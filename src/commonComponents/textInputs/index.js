@@ -75,6 +75,7 @@ const TextInputs = ({
               {icon}
               <TextInput
                 keyboardType={keyboardType}
+                value={value}
                 style={[
                   styles.textInput,
                   {width: width},

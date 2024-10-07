@@ -68,18 +68,18 @@ const SignIn = ({navigation}) => {
   return (
     <View style={[styles.container, {backgroundColor: bgFullStyle}]}>
       <AuthContainer
-        title={t('transData.letYouIn')}
-        subtitle={t('transData.heyMissed')}
+        title="Bienvenido"
+        subtitle="App de talleres"
         value={
           <View>
             <TextInputs
-              title={t('transData.emailId')}
-              placeHolder={t('transData.enterEmail')}
+              title="Email"
+              placeHolder="Ingrese su Email"
               onChangeText={text => {
                 setEmail(text);
                 setEmailTyping(true);
                 if (text.trim() === '') {
-                  setEmailError('Email is required');
+                  setEmailError('Email is requerido');
                 } else {
                   setEmailError('');
                 }
@@ -98,13 +98,13 @@ const SignIn = ({navigation}) => {
               <Text style={styles.errorStyle}>{emailError}</Text>
             )}
             <TextInputs
-              title={t('transData.passwords')}
-              placeHolder={t('transData.enterYouPassword')}
+              title="Contraseña"
+              placeHolder="Ingrese su contraseña"
               onChangeText={text => {
                 setPassword(text);
                 setPwdTyping(true);
                 if (text.length < 6) {
-                  setPasswordError('Password must be at least 6 characters');
+                  setPasswordError('Contraseña debe tener minimo 6 caracteres');
                 } else {
                   setPasswordError('');
                 }
@@ -131,7 +131,7 @@ const SignIn = ({navigation}) => {
                   external.fg_1,
                   {color: textColorStyle, fontSize: fontSizes.FONT16},
                 ]}>
-                {t('transData.rememberMe')}
+                Recuerdame
               </Text>
               <TouchableOpacity
                 onPress={() => navigation.navigate('ForgetPassword')}>
@@ -140,7 +140,7 @@ const SignIn = ({navigation}) => {
                     commonStyles.subtitleText,
                     {color: '#4D66FF', fontSize: fontSizes.FONT16},
                   ]}>
-                  {t('transData.forgetPassword')}
+                  Olvido la contraseña
                 </Text>
               </TouchableOpacity>
             </View>
@@ -149,7 +149,7 @@ const SignIn = ({navigation}) => {
       />
 
       <NavigationButton
-        title={t('transData.signIn')}
+        title="Ingresar"
         color={appColors.screenBg}
         onPress={onHandleChange}
         disabled={isSignInDisabled}
@@ -158,7 +158,7 @@ const SignIn = ({navigation}) => {
 
       <View style={styles.singUpView}>
         <Text style={[commonStyles.subtitleText]}>
-          {t('transData.dontHaveAccount')}
+          ¿No posee una cuenta?
         </Text>
         <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
           <Text
@@ -167,7 +167,7 @@ const SignIn = ({navigation}) => {
               external.ph_5,
               {color: textColorStyle},
             ]}>
-            {t('transData.signUp')}
+            Registro
           </Text>
         </TouchableOpacity>
       </View>

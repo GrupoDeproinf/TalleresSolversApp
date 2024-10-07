@@ -14,7 +14,7 @@ const LinearBoderText = () => {
         style={styles.linearBorderStyle}
         colors={[appColors.linearBorder, appColors.subtitle]}
       />
-      <Text style={[styles.orText]}>{t('transData.continueWith')}</Text>
+      <Text style={[styles.orText]}>O Continue con</Text>
       <LinearGradient
         start={{x: 0.0, y: 3.0}}
         end={{x: 1.0, y: 5.0}}

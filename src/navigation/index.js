@@ -40,17 +40,19 @@ const MyStack = () => {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{headerShown: false}}>
-        {/* <Stack.Screen name="Splash" component={Splash} />
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="SignUp" component={SignUp} />
+        <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
+        <Stack.Screen name="ResetPassword" component={ResetPassword} />
+
+        <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="Onboarding" component={Onboarding} />
         <Stack.Screen name="OnboardingTwo" component={OnboardingTwo} />
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
-        <Stack.Screen name="SignUp" component={SignUp} />
-        <Stack.Screen name="OtpVerfication" component={OtpVerfication} />
-        <Stack.Screen name="ResetPassword" component={ResetPassword} />
+        {/* <Stack.Screen name="OtpVerfication" component={OtpVerfication} />
         <Stack.Screen name="CategoryDetail" component={CategoryDetail} />
-        <Stack.Screen name="LoaderScreen" component={LoaderScreen} /> */}
-        <Stack.Screen name="DrawerScreen" component={DrawerScreen} />
+        <Stack.Screen name="LoaderScreen" component={LoaderScreen} />
+        <Stack.Screen name="DrawerScreen" component={DrawerScreen} /> */}
+        
         <Stack.Screen
           name="NotificationScreen"
           component={NotificationScreen}

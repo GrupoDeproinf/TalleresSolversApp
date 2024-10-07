@@ -54,13 +54,13 @@ const ForgetPassword = ({navigation}) => {
   return (
     <View style={[styles.headingContainer, {backgroundColor: bgFullStyle}]}>
       <AuthContainer
-        title={t('transData.forgetPassword')}
-        subtitle={t('transData.forgetPasswordText')}
+        title="¿Olvido la contraseña?"
+        subtitle="Ingrese su correo y restablezca su contraseña"
         value={
           <View>
             <TextInputs
-              title={t('transData.emailId')}
-              placeHolder={t('transData.enterEmail')}
+              title="Email"
+              placeHolder="Ingrese su correo"
               onChangeText={onEmailChange}
               onBlur={validateEmail}
               icon={
@@ -77,7 +77,7 @@ const ForgetPassword = ({navigation}) => {
         }
       />
       <NavigationButton
-        title={t('transData.getOtp')}
+        title="Recuperar Clave"
         onPress={onHandleChange}
         disabled={isGetOtpDisabled}
         backgroundColor={isGetOtpDisabled ? '#D1D6DE' : '#4D66FF'}
