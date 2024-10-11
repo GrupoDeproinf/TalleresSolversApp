@@ -1,5 +1,5 @@
 import {Image, Text, View} from 'react-native';
-import React from 'react';
+import React, {useState, useEffect } from 'react';
 import {external} from '../../../style/external.css';
 import IconBackground from '../../../commonComponents/iconBackGround';
 import {hiSmitha} from '../../../constant';
@@ -9,10 +9,41 @@ import {useNavigation} from '@react-navigation/native';
 import images from '../../../utils/images';
 import styles from './style.css';
 import {useValues} from '../../../../App';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HeaderContainer = ({onPress}) => {
   const navigation = useNavigation('');
   const {textColorStyle, viewRTLStyle, t} = useValues();
+  const [infoUser, setinfoUser] = useState(
+    {
+      uid:"",
+      nombre:"",
+      cedula:"",
+      phone:"",
+      typeUser:""
+    }
+  );
+
+
+  useEffect(() => {
+    getData()
+  }, []);
+
+
+  const getData = async () => {
+    try {
+        const jsonValue = await AsyncStorage.getItem('@userInfo');
+        const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+        console.log("valor del storage", user);
+
+        setinfoUser(user)
+    } catch(e) {
+        // error reading value
+        console.log(e)
+    }
+};
+
+
   return (
     <View
       style={[
@@ -28,10 +59,10 @@ const HeaderContainer = ({onPress}) => {
           external.ai_center,
           {flexDirection: viewRTLStyle},
         ]}>
-        <IconBackground value={<Drawer />} onPress={onPress} />
+        {/* <IconBackground value={<Drawer />} onPress={onPress} /> */}
         <View style={[external.ml_5]}>
           <Text style={[commonStyles.titleText19, {color: textColorStyle}]}>
-            {t('transData.hiSmitha')}
+            Hola, {infoUser.nombre}
           </Text>
         </View>
         <Image style={styles.img} source={images.hifi} />

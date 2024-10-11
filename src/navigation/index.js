@@ -14,6 +14,7 @@ import MyWhishList from '../screens/myWhishList';
 import NotificationContainer from '../screens/notification/notificationDesc';
 import WhishlitContainer from '../screens/myWhishList/whishlistScreen';
 import EditProfile from '../screens/profileScreen/editProfile';
+import TallerProfileScreen from '../screens/profileScreen/tallerProfileScreen';
 import OrderHistory from '../screens/profileScreen/orderHistory';
 import OfferScreen from '../screens/offerScreen';
 import Settings from '../screens/profileScreen/notificationSetting';
@@ -48,10 +49,10 @@ const MyStack = () => {
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="Onboarding" component={Onboarding} />
         <Stack.Screen name="OnboardingTwo" component={OnboardingTwo} />
-        {/* <Stack.Screen name="OtpVerfication" component={OtpVerfication} />
+        <Stack.Screen name="OtpVerfication" component={OtpVerfication} />
         <Stack.Screen name="CategoryDetail" component={CategoryDetail} />
         <Stack.Screen name="LoaderScreen" component={LoaderScreen} />
-        <Stack.Screen name="DrawerScreen" component={DrawerScreen} /> */}
+        <Stack.Screen name="DrawerScreen" component={DrawerScreen} />
         
         <Stack.Screen
           name="NotificationScreen"
@@ -64,6 +65,7 @@ const MyStack = () => {
         />
         <Stack.Screen name="WhishlitContainer" component={WhishlitContainer} />
         <Stack.Screen name="EditProfile" component={EditProfile} />
+        <Stack.Screen name="TallerProfileScreen" component={TallerProfileScreen} />
         <Stack.Screen name="OrderHistory" component={OrderHistory} />
         <Stack.Screen name="HomeScreenTwo" component={HomeScreenTwo} />
         <Stack.Screen name="OfferScreen" component={OfferScreen} />

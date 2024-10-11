@@ -1,5 +1,5 @@
 import {Image, Pressable, Text, View} from 'react-native';
-import React from 'react';
+import React, {useState, useEffect } from 'react';
 import {external} from '../../style/external.css';
 import {commonStyles} from '../../style/commonStyle.css';
 import images from '../../utils/images';
@@ -14,6 +14,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
+  const [infoUser, setinfoUser] = useState(
+    {
+      uid:"",
+      nombre:"",
+      cedula:"",
+      phone:"",
+      typeUser:""
+    }
+  );
+
 
   const handleLogout = async () => {
     try {
@@ -23,6 +33,23 @@ const ProfileScreen = () => {
       console.error('Error logging out:', error);
     }
   };
+
+  useEffect(() => {
+    getData()
+  }, []);
+
+  const getData = async () => {
+    try {
+        const jsonValue = await AsyncStorage.getItem('@userInfo');
+        const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+        console.log("valor del storage", user);
+
+        setinfoUser(user)
+    } catch(e) {
+        // error reading value
+        console.log(e)
+    }
+};
 
   const {
     textColorStyle,
@@ -39,6 +66,16 @@ const ProfileScreen = () => {
     ? ['#43454A', '#24262C']
     : [appColors.screenBg, appColors.screenBg];
 
+
+    const removePropertyFromStorage = async (propertyName) => {
+      try {
+        await AsyncStorage.removeItem('@userInfo');
+        console.log('Item removed successfully');
+      } catch (error) {
+        console.error('Error removing item:', error);
+      }
+    };
+
   return (
     <View style={[styles.viewContainer, {backgroundColor: bgFullStyle}]}>
       <Text
@@ -47,7 +84,7 @@ const ProfileScreen = () => {
           commonStyles.hederH2,
           {color: textColorStyle},
         ]}>
-        {t('transData.myProfile')}
+        Mi Perfil
       </Text>
       <View style={[external.as_center]}>
         <View
@@ -60,10 +97,10 @@ const ProfileScreen = () => {
           </View>
         </View>
         <Text style={[styles.nameText, {color: textColorStyle}]}>
-          {t('transData.smithaWilliams')}
+        {infoUser.nombre}
         </Text>
         <Text style={[commonStyles.subtitleText, external.ti_center]}>
-          {t('transData.smithaWilliamsMail')}
+        {infoUser.email}
         </Text>
       </View>
       <View style={[external.mt_10]}>
@@ -73,6 +110,7 @@ const ProfileScreen = () => {
             activeOpacity={0.9}
             onPress={() => {
               if (item.id === 6) {
+                removePropertyFromStorage()
                 handleLogout();
               } else {
                 navigation.navigate(item.screenName);

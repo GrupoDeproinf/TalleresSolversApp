@@ -16,6 +16,7 @@ const MyBeg = ({navigation}) => {
     ? ['#3D3F45', '#45474B', '#2A2C32']
     : [appColors.screenBg, appColors.screenBg];
   const darkmode = isDark ? images.darkBag : images.beg;
+  
   return (
     <View
       style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>

@@ -21,6 +21,7 @@ const TextInputs = ({
   fullWidth,
   fullWidthTwo,
   paddingHorizontalTwo,
+  secureTextEntry
 }) => {
   const [error, setError] = useState('');
 
@@ -75,6 +76,7 @@ const TextInputs = ({
               {icon}
               <TextInput
                 keyboardType={keyboardType}
+                secureTextEntry={secureTextEntry}
                 value={value}
                 style={[
                   styles.textInput,

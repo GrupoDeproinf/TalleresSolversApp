@@ -28,20 +28,20 @@ const ChangePasswordScreen = () => {
         external.ph_20,
         {backgroundColor: bgFullStyle},
       ]}>
-      <HeaderContainer value={t('transData.changePassword')} />
+      <HeaderContainer value="Cambiar Contraseña" />
       <TextInputs
-        title={t('transData.currentPassword')}
-        placeHolder={t('transData.enterYourOldPassword')}
+        title="Actual contraseña"
+        placeHolder="Ingrese su contraseña antigua"
         icon={<Key />}
       />
       <TextInputs
-        title={t('transData.newPassword')}
-        placeHolder={t('transData.enterYourNewPassword')}
+        title="Nueva contraseña" 
+        placeHolder="Ingrese su nueva contraseña"
         icon={<Key />}
       />
       <TextInputs
-        title={t('transData.confirmPasswords')}
-        placeHolder={t('transData.reEnterPassword')}
+        title="Confirme su nueva contraseña"
+        placeHolder="Ingrese su nueva contraseña otra vez "
         icon={<Key />}
       />
       <View
@@ -53,7 +53,7 @@ const ChangePasswordScreen = () => {
         ]}>
         <View style={{width: '100%'}}>
           <NavigationButton
-            title={t('transData.changePassword')}
+            title="Cambiar Contraseña"
             backgroundColor={'#4D66FF'}
             onPress={() => setModalVisible(true)}
             color={'white'}

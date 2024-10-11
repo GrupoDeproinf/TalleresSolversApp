@@ -15,6 +15,7 @@ import LinearBoderText from '../../../commonComponents/linearBoderText';
 import CheckBox from '../../../commonComponents/checkBox';
 import {fontSizes} from '../../../themes/appConstant';
 import LinearGradient from 'react-native-linear-gradient';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignIn = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -48,13 +49,43 @@ const SignIn = ({navigation}) => {
     }
   };
 
-  const onHandleChange = () => {
+  const onHandleChange = async () => {
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
 
     if (isEmailValid && isPasswordValid) {
-      setSignInDisabled(false);
-      navigation.navigate('LoaderScreen');
+      let infoUserCreated
+      if (email == "evanderjar@gmail.com"){
+        infoUserCreated = {
+          uid: '12345',
+          nombre: "Evander Alvarado",
+          cedula: "25831867",
+          phone: "4142617961",
+          typeUser: 'Cliente',
+          email: email,
+        };
+      } else {
+        infoUserCreated = {
+          uid: '12345',
+          nombre: "Taller QA",
+          rif: "j-515615560651",
+          phone: "4142617966",
+          typeUser: 'Taller',
+          email: email,
+        };
+      }
+
+      setEmail("")
+      setPassword("")
+      try {
+        const jsonValue = JSON.stringify(infoUserCreated);
+        console.log(jsonValue);
+        await AsyncStorage.setItem('@userInfo', jsonValue);
+        setSignInDisabled(false);
+        navigation.navigate('LoaderScreen');
+      } catch (e) {
+        console.log(e);
+      }
     } else {
       setSignInDisabled(true);
     }
@@ -68,12 +99,13 @@ const SignIn = ({navigation}) => {
   return (
     <View style={[styles.container, {backgroundColor: bgFullStyle}]}>
       <AuthContainer
-        title="Bienvenido"
-        subtitle="App de talleres"
+        title="Bienvenido a Solvers"
+        subtitle="Garantiza que tu vehículo funcione de manera eficiente y segura"
         value={
           <View>
             <TextInputs
               title="Email"
+              value={email}
               placeHolder="Ingrese su Email"
               onChangeText={text => {
                 setEmail(text);
@@ -99,7 +131,9 @@ const SignIn = ({navigation}) => {
             )}
             <TextInputs
               title="Contraseña"
+              value={password}
               placeHolder="Ingrese su contraseña"
+              secureTextEntry={true} 
               onChangeText={text => {
                 setPassword(text);
                 setPwdTyping(true);

@@ -27,6 +27,7 @@ const OrderHistory = () => {
   const colors = isDark
     ? ['#808184', '#2E3036']
     : [appColors.screenBg, appColors.screenBg];
+
   const renderItem = ({item}) => (
     <LinearGradient
       start={{x: 0.0, y: 0.0}}
@@ -70,9 +71,9 @@ const OrderHistory = () => {
               {(currPrice * item.price).toFixed(2)}
             </Text>
           </View>
-          <Text style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
+          {/* <Text style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
             {t('transData.colorBlue')}
-          </Text>
+          </Text> */}
           <View
             style={[
               external.fd_row,
@@ -85,14 +86,15 @@ const OrderHistory = () => {
                 {color: textColorStyle},
                 {textAlign: textRTLStyle},
               ]}>
-              {t('transData.deliverd')}
+              {/* {t('transData.deliverd')} */}
+              Fecha: {item.date}
             </Text>
             <View
               style={[
                 styles.orderContainer,
                 {borderTopEndRadius: isRTL ? windowHeight(9) : undefined},
               ]}>
-              <Text style={styles.buyAgain}>{t('transData.buyAgain')}</Text>
+              <Text style={styles.buyAgain}>Comprar</Text>
             </View>
           </View>
         </View>
@@ -106,7 +108,7 @@ const OrderHistory = () => {
         external.ph_20,
         {backgroundColor: bgFullStyle},
       ]}>
-      <HeaderContainer value={t('transData.orderHistory')} />
+      <HeaderContainer value="Historial de Servicios" />
       <FlatList data={orderHistoryData} renderItem={renderItem} />
     </View>
   );

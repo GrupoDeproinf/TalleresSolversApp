@@ -6,24 +6,26 @@ import {
   ScrollView,
   StyleSheet,
   Image,
+  ToastAndroid,
+  Button,
 } from 'react-native';
-import React, {useState} from 'react';
-import AuthContainer from '../../../commonComponents/authContainer';
-import {
-  confirmPasswords,
-  createYourAccount,
-  dontHaveAccount,
-  emailId,
-  enterEmail,
-  enterNumber,
-  enterYouPassword,
-  exploreyourLife,
-  passwords,
-  phoneNumber,
-  reEnterPassword,
-  signIn,
-  signUp,
-} from '../../../constant';
+import React, {useState, useEffect} from 'react';
+// import AuthContainer from '../../../commonComponents/authContainer';
+// import {
+//   confirmPasswords,
+//   createYourAccount,
+//   dontHaveAccount,
+//   emailId,
+//   enterEmail,
+//   enterNumber,
+//   enterYouPassword,
+//   exploreyourLife,
+//   passwords,
+//   phoneNumber,
+//   reEnterPassword,
+//   signIn,
+//   signUp,
+// } from '../../../constant';
 import TextInputs from '../../../commonComponents/textInputs';
 import NavigationButton from '../../../commonComponents/navigationButton';
 import {commonStyles} from '../../../style/commonStyle.css';
@@ -38,17 +40,14 @@ import UserImage from '../../../assets/newImage/user.png';
 import KeyImage from '../../../assets/newImage/key.png';
 
 import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
-// import Icon from 'react-native-vector-icons/FontAwesome';
-// import { Icon } from 'react-native-elements';
 
-import Icon from 'react-native-vector-icons/FontAwesome'; // Para íconos como "user"
-// import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const SignUp = ({navigation}) => {
   const [email, setEmail] = useState('');
-  const [cedula, setcedula] = useState('');
+  const [cedula, setcedula] = useState(0);
   const [Nombre, setNombre] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(0);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [emailError, setEmailError] = useState('');
@@ -119,325 +118,110 @@ const SignUp = ({navigation}) => {
     }
   };
 
-  const onHandleChange = () => {
-    console.log(index);
+  const onHandleChange = async () => {
+    console.log(typeOfView);
 
-    // const isEmailValid = validateEmail();
-    // const isPhoneValid = validatePhone();
-    // const isPasswordValid = validatePassword();
-    // const isConfirmPasswordValid = validateConfirmPassword();
+    if (typeOfView == 'Cliente') {
+      const isEmailValid = validateEmail();
+      const isPhoneValid = validatePhone();
+      const isPasswordValid = validatePassword();
+      const isConfirmPasswordValid = validateConfirmPassword();
 
-    // const isDisabled =
-    //   !isEmailValid ||
-    //   !isPhoneValid ||
-    //   !isPasswordValid ||
-    //   !isConfirmPasswordValid;
+      if (
+        isEmailValid == true &&
+        isPhoneValid == true &&
+        isPasswordValid == true &&
+        isConfirmPasswordValid == true &&
+        Nombre != '' &&
+        cedula != 0
+      ) {
+        const infoUserCreated = {
+          uid: '12345',
+          nombre: Nombre,
+          cedula: cedula,
+          phone: phone,
+          typeUser: 'Cliente',
+          email: email,
+        };
+        try {
+          const jsonValue = JSON.stringify(infoUserCreated);
+          console.log(jsonValue);
+          await AsyncStorage.setItem('@userInfo', jsonValue);
+        } catch (e) {
+          console.log(e);
+        }
+        setNombre('');
+        setcedula(0);
+        setEmail('');
+        setPhone(0);
+        setPassword('');
+        setConfirmPassword('');
+        settypeOfView("")
 
-    // setGetOtpDisabled(isDisabled);
+        showToast('Usuario creado exitosamente');
+        navigation.navigate('LoaderScreen');
+      } else {
+        showToast('Error al crear al usuario, por favor validar formulario');
+      }
+    } else {
+      const isEmailValid = validateEmail();
+      const isPhoneValid = validatePhone();
+      const isPasswordValid = validatePassword();
+      const isConfirmPasswordValid = validateConfirmPassword();
 
-    // if (!isDisabled) {
-    //   navigation.navigate('LoaderScreen');
-    // }
+      if (
+        isEmailValid == true &&
+        isPhoneValid == true &&
+        isPasswordValid == true &&
+        isConfirmPasswordValid == true &&
+        Nombre != '' &&
+        cedula != 0
+      ) {
+        const infoUserCreated = {
+          uid: '12345',
+          nombre: Nombre,
+          rif: cedula,
+          phone: phone,
+          typeUser: 'Taller',
+          email: email,
+        };
+        try {
+          const jsonValue = JSON.stringify(infoUserCreated);
+          console.log(jsonValue);
+          await AsyncStorage.setItem('@userInfo', jsonValue);
+        } catch (e) {
+          console.log(e);
+        }
+        setNombre('');
+        setcedula(0);
+        setEmail('');
+        setPhone(0);
+        setPassword('');
+        setConfirmPassword('');
+        settypeOfView("")
+
+        showToast('Usuario creado exitosamente');
+        navigation.navigate('LoaderScreen');
+      } else {
+        showToast('Error al crear al usuario, por favor validar formulario');
+      }
+    }
   };
   const {bgFullStyle, textColorStyle, t} = useValues();
 
-  // Tabs
+  // const showToast = (type, text1, position, visibilityTime, autoHide) => {
+  //   Toast.show({
+  //     type: type,
+  //     text1: text1,
+  //     position: position',
+  //     visibilityTime: visibilityTime,
+  //     autoHide: autoHide,
+  //   });
+  // };
 
-  const ClienteRoute = () => (
-    <ScrollView style={{marginBottom: 15}}>
-      <View>
-        <TextInputs
-          title="Nombre y Apellido"
-          placeHolder="Ingrese su nombre y apellido"
-          value={Nombre}
-          onChangeText={text => {
-            console.log(text);
-            setNombre(text);
-            setNombreTyping(true);
-            if (text.trim() === '') {
-              setNombreError('Nombre es requerido');
-            } else {
-              setNombreError('');
-            }
-          }}
-          onBlur={() => {
-            setNombreTyping(false);
-          }}
-          icon={<Email color={NombreTyping ? '#051E47' : appColors.subtitle} />}
-        />
-        {NombreError !== '' && (
-          <Text style={styles.errorStyle}>{NombreError}</Text>
-        )}
-
-        <TextInputs
-          title="Cedula"
-          placeHolder="Ingrese su cedula"
-          onChangeText={text => {
-            // Eliminar cualquier caracter que no sea un número
-            const numericText = text.replace(/[^0-9]/g, '');
-            setcedula(numericText);
-            setcedulaTyping(true);
-            if (numericText.trim() === '') {
-              setcedulaError('Cedula es requerida');
-            } else {
-              setcedulaError('');
-            }
-          }}
-          onBlur={() => {
-            setcedulaTyping(false);
-          }}
-          keyboardType="numeric" // Establece el teclado numérico
-          icon={
-            <Email color={iscedulaTyping ? '#051E47' : appColors.subtitle} />
-          }
-        />
-
-        {cedulaError !== '' && (
-          <Text style={styles.errorStyle}>{cedulaError}</Text>
-        )}
-
-        <TextInputs
-          title="Email"
-          placeHolder="Ingrese su email"
-          onChangeText={text => {
-            setEmail(text);
-            setEmailTyping(true);
-            if (text.trim() === '') {
-              setEmailError('Email es requerido');
-            } else {
-              setEmailError('');
-            }
-          }}
-          onBlur={() => {
-            validateEmail();
-            setEmailTyping(false);
-          }}
-          icon={
-            <Email color={isEmailTyping ? '#051E47' : appColors.subtitle} />
-          }
-        />
-        {emailError !== '' && (
-          <Text style={styles.errorStyle}>{emailError}</Text>
-        )}
-
-        <TextInputs
-          title="Numero Telefonico"
-          placeHolder="Ingrese su numero"
-          onChangeText={text => {
-            setPhone(text);
-            setCallTyping(true);
-            if (text.trim() === '') {
-              setPhoneError('Numero telefonico requerido');
-            } else {
-              setPhoneError('');
-            }
-          }}
-          onBlur={() => {
-            validatePhone();
-            setCallTyping(false);
-          }}
-          icon={<Call color={isCallTyping ? '#051E47' : appColors.subtitle} />}
-        />
-
-        {phoneError !== '' && (
-          <Text style={styles.errorStyle}>{phoneError}</Text>
-        )}
-
-        <TextInputs
-          title="Contraseña"
-          placeHolder="Ingrese su contraseña"
-          onChangeText={text => {
-            setPassword(text);
-            setPwdTyping(true);
-            if (text.length < 6) {
-              setPasswordError('Contraseña debe tener minimo 6 digitos');
-            } else {
-              setPasswordError('');
-            }
-          }}
-          onBlur={() => {
-            validatePassword();
-            setPwdTyping(false);
-          }}
-          icon={<Key color={isPwdTyping ? '#051E47' : appColors.subtitle} />}
-        />
-        {passwordError !== '' && (
-          <Text style={styles.errorStyle}>{passwordError}</Text>
-        )}
-
-        <TextInputs
-          title="Confirmar Contraseña"
-          placeHolder="Ingrese otra vez la contraseña"
-          onChangeText={text => {
-            setConfirmPassword(text);
-            setConfPwdTyping(true);
-            if (text !== password) {
-              setConfirmPasswordError('Contraseña no coincide');
-            } else {
-              setConfirmPasswordError('');
-            }
-          }}
-          onBlur={() => {
-            validateConfirmPassword();
-            setConfPwdTyping(false);
-          }}
-          icon={<Key color={isConfTyping ? '#051E47' : appColors.subtitle} />}
-        />
-
-        {confirmPasswordError !== '' && (
-          <Text style={styles.errorStyle}>{confirmPasswordError}</Text>
-        )}
-      </View>
-    </ScrollView>
-  );
-
-  const TallerRoute = () => (
-    <ScrollView style={{marginBottom: 15}}>
-      <View>
-        <TextInputs
-          title="Nombre del Taller"
-          placeHolder="Ingrese el nombre"
-          value={Nombre}
-          onChangeText={text => {
-            console.log(text);
-            setNombre(text);
-            setNombreTyping(true);
-            if (text.trim() === '') {
-              setNombreError('Nombre es requerido');
-            } else {
-              setNombreError('');
-            }
-          }}
-          onBlur={() => {
-            setNombreTyping(false);
-          }}
-          icon={<Email color={NombreTyping ? '#051E47' : appColors.subtitle} />}
-        />
-        {NombreError !== '' && (
-          <Text style={styles.errorStyle}>{NombreError}</Text>
-        )}
-
-        <TextInputs
-          title="Rif"
-          placeHolder="Ingrese rif"
-          onChangeText={text => {
-            // Eliminar cualquier caracter que no sea un número
-            // const numericText = text.replace(/[^0-9]/g, '');
-            setcedula(numericText);
-            setcedulaTyping(true);
-            if (numericText.trim() === '') {
-              setcedulaError('Cedula es requerida');
-            } else {
-              setcedulaError('');
-            }
-          }}
-          onBlur={() => {
-            setcedulaTyping(false);
-          }}
-          // keyboardType="numeric" // Establece el teclado numérico
-          icon={
-            <Email color={iscedulaTyping ? '#051E47' : appColors.subtitle} />
-          }
-        />
-
-        {cedulaError !== '' && (
-          <Text style={styles.errorStyle}>{cedulaError}</Text>
-        )}
-
-        <TextInputs
-          title="Email"
-          placeHolder="Ingrese su email"
-          onChangeText={text => {
-            setEmail(text);
-            setEmailTyping(true);
-            if (text.trim() === '') {
-              setEmailError('Email es requerido');
-            } else {
-              setEmailError('');
-            }
-          }}
-          onBlur={() => {
-            validateEmail();
-            setEmailTyping(false);
-          }}
-          icon={
-            <Email color={isEmailTyping ? '#051E47' : appColors.subtitle} />
-          }
-        />
-        {emailError !== '' && (
-          <Text style={styles.errorStyle}>{emailError}</Text>
-        )}
-
-        <TextInputs
-          title="Numero Telefonico"
-          placeHolder="Ingrese su numero"
-          onChangeText={text => {
-            setPhone(text);
-            setCallTyping(true);
-            if (text.trim() === '') {
-              setPhoneError('Numero telefonico requerido');
-            } else {
-              setPhoneError('');
-            }
-          }}
-          onBlur={() => {
-            validatePhone();
-            setCallTyping(false);
-          }}
-          icon={<Call color={isCallTyping ? '#051E47' : appColors.subtitle} />}
-        />
-
-        {phoneError !== '' && (
-          <Text style={styles.errorStyle}>{phoneError}</Text>
-        )}
-
-        <TextInputs
-          title="Contraseña"
-          placeHolder="Ingrese su contraseña"
-          onChangeText={text => {
-            setPassword(text);
-            setPwdTyping(true);
-            if (text.length < 6) {
-              setPasswordError('Contraseña debe tener minimo 6 digitos');
-            } else {
-              setPasswordError('');
-            }
-          }}
-          onBlur={() => {
-            validatePassword();
-            setPwdTyping(false);
-          }}
-          icon={<Key color={isPwdTyping ? '#051E47' : appColors.subtitle} />}
-        />
-        {passwordError !== '' && (
-          <Text style={styles.errorStyle}>{passwordError}</Text>
-        )}
-
-        <TextInputs
-          title="Confirmar Contraseña"
-          placeHolder="Ingrese otra vez la contraseña"
-          onChangeText={text => {
-            setConfirmPassword(text);
-            setConfPwdTyping(true);
-            if (text !== password) {
-              setConfirmPasswordError('Contraseña no coincide');
-            } else {
-              setConfirmPasswordError('');
-            }
-          }}
-          onBlur={() => {
-            validateConfirmPassword();
-            setConfPwdTyping(false);
-          }}
-          icon={<Key color={isConfTyping ? '#051E47' : appColors.subtitle} />}
-        />
-
-        {confirmPasswordError !== '' && (
-          <Text style={styles.errorStyle}>{confirmPasswordError}</Text>
-        )}
-      </View>
-    </ScrollView>
-  );
+  const showToast = text => {
+    ToastAndroid.show(text, ToastAndroid.SHORT);
+  };
 
   // Funciones para manejar los clics
   const handleClientePress = () => {
@@ -459,7 +243,7 @@ const SignUp = ({navigation}) => {
           marginTop: 15,
           color: 'black',
         }}>
-        Regístrate ahora
+        Regístrate ahora {typeOfView != '' ? '(' + typeOfView + ')' : null}
       </Text>
       <Text style={{fontSize: 13, color: 'gray', marginBottom: 10}}>
         Regístrate ya sea como cliente o taller
@@ -472,6 +256,7 @@ const SignUp = ({navigation}) => {
             <TextInputs
               title="Nombre y Apellido"
               placeHolder="Ingrese su nombre y apellido"
+              value={Nombre}
               onChangeText={text => {
                 console.log(text);
                 setNombre(text);
@@ -495,6 +280,7 @@ const SignUp = ({navigation}) => {
 
             <TextInputs
               title="Cedula"
+              value={cedula}
               placeHolder="Ingrese su cedula"
               onChangeText={text => {
                 // Eliminar cualquier caracter que no sea un número
@@ -524,6 +310,7 @@ const SignUp = ({navigation}) => {
 
             <TextInputs
               title="Email"
+              value={email}
               placeHolder="Ingrese su email"
               onChangeText={text => {
                 setEmail(text);
@@ -547,13 +334,18 @@ const SignUp = ({navigation}) => {
             )}
 
             <TextInputs
-              title="Numero Telefonico"
-              placeHolder="Ingrese su numero"
+              title="Número Telefónico"
+              value={phone}
+              placeholder="Ingrese su número"
+              keyboardType="numeric"
               onChangeText={text => {
-                setPhone(text);
+                // Remove non-numeric characters using regex
+                const numericText = text.replace(/[^0-9]/g, '');
+                setPhone(numericText);
                 setCallTyping(true);
-                if (text.trim() === '') {
-                  setPhoneError('Numero telefonico requerido');
+
+                if (numericText.trim() === '') {
+                  setPhoneError('Número telefónico requerido');
                 } else {
                   setPhoneError('');
                 }
@@ -573,12 +365,15 @@ const SignUp = ({navigation}) => {
 
             <TextInputs
               title="Contraseña"
-              placeHolder="Ingrese su contraseña"
+              value={password}
+              placeholder="Ingrese su contraseña"
+              secureTextEntry={true} // Make it a password field
               onChangeText={text => {
                 setPassword(text);
                 setPwdTyping(true);
+
                 if (text.length < 6) {
-                  setPasswordError('Contraseña debe tener minimo 6 digitos');
+                  setPasswordError('Contraseña debe tener mínimo 6 dígitos');
                 } else {
                   setPasswordError('');
                 }
@@ -591,13 +386,12 @@ const SignUp = ({navigation}) => {
                 <Key color={isPwdTyping ? '#051E47' : appColors.subtitle} />
               }
             />
-            {passwordError !== '' && (
-              <Text style={styles.errorStyle}>{passwordError}</Text>
-            )}
 
             <TextInputs
               title="Confirmar Contraseña"
+              value={confirmPassword}
               placeHolder="Ingrese otra vez la contraseña"
+              secureTextEntry={true}
               onChangeText={text => {
                 setConfirmPassword(text);
                 setConfPwdTyping(true);
@@ -651,15 +445,16 @@ const SignUp = ({navigation}) => {
             )}
 
             <TextInputs
-              title="Rif"
-              placeHolder="Ingrese rif"
+              title="Registro de Información Fiscal (RIF)"
+              value={cedula}
+              placeHolder="Ingrese el numero de RIF"
               onChangeText={text => {
                 // Eliminar cualquier caracter que no sea un número
-                // const numericText = text.replace(/[^0-9]/g, '');
+                const numericText = text.replace(/[^0-9]/g, '');
                 setcedula(numericText);
                 setcedulaTyping(true);
                 if (numericText.trim() === '') {
-                  setcedulaError('Cedula es requerida');
+                  setcedulaError('RIF es requerido');
                 } else {
                   setcedulaError('');
                 }
@@ -667,7 +462,7 @@ const SignUp = ({navigation}) => {
               onBlur={() => {
                 setcedulaTyping(false);
               }}
-              // keyboardType="numeric" // Establece el teclado numérico
+              keyboardType="numeric" // Establece el teclado numérico
               icon={
                 <Email
                   color={iscedulaTyping ? '#051E47' : appColors.subtitle}
@@ -681,6 +476,7 @@ const SignUp = ({navigation}) => {
 
             <TextInputs
               title="Email"
+              value={email}
               placeHolder="Ingrese su email"
               onChangeText={text => {
                 setEmail(text);
@@ -704,13 +500,18 @@ const SignUp = ({navigation}) => {
             )}
 
             <TextInputs
-              title="Numero Telefonico"
-              placeHolder="Ingrese su numero"
+              title="Número Telefónico"
+              value={phone}
+              placeholder="Ingrese su número"
+              keyboardType="numeric"
               onChangeText={text => {
-                setPhone(text);
+                // Remove non-numeric characters using regex
+                const numericText = text.replace(/[^0-9]/g, '');
+                setPhone(numericText);
                 setCallTyping(true);
-                if (text.trim() === '') {
-                  setPhoneError('Numero telefonico requerido');
+
+                if (numericText.trim() === '') {
+                  setPhoneError('Número telefónico requerido');
                 } else {
                   setPhoneError('');
                 }
@@ -730,12 +531,15 @@ const SignUp = ({navigation}) => {
 
             <TextInputs
               title="Contraseña"
-              placeHolder="Ingrese su contraseña"
+              value={password}
+              placeholder="Ingrese su contraseña"
+              secureTextEntry={true} // Make it a password field
               onChangeText={text => {
                 setPassword(text);
                 setPwdTyping(true);
+
                 if (text.length < 6) {
-                  setPasswordError('Contraseña debe tener minimo 6 digitos');
+                  setPasswordError('Contraseña debe tener mínimo 6 dígitos');
                 } else {
                   setPasswordError('');
                 }
@@ -748,13 +552,12 @@ const SignUp = ({navigation}) => {
                 <Key color={isPwdTyping ? '#051E47' : appColors.subtitle} />
               }
             />
-            {passwordError !== '' && (
-              <Text style={styles.errorStyle}>{passwordError}</Text>
-            )}
 
             <TextInputs
               title="Confirmar Contraseña"
+              value={confirmPassword}
               placeHolder="Ingrese otra vez la contraseña"
+              secureTextEntry={true}
               onChangeText={text => {
                 setConfirmPassword(text);
                 setConfPwdTyping(true);
@@ -772,10 +575,6 @@ const SignUp = ({navigation}) => {
                 <Key color={isConfTyping ? '#051E47' : appColors.subtitle} />
               }
             />
-
-            {confirmPasswordError !== '' && (
-              <Text style={styles.errorStyle}>{confirmPasswordError}</Text>
-            )}
           </View>
         </ScrollView>
       ) : null}
