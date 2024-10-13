@@ -182,7 +182,7 @@ const TallerProfileScreen = ({navigation}) => {
   }
 
 
-  if(!showForm){
+  if(showForm){
     return (
       <View
         style={[
@@ -394,7 +394,7 @@ const TallerProfileScreen = ({navigation}) => {
     );
   }
 
-  if(showForm){
+  if(!showForm){
     return (
       <View
         style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
