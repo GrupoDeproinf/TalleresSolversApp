@@ -39,6 +39,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: windowHeight(10),
     alignItems: 'center',
+    marginBottom:30
   },
   container: {
     ...commonStyles.commonContainer,

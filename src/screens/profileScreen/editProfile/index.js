@@ -57,6 +57,7 @@ const EditProfile = ({navigation}) => {
   // *******************************************
 
   useEffect(() => {
+    console.log("Aquiiii1234")
     getData()
   }, []);
 

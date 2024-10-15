@@ -18,7 +18,7 @@ const LoaderScreen = ({navigation}) => {
     try {
         const jsonValue = await AsyncStorage.getItem('@userInfo');
         const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-        console.log("valor del storage", user);
+        console.log("valor del storage 658888", user);
         if(user.typeUser == "Cliente"){
           const timer = setTimeout(() => {
             navigation.replace('DrawerScreen');

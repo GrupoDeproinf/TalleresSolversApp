@@ -21,7 +21,11 @@ const TextInputs = ({
   fullWidth,
   fullWidthTwo,
   paddingHorizontalTwo,
-  secureTextEntry
+  secureTextEntry,
+  multiline,
+  numberOfLines,
+  height,
+  editable
 }) => {
   const [error, setError] = useState('');
 
@@ -77,10 +81,14 @@ const TextInputs = ({
               <TextInput
                 keyboardType={keyboardType}
                 secureTextEntry={secureTextEntry}
+                multiline={multiline}
+                numberOfLines={numberOfLines}
                 value={value}
+                editable={editable}
                 style={[
                   styles.textInput,
                   {width: width},
+                  {height: height},
                   {color: textColorStyle},
                   {textAlign: textRTLStyle},
                 ]}

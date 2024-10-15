@@ -1,4 +1,4 @@
-import {Text, TouchableOpacity, View} from 'react-native';
+import {Text, TouchableOpacity, View, ToastAndroid } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import AuthContainer from '../../../commonComponents/authContainer';
 import {apple, facebook} from '../../../constant';
@@ -52,43 +52,60 @@ const SignIn = ({navigation}) => {
   const onHandleChange = async () => {
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
+    setSignInDisabled(false);
 
     if (isEmailValid && isPasswordValid) {
-      let infoUserCreated
-      if (email == "evanderjar@gmail.com"){
-        infoUserCreated = {
-          uid: '12345',
-          nombre: "Evander Alvarado",
-          cedula: "25831867",
-          phone: "4142617961",
-          typeUser: 'Cliente',
-          email: email,
-        };
-      } else {
-        infoUserCreated = {
-          uid: '12345',
-          nombre: "Taller QA",
-          rif: "j-515615560651",
-          phone: "4142617966",
-          typeUser: 'Taller',
-          email: email,
-        };
-      }
 
-      setEmail("")
-      setPassword("")
+      console.log(email)
+      console.log(password)
+
       try {
-        const jsonValue = JSON.stringify(infoUserCreated);
-        console.log(jsonValue);
-        await AsyncStorage.setItem('@userInfo', jsonValue);
-        setSignInDisabled(false);
-        navigation.navigate('LoaderScreen');
-      } catch (e) {
-        console.log(e);
+        // Hacer la solicitud POST
+        const response = await fetch('http://desarrollo-test.com/api/usuarios/authenticateUser', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({email:email}), // Convertir los datos a JSON
+        });
+  
+        // Verificar la respuesta del servidor
+        if (response.ok) {
+          const result = await response.json();
+          console.log("Este es el usuario nuevo ", result); // Aquí puedes manejar la respuesta
+
+          if (result.message == "Usuario autenticado exitosamente"){
+            try {
+              const jsonValue = JSON.stringify(result.userData);
+              console.log(jsonValue);
+              await AsyncStorage.setItem('@userInfo', jsonValue);
+            } catch (e) {
+              console.log(e);
+            }
+
+            setSignInDisabled(true);
+            setEmail("")
+            setPassword("")
+            navigation.navigate('LoaderScreen');
+
+          } else {
+            showToast('No se ha encontrado el usuario, por favor validar formulario');
+          }
+        } else {
+          console.error('Error en la solicitud:', response.statusText);
+          showToast('Error al encontrar al usuario, por favor validar formulario');
+        }
+      } catch (error) {
+        console.error('Error en la solicitud:', error);
+        showToast('Error al encontrar al usuario, por favor validar formulario');
       }
     } else {
       setSignInDisabled(true);
     }
+  };
+
+  const showToast = text => {
+    ToastAndroid.show(text, ToastAndroid.SHORT);
   };
 
   const {bgFullStyle, textColorStyle, t, iconColorStyle} = useValues();
@@ -205,7 +222,8 @@ const SignIn = ({navigation}) => {
           </Text>
         </TouchableOpacity>
       </View>
-      <LinearBoderText />
+
+      {/* <LinearBoderText />
       <View style={[external.fd_row, external.ai_center, external.mb_40]}>
         <LinearGradient
           start={{x: 0.0, y: 0.0}}
@@ -270,7 +288,7 @@ const SignIn = ({navigation}) => {
             </Text>
           </LinearGradient>
         </LinearGradient>
-      </View>
+      </View> */}
     </View>
   );
 };

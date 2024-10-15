@@ -79,7 +79,7 @@ const SignUp = ({navigation}) => {
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setEmailError('Invalid email address');
+      setEmailError('Direccion de correo incorrecta');
       return false;
     } else {
       setEmailError('');
@@ -90,13 +90,14 @@ const SignUp = ({navigation}) => {
   const validatePhone = () => {
     const phoneRegex = /^\d{10}$/;
     if (!phoneRegex.test(phone)) {
-      setPhoneError('Invalid phone number');
+      setPhoneError('Telefono debe contener 9 caracteres');
       return false;
     } else {
       setPhoneError('');
       return true;
     }
   };
+  
 
   const validatePassword = () => {
     if (password.length < 6) {
@@ -120,6 +121,8 @@ const SignUp = ({navigation}) => {
 
   const onHandleChange = async () => {
     console.log(typeOfView);
+    console.log("Aquiiiiiiiiiiiiiii")
+    
 
     if (typeOfView == 'Cliente') {
       const isEmailValid = validateEmail();
@@ -133,33 +136,67 @@ const SignUp = ({navigation}) => {
         isPasswordValid == true &&
         isConfirmPasswordValid == true &&
         Nombre != '' &&
-        cedula != 0
+        cedula != 0  && cedula != '' 
       ) {
         const infoUserCreated = {
-          uid: '12345',
-          nombre: Nombre,
+          Nombre: Nombre,
           cedula: cedula,
           phone: phone,
           typeUser: 'Cliente',
           email: email,
         };
-        try {
-          const jsonValue = JSON.stringify(infoUserCreated);
-          console.log(jsonValue);
-          await AsyncStorage.setItem('@userInfo', jsonValue);
-        } catch (e) {
-          console.log(e);
-        }
-        setNombre('');
-        setcedula(0);
-        setEmail('');
-        setPhone(0);
-        setPassword('');
-        setConfirmPassword('');
-        settypeOfView("")
 
-        showToast('Usuario creado exitosamente');
-        navigation.navigate('LoaderScreen');
+        try {
+          // Hacer la solicitud POST
+          const response = await fetch('http://desarrollo-test.com/api/usuarios/SaveClient', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
+          });
+    
+          // Verificar la respuesta del servidor
+          console.log(response)
+
+          if (response.ok) {
+            const result = await response.json();
+            console.log(result); // Aquí puedes manejar la respuesta
+
+            try {
+              const jsonValue = JSON.stringify(infoUserCreated);
+              console.log(jsonValue);
+              await AsyncStorage.setItem('@userInfo', jsonValue);
+            } catch (e) {
+              console.log(e);
+            }
+            setNombre('');
+            setcedula(0);
+            setEmail('');
+            setPhone(0);
+            setPassword('');
+            setConfirmPassword('');
+            settypeOfView("")
+    
+            showToast('Usuario creado exitosamente');
+            navigation.navigate('Login');
+
+          } else {
+            const errorText = await response.text(); // Obtener el texto de error si la respuesta no fue exitosa
+            try {
+              const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
+              console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
+              showToast(errorJson.message);
+          } catch (e) {
+              console.error('Error al procesar la respuesta de error:', e);
+              console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
+          }
+
+
+          }
+        } catch (error) {
+          console.error('Error en la solicitud:', error);
+        }
       } else {
         showToast('Error al crear al usuario, por favor validar formulario');
       }
@@ -178,30 +215,55 @@ const SignUp = ({navigation}) => {
         cedula != 0
       ) {
         const infoUserCreated = {
-          uid: '12345',
-          nombre: Nombre,
+          Nombre: Nombre,
           rif: cedula,
           phone: phone,
           typeUser: 'Taller',
           email: email,
         };
-        try {
-          const jsonValue = JSON.stringify(infoUserCreated);
-          console.log(jsonValue);
-          await AsyncStorage.setItem('@userInfo', jsonValue);
-        } catch (e) {
-          console.log(e);
-        }
-        setNombre('');
-        setcedula(0);
-        setEmail('');
-        setPhone(0);
-        setPassword('');
-        setConfirmPassword('');
-        settypeOfView("")
 
-        showToast('Usuario creado exitosamente');
-        navigation.navigate('LoaderScreen');
+
+        try {
+          // Hacer la solicitud POST
+          const response = await fetch('http://desarrollo-test.com/api/usuarios/SaveTaller', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
+          });
+    
+          // Verificar la respuesta del servidor
+          if (response.ok) {
+            const result = await response.json();
+            console.log(result); // Aquí puedes manejar la respuesta
+
+            try {
+              const jsonValue = JSON.stringify(infoUserCreated);
+              console.log(jsonValue);
+              await AsyncStorage.setItem('@userInfo', jsonValue);
+            } catch (e) {
+              console.log(e);
+            }
+            setNombre('');
+            setcedula(0);
+            setEmail('');
+            setPhone(0);
+            setPassword('');
+            setConfirmPassword('');
+            settypeOfView("")
+    
+            showToast('Usuario creado exitosamente');
+            navigation.navigate('Login');
+
+          } else {
+            console.error('Error en la solicitud:', response.statusText);
+            showToast('Error al crear al usuario, por favor validar formulario');
+          }
+        } catch (error) {
+          console.error('Error en la solicitud:', error);
+          showToast('Error al crear al usuario, por favor validar formulario');
+        }
       } else {
         showToast('Error al crear al usuario, por favor validar formulario');
       }
@@ -292,6 +354,7 @@ const SignUp = ({navigation}) => {
                 } else {
                   setcedulaError('');
                 }
+
               }}
               onBlur={() => {
                 setcedulaTyping(false);
@@ -336,7 +399,7 @@ const SignUp = ({navigation}) => {
             <TextInputs
               title="Número Telefónico"
               value={phone}
-              placeholder="Ingrese su número"
+              placeHolder="Ejem (4142617966)"
               keyboardType="numeric"
               onChangeText={text => {
                 // Remove non-numeric characters using regex
@@ -366,7 +429,7 @@ const SignUp = ({navigation}) => {
             <TextInputs
               title="Contraseña"
               value={password}
-              placeholder="Ingrese su contraseña"
+              placeHolder="Ingrese su contraseña"
               secureTextEntry={true} // Make it a password field
               onChangeText={text => {
                 setPassword(text);
@@ -376,6 +439,7 @@ const SignUp = ({navigation}) => {
                   setPasswordError('Contraseña debe tener mínimo 6 dígitos');
                 } else {
                   setPasswordError('');
+                  
                 }
               }}
               onBlur={() => {
@@ -502,7 +566,7 @@ const SignUp = ({navigation}) => {
             <TextInputs
               title="Número Telefónico"
               value={phone}
-              placeholder="Ingrese su número"
+              placeHolder="Ingrese su número(4142617966)"
               keyboardType="numeric"
               onChangeText={text => {
                 // Remove non-numeric characters using regex
@@ -532,7 +596,7 @@ const SignUp = ({navigation}) => {
             <TextInputs
               title="Contraseña"
               value={password}
-              placeholder="Ingrese su contraseña"
+              placeHolder="Ingrese su contraseña"
               secureTextEntry={true} // Make it a password field
               onChangeText={text => {
                 setPassword(text);
@@ -616,7 +680,6 @@ const SignUp = ({navigation}) => {
           title="Registrarse"
           color={appColors.screenBg}
           onPress={onHandleChange}
-          disabled={isGetOtpDisabled}
           backgroundColor={'#4D66FF'}
         />
       ) : null}

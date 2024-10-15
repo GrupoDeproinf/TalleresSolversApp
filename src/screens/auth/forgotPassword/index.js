@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text} from 'react-native';
+import {View, Text, ToastAndroid} from 'react-native';
 import AuthContainer from '../../../commonComponents/authContainer';
 import {
   emailId,
@@ -25,9 +25,10 @@ const ForgetPassword = ({navigation}) => {
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setEmailError('Invalid email address');
+      setEmailError('Formato de email incorrecto');
     } else {
       setEmailError('');
+      setGetOtpDisabled(false)
     }
   };
   const onEmailChange = text => {
@@ -39,12 +40,58 @@ const ForgetPassword = ({navigation}) => {
       setEmailTyping(true);
     }
   };
-  const onHandleChange = () => {
+  const onHandleChange = async () => {
     setButtonPressed(true);
-    if (emailError === '') {
-      navigation.navigate('OtpVerfication');
+    setGetOtpDisabled(true)
+
+    console.log(email)
+    console.log("Aquiii")
+
+    try {
+      // Hacer la solicitud POST
+      const response = await fetch('http://desarrollo-test.com/api/usuarios/restorePass', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({email:email}), // Convertir los datos a JSON
+      });
+
+      // Verificar la respuesta del servidor
+      if (response.ok) {
+        const result = await response.json();
+        console.log("Este es el usuario nuevo ", result); // Aquí puedes manejar la respuesta
+
+        if (result.message == "Correo de restablecimiento enviado."){
+          showToast('Correo de restablecimiento enviado!!');
+          setGetOtpDisabled(false)
+          navigation.navigate('Login');
+        } else {
+          showToast('El email dado no se encuentra registrado');
+          setGetOtpDisabled(false)
+        }
+      } else {
+        console.error('Error en la solicitud:', response);
+        showToast('El email dado no se encuentra registrado');
+        setGetOtpDisabled(false)
+      }
+    } catch (error) {
+      console.error('Error en la solicitud:', error);
+      showToast('El email dado no se encuentra registrado');
+      setGetOtpDisabled(false)
     }
+
+
+    // if (emailError === '') {
+    //   navigation.navigate('Login');
+    // }
   };
+
+  const showToast = text => {
+    ToastAndroid.show(text, ToastAndroid.SHORT);
+  };
+
+
   useEffect(() => {
     validateEmail();
     setGetOtpDisabled(emailError !== '');
@@ -56,11 +103,12 @@ const ForgetPassword = ({navigation}) => {
       <AuthContainer
         title="¿Olvido la contraseña?"
         subtitle="Ingrese su correo y restablezca su contraseña"
+        showBack={true}
         value={
           <View>
             <TextInputs
               title="Email"
-              placeHolder="Ingrese su correo"
+              placeHolder="Ingrese su correo (email@email.com)"
               onChangeText={onEmailChange}
               onBlur={validateEmail}
               icon={

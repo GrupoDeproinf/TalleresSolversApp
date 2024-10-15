@@ -15,6 +15,7 @@ const NavigationButton = ({
   backgroundColor,
   borderWidth,
   borderColor,
+  disabled
 }) => {
   const {isDark, linearColorStyleTwo, linearColorStyle} = useValues();
   return (
@@ -22,6 +23,7 @@ const NavigationButton = ({
       {isDark ? (
         <TouchableOpacity
           onPress={onPress}
+          disabled={disabled}
           activeOpacity={0.7}
           style={[
             styles.linearGradient,
@@ -55,6 +57,7 @@ const NavigationButton = ({
       ) : (
         <TouchableOpacity
           onPress={onPress}
+          disabled={disabled}
           activeOpacity={0.7}
           style={[
             styles.linearGradient,
