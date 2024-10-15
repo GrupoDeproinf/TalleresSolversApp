@@ -15,7 +15,8 @@ const NavigationButton = ({
   backgroundColor,
   borderWidth,
   borderColor,
-  disabled
+  disabled,
+  marginTop
 }) => {
   const {isDark, linearColorStyleTwo, linearColorStyle} = useValues();
   return (

@@ -94,7 +94,6 @@ const TallerProfileScreen = ({navigation}) => {
   const [GarantiaError, setGarantiaError] = useState('');
   const [GarantiaTyping, setGarantiaTyping] = useState(false);
 
-
   const [seguro, setseguro] = useState('');
   const [seguroError, setseguroError] = useState('');
   const [seguroTyping, setseguroTyping] = useState(false);
@@ -102,6 +101,7 @@ const TallerProfileScreen = ({navigation}) => {
   // *******************************************
 
   const [checked, setChecked] = useState('no'); // Valor inicial
+  const [disabledInput, setdisabledInput] = useState(false); 
 
   useEffect(() => {
     getData();
@@ -113,7 +113,7 @@ const TallerProfileScreen = ({navigation}) => {
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
       console.log('valor del storage12345555', user.uid);
-      setuidUserConnected(user.uid)
+      setuidUserConnected(user.uid);
 
       try {
         // Hacer la solicitud POST
@@ -131,27 +131,23 @@ const TallerProfileScreen = ({navigation}) => {
         // Verificar la respuesta del servidor
         if (response.ok) {
           const result = await response.json();
-          console.log("Emailllllll", result.userData.email); // Aquí puedes manejar la respuesta
+          console.log('Emailllllll', result.userData.email); // Aquí puedes manejar la respuesta
 
           setNombre(result.userData.nombre);
           setcedula(result.userData.rif);
           setEmail(result.userData.email);
           setPhone(result.userData.phone);
 
-          setDireccion(result.userData.Direccion)
-          setRegComercial(result.userData.RegComercial)
-          setCaracteristicas(result.userData.Caracteristicas)
-          setTarifa(result.userData.Tarifa)
-          setExperiencia(result.userData.Experiencia)
-          setLinkFacebook(result.userData.LinkFacebook)
-          setLinkInstagram(result.userData.LinkInstagram)
-          setLinkTiktok(result.userData.LinkTiktok)
-          setGarantia(result.userData.Garantia)
-          setseguro(result.userData.seguro)
-
-
-
-
+          setDireccion(result.userData.Direccion);
+          setRegComercial(result.userData.RegComercial);
+          setCaracteristicas(result.userData.Caracteristicas);
+          setTarifa(result.userData.Tarifa);
+          setExperiencia(result.userData.Experiencia);
+          setLinkFacebook(result.userData.LinkFacebook);
+          setLinkInstagram(result.userData.LinkInstagram);
+          setLinkTiktok(result.userData.LinkTiktok);
+          setGarantia(result.userData.Garantia);
+          setseguro(result.userData.seguro);
         } else {
           console.error('Error en la solicitud:', response.statusText);
         }
@@ -190,6 +186,9 @@ const TallerProfileScreen = ({navigation}) => {
     const isEmailValid = validateEmail();
     const isPhoneValid = validatePhone();
 
+    setdisabledInput(true)
+
+
     if (
       isEmailValid == true &&
       isPhoneValid == true &&
@@ -198,38 +197,40 @@ const TallerProfileScreen = ({navigation}) => {
     ) {
       const infoUserCreated = {
         uid: uidUserConnected,
-        nombre: Nombre,
-        rif: cedula,
-        phone: phone,
+        nombre: Nombre == undefined ? '' : Nombre,
+        rif: cedula == undefined ? '' : cedula,
+        phone: phone == undefined ? '' : phone,
         typeUser: 'Taller',
-        email: email,
-        status:"Finalizado",
-        Direccion:Direccion,
-        RegComercial:RegComercial,
-        Caracteristicas:Caracteristicas,
-        Tarifa:Tarifa,
-        Experiencia:Experiencia,
-        LinkFacebook:LinkFacebook,
-        LinkInstagram:LinkInstagram,
-        LinkTiktok:LinkTiktok,
-        Garantia:Garantia,
-        seguro:seguro,
+        email: email == undefined ? '' : email,
+        status: 'Por aprobacion',
+        Direccion: Direccion == undefined ? '' : Direccion,
+        RegComercial: RegComercial == undefined ? '' : RegComercial,
+        Caracteristicas: Caracteristicas == undefined ? '' : Caracteristicas,
+        Tarifa: Tarifa == undefined ? '' : Tarifa,
+        Experiencia: Experiencia == undefined ? '' : Experiencia,
+        LinkFacebook: LinkFacebook == undefined ? '' : LinkFacebook,
+        LinkInstagram: LinkInstagram == undefined ? '' : LinkInstagram,
+        LinkTiktok: LinkTiktok == undefined ? '' : LinkTiktok,
+        Garantia: Garantia == undefined ? '' : Garantia,
+        seguro: seguro == undefined ? '' : seguro,
       };
 
-      console.log(infoUserCreated)
-      console.log("Aquiiii")
-
+      console.log(infoUserCreated);
+      console.log('Aquiiii1234');
 
       try {
         // Hacer la solicitud POST
-        const response = await fetch('http://desarrollo-test.com/api/usuarios/SaveTallerAll', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const response = await fetch(
+          'http://desarrollo-test.com/api/usuarios/SaveTallerAll',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
           },
-          body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
-        });
-  
+        );
+
         // Verificar la respuesta del servidor
         if (response.ok) {
           const result = await response.json();
@@ -244,29 +245,30 @@ const TallerProfileScreen = ({navigation}) => {
           }
 
           showToast('Actualizado correctamente');
-          ChangeView()
+          setdisabledInput(false)
+          ChangeView();
           // navigation.goBack('');
-
         } else {
+          const errorText = await response.text(); // Obtener el texto de error si la respuesta no fue exitosa
+            try {
+              const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
+              console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
+              setGetOtpDisabled(false)
+              showToast(errorJson.message);
+          } catch (e) {
+              console.error('Error al procesar la respuesta de error:', e);
+              console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
+            }
+          setdisabledInput(false)
           console.error('Error en la solicitud:', response.statusText);
         }
       } catch (error) {
+        setdisabledInput(false)
         console.error('Error en la solicitud:', error);
       }
-
-
-
-      // try {
-      //   const jsonValue = JSON.stringify(infoUserCreated);
-      //   console.log(jsonValue);
-      //   await AsyncStorage.setItem('@userInfo', jsonValue);
-      // } catch (e) {
-      //   console.log(e);
-      // }
-
-      // showToast('Actualizado correctamente');
-      // navigation.goBack('');
-    } else {
+    } 
+    else {
+      setdisabledInput(false)
       showToast('Error al actualizar el usuario, por favor validar formulario');
     }
   };
@@ -313,6 +315,23 @@ const TallerProfileScreen = ({navigation}) => {
 
   const ChangeView = () => {
     setshowForm(!showForm);
+    setdisabledInput(false)
+  };
+
+  const CloseSesion = async () => {
+    try {
+      await AsyncStorage.removeItem('@userInfo');
+      console.log('Item removed successfully');
+    } catch (error) {
+      console.error('Error removing item:', error);
+    }
+
+    try {
+      await AsyncStorage.removeItem('userToken');
+      navigation.replace('Login');
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
   };
 
   if (showForm) {
@@ -593,7 +612,7 @@ const TallerProfileScreen = ({navigation}) => {
             <Text style={styles.errorStyle}>{CaracteristicasError}</Text>
           )}
 
-          <TextInputs
+          {/* <TextInputs
             title="Tarifa de Pago de acuerdo al tipo de Servicio Prestado***"
             placeHolder="Tarifa"
             value={Tarifa}
@@ -616,7 +635,7 @@ const TallerProfileScreen = ({navigation}) => {
           />
           {TarifaError !== '' && (
             <Text style={styles.errorStyle}>{TarifaError}</Text>
-          )}
+          )} */}
 
           <TextInputs
             title="Tiempo de experiencia en el área."
@@ -726,7 +745,7 @@ const TallerProfileScreen = ({navigation}) => {
             <Text style={styles.errorStyle}>{LinkTiktokError}</Text>
           )}
 
-          <TextInputs
+          {/* <TextInputs
             title="Garantía del Servicio***"
             placeHolder="Ingrese su garantia"
             value={Garantia}
@@ -749,10 +768,10 @@ const TallerProfileScreen = ({navigation}) => {
           />
           {GarantiaError !== '' && (
             <Text style={styles.errorStyle}>{GarantiaError}</Text>
-          )}
+          )} */}
 
           <TextInputs
-            title="Seguro del taller***"
+            title="Seguro del taller**"
             placeHolder="Ingrese su seguro"
             value={seguro}
             onChangeText={text => {
@@ -777,45 +796,19 @@ const TallerProfileScreen = ({navigation}) => {
           )}
         </ScrollView>
 
-        {/* <TextInputs
-          title={t('transData.name')}
-          placeHolder={t('transData.smithaWilliams')}
-          color={textColorStyle}
-          icon={<Profile />}
-          value={nameValue}
-          onChangeText={handleNameChange}
-        />
-        <TextInputs
-          title={t('transData.emailId')}
-          placeHolder={t('transData.smithaWilliamsMail')}
-          color={textColorStyle}
-          icon={<Email color={iconColorStyle} />}
-          value={emailValue}
-          onChangeText={handleEmailChange}
-          keyboardType={'email-address'}
-        />
-        <TextInputs
-          title={t('transData.phoneNumber')}
-          placeHolder={phoneMo}
-          color={textColorStyle}
-          icon={<Call color={iconColorStyle} />}
-          value={phoneValue}
-          onChangeText={handlePhoneChange}
-          keyboardType={'decimal-pad'}
-        /> */}
-
         <View style={[external.fx_1, external.js_end, external.Pb_30]}>
           <View
             style={{
               backgroundColor: buttonColor,
               borderRadius: windowHeight(20),
-              marginBottom:15
+              marginBottom: 15,
             }}>
             <NavigationButton
               title="Guardar Cambios"
-              color={buttonColor ? appColors.screenBg : appColors.subtitle}
               onPress={() => onHandleChange()}
-              backgroundColor={'#4D66FF'}
+              disabled={disabledInput}
+              backgroundColor={disabledInput ? '#D1D6DE' : '#4D66FF'}
+              color={disabledInput ? '#051E47' : appColors.screenBg}
             />
           </View>
         </View>
@@ -844,23 +837,45 @@ const TallerProfileScreen = ({navigation}) => {
             </Text>
           </View>
         </View>
+
         <View style={styles.flexView}>
-          <View>
-            <Image style={styles.imgStyle1} source={darkmode} />
-            <Text style={[styles.bagIsEmptyText, {color: textColorStyle}]}>
+          <View
+            style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+            <Image
+              source={require('../../../assets/solversLogo.png')} // Asegúrate de que la ruta sea correcta
+              style={{width: 100, height: 100, marginBottom: 20}} // Aumentar el tamaño de la imagen y agregar marginBottom
+              resizeMode="contain" // Esto asegura que la imagen mantenga sus proporciones
+            />
+
+            <Text
+              style={[
+                styles.bagIsEmptyText,
+                {color: textColorStyle, textAlign: 'center'},
+              ]}>
               Su taller ha sido registrado parcialmente.
             </Text>
-            <Text style={styles.bagisEmptySomething}>
+
+            <Text style={[styles.bagisEmptySomething, {textAlign: 'center'}]}>
               ¡Ya casi está! Solo completa tu perfil y pronto te visitaremos
               para darte el visto bueno.
             </Text>
           </View>
+
           <View style={{width: '100%'}}>
             <NavigationButton
               title="Continuar Registro"
               backgroundColor={'#4D66FF'}
               color={appColors.screenBg}
               onPress={() => ChangeView()}
+            />
+          </View>
+
+          <View style={{width: '100%', marginBottom:25, marginTop:10}}>
+            <NavigationButton
+              title="Cerrar Sesión"
+              backgroundColor={'#D1D6DE'}
+              color={'#051E47'}
+              onPress={() => CloseSesion()}
             />
           </View>
         </View>

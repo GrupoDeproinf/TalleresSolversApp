@@ -25,7 +25,7 @@ const SignIn = ({navigation}) => {
   const [isEmailTyping, setEmailTyping] = useState(false);
   const [isPwdTyping, setPwdTyping] = useState(false);
   const [checkedData, setCheckedData] = useState(false);
-  const [isSignInDisabled, setSignInDisabled] = useState(true);
+  const [isSignInDisabled, setSignInDisabled] = useState(false);
 
   useEffect(() => {}, []);
   const validateEmail = () => {
@@ -52,7 +52,7 @@ const SignIn = ({navigation}) => {
   const onHandleChange = async () => {
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
-    setSignInDisabled(false);
+    setSignInDisabled(true);
 
     if (isEmailValid && isPasswordValid) {
 
@@ -86,9 +86,11 @@ const SignIn = ({navigation}) => {
             setSignInDisabled(true);
             setEmail("")
             setPassword("")
+            setSignInDisabled(false);
             navigation.navigate('LoaderScreen');
 
           } else {
+            setSignInDisabled(false);
             showToast('No se ha encontrado el usuario, por favor validar formulario');
           }
         } else {
@@ -97,10 +99,11 @@ const SignIn = ({navigation}) => {
         }
       } catch (error) {
         console.error('Error en la solicitud:', error);
-        showToast('Error al encontrar al usuario, por favor validar formulario');
+        setSignInDisabled(false);
+        showToast('Usuario no encontrado, por favor validar formulario');
       }
     } else {
-      setSignInDisabled(true);
+      setSignInDisabled(false);
     }
   };
 
@@ -201,10 +204,10 @@ const SignIn = ({navigation}) => {
 
       <NavigationButton
         title="Ingresar"
-        color={appColors.screenBg}
         onPress={onHandleChange}
         disabled={isSignInDisabled}
-        backgroundColor={'#4D66FF'}
+        backgroundColor={isSignInDisabled ? '#D1D6DE' : '#4D66FF'}
+        color={isSignInDisabled ? '#051E47' : appColors.screenBg}
       />
 
       <View style={styles.singUpView}>

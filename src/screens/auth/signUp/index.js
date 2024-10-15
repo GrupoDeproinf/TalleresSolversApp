@@ -56,7 +56,7 @@ const SignUp = ({navigation}) => {
   const [phoneError, setPhoneError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
-  const [isGetOtpDisabled, setGetOtpDisabled] = useState(true);
+  const [isGetOtpDisabled, setGetOtpDisabled] = useState(false);
   const [isEmailTyping, setEmailTyping] = useState(false);
   const [iscedulaTyping, setcedulaTyping] = useState(false);
   const [NombreTyping, setNombreTyping] = useState(false);
@@ -75,6 +75,10 @@ const SignUp = ({navigation}) => {
     {key: 'Cliente', title: 'Cliente'},
     {key: 'Taller', title: 'Taller'},
   ]);
+
+
+  useEffect(() => {
+  }, [isGetOtpDisabled]);
 
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -122,6 +126,8 @@ const SignUp = ({navigation}) => {
   const onHandleChange = async () => {
     console.log(typeOfView);
     console.log("Aquiiiiiiiiiiiiiii")
+
+    setGetOtpDisabled(true)
     
 
     if (typeOfView == 'Cliente') {
@@ -179,6 +185,7 @@ const SignUp = ({navigation}) => {
             settypeOfView("")
     
             showToast('Usuario creado exitosamente');
+            setGetOtpDisabled(false)
             navigation.navigate('Login');
 
           } else {
@@ -186,18 +193,19 @@ const SignUp = ({navigation}) => {
             try {
               const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
               console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
+              setGetOtpDisabled(false)
               showToast(errorJson.message);
           } catch (e) {
               console.error('Error al procesar la respuesta de error:', e);
               console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
-          }
-
-
+            }
           }
         } catch (error) {
           console.error('Error en la solicitud:', error);
+          setGetOtpDisabled(false)
         }
       } else {
+        setGetOtpDisabled(false)
         showToast('Error al crear al usuario, por favor validar formulario');
       }
     } else {
@@ -212,7 +220,7 @@ const SignUp = ({navigation}) => {
         isPasswordValid == true &&
         isConfirmPasswordValid == true &&
         Nombre != '' &&
-        cedula != 0
+        cedula != 0 && cedula != ''
       ) {
         const infoUserCreated = {
           Nombre: Nombre,
@@ -220,8 +228,9 @@ const SignUp = ({navigation}) => {
           phone: phone,
           typeUser: 'Taller',
           email: email,
-        };
+        };  
 
+        console.log(infoUserCreated)
 
         try {
           // Hacer la solicitud POST
@@ -254,18 +263,30 @@ const SignUp = ({navigation}) => {
             settypeOfView("")
     
             showToast('Usuario creado exitosamente');
+            setGetOtpDisabled(false)
             navigation.navigate('Login');
 
           } else {
-            console.error('Error en la solicitud:', response.statusText);
-            showToast('Error al crear al usuario, por favor validar formulario');
+            const errorText = await response.text(); // Obtener el texto de error si la respuesta no fue exitosa
+            try {
+              const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
+              console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
+              setGetOtpDisabled(false)
+              showToast(errorJson.message);
+          } catch (e) {
+              console.error('Error al procesar la respuesta de error:', e);
+              console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
+            }
           }
         } catch (error) {
+
           console.error('Error en la solicitud:', error);
+          setGetOtpDisabled(false)
           showToast('Error al crear al usuario, por favor validar formulario');
         }
       } else {
         showToast('Error al crear al usuario, por favor validar formulario');
+        setGetOtpDisabled(false)
       }
     }
   };
@@ -678,9 +699,10 @@ const SignUp = ({navigation}) => {
       {typeOfView != '' ? (
         <NavigationButton
           title="Registrarse"
-          color={appColors.screenBg}
           onPress={onHandleChange}
-          backgroundColor={'#4D66FF'}
+          disabled={isGetOtpDisabled}
+          backgroundColor={isGetOtpDisabled ? '#D1D6DE' : '#4D66FF'}
+          color={isGetOtpDisabled ? '#051E47' : appColors.screenBg}
         />
       ) : null}
 
