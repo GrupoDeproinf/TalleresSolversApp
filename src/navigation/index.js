@@ -36,6 +36,9 @@ import ProductDetailThree from '../screens/productScreen/productDetailThree';
 import DrawerScreen from '../drawer';
 import Onboarding from '../screens/intro/onBording';
 import OnboardingTwo from '../screens/intro/onBordingTwo';
+import FormTaller from '../screens/FormTaller'
+
+
 const Stack = createNativeStackNavigator();
 const MyStack = () => {
   return (
@@ -58,12 +61,21 @@ const MyStack = () => {
           name="NotificationScreen"
           component={NotificationScreen}
         />
+
         <Stack.Screen name="MyWhishList" component={MyWhishList} />
+
         <Stack.Screen
           name="NotificationContainer"
           component={NotificationContainer}
         />
-        <Stack.Screen name="WhishlitContainer" component={WhishlitContainer} />
+        <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} />
+        <Stack.Screen name="WhishlitContainer" component={WhishlitContainer} /> 
+        
+         
+        <Stack.Screen name="FormTaller" component={FormTaller} />  
+
+
+
         <Stack.Screen name="EditProfile" component={EditProfile} />
         <Stack.Screen name="TallerProfileScreen" component={TallerProfileScreen} />
         <Stack.Screen name="OrderHistory" component={OrderHistory} />
@@ -82,7 +94,6 @@ const MyStack = () => {
           name="ChangeAddressScreen"
           component={ChangeAddressScreen}
         />
-        <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} />
         <Stack.Screen name="ProductDetailOne" component={ProductDetailOne} />
         <Stack.Screen name="RatingScreen" component={RatingScreen} />
         <Stack.Screen name="CategoryTwo" component={CategoryTwo} />

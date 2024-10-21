@@ -7,7 +7,7 @@ import styles from './style.css';
 import {useValues} from '../../../App';
 import {useNavigation} from '@react-navigation/native';
 
-const AuthContainer = ({subtitle, title, value, onPress, showBack}) => {
+const AuthContainer = ({subtitle, title, value, onPress, showBack, AlignItemTitle}) => {
   const {bgFullStyle, textColorStyle, textRTLStyle, imageRTLStyle} =
     useValues();
   const navigation = useNavigation('');
@@ -46,11 +46,11 @@ const AuthContainer = ({subtitle, title, value, onPress, showBack}) => {
           commonStyles.container,
           external.mt_20,
           {color: textColorStyle},
-          {textAlign: textRTLStyle},
+          {textAlign: AlignItemTitle != undefined ? AlignItemTitle : textRTLStyle },
         ]}>
         {title}
       </Text>
-      <Text style={[styles.subtitleText, {textAlign: textRTLStyle}]}>
+      <Text style={[styles.subtitleText, {textAlign: AlignItemTitle != undefined ? AlignItemTitle : textRTLStyle}]}>
         {subtitle}
       </Text>
       <View>{value}</View>

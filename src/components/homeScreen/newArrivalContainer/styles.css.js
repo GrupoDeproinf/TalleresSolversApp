@@ -38,6 +38,8 @@ const styles = StyleSheet.create({
     width: '75%',
     color: appColors.titleText,
     fontSize: fontSizes.FONT19,
+    fontFamily: appFonts.semiBold,
+    fontWeight: '600',
   },
   ratingContainer: {
     ...external.fd_row,
@@ -53,6 +55,13 @@ const styles = StyleSheet.create({
   subtitle: {
     ...commonStyles.subtitleText,
   },
+  datoSub: {
+    fontWeight: '400',
+    fontSize: fontSizes.FONT13,
+    lineHeight: windowHeight(18),
+    color: '#9BA6B8',
+    fontFamily: appFonts.Regular,
+  }, 
   priceContainer: {
     ...external.fd_row,
     ...external.ai_center,
@@ -63,6 +72,12 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.FONT21,
     fontFamily: appFonts.semiBold,
     fontWeight: '600',
+  },
+  status: {
+    ...commonStyles.titleText10,
+    fontSize: fontSizes.FONT15,
+    // fontFamily: appFonts.semiBold,
+    // fontWeight: '600',
   },
   underlinePrice: {
     ...commonStyles.subtitleText,

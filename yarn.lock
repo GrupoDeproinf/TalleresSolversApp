@@ -1887,6 +1887,11 @@
   resolved "https://registry.npmjs.org/@react-native-community/slider/-/slider-4.5.0.tgz"
   integrity sha512-pyUvNTvu5IfCI5abzqRfO/dd3A009RC66RXZE6t0gyOwI/j0QDlq9VZRv3rjkpuIvNTnsYj+m5BHlh0DkSYUyA==
 
+"@react-native-picker/picker@^2.8.1":
+  version "2.8.1"
+  resolved "https://registry.npmjs.org/@react-native-picker/picker/-/picker-2.8.1.tgz"
+  integrity sha512-iFhsKQzRh/z3GlmvJWSjJJ4333FdLE/PhXxlGlYllE7sFf+UTzziVY+ajatuJ+R5zDw2AxfJV4v/3tAzUJb0/A==
+
 "@react-native/assets-registry@^0.72.0":
   version "0.72.0"
   resolved "https://registry.npmjs.org/@react-native/assets-registry/-/assets-registry-0.72.0.tgz"
@@ -6761,7 +6766,7 @@ promzard@^1.0.0:
   dependencies:
     read "^2.0.0"
 
-prop-types@*, prop-types@^15.5.10, prop-types@^15.6.1, prop-types@^15.7.2, prop-types@^15.8.1:
+prop-types@*, prop-types@^15.5.10, prop-types@^15.5.7, prop-types@^15.6.1, prop-types@^15.7.2, prop-types@^15.8.1:
   version "15.8.1"
   resolved "https://registry.npmjs.org/prop-types/-/prop-types-15.8.1.tgz"
   integrity sha512-oj87CgZICdulUohogVAR7AjlC0327U4el4L6eAvOqCeudMDVU0NThNaV+b9Df4dXgSP1gXMTnPdhfe/2qDH5cg==
@@ -6858,6 +6863,13 @@ react-is@^18.2.0:
   version "18.2.0"
   resolved "https://registry.npmjs.org/react-is/-/react-is-18.2.0.tgz"
   integrity sha512-xWGDIW6x921xtzPkhiULtthJHoJvBbF3q26fzloPCK0hsvxtPVelvftw3zjbHWSkR2km9Z+4uxbDDK/6Zw9B8w==
+
+react-native-check-box@^2.1.7:
+  version "2.1.7"
+  resolved "https://registry.npmjs.org/react-native-check-box/-/react-native-check-box-2.1.7.tgz"
+  integrity sha512-dPVOoz4jKs2je2HSHp7+XJXNyZFq8Kij7IHutigrQKzB550Dko6ZAQu/1mG1FzdUMFxxkZ2nX59KmbR0Co0T8Q==
+  dependencies:
+    prop-types "^15.5.7"
 
 react-native-circular-slider@^1.0.1:
   version "1.0.1"
@@ -7027,7 +7039,7 @@ react-native-vector-icons@*, react-native-vector-icons@^10.2.0, react-native-vec
     prop-types "^15.7.2"
     yargs "^16.1.1"
 
-react-native@*, "react-native@^0.0.0-0 || >=0.60 <1.0", react-native@>=0.57.0, react-native@>=0.58, react-native@0.72.7:
+react-native@*, "react-native@^0.0.0-0 || >=0.60 <1.0", react-native@>=0.20.0, react-native@>=0.57.0, react-native@>=0.58, react-native@0.72.7:
   version "0.72.7"
   resolved "https://registry.npmjs.org/react-native/-/react-native-0.72.7.tgz"
   integrity sha512-dqVFojOO9rOvyFbbM3/v9/GJR355OSuBhEY4NQlMIRc2w0Xch5MT/2uPoq3+OvJ+5h7a8LFAco3fucSffG0FbA==

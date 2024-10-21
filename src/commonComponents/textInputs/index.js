@@ -25,7 +25,8 @@ const TextInputs = ({
   multiline,
   numberOfLines,
   height,
-  editable
+  editable,
+  textDecorationLine,
 }) => {
   const [error, setError] = useState('');
 
@@ -91,6 +92,10 @@ const TextInputs = ({
                   {height: height},
                   {color: textColorStyle},
                   {textAlign: textRTLStyle},
+                  { 
+                    textDecorationLine: textDecorationLine == undefined ? 'none' : textDecorationLine, // Línea en el centro
+                  }
+
                 ]}
                 placeholder={placeHolder}
                 placeholderTextColor={color || appColors.subtitle}

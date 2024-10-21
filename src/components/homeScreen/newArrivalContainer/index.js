@@ -5,8 +5,9 @@ import {
   Text,
   TouchableOpacity,
   View,
+  TouchableWithoutFeedback,
 } from 'react-native';
-import React from 'react';
+import React, {useState} from 'react';
 import H3HeadingCategory from '../../../commonComponents/headingCategory/H3HeadingCategory';
 import {seeAll} from '../../../constant';
 import {YellowStar} from '../../../assets/icons/yellowStar';
@@ -20,6 +21,10 @@ import {windowHeight} from '../../../themes/appConstant';
 import {useValues} from '../../../../App';
 import appColors from '../../../themes/appColors';
 import {useNavigation} from '@react-navigation/native';
+import Icons from 'react-native-vector-icons/FontAwesome';
+import {Snackbar} from 'react-native-paper';
+
+import notImageFound from '../../../assets/noimageold.jpeg';
 
 const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
   const {
@@ -38,10 +43,32 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
   const colors = isDark
     ? ['#3D3F45', '#45474B', '#2A2C32']
     : [appColors.screenBg, appColors.screenBg];
+
+  const [visibleHint, setVisibleHint] = useState(false);
+  const [statusLabel, setstatusLabel] = useState(false);
+
+
+
+  const goToDetail = item => {
+    console.log(item);
+
+    navigation.navigate('FormTaller', {uid: item.uid});
+  };
+
+  const onLongPressHandler = (itemId, status) => {
+    setVisibleHint(itemId); // Muestra el Snackbar para el ítem presionado
+    setstatusLabel(status)
+    setTimeout(() => {
+      setVisibleHint(null); // Oculta el Snackbar después de un tiempo
+    }, 1000);
+  };
+
+  const onDismissHint = () => {
+    setVisibleHint(null); // Oculta el Snackbar cuando se presiona para cerrar
+  };
+
   const renderItem = ({item}) => (
-    <TouchableOpacity
-      onPress={() => navigation.navigate('ProductDetailOne')}
-      activeOpacity={0.9}>
+    <TouchableOpacity onPress={() => goToDetail(item)} activeOpacity={0.9}>
       <LinearGradient
         start={{x: 0.0, y: 0.0}}
         end={{x: 0.0, y: 1.0}}
@@ -62,7 +89,11 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
           ]}>
           <View
             style={[styles.imageContainer, {backgroundColor: imageContainer}]}>
-            <Image style={styles.image} source={item.img} />
+            {item.img == null ? (
+              <Image style={styles.image} source={notImageFound} />
+            ) : (
+              <Image style={styles.image} source={item.img} />
+            )}
           </View>
           <View style={styles.textContainer}>
             <View
@@ -73,17 +104,21 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
                   {color: textColorStyle},
                   {textAlign: textRTLStyle},
                 ]}>
-                {t(item.title)}
+                {t(item.nombre)}
               </Text>
               {showPlus && (
                 <TouchableOpacity style={styles.ratingContainer}>
                   <YellowStar />
-                  <Text style={[styles.ratingText]}>{item.rating}</Text>
+                  <Text style={[styles.ratingText]}>5</Text>
                 </TouchableOpacity>
               )}
             </View>
-            <Text style={[styles.subtitle, {textAlign: textRTLStyle}]}>
-              {t(item.subtitle)}
+            <Text
+              style={[
+                styles.datoSub,
+                {textAlign: textRTLStyle, marginBottom: -10},
+              ]}>
+              Rif: {t(item.rif)}
             </Text>
             <View
               style={[styles.priceContainer, {flexDirection: viewRTLStyle}]}>
@@ -94,41 +129,59 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
                   {width: '75%'},
                   {flexDirection: viewRTLStyle},
                 ]}>
-                <Text style={[styles.price, {color: textColorStyle}]}>
-                  {currSymbol}
-                  {(currPrice * item.price).toFixed(2)}
-                </Text>
-                <Text style={[styles.underlinePrice]}>
-                  {currSymbol}
-                  {(currPrice * item.underlinePrice).toFixed(2)}
+                <Text style={[styles.status, {color: textColorStyle}]}>
+                  Telefono: {t(item.phone)}
                 </Text>
               </View>
-              {showPlus ? (
-                <LinearGradient
-                  start={{x: 0.0, y: 5.0}}
-                  end={{x: 5.0, y: 0.0}}
-                  style={styles.linearBorderStyle}
-                  colors={['#5385FC', '#355FE9']}>
-                  <Plus />
-                </LinearGradient>
-              ) : (
-                <LinearGradient
-                  start={{x: 0.0, y: 5.0}}
-                  end={{x: 5.0, y: 0.0}}
-                  colors={linearColorStyleTwo}
-                  style={styles.showLinear}>
-                  <PlusRadial />
-                  <Text
-                    style={[
-                      commonStyles.titleText19,
-                      {fontFamily: appFonts.semiBold},
-                      {color: textColorStyle},
-                    ]}>
-                    1
-                  </Text>
-                  <MinusIcon />
-                </LinearGradient>
-              )}
+
+              {
+                item.status === "Pendiente" ? (
+                  <TouchableOpacity
+                    onPress={() => onLongPressHandler(item.uid, item.status)}>
+                    <Icons name="times-circle-o" size={23} color="#e5be01" />
+                  </TouchableOpacity>
+                ) : null
+              }
+
+
+              {
+                item.status == "En espera por aprobación" ? (
+                  <TouchableOpacity
+                    onPress={() => onLongPressHandler(item.uid, item.status)}>
+                    <Icons name="warning" size={23} color="#e5be01" />
+                  </TouchableOpacity>
+                ) : null
+              }
+
+
+{
+                item.status === "Aprobado" ? (
+                  <TouchableOpacity
+                    onPress={() => onLongPressHandler(item.uid, item.status)}>
+                    <Icons name="check-circle-o" size={23} color="green" />
+                  </TouchableOpacity>
+                ) : null
+              }
+
+
+              {
+                item.status == "Rechazado" ? (
+                  <TouchableOpacity
+                    onPress={() => onLongPressHandler(item.uid, item.status)}>
+                    <Icons name="ban" size={23} color="red" />
+                  </TouchableOpacity>
+                ) : null
+              }
+
+
+
+              {/* Mostrar el hint (Snackbar) solo para el item actual */}
+              <Snackbar
+                visible={visibleHint === item.uid}
+                onDismiss={onDismissHint}
+                duration={900}>
+                {statusLabel}
+              </Snackbar>
             </View>
           </View>
         </LinearGradient>

@@ -42,6 +42,7 @@ import KeyImage from '../../../assets/newImage/key.png';
 import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Picker} from '@react-native-picker/picker';
 
 const SignUp = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -66,6 +67,8 @@ const SignUp = ({navigation}) => {
 
   const [typeOfView, settypeOfView] = useState('');
 
+  const [selectedPrefix, setSelectedPrefix] = useState('J-'); // Default value 'J'
+
   // Variables para el tab
 
   const layout = useWindowDimensions();
@@ -76,9 +79,7 @@ const SignUp = ({navigation}) => {
     {key: 'Taller', title: 'Taller'},
   ]);
 
-
-  useEffect(() => {
-  }, [isGetOtpDisabled]);
+  useEffect(() => {}, [isGetOtpDisabled]);
 
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -101,7 +102,6 @@ const SignUp = ({navigation}) => {
       return true;
     }
   };
-  
 
   const validatePassword = () => {
     if (password.length < 6) {
@@ -125,10 +125,9 @@ const SignUp = ({navigation}) => {
 
   const onHandleChange = async () => {
     console.log(typeOfView);
-    console.log("Aquiiiiiiiiiiiiiii")
+    console.log('Aquiiiiiiiiiiiiiii');
 
-    setGetOtpDisabled(true)
-    
+    setGetOtpDisabled(true);
 
     if (typeOfView == 'Cliente') {
       const isEmailValid = validateEmail();
@@ -142,11 +141,12 @@ const SignUp = ({navigation}) => {
         isPasswordValid == true &&
         isConfirmPasswordValid == true &&
         Nombre != '' &&
-        cedula != 0  && cedula != '' 
+        cedula != 0 &&
+        cedula != ''
       ) {
         const infoUserCreated = {
           Nombre: Nombre,
-          cedula: cedula,
+          cedula: selectedPrefix + "" + cedula,
           phone: phone,
           typeUser: 'Cliente',
           email: email,
@@ -154,16 +154,19 @@ const SignUp = ({navigation}) => {
 
         try {
           // Hacer la solicitud POST
-          const response = await fetch('http://desarrollo-test.com/api/usuarios/SaveClient', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
+          const response = await fetch(
+            'http://desarrollo-test.com/api/usuarios/SaveClient',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
             },
-            body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
-          });
-    
+          );
+
           // Verificar la respuesta del servidor
-          console.log(response)
+          console.log(response);
 
           if (response.ok) {
             const result = await response.json();
@@ -182,30 +185,30 @@ const SignUp = ({navigation}) => {
             setPhone(0);
             setPassword('');
             setConfirmPassword('');
-            settypeOfView("")
-    
-            showToast('Usuario creado exitosamente');
-            setGetOtpDisabled(false)
-            navigation.navigate('Login');
+            settypeOfView('');
+            setSelectedPrefix('J-');
 
+            showToast('Usuario creado exitosamente');
+            setGetOtpDisabled(false);
+            navigation.navigate('Login');
           } else {
             const errorText = await response.text(); // Obtener el texto de error si la respuesta no fue exitosa
             try {
               const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
               console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
-              setGetOtpDisabled(false)
+              setGetOtpDisabled(false);
               showToast(errorJson.message);
-          } catch (e) {
+            } catch (e) {
               console.error('Error al procesar la respuesta de error:', e);
               console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
             }
           }
         } catch (error) {
           console.error('Error en la solicitud:', error);
-          setGetOtpDisabled(false)
+          setGetOtpDisabled(false);
         }
       } else {
-        setGetOtpDisabled(false)
+        setGetOtpDisabled(false);
         showToast('Error al crear al usuario, por favor validar formulario');
       }
     } else {
@@ -220,28 +223,32 @@ const SignUp = ({navigation}) => {
         isPasswordValid == true &&
         isConfirmPasswordValid == true &&
         Nombre != '' &&
-        cedula != 0 && cedula != ''
+        cedula != 0 &&
+        cedula != ''
       ) {
         const infoUserCreated = {
           Nombre: Nombre,
-          rif: cedula,
+          rif: selectedPrefix + "" + cedula,
           phone: phone,
           typeUser: 'Taller',
           email: email,
-        };  
+        };
 
-        console.log(infoUserCreated)
+        console.log(infoUserCreated);
 
         try {
           // Hacer la solicitud POST
-          const response = await fetch('http://desarrollo-test.com/api/usuarios/SaveTaller', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
+          const response = await fetch(
+            'http://desarrollo-test.com/api/usuarios/SaveTaller',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
             },
-            body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
-          });
-    
+          );
+
           // Verificar la respuesta del servidor
           if (response.ok) {
             const result = await response.json();
@@ -260,37 +267,36 @@ const SignUp = ({navigation}) => {
             setPhone(0);
             setPassword('');
             setConfirmPassword('');
-            settypeOfView("")
-    
-            showToast('Usuario creado exitosamente');
-            setGetOtpDisabled(false)
-            navigation.navigate('Login');
+            settypeOfView('');
+            setSelectedPrefix('J-');
 
+            showToast('Usuario creado exitosamente');
+            setGetOtpDisabled(false);
+            navigation.navigate('Login');
           } else {
             const errorText = await response.text(); // Obtener el texto de error si la respuesta no fue exitosa
             try {
               const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
               console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
-              setGetOtpDisabled(false)
+              setGetOtpDisabled(false);
               showToast(errorJson.message);
-          } catch (e) {
+            } catch (e) {
               console.error('Error al procesar la respuesta de error:', e);
               console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
             }
           }
         } catch (error) {
-
           console.error('Error en la solicitud:', error);
-          setGetOtpDisabled(false)
+          setGetOtpDisabled(false);
           showToast('Error al crear al usuario, por favor validar formulario');
         }
       } else {
         showToast('Error al crear al usuario, por favor validar formulario');
-        setGetOtpDisabled(false)
+        setGetOtpDisabled(false);
       }
     }
   };
-  const {bgFullStyle, textColorStyle, t} = useValues();
+  const {bgFullStyle, textColorStyle, t, textRTLStyle} = useValues();
 
   // const showToast = (type, text1, position, visibilityTime, autoHide) => {
   //   Toast.show({
@@ -361,36 +367,76 @@ const SignUp = ({navigation}) => {
               <Text style={styles.errorStyle}>{NombreError}</Text>
             )}
 
-            <TextInputs
-              title="Cedula"
-              value={cedula}
-              placeHolder="Ingrese su cedula"
-              onChangeText={text => {
-                // Eliminar cualquier caracter que no sea un número
-                const numericText = text.replace(/[^0-9]/g, '');
-                setcedula(numericText);
-                setcedulaTyping(true);
-                if (numericText.trim() === '') {
-                  setcedulaError('Cedula es requerida');
-                } else {
-                  setcedulaError('');
-                }
+            <View style={{marginTop: 5}}>
+              <Text
+                style={[
+                  styles.headingContainer,
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
+                ]}>
+                Cedula
+              </Text>
 
-              }}
-              onBlur={() => {
-                setcedulaTyping(false);
-              }}
-              keyboardType="numeric" // Establece el teclado numérico
-              icon={
-                <Email
-                  color={iscedulaTyping ? '#051E47' : appColors.subtitle}
-                />
-              }
-            />
+              {/* Contenedor para el Picker y el TextInput */}
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                {/* Select para elegir "J-" o "G-" */}
+                <View
+                  style={{
+                    overflow: 'hidden',
+                    height: 50, // Asegurar que ambos tengan el mismo height
+                    marginRight: 5, // Espaciado entre el Picker y el TextInput
+                  }}>
+                  <Picker
+                    selectedValue={selectedPrefix}
+                    onValueChange={itemValue => setSelectedPrefix(itemValue)}
+                    style={{
+                      width: 100,
+                      height: 0, // Altura para el Picker
+                      color: 'black',
+                    }}>
+                    <Picker.Item label="C-" value="C-" />
+                    <Picker.Item label="E-" value="E-" />
+                    <Picker.Item label="G-" value="G-" />
+                    <Picker.Item label="J-" value="J-" />
+                    <Picker.Item label="P-" value="P-" />
+                    <Picker.Item label="V-" value="V-" />
+                  </Picker>
+                </View>
 
-            {cedulaError !== '' && (
-              <Text style={styles.errorStyle}>{cedulaError}</Text>
-            )}
+                {/* TextInput para el número de RIF */}
+                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
+                  <TextInputs
+                    title=""
+                    value={cedula}
+                    placeHolder="Ingrese el número de cedula"
+                    onChangeText={text => {
+                      const numericText = text.replace(/[^0-9]/g, '');
+                      setcedula(numericText);
+                      setcedulaTyping(true);
+                      if (numericText.trim() === '') {
+                        setcedulaError('Cedula es requerida');
+                      } else {
+                        setcedulaError('');
+                      }
+                    }}
+                    onBlur={() => {
+                      setcedulaTyping(false);
+                    }}
+                    keyboardType="numeric"
+                    icon={
+                      <Email
+                        color={iscedulaTyping ? '#051E47' : appColors.subtitle}
+                      />
+                    }
+                    style={{height: 50}} // Altura para el TextInput
+                  />
+                </View>
+              </View>
+
+              {cedulaError !== '' && (
+                <Text style={styles.errorStyle}>{cedulaError}</Text>
+              )}
+            </View>
 
             <TextInputs
               title="Email"
@@ -460,7 +506,6 @@ const SignUp = ({navigation}) => {
                   setPasswordError('Contraseña debe tener mínimo 6 dígitos');
                 } else {
                   setPasswordError('');
-                  
                 }
               }}
               onBlur={() => {
@@ -529,35 +574,78 @@ const SignUp = ({navigation}) => {
               <Text style={styles.errorStyle}>{NombreError}</Text>
             )}
 
-            <TextInputs
-              title="Registro de Información Fiscal (RIF)"
-              value={cedula}
-              placeHolder="Ingrese el numero de RIF"
-              onChangeText={text => {
-                // Eliminar cualquier caracter que no sea un número
-                const numericText = text.replace(/[^0-9]/g, '');
-                setcedula(numericText);
-                setcedulaTyping(true);
-                if (numericText.trim() === '') {
-                  setcedulaError('RIF es requerido');
-                } else {
-                  setcedulaError('');
-                }
-              }}
-              onBlur={() => {
-                setcedulaTyping(false);
-              }}
-              keyboardType="numeric" // Establece el teclado numérico
-              icon={
-                <Email
-                  color={iscedulaTyping ? '#051E47' : appColors.subtitle}
-                />
-              }
-            />
+            <View style={{marginTop: 5}}>
+              {/* Texto "RIF" arriba de los inputs */}
+              <Text
+                style={[
+                  styles.headingContainer,
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
+                ]}>
+                Registro de Información Fiscal (RIF)
+              </Text>
 
-            {cedulaError !== '' && (
-              <Text style={styles.errorStyle}>{cedulaError}</Text>
-            )}
+              {/* Contenedor para el Picker y el TextInput */}
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                {/* Select para elegir "J-" o "G-" */}
+                <View
+                  style={{
+                    overflow: 'hidden',
+                    height: 50, // Asegurar que ambos tengan el mismo height
+                    marginRight: 5, // Espaciado entre el Picker y el TextInput
+                  }}>
+                  <Picker
+                    selectedValue={selectedPrefix}
+                    onValueChange={itemValue => setSelectedPrefix(itemValue)}
+                    style={{
+                      width: 100,
+                      height: 0, // Altura para el Picker
+                      color: 'black',
+                    }}>
+                    <Picker.Item label="C-" value="C-" />
+                    <Picker.Item label="E-" value="E-" />
+                    <Picker.Item label="G-" value="G-" />
+                    <Picker.Item label="J-" value="J-" />
+                    <Picker.Item label="P-" value="P-" />
+                    <Picker.Item label="V-" value="V-" />
+                  </Picker>
+                </View>
+
+                {/* TextInput para el número de RIF */}
+                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
+                  <TextInputs
+                    title=""
+                    value={cedula}
+                    placeHolder="Ingrese el número de RIF"
+                    onChangeText={text => {
+                      const numericText = text.replace(/[^0-9]/g, '');
+                      setcedula(numericText);
+                      setcedulaTyping(true);
+                      if (numericText.trim() === '') {
+                        setcedulaError('RIF es requerido');
+                      } else {
+                        setcedulaError('');
+                      }
+                    }}
+                    onBlur={() => {
+                      setcedulaTyping(false);
+                    }}
+                    keyboardType="numeric"
+                    icon={
+                      <Email
+                        color={iscedulaTyping ? '#051E47' : appColors.subtitle}
+                      />
+                    }
+                    style={{height: 50}} // Altura para el TextInput
+                  />
+                </View>
+              </View>
+
+              {/* Mensaje de error si el RIF es inválido */}
+              {cedulaError !== '' && (
+                <Text style={styles.errorStyle}>{cedulaError}</Text>
+              )}
+            </View>
 
             <TextInputs
               title="Email"

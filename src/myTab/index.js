@@ -5,6 +5,7 @@ import HomeScreen from '../screens/homeScreen';
 import CategoryScreen from '../screens/categoryScreen';
 import MyBeg from '../screens/emptyScreen/myBeg';
 import ProfileScreen from '../screens/profileScreen';
+import TalleresContainer from '../screens/Talleres'
 import {
   Category,
   CategoryLight,
@@ -14,12 +15,17 @@ import {
   MyBegs,
   ProfileLight,
   ProfileTab,
+  Setting,
+  
 } from '../utils/icon';
 import images from '../utils/images';
 import {external} from '../style/external.css';
 import LinearGradient from 'react-native-linear-gradient';
 import {useValues} from '../../App';
 import {windowHeight, windowWidth} from '../themes/appConstant';
+import Icons from 'react-native-vector-icons/FontAwesome'
+import Icons2 from 'react-native-vector-icons/Entypo'
+
 
 const Tab = createBottomTabNavigator();
 
@@ -142,6 +148,17 @@ const MyTabs = () => {
           activeTabBarIcon: () => <MyBegs />,
         }}
       />
+
+      <Tab.Screen
+        name="Talleres"
+        component={TalleresContainer}
+        options={{
+          tabBarLabel: 'Talleres',
+          tabBarIcon: () => <Icons name="car" size={30} color="#9BA6B8"/>,
+          activeTabBarIcon: () => <Icons name="car" size={30} color="#4D66FF"/>,
+        }}
+      />
+
       <Tab.Screen
         name="ProfileScreen"
         component={ProfileScreen}

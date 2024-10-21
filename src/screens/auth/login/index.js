@@ -27,7 +27,11 @@ const SignIn = ({navigation}) => {
   const [checkedData, setCheckedData] = useState(false);
   const [isSignInDisabled, setSignInDisabled] = useState(false);
 
-  useEffect(() => {}, []);
+  useEffect(() => {
+    setSignInDisabled(false)
+    setEmail('')
+    setPassword('')
+  }, []);
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -74,7 +78,7 @@ const SignIn = ({navigation}) => {
           const result = await response.json();
           console.log("Este es el usuario nuevo ", result); // Aquí puedes manejar la respuesta
 
-          if (result.message == "Usuario autenticado exitosamente"){
+          if (result.message == "Usuario autenticado exitosamente" || result.message == "Usuario autenticado exitosamente como Admin"){
             try {
               const jsonValue = JSON.stringify(result.userData);
               console.log(jsonValue);
@@ -95,6 +99,7 @@ const SignIn = ({navigation}) => {
           }
         } else {
           console.error('Error en la solicitud:', response.statusText);
+          setSignInDisabled(false)
           showToast('Error al encontrar al usuario, por favor validar formulario');
         }
       } catch (error) {
@@ -121,6 +126,7 @@ const SignIn = ({navigation}) => {
       <AuthContainer
         title="Bienvenido a Solvers"
         subtitle="Garantiza que tu vehículo funcione de manera eficiente y segura"
+        AlignItemTitle = {"center"}
         value={
           <View>
             <TextInputs

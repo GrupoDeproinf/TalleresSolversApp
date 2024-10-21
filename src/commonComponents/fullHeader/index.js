@@ -4,7 +4,7 @@ import {BackLeft} from '../../utils/icon';
 import styles from './style.css';
 import {useValues} from '../../../App';
 import LinearGradient from 'react-native-linear-gradient';
-const FullHeader = ({onpressBack, modelPress, value, title, show, text}) => {
+const FullHeader = ({onpressBack, modelPress, value, title, show, text, showArrow}) => {
   const {
     linearColorStyle,
     textColorStyle,
@@ -15,12 +15,23 @@ const FullHeader = ({onpressBack, modelPress, value, title, show, text}) => {
 
   return (
     <View style={[styles.container, {flexDirection: viewRTLStyle}]}>
-      <TouchableOpacity
-        onPress={onpressBack}
-        style={{transform: [{scale: imageRTLStyle}]}}>
-        <BackLeft />
-      </TouchableOpacity>
-      <Text style={[styles.titleText, {color: textColorStyle}]}>{title}</Text>
+
+      {
+        showArrow ?? (
+        <TouchableOpacity
+          onPress={onpressBack}
+          style={{transform: [{scale: imageRTLStyle}]}}>
+          <BackLeft />
+        </TouchableOpacity>
+        )
+      }
+
+
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <Text style={[styles.titleText, {color: textColorStyle}]}>{title}</Text>
+      </View>
+
+
       {show ? (
         <View>{text}</View>
       ) : (

@@ -10,6 +10,7 @@ import NavigationButton from '../../../commonComponents/navigationButton';
 import styles from './style.css';
 import {useValues} from '../../../../App';
 
+
 const MyBeg = ({navigation}) => {
   const {isDark, bgFullStyle, textColorStyle, t} = useValues();
   const colors = isDark

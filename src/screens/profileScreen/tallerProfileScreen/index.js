@@ -202,7 +202,7 @@ const TallerProfileScreen = ({navigation}) => {
         phone: phone == undefined ? '' : phone,
         typeUser: 'Taller',
         email: email == undefined ? '' : email,
-        status: 'Por aprobacion',
+        status: 'En espera por aprobación',
         Direccion: Direccion == undefined ? '' : Direccion,
         RegComercial: RegComercial == undefined ? '' : RegComercial,
         Caracteristicas: Caracteristicas == undefined ? '' : Caracteristicas,
@@ -213,6 +213,7 @@ const TallerProfileScreen = ({navigation}) => {
         LinkTiktok: LinkTiktok == undefined ? '' : LinkTiktok,
         Garantia: Garantia == undefined ? '' : Garantia,
         seguro: seguro == undefined ? '' : seguro,
+        agenteAutorizado: checked == undefined ? false : checked
       };
 
       console.log(infoUserCreated);

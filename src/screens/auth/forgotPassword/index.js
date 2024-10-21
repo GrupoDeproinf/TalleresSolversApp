@@ -103,6 +103,7 @@ const ForgetPassword = ({navigation}) => {
       <AuthContainer
         title="¿Olvido la contraseña?"
         subtitle="Ingrese su correo y restablezca su contraseña"
+        AlignItemTitle = {"center"}
         showBack={true}
         value={
           <View>

@@ -2,8 +2,13 @@ import {StyleSheet} from 'react-native';
 import {windowHeight} from '../../../themes/appConstant';
 import appColors from '../../../themes/appColors';
 import appFonts from '../../../themes/appFonts';
+import {commonStyles} from '../../../../src/style/commonStyle.css';
+
 
 const styles = StyleSheet.create({
+  headingContainer: {
+    ...commonStyles.titleText19,
+  },
   singUpView: {
     flexDirection: 'row',
     justifyContent: 'center',
