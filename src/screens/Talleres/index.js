@@ -54,7 +54,6 @@ const TalleresContainer = ({navigation}) => {
           // Verificar la respuesta del servidor
           if (response.ok) {
             const result = await response.json();
-            console.clear()
             console.log("usuarios de resultados21234565156", result); // Aquí puedes manejar la respuesta
             
             setdataTalleres(result)
