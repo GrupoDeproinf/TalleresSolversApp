@@ -44,6 +44,12 @@ import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Picker} from '@react-native-picker/picker';
 
+
+import Icons from 'react-native-vector-icons/FontAwesome'
+import Icons2 from 'react-native-vector-icons/FontAwesome5'
+
+
+
 const SignUp = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [cedula, setcedula] = useState(0);
@@ -340,6 +346,7 @@ const SignUp = ({navigation}) => {
 
       {typeOfView === 'Cliente' ? (
         // ****************************** FOMRULARIO PARA CLIENTES ***********************************************
+
         <ScrollView style={{marginBottom: 15}}>
           <View>
             <TextInputs
@@ -359,9 +366,7 @@ const SignUp = ({navigation}) => {
               onBlur={() => {
                 setNombreTyping(false);
               }}
-              icon={
-                <Email color={NombreTyping ? '#051E47' : appColors.subtitle} />
-              }
+              icon={<Icons name="user" size={20} color="#9BA6B8" />}
             />
             {NombreError !== '' && (
               <Text style={styles.errorStyle}>{NombreError}</Text>
@@ -423,11 +428,7 @@ const SignUp = ({navigation}) => {
                       setcedulaTyping(false);
                     }}
                     keyboardType="numeric"
-                    icon={
-                      <Email
-                        color={iscedulaTyping ? '#051E47' : appColors.subtitle}
-                      />
-                    }
+                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
                     style={{height: 50}} // Altura para el TextInput
                   />
                 </View>
@@ -566,9 +567,7 @@ const SignUp = ({navigation}) => {
               onBlur={() => {
                 setNombreTyping(false);
               }}
-              icon={
-                <Email color={NombreTyping ? '#051E47' : appColors.subtitle} />
-              }
+              icon={<Icons name="user" size={20} color="#9BA6B8" />}
             />
             {NombreError !== '' && (
               <Text style={styles.errorStyle}>{NombreError}</Text>
@@ -631,11 +630,7 @@ const SignUp = ({navigation}) => {
                       setcedulaTyping(false);
                     }}
                     keyboardType="numeric"
-                    icon={
-                      <Email
-                        color={iscedulaTyping ? '#051E47' : appColors.subtitle}
-                      />
-                    }
+                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
                     style={{height: 50}} // Altura para el TextInput
                   />
                 </View>

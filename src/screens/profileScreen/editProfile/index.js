@@ -29,6 +29,9 @@ import CheckBox from 'react-native-check-box';
 import {Picker} from '@react-native-picker/picker';
 import Icons from 'react-native-vector-icons/FontAwesome'
 
+
+import Icons2 from 'react-native-vector-icons/FontAwesome5'
+
 import {RadioButton, Button} from 'react-native-paper';
 
 
@@ -554,6 +557,7 @@ const EditProfile = ({navigation}) => {
                   );
                 }}
                 onBlur={() => {}}
+                icon={<Icons name="user" size={20} color="#9BA6B8" />}
               />
             </View>
 
@@ -631,6 +635,7 @@ const EditProfile = ({navigation}) => {
                   );
                 }}
                 onBlur={() => {}}
+                icon={<Icons name="map-marker" size={20} color="#9BA6B8" />}
               />
               {DireccionError !== '' && (
                 <Text style={styles.errorStyle}>{DireccionError}</Text>
@@ -661,6 +666,7 @@ const EditProfile = ({navigation}) => {
                   );
                 }}
                 onBlur={() => {}}
+                icon={<Icons name="id-card" size={20} color="#9BA6B8" />}
                 keyboardType="numeric"
               />
               {RegComercialError !== '' && (
@@ -692,6 +698,7 @@ const EditProfile = ({navigation}) => {
                   );
                 }}
                 onBlur={() => {}}
+                icon={<Icons name="phone" size={20} color="#9BA6B8" />}
               />
               {phoneError !== '' && (
                 <Text style={styles.errorStyle}>{phoneError}</Text>
@@ -716,6 +723,7 @@ const EditProfile = ({navigation}) => {
                   setEmailError(text.trim() === '' ? 'Email es requerido' : '');
                 }}
                 onBlur={() => {}}
+                icon={<Icons name="file" size={20} color="#9BA6B8" />}
               />
             </View>
             <View
@@ -741,6 +749,7 @@ const EditProfile = ({navigation}) => {
                   );
                 }}
                 onBlur={() => {}}
+                icon={<Icons name="wrench" size={20} color="#9BA6B8" />}
               />
             </View>
 
@@ -808,6 +817,7 @@ const EditProfile = ({navigation}) => {
                   );
                 }}
                 onBlur={() => {}}
+                icon={<Icons name="star" size={20} color="#9BA6B8" />}
               />
             </View>
 
@@ -831,6 +841,7 @@ const EditProfile = ({navigation}) => {
                   );
                 }}
                 onBlur={() => {}}
+                icon={<Icons name="facebook-square" size={20} color="#9BA6B8" />}
               />
             </View>
 
@@ -855,6 +866,7 @@ const EditProfile = ({navigation}) => {
                   );
                 }}
                 onBlur={() => {}}
+                icon={<Icons name="instagram" size={20} color="#9BA6B8" />}
               />
               {LinkInstagramError !== '' && (
                 <Text style={styles.errorStyle}>{LinkInstagramError}</Text>
@@ -880,6 +892,7 @@ const EditProfile = ({navigation}) => {
                   );
                 }}
                 onBlur={() => {}}
+                icon={<Icons2 name="tiktok" size={20} color="#9BA6B8" />}
               />
             </View>
 
@@ -903,6 +916,7 @@ const EditProfile = ({navigation}) => {
                   );
                 }}
                 onBlur={() => {}}
+                icon={<Icons name="heart" size={20} color="#9BA6B8" />}
               />
               {seguroError !== '' && (
                 <Text style={styles.errorStyle}>{seguroError}</Text>
