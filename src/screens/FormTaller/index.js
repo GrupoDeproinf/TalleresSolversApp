@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Image,
   ToastAndroid,
-  Modal
+  Modal,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import ErrorContainer from '../../commonComponents/errorContainer';
@@ -124,6 +124,8 @@ const FormTaller = () => {
   const [isCheckedTiktok, setisCheckedTiktok] = useState(false);
   const [isCheckedSeguro, setisCheckedSeguro] = useState(false);
 
+  const [isCheckedAgente, setisCheckedAgente] = useState(false);
+
   const [modalVisible, setModalVisible] = useState(false);
 
   const [tipoAccion, settipoAccion] = useState('');
@@ -138,8 +140,8 @@ const FormTaller = () => {
 
   useEffect(() => {
     const {uid} = route.params;
-    setModalVisible(false)
-    setuidTaller(uid)
+    setModalVisible(false);
+    setuidTaller(uid);
     getData(uid);
   }, []);
 
@@ -164,6 +166,8 @@ const FormTaller = () => {
         if (result.message == 'Usuario encontrado') {
           console.log('Este es el usuario encontrado1234444', result.userData); // Aquí puedes manejar la respuesta
           setNameTaller(result.userData.nombre);
+
+          setChecked(result.userData.agenteAutorizado);
 
           setNombre(
             result.userData.nombre == undefined ? '' : result.userData.nombre,
@@ -244,95 +248,106 @@ const FormTaller = () => {
     t,
   } = useValues();
 
-  const onHandleChange = (type) => {
-    settipoAccion(type)
-    setModalVisible(true)
-  }
+  const onHandleChange = type => {
+    settipoAccion(type);
+    setModalVisible(true);
+  };
 
-  const onCancel = () =>{
-    setModalVisible(false)
-  }
+  const onCancel = () => {
+    setModalVisible(false);
+  };
 
-  const onConfirm = async () =>{
-    console.log(tipoAccion)
-    console.log(uidTaller)
-    if (tipoAccion == "Aprobar"){
-      console.log("Aprobar")
-      
+  const onConfirm = async () => {
+    console.log(tipoAccion);
+    console.log(uidTaller);
+    if (tipoAccion == 'Aprobar') {
+      console.log('Aprobar');
 
       try {
         // Hacer la solicitud POST
-        const response = await fetch('http://desarrollo-test.com/api/usuarios/actualizarStatusUsuario', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const response = await fetch(
+          'http://desarrollo-test.com/api/usuarios/actualizarStatusUsuario',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({uid: uidTaller, nuevoStatus: 'Aprobado'}), // Convertir los datos a JSON
           },
-          body: JSON.stringify({uid:uidTaller, nuevoStatus:'Aprobado'}), // Convertir los datos a JSON
-        });
-  
+        );
+
         // Verificar la respuesta del servidor
         if (response.ok) {
           const result = await response.json();
-          console.log("Este es el usuario nuevo ", result); // Aquí puedes manejar la respuesta
-  
-          if (result.message == "El estado del usuario ha sido actualizado exitosamente"){
+          console.log('Este es el usuario nuevo ', result); // Aquí puedes manejar la respuesta
+
+          if (
+            result.message ==
+            'El estado del usuario ha sido actualizado exitosamente'
+          ) {
             showToast('Se ha aprobado el taller exitosamente');
-            setModalVisible(false)
-            navigation.goBack('')
+            setModalVisible(false);
+            navigation.goBack('');
           } else {
             showToast('Ha ocurrido un error');
-            setModalVisible(false)
-            navigation.goBack('')
+            setModalVisible(false);
+            navigation.goBack('');
           }
         } else {
           console.error('Error en la solicitud:', response);
           showToast('Ha ocurrido un error');
-          setModalVisible(false)
-          navigation.goBack('')
+          setModalVisible(false);
+          navigation.goBack('');
         }
       } catch (error) {
         showToast('Ha ocurrido un error');
-        setModalVisible(false)
-        navigation.goBack('')
+        setModalVisible(false);
+        navigation.goBack('');
       }
     } else {
       try {
         // Hacer la solicitud POST
-        const response = await fetch('http://desarrollo-test.com/api/usuarios/actualizarStatusUsuario', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
+        const response = await fetch(
+          'http://desarrollo-test.com/api/usuarios/actualizarStatusUsuario',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({uid: uidTaller, nuevoStatus: 'Rechazado'}), // Convertir los datos a JSON
           },
-          body: JSON.stringify({uid:uidTaller, nuevoStatus:'Rechazado'}), // Convertir los datos a JSON
-        });
-  
+        );
+
         // Verificar la respuesta del servidor
         if (response.ok) {
           const result = await response.json();
-          console.log("Este es el usuario nuevo ", result); // Aquí puedes manejar la respuesta
-  
-          if (result.message == "El estado del usuario ha sido actualizado exitosamente"){
+          console.log('Este es el usuario nuevo ', result); // Aquí puedes manejar la respuesta
+
+          if (
+            result.message ==
+            'El estado del usuario ha sido actualizado exitosamente'
+          ) {
             showToast('Se ha rechazado el taller');
-            setModalVisible(false)
-            navigation.goBack('')
+            setModalVisible(false);
+            navigation.goBack('');
           } else {
             showToast('Ha ocurrido un error');
-            setModalVisible(false)
-            navigation.goBack('')
+            setModalVisible(false);
+            navigation.goBack('');
           }
         } else {
           console.error('Error en la solicitud:', response);
           showToast('Ha ocurrido un error');
-          setModalVisible(false)
-          navigation.goBack('')
+          setModalVisible(false);
+          navigation.goBack('');
         }
       } catch (error) {
         showToast('Ha ocurrido un error');
-        setModalVisible(false)
-        navigation.goBack('')
+        setModalVisible(false);
+        navigation.goBack('');
       }
     }
-  }
+  };
 
   const showToast = text => {
     ToastAndroid.show(text, ToastAndroid.SHORT);
@@ -617,6 +632,7 @@ const FormTaller = () => {
                 setisCheckedCaracteristicas(!isCheckedCaracteristicas);
               }}
             />
+
             <TextInputs
               title="Caracteristicas del taller"
               editable={false}
@@ -635,6 +651,56 @@ const FormTaller = () => {
               }}
               onBlur={() => {}}
             />
+          </View>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 10,
+              marginTop: -15,
+            }}>
+            <CheckBox
+              isChecked={isCheckedAgente}
+              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
+              checkedCheckBoxColor="#4D66FF"
+              onClick={() => {
+                setisCheckedAgente(!isCheckedAgente);
+              }}
+            />
+
+            <Text
+              style={{
+                marginBottom: 10,
+                color: 'black',
+                marginTop: 35,
+                textDecorationLine: isCheckedAgente ? 'line-through' : 'none',
+              }}>
+              ¿Es un Agente Autorizado?
+            </Text>
+
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: 25,
+              }}>
+              <RadioButton
+                value="si"
+                disabled={true}
+                status={checked === 'si' ? 'checked' : 'unchecked'}
+                onPress={() => setChecked('si')}
+              />
+              <Text style={{color: 'black'}}>Sí</Text>
+
+              <RadioButton
+                value="no"
+                disabled={true}
+                status={checked === 'no' ? 'checked' : 'unchecked'}
+                onPress={() => setChecked('no')}
+              />
+              <Text style={{color: 'black'}}>No</Text>
+            </View>
           </View>
 
           {/* Tiempo de experiencia */}
@@ -828,29 +894,28 @@ const FormTaller = () => {
       </View>
 
       <Modal
-      transparent={true}
-      animationType="slide"
-      visible={modalVisible}
-      onRequestClose={onCancel}
-    >
-      <View style={stylesModal.container}>
-        <View style={stylesModal.modalView}>
-          <Text style={stylesModal.modalText}>
-            ¿Estás seguro de que quieres {tipoAccion} este taller?
-          </Text>
-          <View style={stylesModal.buttonContainer}>
-            <TouchableOpacity style={stylesModal.buttonYes} onPress={onConfirm}>
-              <Text style={stylesModal.buttonText}>Sí</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={stylesModal.buttonNo} onPress={onCancel}>
-              <Text style={stylesModal.buttonText}>No</Text>
-            </TouchableOpacity>
+        transparent={true}
+        animationType="slide"
+        visible={modalVisible}
+        onRequestClose={onCancel}>
+        <View style={stylesModal.container}>
+          <View style={stylesModal.modalView}>
+            <Text style={stylesModal.modalText}>
+              ¿Estás seguro de que quieres {tipoAccion} este taller?
+            </Text>
+            <View style={stylesModal.buttonContainer}>
+              <TouchableOpacity
+                style={stylesModal.buttonYes}
+                onPress={onConfirm}>
+                <Text style={stylesModal.buttonText}>Sí</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={stylesModal.buttonNo} onPress={onCancel}>
+                <Text style={stylesModal.buttonText}>No</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
-      </View>
-    </Modal>
-
-
+      </Modal>
     </View>
   );
 };
@@ -858,56 +923,54 @@ const FormTaller = () => {
 const stylesModal = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center"
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalView: {
     margin: 20,
-    backgroundColor: "white",
+    backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
-    alignItems: "center",
-    shadowColor: "#000",
+    alignItems: 'center',
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2
+      height: 2,
     },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5
+    elevation: 5,
   },
   buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    width: "100%"
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
   },
   modalText: {
     marginBottom: 15,
-    textAlign: "center",
-    color: "#333",
+    textAlign: 'center',
+    color: '#333',
     fontSize: 16,
-    fontWeight: "bold"
+    fontWeight: 'bold',
   },
   buttonYes: {
-    backgroundColor: "green", // Color del botón "Sí"
+    backgroundColor: 'green', // Color del botón "Sí"
     borderRadius: 5,
     padding: 10,
-    width: "48%", // Ajustar ancho para espacio entre botones
-    alignItems: "center"
+    width: '48%', // Ajustar ancho para espacio entre botones
+    alignItems: 'center',
   },
   buttonNo: {
-    backgroundColor: "red", // Color del botón "No"
+    backgroundColor: 'red', // Color del botón "No"
     borderRadius: 5,
     padding: 10,
-    width: "48%", // Ajustar ancho para espacio entre botones
-    alignItems: "center"
+    width: '48%', // Ajustar ancho para espacio entre botones
+    alignItems: 'center',
   },
   buttonText: {
-    color: "white", // Color del texto del botón
-    fontWeight: "bold"
-  }
+    color: 'white', // Color del texto del botón
+    fontWeight: 'bold',
+  },
 });
-
-
 
 export default FormTaller;

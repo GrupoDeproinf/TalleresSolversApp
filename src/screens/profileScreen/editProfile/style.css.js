@@ -1,7 +1,11 @@
 import {StyleSheet} from 'react-native';
 import {windowHeight, windowWidth} from '../../../themes/appConstant';
+import {commonStyles} from '../../../../src/style/commonStyle.css';
 
 const styles = StyleSheet.create({
+  headingContainer: {
+    ...commonStyles.titleText19,
+  },
   imgStyle: {
     width: windowWidth(90),
     height: windowHeight(54),

@@ -26,6 +26,7 @@ import {useValues} from '../../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {RadioButton, Button} from 'react-native-paper';
+import {Picker} from '@react-native-picker/picker';
 
 const TallerProfileScreen = ({navigation}) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
@@ -101,7 +102,9 @@ const TallerProfileScreen = ({navigation}) => {
   // *******************************************
 
   const [checked, setChecked] = useState('no'); // Valor inicial
-  const [disabledInput, setdisabledInput] = useState(false); 
+  const [disabledInput, setdisabledInput] = useState(false);
+
+  const [selectedPrefix, setSelectedPrefix] = useState('J-'); // Default value 'J'
 
   useEffect(() => {
     getData();
@@ -148,6 +151,15 @@ const TallerProfileScreen = ({navigation}) => {
           setLinkTiktok(result.userData.LinkTiktok);
           setGarantia(result.userData.Garantia);
           setseguro(result.userData.seguro);
+
+          let typeID = result.userData.rif.split("-")
+          setcedula(
+            typeID[1] == undefined ? '' : typeID[1],
+          );
+
+          setSelectedPrefix(typeID[0]+"-")
+
+
         } else {
           console.error('Error en la solicitud:', response.statusText);
         }
@@ -186,8 +198,7 @@ const TallerProfileScreen = ({navigation}) => {
     const isEmailValid = validateEmail();
     const isPhoneValid = validatePhone();
 
-    setdisabledInput(true)
-
+    setdisabledInput(true);
 
     if (
       isEmailValid == true &&
@@ -198,7 +209,7 @@ const TallerProfileScreen = ({navigation}) => {
       const infoUserCreated = {
         uid: uidUserConnected,
         nombre: Nombre == undefined ? '' : Nombre,
-        rif: cedula == undefined ? '' : cedula,
+        rif: cedula == undefined ? '' : selectedPrefix + '' + cedula,
         phone: phone == undefined ? '' : phone,
         typeUser: 'Taller',
         email: email == undefined ? '' : email,
@@ -213,7 +224,7 @@ const TallerProfileScreen = ({navigation}) => {
         LinkTiktok: LinkTiktok == undefined ? '' : LinkTiktok,
         Garantia: Garantia == undefined ? '' : Garantia,
         seguro: seguro == undefined ? '' : seguro,
-        agenteAutorizado: checked == undefined ? false : checked
+        agenteAutorizado: checked == undefined ? false : checked,
       };
 
       console.log(infoUserCreated);
@@ -246,30 +257,29 @@ const TallerProfileScreen = ({navigation}) => {
           }
 
           showToast('Actualizado correctamente');
-          setdisabledInput(false)
+          setdisabledInput(false);
           ChangeView();
           // navigation.goBack('');
         } else {
           const errorText = await response.text(); // Obtener el texto de error si la respuesta no fue exitosa
-            try {
-              const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
-              console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
-              setGetOtpDisabled(false)
-              showToast(errorJson.message);
+          try {
+            const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
+            console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
+            setGetOtpDisabled(false);
+            showToast(errorJson.message);
           } catch (e) {
-              console.error('Error al procesar la respuesta de error:', e);
-              console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
-            }
-          setdisabledInput(false)
+            console.error('Error al procesar la respuesta de error:', e);
+            console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
+          }
+          setdisabledInput(false);
           console.error('Error en la solicitud:', response.statusText);
         }
       } catch (error) {
-        setdisabledInput(false)
+        setdisabledInput(false);
         console.error('Error en la solicitud:', error);
       }
-    } 
-    else {
-      setdisabledInput(false)
+    } else {
+      setdisabledInput(false);
       showToast('Error al actualizar el usuario, por favor validar formulario');
     }
   };
@@ -282,6 +292,7 @@ const TallerProfileScreen = ({navigation}) => {
     iconColorStyle,
     isDark,
     t,
+    textRTLStyle
   } = useValues();
 
   // const showToast = (type, text1, position, visibilityTime, autoHide) => {
@@ -316,7 +327,7 @@ const TallerProfileScreen = ({navigation}) => {
 
   const ChangeView = () => {
     setshowForm(!showForm);
-    setdisabledInput(false)
+    setdisabledInput(false);
   };
 
   const CloseSesion = async () => {
@@ -413,31 +424,76 @@ const TallerProfileScreen = ({navigation}) => {
               <Text style={styles.errorStyle}>{NombreError}</Text>
             )}
 
-            <TextInputs
-              title="Registro de Información Fiscal (RIF)"
-              value={cedula}
-              placeHolder="Ingrese su RIF"
-              onChangeText={text => {
-                // Eliminar cualquier caracter que no sea un número
-                const numericText = text.replace(/[^0-9]/g, '');
-                setcedula(numericText);
-                setcedulaTyping(true);
-                if (numericText.trim() === '') {
-                  setcedulaError('Cedula es requerida');
-                } else {
-                  setcedulaError('');
-                }
-              }}
-              onBlur={() => {
-                setcedulaTyping(false);
-              }}
-              keyboardType="numeric" // Establece el teclado numérico
-              icon={
-                <Email
-                  color={iscedulaTyping ? '#051E47' : appColors.subtitle}
-                />
-              }
-            />
+            <View style={{marginTop: 5}}>
+              <Text
+                style={[
+                  styles.headingContainer,
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
+                ]}>
+                Cedula
+              </Text>
+
+              {/* Contenedor para el Picker y el TextInput */}
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                {/* Select para elegir "J-" o "G-" */}
+                <View
+                  style={{
+                    overflow: 'hidden',
+                    height: 50, // Asegurar que ambos tengan el mismo height
+                    marginRight: 5, // Espaciado entre el Picker y el TextInput
+                  }}>
+                  <Picker
+                    selectedValue={selectedPrefix}
+                    onValueChange={itemValue => setSelectedPrefix(itemValue)}
+                    style={{
+                      width: 100,
+                      height: 0, // Altura para el Picker
+                      color: 'black',
+                    }}>
+                    <Picker.Item label="C-" value="C-" />
+                    <Picker.Item label="E-" value="E-" />
+                    <Picker.Item label="G-" value="G-" />
+                    <Picker.Item label="J-" value="J-" />
+                    <Picker.Item label="P-" value="P-" />
+                    <Picker.Item label="V-" value="V-" />
+                  </Picker>
+                </View>
+
+                {/* TextInput para el número de RIF */}
+                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
+                  <TextInputs
+                    title=""
+                    value={cedula}
+                    placeHolder="Ingrese el número de cedula"
+                    onChangeText={text => {
+                      const numericText = text.replace(/[^0-9]/g, '');
+                      setcedula(numericText);
+                      setcedulaTyping(true);
+                      if (numericText.trim() === '') {
+                        setcedulaError('Cedula es requerida');
+                      } else {
+                        setcedulaError('');
+                      }
+                    }}
+                    onBlur={() => {
+                      setcedulaTyping(false);
+                    }}
+                    keyboardType="numeric"
+                    icon={
+                      <Email
+                        color={iscedulaTyping ? '#051E47' : appColors.subtitle}
+                      />
+                    }
+                    style={{height: 50}} // Altura para el TextInput
+                  />
+                </View>
+              </View>
+
+              {cedulaError !== '' && (
+                <Text style={styles.errorStyle}>{cedulaError}</Text>
+              )}
+            </View>
 
             {cedulaError !== '' && (
               <Text style={styles.errorStyle}>{cedulaError}</Text>
@@ -871,7 +927,7 @@ const TallerProfileScreen = ({navigation}) => {
             />
           </View>
 
-          <View style={{width: '100%', marginBottom:25, marginTop:10}}>
+          <View style={{width: '100%', marginBottom: 25, marginTop: 10}}>
             <NavigationButton
               title="Cerrar Sesión"
               backgroundColor={'#D1D6DE'}

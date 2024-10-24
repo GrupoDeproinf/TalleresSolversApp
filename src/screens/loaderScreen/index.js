@@ -37,7 +37,6 @@ const LoaderScreen = ({navigation}) => {
             // Verificar la respuesta del servidor
             if (response.ok) {
               const result = await response.json();
-              console.clear()
               console.log("Este es el usuario encontrado", result); // Aquí puedes manejar la respuesta
     
               if (result.message == "Usuario encontrado"){
@@ -50,8 +49,8 @@ const LoaderScreen = ({navigation}) => {
   
                 } catch (e) {
                   console.log(e);
+                  navigation.navigate('LoaderScreen');
                 }
-                navigation.navigate('LoaderScreen');
               } else {
   
                 // showToast('No se ha encontrado el usuario, por favor validar formulario');
@@ -73,6 +72,8 @@ const LoaderScreen = ({navigation}) => {
         console.log(e)
     }
 };
+
+
 
 const goToProfile = (typeUser, status) => {
   if(typeUser == "Cliente"){

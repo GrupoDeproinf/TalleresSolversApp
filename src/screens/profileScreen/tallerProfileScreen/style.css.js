@@ -35,6 +35,9 @@ import {commonStyles} from '../../../style/commonStyle.css';
 
 
 const styles = StyleSheet.create({
+  headingContainer: {
+    ...commonStyles.titleText19,
+  },
   container: {
     ...external.fd_row,
     ...external.pt_10,
