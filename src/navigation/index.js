@@ -38,6 +38,8 @@ import Onboarding from '../screens/intro/onBording';
 import OnboardingTwo from '../screens/intro/onBordingTwo';
 import FormTaller from '../screens/FormTaller'
 
+import TalleresContainer from '../screens/Talleres'
+
 
 const Stack = createNativeStackNavigator();
 const MyStack = () => {
@@ -73,6 +75,8 @@ const MyStack = () => {
         
          
         <Stack.Screen name="FormTaller" component={FormTaller} />  
+
+        <Stack.Screen name="TalleresContainer" component={TalleresContainer} />  
 
 
 

@@ -10,6 +10,8 @@ import {useValues} from '../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 
+
+
 const TalleresContainer = ({navigation}) => {
 
   const {bgFullStyle, t} = useValues();
@@ -48,7 +50,6 @@ const TalleresContainer = ({navigation}) => {
             headers: {
               'Content-Type': 'application/json',
             },
-            // body: JSON.stringify({uid:user.uid}), // Convertir los datos a JSON
           });
     
           // Verificar la respuesta del servidor
@@ -57,38 +58,15 @@ const TalleresContainer = ({navigation}) => {
             console.log("usuarios de resultados21234565156", result); // Aquí puedes manejar la respuesta
             
             setdataTalleres(result)
-
-            // if (result.message == "Usuario encontrado"){
-            //   try {
-            //     const jsonValue = JSON.stringify(result.userData);
-            //     console.log(jsonValue);
-            //     await AsyncStorage.setItem('@userInfo', jsonValue);
-
-            //     goToProfile(result.userData.typeUser, result.userData.status)
-
-            //   } catch (e) {
-            //     console.log(e);
-            //   }
-            //   navigation.navigate('LoaderScreen');
-            // } else {
-
-            //   // showToast('No se ha encontrado el usuario, por favor validar formulario');
-            //   navigation.replace('Login');
-            // }
           } else {
 
             setdataTalleres([])
-            // console.error('Error en la solicitud:', response.statusText);
-            // navigation.replace('Login');
           }
         } catch (error) {
             setdataTalleres([])
-        //   console.error('Error en la solicitud:', error);
-        //   navigation.replace('Login');
         }
 
     } catch(e) {
-        // error reading value
         setdataTalleres([])
         console.log(e)
     }
@@ -102,6 +80,7 @@ const TalleresContainer = ({navigation}) => {
         <FullHeader
           showArrow={false}
           show={true}
+          showClose={true}
           title="Talleres"
           text={
             <Text style={styles.container}>Filtrar</Text>

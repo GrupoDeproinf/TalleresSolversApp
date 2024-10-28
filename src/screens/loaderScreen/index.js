@@ -23,7 +23,10 @@ const LoaderScreen = ({navigation}) => {
 
         if (user.typeUser == "Admin"){
           goToProfile(user.typeUser, '')
-        } else {
+        } else if (user.typeUser == "Certificador"){
+          goToProfile(user.typeUser, '')
+        } 
+        else {
           try {
             // Hacer la solicitud POST
             const response = await fetch('http://desarrollo-test.com/api/usuarios/getUserByUid', {
@@ -106,6 +109,15 @@ const goToProfile = (typeUser, status) => {
     console.log("*************************************")
     const timer = setTimeout(() => {
       navigation.replace('DrawerScreen');
+    }, 1000);
+    return () => clearTimeout(timer);
+
+  } else if(typeUser == "Certificador"){
+    console.log("**************************************")
+    console.log("Es Certificador")
+    console.log("*************************************")
+    const timer = setTimeout(() => {
+      navigation.replace('TalleresContainer');
     }, 1000);
     return () => clearTimeout(timer);
 
