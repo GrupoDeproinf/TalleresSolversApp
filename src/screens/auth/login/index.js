@@ -71,7 +71,7 @@ const SignIn = ({navigation}) => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({email:email}), // Convertir los datos a JSON
+          body: JSON.stringify({email:email, password:password}), // Convertir los datos a JSON
         });
   
         // Verificar la respuesta del servidor

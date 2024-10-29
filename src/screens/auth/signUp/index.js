@@ -156,7 +156,10 @@ const SignUp = ({navigation}) => {
           phone: phone,
           typeUser: 'Cliente',
           email: email,
+          password:password
         };
+
+        console.log(infoUserCreated)
 
         try {
           // Hacer la solicitud POST
