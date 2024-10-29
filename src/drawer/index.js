@@ -1,15 +1,36 @@
-import React from 'react';
-import {createDrawerNavigator} from '@react-navigation/drawer';
+import React, { useEffect, useState } from 'react';
+import { createDrawerNavigator } from '@react-navigation/drawer';
 import MyTabs from '../myTab';
-import {useValues} from '../../App';
-import {windowHeight, windowWidth} from '../themes/appConstant';
+import { useValues } from '../../App';
+import { windowHeight, windowWidth } from '../themes/appConstant';
 import DrawerContent from './drawerContent';
 import HomeScreenTwo from '../screens/homeScreenTwo';
 
 const Drawer = createDrawerNavigator();
 
 const CustomDrawerNavigator = () => {
-  const {isRTL} = useValues();
+  const { isRTL } = useValues();
+  const [user, setuser] = useState(false);
+
+
+  useEffect(() => {
+    getUser()
+  }, []);
+
+
+  const getUser = async () => {
+    // try {
+    //   const jsonValue = await AsyncStorage.getItem('@userInfo');
+    //   const userNew = jsonValue != null ? JSON.parse(jsonValue) : null;
+
+    //   setuser(userNew)
+    //   console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    //   console.log("Userrrr12344444navbarrr", userNew)
+    //   console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    // } catch (e) {
+    // }
+  }
+
   return (
     <Drawer.Navigator
       // eslint-disable-next-line react/no-unstable-nested-components

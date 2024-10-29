@@ -112,6 +112,9 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
   );
 };
 
+
+// Tabs usuarios clientes
+
 const MyTabs = () => {
   return (
     <Tab.Navigator
@@ -126,8 +129,8 @@ const MyTabs = () => {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: () => <HomeLight />,
-          activeTabBarIcon: () => <HomeIcon />,
+          tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8"/>,
+          activeTabBarIcon: () => <Icons name="home" size={30} color="#4D66FF"/>
         }}
       />
       <Tab.Screen
