@@ -241,6 +241,7 @@ const SignUp = ({navigation}) => {
           phone: phone,
           typeUser: 'Taller',
           email: email,
+          password:password
         };
 
         console.log(infoUserCreated);
