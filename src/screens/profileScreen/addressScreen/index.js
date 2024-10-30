@@ -260,7 +260,7 @@ const AddressScreen = ({navigation}) => {
                 </View>
                 <View style={{width: 170}}>
                   <NavigationButton
-                    backgroundColor={'#4D66FF'}
+                    backgroundColor={'#2D3261'}
                     title={'Add'}
                     color={appColors.screenBg}
                     onPress={() => setEditModal(false)}

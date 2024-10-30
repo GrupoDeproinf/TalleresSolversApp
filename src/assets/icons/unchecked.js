@@ -8,13 +8,13 @@ export function UncheckMark({props}) {
       height={20}
       fill="none"
       {...props}>
-      <Rect width={20} height={20} fill="#4D66FF" rx={4} />
+      <Rect width={20} height={20} fill="#2D3261" rx={4} />
       <Rect
         width={19}
         height={19}
         x={0.5}
         y={0.5}
-        stroke="#4D66FF"
+        stroke="#2D3261"
         strokeOpacity={0.1}
         rx={3.5}
       />

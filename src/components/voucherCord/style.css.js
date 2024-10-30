@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
   applyNow: {
     ...commonStyles.subtitleText,
     fontSize: fontSizes.FONT18,
-    color: '#4D66FF',
+    color: '#2D3261',
     paddingHorizontal: windowHeight(13),
   },
 });

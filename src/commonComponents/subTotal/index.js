@@ -57,7 +57,7 @@ const SubtotalContainer = () => {
           <JsSpaceContainer
             title={t('transData.payableAmount')}
             price={`${currSymbol}${(currPrice * 3568.31).toFixed(2)}`}
-            color={'#4D66FF'}
+            color={'#2D3261'}
           />
         </LinearGradient>
       </LinearGradient>

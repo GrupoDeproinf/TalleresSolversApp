@@ -89,7 +89,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
                     width: windowHeight(3),
                     height: windowHeight(3),
                     borderRadius: windowHeight(3),
-                    backgroundColor: '#4D66FF',
+                    backgroundColor: '#2D3261',
                     marginVertical: 4,
                   }}
                 />
@@ -130,7 +130,7 @@ const MyTabs = () => {
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8"/>,
-          activeTabBarIcon: () => <Icons name="home" size={30} color="#4D66FF"/>
+          activeTabBarIcon: () => <Icons name="home" size={30} color="#2D3261"/>
         }}
       />
       <Tab.Screen
@@ -158,7 +158,7 @@ const MyTabs = () => {
         options={{
           tabBarLabel: 'Talleres',
           tabBarIcon: () => <Icons name="car" size={30} color="#9BA6B8"/>,
-          activeTabBarIcon: () => <Icons name="car" size={30} color="#4D66FF"/>,
+          activeTabBarIcon: () => <Icons name="car" size={30} color="#2D3261"/>,
         }}
       />
 

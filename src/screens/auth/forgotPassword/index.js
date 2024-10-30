@@ -14,6 +14,7 @@ import appColors from '../../../themes/appColors';
 import {Email} from '../../../assets/icons/email';
 import styles from './style.css';
 import {useValues} from '../../../../App';
+import api from '../../../../axiosInstance'; 
 
 const ForgetPassword = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -45,41 +46,40 @@ const ForgetPassword = ({navigation}) => {
     setGetOtpDisabled(true)
 
     console.log(email)
-    console.log("Aquiii")
+    console.log("Aquiii++++++++++++++++++++++")
 
     try {
-      // Hacer la solicitud POST
-      const response = await fetch('http://desarrollo-test.com/api/usuarios/restorePass', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({email:email}), // Convertir los datos a JSON
+      // Hacer la solicitud POST utilizando Axios
+      const response = await api.post('/usuarios/restorePass', {
+        email: email.toLowerCase(), // Convertir el email a minúsculas
       });
-
+    
       // Verificar la respuesta del servidor
-      if (response.ok) {
-        const result = await response.json();
-        console.log("Este es el usuario nuevo ", result); // Aquí puedes manejar la respuesta
-
-        if (result.message == "Correo de restablecimiento enviado."){
-          showToast('Correo de restablecimiento enviado!!');
-          setGetOtpDisabled(false)
-          navigation.navigate('Login');
-        } else {
-          showToast('El email dado no se encuentra registrado');
-          setGetOtpDisabled(false)
-        }
+      const result = response.data; // Los datos vienen directamente de response.data
+      console.log("Este es el resultado de la restauración****************: ", result); // Aquí puedes manejar la respuesta
+    
+      if (result.message === "Correo de restablecimiento enviado.") {
+        showToast('Correo de restablecimiento enviado!!');
+        setGetOtpDisabled(false);
+        navigation.navigate('Login');
       } else {
-        console.error('Error en la solicitud:', response);
         showToast('El email dado no se encuentra registrado');
-        setGetOtpDisabled(false)
+        setGetOtpDisabled(false);
       }
     } catch (error) {
-      console.error('Error en la solicitud:', error);
-      showToast('El email dado no se encuentra registrado');
-      setGetOtpDisabled(false)
+      if (error.response) {
+        // La solicitud se hizo y el servidor respondió con un código de estado
+        console.error('Error en la solicitud:', error.response.statusText);
+        showToast('El email dado no se encuentra registrado');
+        setGetOtpDisabled(false);
+      } else {
+        // La solicitud fue hecha pero no se recibió respuesta
+        console.error('Error en la solicitud:', error);
+        showToast('Error al realizar la solicitud');
+        setGetOtpDisabled(false);
+      }
     }
+    
 
 
     // if (emailError === '') {
@@ -129,7 +129,7 @@ const ForgetPassword = ({navigation}) => {
         title="Recuperar Clave"
         onPress={onHandleChange}
         disabled={isGetOtpDisabled}
-        backgroundColor={isGetOtpDisabled ? '#D1D6DE' : '#4D66FF'}
+        backgroundColor={isGetOtpDisabled ? '#848688' : '#2D3261'}
         color={isGetOtpDisabled ? '#051E47' : appColors.screenBg}
       />
     </View>

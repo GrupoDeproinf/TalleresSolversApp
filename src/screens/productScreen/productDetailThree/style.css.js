@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   viewContainer: {
-    backgroundColor: '#4D66FF',
+    backgroundColor: '#2D3261',
     borderRadius: windowHeight(8),
     alignItems: 'center',
     justifyContent: 'center',
@@ -115,7 +115,7 @@ const styles = StyleSheet.create({
     ...commonStyles.titleText19,
     ...external.ph_20,
     ...external.mt_5,
-    color: '#4D66FF',
+    color: '#2D3261',
     fontSize: fontSizes.FONT17,
   },
   outOfFive: {

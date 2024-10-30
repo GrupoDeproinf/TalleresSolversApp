@@ -16,6 +16,7 @@ import CheckBox from '../../../commonComponents/checkBox';
 import {fontSizes} from '../../../themes/appConstant';
 import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../../../../axiosInstance'; 
 
 const SignIn = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -65,48 +66,49 @@ const SignIn = ({navigation}) => {
       console.log(JSON.stringify({email:email}))
 
       try {
-        // Hacer la solicitud POST
-        const response = await fetch('http://desarrollo-test.com/api/usuarios/authenticateUser', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({email:email, password:password}), // Convertir los datos a JSON
+        // Hacer la solicitud POST utilizando Axios
+        const response = await api.post('/usuarios/authenticateUser', {
+          email: email.toLowerCase(),
+          password: password.toLowerCase(),
         });
-  
+    
         // Verificar la respuesta del servidor
-        if (response.ok) {
-          const result = await response.json();
-          console.log("Este es el usuario nuevo ", result); // Aquí puedes manejar la respuesta
-
-          if (result.message == "Usuario autenticado exitosamente" || result.message == "Usuario autenticado exitosamente como Admin"){
-            try {
-              const jsonValue = JSON.stringify(result.userData);
-              console.log(jsonValue);
-              await AsyncStorage.setItem('@userInfo', jsonValue);
-            } catch (e) {
-              console.log(e);
-            }
-
-            setSignInDisabled(true);
-            setEmail("")
-            setPassword("")
-            setSignInDisabled(false);
-            navigation.navigate('LoaderScreen');
-
-          } else {
-            setSignInDisabled(false);
-            showToast('No se ha encontrado el usuario, por favor validar formulario');
+        const result = response.data; // Los datos vienen directamente de response.data
+        console.log("Este es el usuario nuevo ", result); // Aquí puedes manejar la respuesta
+    
+        if (
+          result.message === "Usuario autenticado exitosamente" || 
+          result.message === "Usuario autenticado exitosamente como Admin"
+        ) {
+          try {
+            const jsonValue = JSON.stringify(result.userData);
+            console.log(jsonValue);
+            await AsyncStorage.setItem('@userInfo', jsonValue);
+          } catch (e) {
+            console.log(e);
           }
+    
+          setSignInDisabled(true);
+          setEmail("");
+          setPassword("");
+          setSignInDisabled(false);
+          navigation.navigate('LoaderScreen');
         } else {
-          console.error('Error en la solicitud:', response.statusText);
-          setSignInDisabled(false)
-          showToast('Error al encontrar al usuario, por favor validar formulario');
+          setSignInDisabled(false);
+          showToast('No se ha encontrado el usuario, por favor validar formulario');
         }
       } catch (error) {
-        console.error('Error en la solicitud:', error);
-        setSignInDisabled(false);
-        showToast('Usuario no encontrado, por favor validar formulario');
+        if (error.response) {
+          // La solicitud se hizo y el servidor respondió con un código de estado
+          console.error('Error en la solicitud:', error.response.statusText);
+          setSignInDisabled(false);
+          showToast('Error al encontrar al usuario, por favor validar formulario');
+        } else {
+          // La solicitud fue hecha pero no se recibió respuesta
+          console.error('Error en la solicitud:', error);
+          setSignInDisabled(false);
+          showToast('Usuario no encontrado, por favor validar formulario');
+        }
       }
     } else {
       setSignInDisabled(false);
@@ -199,7 +201,7 @@ const SignIn = ({navigation}) => {
                 <Text
                   style={[
                     commonStyles.subtitleText,
-                    {color: '#4D66FF', fontSize: fontSizes.FONT16},
+                    {color: '#2D3261', fontSize: fontSizes.FONT16},
                   ]}>
                   Olvido la contraseña
                 </Text>
@@ -213,7 +215,7 @@ const SignIn = ({navigation}) => {
         title="Ingresar"
         onPress={onHandleChange}
         disabled={isSignInDisabled}
-        backgroundColor={isSignInDisabled ? '#D1D6DE' : '#4D66FF'}
+        backgroundColor={isSignInDisabled ? '#848688' : '#2D3261'}
         color={isSignInDisabled ? '#051E47' : appColors.screenBg}
       />
 

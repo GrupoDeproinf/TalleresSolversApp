@@ -118,7 +118,7 @@ const OnboardingTwo = ({navigation}) => {
       <View style={styles.navigationBtnView}>
         <NavigationButton
           title={i_Have_An_Account}
-          backgroundColor={'#4D66FF'}
+          backgroundColor={'#2D3261'}
           onPress={() => navigation.navigate('Login')}
           color={appColors.screenBg}
         />

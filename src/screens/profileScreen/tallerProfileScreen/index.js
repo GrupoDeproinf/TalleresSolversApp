@@ -27,12 +27,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {RadioButton, Button} from 'react-native-paper';
 import {Picker} from '@react-native-picker/picker';
+import api from '../../../../axiosInstance'; 
+
+import Icons from 'react-native-vector-icons/FontAwesome'
+import Icons2 from 'react-native-vector-icons/FontAwesome5'
+
 
 const TallerProfileScreen = ({navigation}) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
   const [emailValue, setEmailValue] = useState(smithaWilliamsMail);
   const [phoneValue, setPhoneValue] = useState(phoneMo);
-  const [buttonColor, setButtonColor] = useState('#d1d6de');
+  const [buttonColor, setButtonColor] = useState('#848688');
 
   const [showForm, setshowForm] = useState(false);
   const [uidUserConnected, setuidUserConnected] = useState(false);
@@ -119,28 +124,19 @@ const TallerProfileScreen = ({navigation}) => {
       setuidUserConnected(user.uid);
 
       try {
-        // Hacer la solicitud POST
-        const response = await fetch(
-          'http://desarrollo-test.com/api/usuarios/getUserByUid',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({uid: user.uid}), // Convertir los datos a JSON
-          },
-        );
-
+        // Hacer la solicitud POST utilizando Axios
+        const response = await api.post('/usuarios/getUserByUid', { uid: user.uid });
+      
         // Verificar la respuesta del servidor
-        if (response.ok) {
-          const result = await response.json();
-          console.log('Emailllllll', result.userData.email); // Aquí puedes manejar la respuesta
-
+        if (response.status === 200) {
+          const result = response.data;
+          console.log('Email:', result.userData.email); // Aquí puedes manejar la respuesta
+      
           setNombre(result.userData.nombre);
           setcedula(result.userData.rif);
           setEmail(result.userData.email);
           setPhone(result.userData.phone);
-
+      
           setDireccion(result.userData.Direccion);
           setRegComercial(result.userData.RegComercial);
           setCaracteristicas(result.userData.Caracteristicas);
@@ -151,21 +147,22 @@ const TallerProfileScreen = ({navigation}) => {
           setLinkTiktok(result.userData.LinkTiktok);
           setGarantia(result.userData.Garantia);
           setseguro(result.userData.seguro);
-
-          let typeID = result.userData.rif.split("-")
-          setcedula(
-            typeID[1] == undefined ? '' : typeID[1],
-          );
-
-          setSelectedPrefix(typeID[0]+"-")
-
-
+      
+          // Separar el prefijo del tipo de ID (rif) y asignarlo a los estados correspondientes
+          const typeID = result.userData.rif.split("-");
+          setcedula(typeID[1] || '');
+          setSelectedPrefix(`${typeID[0]}-`);
         } else {
           console.error('Error en la solicitud:', response.statusText);
         }
       } catch (error) {
-        console.error('Error en la solicitud:', error);
+        if (error.response) {
+          console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
+        } else {
+          console.error('Error en la solicitud:', error.message);
+        }
       }
+      
     } catch (e) {
       // error reading value
       console.log(e);
@@ -231,23 +228,16 @@ const TallerProfileScreen = ({navigation}) => {
       console.log('Aquiiii1234');
 
       try {
-        // Hacer la solicitud POST
-        const response = await fetch(
-          'http://desarrollo-test.com/api/usuarios/SaveTallerAll',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
-          },
-        );
+        // Hacer la solicitud POST utilizando Axios
+        const response = await api.post('/usuarios/SaveTallerAll', infoUserCreated);
+      
+        console.log("response++++++++++", response.status)
 
         // Verificar la respuesta del servidor
-        if (response.ok) {
-          const result = await response.json();
+        if (response.status === 201) {
+          const result = response.data;
           console.log(result); // Aquí puedes manejar la respuesta
-
+      
           try {
             const jsonValue = JSON.stringify(infoUserCreated);
             console.log(jsonValue);
@@ -255,29 +245,27 @@ const TallerProfileScreen = ({navigation}) => {
           } catch (e) {
             console.log(e);
           }
-
+      
           showToast('Actualizado correctamente');
           setdisabledInput(false);
           ChangeView();
-          // navigation.goBack('');
         } else {
-          const errorText = await response.text(); // Obtener el texto de error si la respuesta no fue exitosa
-          try {
-            const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
-            console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
-            setGetOtpDisabled(false);
-            showToast(errorJson.message);
-          } catch (e) {
-            console.error('Error al procesar la respuesta de error:', e);
-            console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
-          }
-          setdisabledInput(false);
-          console.error('Error en la solicitud:', response.statusText);
+          const errorText = response.data ? response.data.message : 'Error desconocido';
+          console.error('Error al guardar el usuario:', errorText);
+          setGetOtpDisabled(false);
+          showToast(errorText);
         }
       } catch (error) {
         setdisabledInput(false);
-        console.error('Error en la solicitud:', error);
+        if (error.response) {
+          console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
+          showToast(error.response.data.message || 'Error en la solicitud');
+        } else {
+          console.error('Error en la solicitud:', error.message);
+          showToast('Error en la solicitud');
+        }
       }
+      
     } else {
       setdisabledInput(false);
       showToast('Error al actualizar el usuario, por favor validar formulario');
@@ -416,9 +404,7 @@ const TallerProfileScreen = ({navigation}) => {
               onBlur={() => {
                 setNombreTyping(false);
               }}
-              icon={
-                <Email color={NombreTyping ? '#051E47' : appColors.subtitle} />
-              }
+              icon={<Icons name="user" size={20} color="#9BA6B8" />}
             />
             {NombreError !== '' && (
               <Text style={styles.errorStyle}>{NombreError}</Text>
@@ -480,11 +466,7 @@ const TallerProfileScreen = ({navigation}) => {
                       setcedulaTyping(false);
                     }}
                     keyboardType="numeric"
-                    icon={
-                      <Email
-                        color={iscedulaTyping ? '#051E47' : appColors.subtitle}
-                      />
-                    }
+                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
                     style={{height: 50}} // Altura para el TextInput
                   />
                 </View>
@@ -516,11 +498,7 @@ const TallerProfileScreen = ({navigation}) => {
               onBlur={() => {
                 setDireccionTyping(false);
               }}
-              icon={
-                <Email
-                  color={DireccionTyping ? '#051E47' : appColors.subtitle}
-                />
-              }
+              icon={<Icons name="map-marker" size={20} color="#9BA6B8" />}
             />
             {DireccionError !== '' && (
               <Text style={styles.errorStyle}>{DireccionError}</Text>
@@ -545,11 +523,7 @@ const TallerProfileScreen = ({navigation}) => {
                 setRegComercialTyping(false);
               }}
               keyboardType="numeric" // Establece el teclado numérico
-              icon={
-                <Email
-                  color={RegComercialTyping ? '#051E47' : appColors.subtitle}
-                />
-              }
+              icon={<Icons name="id-card" size={20} color="#9BA6B8" />}
             />
 
             {RegComercialError !== '' && (
@@ -577,9 +551,7 @@ const TallerProfileScreen = ({navigation}) => {
                 validatePhone();
                 setCallTyping(false);
               }}
-              icon={
-                <Call color={isCallTyping ? '#051E47' : appColors.subtitle} />
-              }
+              icon={<Icons name="phone" size={20} color="#9BA6B8" />}
             />
 
             {phoneError !== '' && (
@@ -659,11 +631,7 @@ const TallerProfileScreen = ({navigation}) => {
               validateCaracteristicas();
               setCaracteristicasTyping(false);
             }}
-            icon={
-              <Email
-                color={CaracteristicasTyping ? '#051E47' : appColors.subtitle}
-              />
-            }
+            icon={<Icons name="wrench" size={20} color="#9BA6B8" />}
           />
           {CaracteristicasError !== '' && (
             <Text style={styles.errorStyle}>{CaracteristicasError}</Text>
@@ -711,11 +679,7 @@ const TallerProfileScreen = ({navigation}) => {
             onBlur={() => {
               setExperienciaTyping(false);
             }}
-            icon={
-              <Email
-                color={ExperienciaTyping ? '#051E47' : appColors.subtitle}
-              />
-            }
+            icon={<Icons name="star" size={20} color="#9BA6B8" />}
           />
           {ExperienciaError !== '' && (
             <Text style={styles.errorStyle}>{ExperienciaError}</Text>
@@ -738,11 +702,7 @@ const TallerProfileScreen = ({navigation}) => {
             onBlur={() => {
               // setLinkFacebookTyping(false);
             }}
-            icon={
-              <Email
-                color={LinkFacebookTyping ? '#051E47' : appColors.subtitle}
-              />
-            }
+            icon={<Icons name="facebook-square" size={20} color="#9BA6B8" />}
           />
           {LinkFacebookError !== '' && (
             <Text style={styles.errorStyle}>{LinkFacebookError}</Text>
@@ -765,11 +725,7 @@ const TallerProfileScreen = ({navigation}) => {
             onBlur={() => {
               // setLinkInstagramTyping(false);
             }}
-            icon={
-              <Email
-                color={LinkInstagramTyping ? '#051E47' : appColors.subtitle}
-              />
-            }
+            icon={<Icons name="instagram" size={20} color="#9BA6B8" />}
           />
           {LinkInstagramError !== '' && (
             <Text style={styles.errorStyle}>{LinkInstagramError}</Text>
@@ -792,11 +748,7 @@ const TallerProfileScreen = ({navigation}) => {
             onBlur={() => {
               // setLinkTiktokTyping(false);
             }}
-            icon={
-              <Email
-                color={LinkTiktokTyping ? '#051E47' : appColors.subtitle}
-              />
-            }
+            icon={<Icons2 name="tiktok" size={20} color="#9BA6B8" />}
           />
           {LinkTiktokError !== '' && (
             <Text style={styles.errorStyle}>{LinkTiktokError}</Text>
@@ -828,7 +780,7 @@ const TallerProfileScreen = ({navigation}) => {
           )} */}
 
           <TextInputs
-            title="Seguro del taller**"
+            title="Seguro del taller"
             placeHolder="Ingrese su seguro"
             value={seguro}
             onChangeText={text => {
@@ -844,9 +796,7 @@ const TallerProfileScreen = ({navigation}) => {
             onBlur={() => {
               setseguroTyping(false);
             }}
-            icon={
-              <Email color={seguroTyping ? '#051E47' : appColors.subtitle} />
-            }
+            icon={<Icons name="heart" size={20} color="#9BA6B8" />}
           />
           {seguroError !== '' && (
             <Text style={styles.errorStyle}>{seguroError}</Text>
@@ -864,7 +814,7 @@ const TallerProfileScreen = ({navigation}) => {
               title="Guardar Cambios"
               onPress={() => onHandleChange()}
               disabled={disabledInput}
-              backgroundColor={disabledInput ? '#D1D6DE' : '#4D66FF'}
+              backgroundColor={disabledInput ? '#848688' : '#2D3261'}
               color={disabledInput ? '#051E47' : appColors.screenBg}
             />
           </View>
@@ -899,7 +849,7 @@ const TallerProfileScreen = ({navigation}) => {
           <View
             style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
             <Image
-              source={require('../../../assets/solversLogo.png')} // Asegúrate de que la ruta sea correcta
+              source={require('../../../assets/solverslogo.jpg')} // Asegúrate de que la ruta sea correcta
               style={{width: 100, height: 100, marginBottom: 20}} // Aumentar el tamaño de la imagen y agregar marginBottom
               resizeMode="contain" // Esto asegura que la imagen mantenga sus proporciones
             />
@@ -921,7 +871,7 @@ const TallerProfileScreen = ({navigation}) => {
           <View style={{width: '100%'}}>
             <NavigationButton
               title="Continuar Registro"
-              backgroundColor={'#4D66FF'}
+              backgroundColor={'#2D3261'}
               color={appColors.screenBg}
               onPress={() => ChangeView()}
             />
@@ -930,7 +880,7 @@ const TallerProfileScreen = ({navigation}) => {
           <View style={{width: '100%', marginBottom: 25, marginTop: 10}}>
             <NavigationButton
               title="Cerrar Sesión"
-              backgroundColor={'#D1D6DE'}
+              backgroundColor={'#848688'}
               color={'#051E47'}
               onPress={() => CloseSesion()}
             />

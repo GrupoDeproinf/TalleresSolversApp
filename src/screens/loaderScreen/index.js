@@ -4,6 +4,7 @@ import images from '../../utils/images';
 import styles from './style.css';
 import {useValues} from '../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../../../axiosInstance'; 
 
 const LoaderScreen = ({navigation}) => {
 
@@ -28,45 +29,39 @@ const LoaderScreen = ({navigation}) => {
         } 
         else {
           try {
-            // Hacer la solicitud POST
-            const response = await fetch('http://desarrollo-test.com/api/usuarios/getUserByUid', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({uid:user.uid}), // Convertir los datos a JSON
+            // Hacer la solicitud POST utilizando Axios
+            const response = await api.post('/usuarios/getUserByUid', {
+              uid: user.uid,
             });
-      
+          
             // Verificar la respuesta del servidor
-            if (response.ok) {
-              const result = await response.json();
-              console.log("Este es el usuario encontrado", result); // Aquí puedes manejar la respuesta
-    
-              if (result.message == "Usuario encontrado"){
-                try {
-                  const jsonValue = JSON.stringify(result.userData);
-                  console.log(jsonValue);
-                  await AsyncStorage.setItem('@userInfo', jsonValue);
-  
-                  goToProfile(result.userData.typeUser, result.userData.status)
-  
-                } catch (e) {
-                  console.log(e);
-                  navigation.navigate('LoaderScreen');
-                }
-              } else {
-  
-                // showToast('No se ha encontrado el usuario, por favor validar formulario');
-                navigation.replace('Login');
+            const result = response.data;
+            console.log("Este es el usuario encontrado", result);
+          
+            if (result.message === "Usuario encontrado") {
+              try {
+                const jsonValue = JSON.stringify(result.userData);
+                console.log(jsonValue);
+                await AsyncStorage.setItem('@userInfo', jsonValue);
+          
+                goToProfile(result.userData.typeUser, result.userData.status);
+              } catch (e) {
+                console.error(e);
+                navigation.navigate('LoaderScreen');
               }
             } else {
-              console.error('Error en la solicitud:', response.statusText);
               navigation.replace('Login');
             }
           } catch (error) {
-            console.error('Error en la solicitud:', error);
+            // Manejo de errores
+            if (error.response) {
+              console.error('Error en la solicitud:', error.response.statusText);
+            } else {
+              console.error('Error en la solicitud:', error.message);
+            }
             navigation.replace('Login');
           }
+          
         }
 
 

@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     ...commonStyles.titleText19,
     ...external.mh_15,
     ...external.mt_10,
-    color: '#4D66FF',
+    color: '#2D3261',
     fontSize: fontSizes.FONT19,
     textDecorationLine: 'underline',
   },

@@ -54,7 +54,7 @@ const ChangePasswordScreen = () => {
         <View style={{width: '100%'}}>
           <NavigationButton
             title="Cambiar Contraseña"
-            backgroundColor={'#4D66FF'}
+            backgroundColor={'#2D3261'}
             onPress={() => setModalVisible(true)}
             color={'white'}
           />

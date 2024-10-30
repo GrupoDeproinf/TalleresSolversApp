@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
   },
   writeReview: {
     ...commonStyles.titleText19,
-    color: '#4D66FF',
+    color: '#2D3261',
     textDecorationLine: 'underline',
     marginTop: windowHeight(8),
     fontSize: fontSizes.FONT17,

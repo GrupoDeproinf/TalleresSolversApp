@@ -14,7 +14,7 @@ export function CheckMark({props}) {
         height={19}
         x={0.5}
         y={0.5}
-        stroke="#4D66FF"
+        stroke="#2D3261"
         strokeOpacity={0.1}
         rx={3.5}
       />

@@ -14,7 +14,7 @@ const styles = StyleSheet.create({
   },
   changeText: {
     ...commonStyles.subtitleText,
-    color: '#4D66FF',
+    color: '#2D3261',
     textDecorationLine: 'underline',
     paddingTop: windowHeight(10),
   },

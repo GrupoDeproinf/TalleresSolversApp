@@ -56,7 +56,7 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
       {
         showClose ? (
           <TouchableOpacity onPress={CloseSesion}>
-            <Text style={{ color: '#4D66FF' }}>Cerrar Sesión</Text>
+            <Text style={{ color: '#2D3261' }}>Cerrar Sesión</Text>
           </TouchableOpacity>
 
         ) : null

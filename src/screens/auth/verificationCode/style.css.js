@@ -20,7 +20,7 @@ const styles = StyleSheet.create({
   },
   otpTextInput: {
     backgroundColor: appColors.screenBg,
-    borderColor: '#4D66FF1A',
+    borderColor: '#2D32611A',
     borderWidth: 0.5,
     borderRadius: 6,
     width: windowWidth(70),

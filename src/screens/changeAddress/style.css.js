@@ -18,7 +18,7 @@ const styles = StyleSheet.create({
     ...external.ph_10,
     fontSize: fontSizes.FONT16,
     textDecorationLine: 'underline',
-    color: '#4D66FF',
+    color: '#2D3261',
     paddingTop: windowHeight(1),
     paddingHorizontal: windowWidth(20),
   },

@@ -28,9 +28,11 @@ import {useNavigation, useRoute} from '@react-navigation/native';
 import CheckBox from 'react-native-check-box';
 import {Picker} from '@react-native-picker/picker';
 import Icons from 'react-native-vector-icons/FontAwesome'
-
-
 import Icons2 from 'react-native-vector-icons/FontAwesome5'
+import api from '../../../../axiosInstance'; 
+
+
+
 
 import {RadioButton, Button} from 'react-native-paper';
 
@@ -42,7 +44,7 @@ const EditProfile = ({navigation}) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
   const [emailValue, setEmailValue] = useState(smithaWilliamsMail);
   const [phoneValue, setPhoneValue] = useState(phoneMo);
-  const [buttonColor, setButtonColor] = useState('#d1d6de');
+  const [buttonColor, setButtonColor] = useState('#848688');
 
   //
 
@@ -151,116 +153,55 @@ const EditProfile = ({navigation}) => {
       settypeUser(user.typeUser);
 
       try {
-        // Hacer la solicitud POST
-        const response = await fetch(
-          'http://desarrollo-test.com/api/usuarios/getUserByUid',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({uid: user.uid}), // Convertir los datos a JSON
-          },
-        );
-
+        // Hacer la solicitud POST utilizando Axios
+        const response = await api.post('/usuarios/getUserByUid', {
+          uid: user.uid,
+        });
+      
         // Verificar la respuesta del servidor
-        if (response.ok) {
-          const result = await response.json();
-
-          if (result.message == 'Usuario encontrado') {
-            console.log(
-              'Este es el usuario encontrado1234444',
-              result.userData,
-            ); // Aquí puedes manejar la respuesta
-
-
-            setNameTaller(result.userData.nombre);
-
-            setNombre(
-              result.userData.nombre == undefined ? '' : result.userData.nombre,
-            );
-
-
-            if (result.userData.typeUser == "Taller"){
-              let typeID = result.userData.rif.split("-")
-              setcedula(
-                typeID[1] == undefined ? '' : typeID[1],
-              );
-
-              setSelectedPrefix(typeID[0]+"-")
-
-            } else if (result.userData.typeUser == "Cliente") {
-              let typeID = result.userData.cedula.split("-")
-              console.log("typeID[1]", typeID[1])
-              setcedula(
-                typeID[1] == undefined ? '' : typeID[1],
-              );
-
-              setSelectedPrefix(typeID[0]+"-")
-            }
-
-
-            setEmail(
-              result.userData.email == undefined ? '' : result.userData.email,
-            );
-            setPhone(
-              result.userData.phone == undefined ? '' : result.userData.phone,
-            );
-
-            setDireccion(
-              result.userData.Direccion == undefined
-                ? ''
-                : result.userData.Direccion,
-            );
-            setRegComercial(
-              result.userData.RegComercial == undefined
-                ? ''
-                : result.userData.RegComercial,
-            );
-            setCaracteristicas(
-              result.userData.Caracteristicas == undefined
-                ? ''
-                : result.userData.Caracteristicas,
-            );
-            setTarifa(
-              result.userData.Tarifa == undefined ? '' : result.userData.Tarifa,
-            );
-            setExperiencia(
-              result.userData.Experiencia == undefined
-                ? ''
-                : result.userData.Experiencia,
-            );
-            setLinkFacebook(
-              result.userData.LinkFacebook == undefined
-                ? ''
-                : result.userData.LinkFacebook,
-            );
-            setLinkInstagram(
-              result.userData.LinkInstagram == undefined
-                ? ''
-                : result.userData.LinkInstagram,
-            );
-            setLinkTiktok(
-              result.userData.LinkTiktok == undefined
-                ? ''
-                : result.userData.LinkTiktok,
-            );
-            setGarantia(
-              result.userData.Garantia == undefined
-                ? ''
-                : result.userData.Garantia,
-            );
-            setseguro(
-              result.userData.seguro == undefined ? '' : result.userData.seguro,
-            );
-          } else {
+        const result = response.data;
+      
+        if (result.message === 'Usuario encontrado') {
+          console.log('Este es el usuario encontrado', result.userData);
+      
+          setNameTaller(result.userData.nombre);
+      
+          setNombre(result.userData.nombre || '');
+      
+          if (result.userData.typeUser === 'Taller') {
+            let typeID = result.userData.rif.split('-');
+            setcedula(typeID[1] || '');
+            setSelectedPrefix(typeID[0] + '-');
+          } else if (result.userData.typeUser === 'Cliente') {
+            let typeID = result.userData.cedula.split('-');
+            console.log('typeID[1]', typeID[1]);
+            setcedula(typeID[1] || '');
+            setSelectedPrefix(typeID[0] + '-');
           }
+      
+          setEmail(result.userData.email || '');
+          setPhone(result.userData.phone || '');
+          setDireccion(result.userData.Direccion || '');
+          setRegComercial(result.userData.RegComercial || '');
+          setCaracteristicas(result.userData.Caracteristicas || '');
+          setTarifa(result.userData.Tarifa || '');
+          setExperiencia(result.userData.Experiencia || '');
+          setLinkFacebook(result.userData.LinkFacebook || '');
+          setLinkInstagram(result.userData.LinkInstagram || '');
+          setLinkTiktok(result.userData.LinkTiktok || '');
+          setGarantia(result.userData.Garantia || '');
+          setseguro(result.userData.seguro || '');
         } else {
-          console.error('Error en la solicitud:', response.statusText);
+          console.warn('Usuario no encontrado');
         }
       } catch (error) {
-        console.error('Error en la solicitud:', error);
+        if (error.response) {
+          console.error('Error en la solicitud:', error.response.statusText);
+        } else {
+          console.error('Error en la solicitud:', error.message);
+        }
       }
+      
 
       // setinfoUser(user)
     } catch (e) {
@@ -319,58 +260,51 @@ const EditProfile = ({navigation}) => {
 
         console.log(infoUserCreated)
         try {
-          // Hacer la solicitud POST
-          const response = await fetch(
-            'http://desarrollo-test.com/api/usuarios/UpdateClient',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
-            },
-          );
-
+          // Hacer la solicitud POST utilizando Axios
+          const response = await api.post('/usuarios/UpdateClient', infoUserCreated);
+        
           // Verificar la respuesta del servidor
           console.log(response);
-
-          if (response.ok) {
-            const result = await response.json();
+        
+          if (response.status === 200) {
+            const result = response.data;
             console.log(result); // Aquí puedes manejar la respuesta
-
+        
             try {
               const jsonValue = JSON.stringify(infoUserCreated);
               console.log(jsonValue);
               await AsyncStorage.setItem('@userInfo', jsonValue);
             } catch (e) {
-              console.log(e);
+              console.error('Error al guardar en AsyncStorage:', e);
             }
+        
             setNombre('');
             setcedula(0);
             setEmail('');
             setPhone(0);
             setSelectedPrefix('J-');
-
+        
             showToast('Usuario actualizado exitosamente');
             setGetOtpDisabled(false);
-            navigation.goBack('')
-
+            navigation.goBack('');
           } else {
-            const errorText = await response.text(); // Obtener el texto de error si la respuesta no fue exitosa
-            try {
-              const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
-              console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
-              setGetOtpDisabled(false);
-              showToast(errorJson.message);
-            } catch (e) {
-              console.error('Error al procesar la respuesta de error:', e);
-              console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
-            }
+            // Manejar errores de respuesta no exitosa
+            const errorText = response.data;
+            console.error('Error al guardar el usuario:', errorText.message || errorText);
+            setGetOtpDisabled(false);
+            showToast(errorText.message || 'Error inesperado en la actualización');
           }
         } catch (error) {
-          console.error('Error en la solicitud:', error);
-          setGetOtpDisabled(false);
+          if (error.response) {
+            console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
+            setGetOtpDisabled(false);
+            showToast(error.response.data.message || 'Error inesperado en la actualización');
+          } else {
+            console.error('Error en la solicitud:', error.message);
+            setGetOtpDisabled(false);
+          }
         }
+        
       } else {
         setGetOtpDisabled(false);
         showToast('Error al crear al usuario, por favor validar formulario');
@@ -407,52 +341,42 @@ const EditProfile = ({navigation}) => {
         console.log('Aquiiii1234');
   
         try {
-          // Hacer la solicitud POST
-          const response = await fetch(
-            'http://desarrollo-test.com/api/usuarios/UpdateTaller',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
-            },
-          );
-  
+          // Hacer la solicitud POST utilizando Axios
+          const response = await api.post('/usuarios/UpdateTaller', infoUserCreated);
+        
           // Verificar la respuesta del servidor
-          if (response.ok) {
-            const result = await response.json();
+          if (response.status === 200) {
+            const result = response.data;
             console.log(result); // Aquí puedes manejar la respuesta
-  
+        
             try {
               const jsonValue = JSON.stringify(infoUserCreated);
               console.log(jsonValue);
               await AsyncStorage.setItem('@userInfo', jsonValue);
             } catch (e) {
-              console.log(e);
+              console.error('Error al guardar en AsyncStorage:', e);
             }
-  
+        
             showToast('Taller actualizado exitosamente');
             setGetOtpDisabled(false);
-            navigation.goBack('')
+            navigation.goBack('');
           } else {
-            const errorText = await response.text(); // Obtener el texto de error si la respuesta no fue exitosa
-              try {
-                const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
-                console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
-                setGetOtpDisabled(false)
-                showToast(errorJson.message);
-            } catch (e) {
-                console.error('Error al procesar la respuesta de error:', e);
-                console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
-              }
+            // Manejar errores de respuesta no exitosa
+            const errorText = response.data;
+            console.error('Error al guardar el taller:', errorText.message || errorText);
             setGetOtpDisabled(false);
-            console.error('Error en la solicitud:', response.statusText);
+            showToast(errorText.message || 'Error inesperado en la actualización');
           }
         } catch (error) {
           setGetOtpDisabled(false);
-          console.error('Error en la solicitud:', error);
+          if (error.response) {
+            console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
+            showToast(error.response.data.message || 'Error inesperado en la actualización');
+          } else {
+            console.error('Error en la solicitud:', error.message);
+          }
         }
+        
       } 
       else {
         setGetOtpDisabled(false);
@@ -1085,13 +1009,13 @@ const EditProfile = ({navigation}) => {
             title="Guardar Cambios"
             color={buttonColor ? appColors.screenBg : appColors.subtitle}
             onPress={() => onHandleChange()}
-            backgroundColor={'#4D66FF'}
+            backgroundColor={'#2D3261'}
           /> */}
           <NavigationButton
             title="Guardar Cambios"
             onPress={onHandleChange}
             disabled={isGetOtpDisabled}
-            backgroundColor={isGetOtpDisabled ? '#D1D6DE' : '#4D66FF'}
+            backgroundColor={isGetOtpDisabled ? '#848688' : '#2D3261'}
             color={isGetOtpDisabled ? '#051E47' : appColors.screenBg}
           />
         </View>

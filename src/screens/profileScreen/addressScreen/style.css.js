@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   },
   removeText: {
     ...commonStyles.titleText19,
-    color: '#4D66FF',
+    color: '#2D3261',
     fontSize: fontSizes.FONT17,
     textDecorationLine: 'underline',
   },

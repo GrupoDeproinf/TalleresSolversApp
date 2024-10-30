@@ -139,7 +139,7 @@ const ChangeAddressScreen = ({navigation}) => {
           external.ph_20,
         ]}>
         <NavigationButton
-          backgroundColor={'#4D66FF'}
+          backgroundColor={'#2D3261'}
           color={appColors.screenBg}
           title={'Select'}
           onPress={() => navigation.navigate('CheckoutScreen')}
@@ -213,7 +213,7 @@ const ChangeAddressScreen = ({navigation}) => {
                 </View>
                 <View style={{width: 170}}>
                   <NavigationButton
-                    backgroundColor={'#4D66FF'}
+                    backgroundColor={'#2D3261'}
                     title={'Add'}
                     color={appColors.screenBg}
                     onPress={closeModal}

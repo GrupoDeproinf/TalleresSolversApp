@@ -123,7 +123,7 @@ const ResetPassword = ({navigation}) => {
         color={isGetOtpDisabled ? '#051E47' : appColors.screenBg}
         onPress={onHandleChange}
         disabled={isGetOtpDisabled}
-        backgroundColor={isGetOtpDisabled ? '#D1D6DE' : '#4D66FF'}
+        backgroundColor={isGetOtpDisabled ? '#848688' : '#2D3261'}
       />
 
       <CommonModal
@@ -150,7 +150,7 @@ const ResetPassword = ({navigation}) => {
             </Text>
             <View style={[external.mt_20]}>
               <NavigationButton
-                backgroundColor={'#4D66FF'}
+                backgroundColor={'#2D3261'}
                 title="Go to home"
                 onPress={() => stackClear(navigation)}
                 color={appColors.screenBg}

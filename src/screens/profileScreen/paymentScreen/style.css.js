@@ -6,7 +6,7 @@ const styles = StyleSheet.create({
   text: {
     ...commonStyles.titleText19,
     textDecorationLine: 'underline',
-    color: '#4D66FF',
+    color: '#2D3261',
     fontSize: fontSizes.FONT17,
   },
 });

@@ -5,7 +5,7 @@ const styles = StyleSheet.create({
   verticalLine: {
     height: '100%',
     width: 5,
-    backgroundColor: '#4D66FF',
+    backgroundColor: '#2D3261',
     marginHorizontal: windowHeight(5),
     borderRadius: 10,
   },

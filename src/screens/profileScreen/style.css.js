@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     borderRadius: windowHeight(60),
     alignItems: 'center',
     justifyContent: 'center',
-    borderColor: '#4D66FF',
+    borderColor: '#2D3261',
   },
   menuItemContent: {
     alignItems: 'center',

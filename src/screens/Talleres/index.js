@@ -9,6 +9,7 @@ import styles from './style.css';
 import {useValues} from '../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
+import api from '../../../axiosInstance';
 
 
 
@@ -44,27 +45,31 @@ const TalleresContainer = ({navigation}) => {
         console.log("Userrrr12344444", user)
 
         try {
-          // Hacer la solicitud POST
-          const response = await fetch('http://desarrollo-test.com/api/usuarios/getTalleres', {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-            },
+          // Hacer la solicitud GET utilizando Axios
+          const response = await api.get('/usuarios/getTalleres', {
+              headers: {
+                  'Content-Type': 'application/json',
+              },
           });
-    
+      
           // Verificar la respuesta del servidor
-          if (response.ok) {
-            const result = await response.json();
-            console.log("usuarios de resultados21234565156", result); // Aquí puedes manejar la respuesta
-            
-            setdataTalleres(result)
+          if (response.status === 200) {
+              const result = response.data;
+              console.log("usuarios de resultados", result); // Aquí puedes manejar la respuesta
+      
+              setdataTalleres(result);
           } else {
-
-            setdataTalleres([])
+              setdataTalleres([]);
           }
-        } catch (error) {
-            setdataTalleres([])
-        }
+      } catch (error) {
+          setdataTalleres([]);
+          if (error.response) {
+              console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
+          } else {
+              console.error('Error en la solicitud:', error.message);
+          }
+      }
+      
 
     } catch(e) {
         setdataTalleres([])

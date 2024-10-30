@@ -3,7 +3,7 @@ export default color = {
   subtitle: '#9BA6B8',
   titleText: '#051E47',
   screenBg: '#FFFFFF',
-  primary: '#4D66FF',
+  primary: '#2D3261',
   bgLayout: '#9FA8BE1A',
   bgLayer: '#F5F6F8',
   primaryLight: '#EFEAff',
@@ -24,7 +24,7 @@ export default color = {
   profileIconBg: '#F1F2F5',
   cardBorder: '#EEF0FF',
   redLight: '#FF5154',
-  lightButton: '#D1D6DE',
+  lightButton: '#848688',
   lightScreenBg: '#FDFDFD',
   shadowColor: '#202228',
 };

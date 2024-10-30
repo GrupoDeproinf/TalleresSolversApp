@@ -6,7 +6,7 @@ import {fontSizes} from '../../themes/appConstant';
 const styles = StyleSheet.create({
   container: {
     ...commonStyles.titleText19,
-    color: '#4D66FF',
+    color: '#2D3261',
     fontSize: fontSizes.FONT17,
   },
 });

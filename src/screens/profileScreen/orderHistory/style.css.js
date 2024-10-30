@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
   buyAgain: {
     ...commonStyles.titleText19,
     paddingHorizontal: windowHeight(5),
-    color: '#4D66FF',
+    color: '#2D3261',
     fontSize: fontSizes.FONT17,
   },
   menuItemContent: {

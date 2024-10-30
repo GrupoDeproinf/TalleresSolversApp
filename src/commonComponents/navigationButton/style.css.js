@@ -13,7 +13,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: '#d1d6de',
+    color: '#848688',
     ...external.ti_center,
     height: windowHeight(19),
     fontSize: fontSizes.FONT20,

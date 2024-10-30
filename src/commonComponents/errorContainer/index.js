@@ -56,7 +56,7 @@ const ErrorContainer = ({
         <View style={{width: '100%'}}>
           <NavigationButton
             title={Buttontitle}
-            backgroundColor={'#4D66FF'}
+            backgroundColor={'#2D3261'}
             color={appColors.screenBg}
             onPress={onPress}
           />

@@ -36,7 +36,7 @@ const styles = StyleSheet.create({
     textDecorationLine: 'line-through',
   },
   viewContainer: {
-    backgroundColor: '#4D66FF',
+    backgroundColor: '#2D3261',
     borderRadius: windowHeight(8),
     alignItems: 'center',
     justifyContent: 'center',

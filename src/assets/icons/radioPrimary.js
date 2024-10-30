@@ -9,8 +9,8 @@ export function RadioBoxPrimary(props) {
       height="22"
       viewBox="0 0 22 22"
       fill="none">
-      <Circle cx="11" cy="11" r="10.5" fill="white" stroke="#4D66FF" />
-      <Circle cx="11" cy="11" r="6" fill="#4D66FF" />
+      <Circle cx="11" cy="11" r="10.5" fill="white" stroke="#2D3261" />
+      <Circle cx="11" cy="11" r="6" fill="#2D3261" />
     </Svg>
   );
 }

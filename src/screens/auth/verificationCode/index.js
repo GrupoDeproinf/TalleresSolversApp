@@ -60,7 +60,7 @@ const OtpVerification = ({navigation}) => {
                     styles.otpTextInput,
                     {backgroundColor: bgFullStyle},
                     {color: textColorStyle},
-                    {borderColor: isDark ? '#47484D' : '#4D66FF1A'},
+                    {borderColor: isDark ? '#47484D' : '#2D32611A'},
                   ]}
                   containerStyle={[external.as_center]}
                   selectionColor={textColorStyle}
@@ -87,7 +87,7 @@ const OtpVerification = ({navigation}) => {
         title={getOtp}
         color={otpValue.length === 5 ? appColors.screenBg : '#051E47'}
         onPress={onPressNavigationButton}
-        backgroundColor={otpValue.length === 5 ? '#4D66FF' : '#D1D6DE'}
+        backgroundColor={otpValue.length === 5 ? '#2D3261' : '#848688'}
       />
     </View>
   );

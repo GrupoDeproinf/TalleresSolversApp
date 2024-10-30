@@ -225,7 +225,7 @@ const CheckoutScreen = ({navigation}) => {
             </Text>
             <View style={[external.mt_20]}>
               <NavigationButton
-                backgroundColor={'#4D66FF'}
+                backgroundColor={'#2D3261'}
                 title="View Order Status"
                 onPress={() => navigation.navigate('OrderStatus')}
                 color={appColors.screenBg}
@@ -297,7 +297,7 @@ const CheckoutScreen = ({navigation}) => {
               </View>
               <View style={{width: windowWidth(200)}}>
                 <NavigationButton
-                  backgroundColor={'#4D66FF'}
+                  backgroundColor={'#2D3261'}
                   title={'Add'}
                   color={appColors.screenBg}
                   onPress={closeSecondModel}

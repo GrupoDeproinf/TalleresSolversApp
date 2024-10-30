@@ -34,6 +34,7 @@ import appColors from '../../themes/appColors';
 import {RadioButton, Button} from 'react-native-paper';
 import {windowHeight} from '../../themes/appConstant';
 import NavigationButton from '../../commonComponents/navigationButton';
+import api from '../../../axiosInstance'; 
 
 const FormTaller = () => {
   const [NameTaller, setNameTaller] = useState('');
@@ -102,7 +103,7 @@ const FormTaller = () => {
 
   const [checked, setChecked] = useState('no'); // Valor i
 
-  const [buttonColor, setButtonColor] = useState('#d1d6de');
+  const [buttonColor, setButtonColor] = useState('#848688');
   const [disabledInput, setdisabledInput] = useState(false);
 
   const navigation = useNavigation();
@@ -147,95 +148,46 @@ const FormTaller = () => {
 
   const getData = async uid => {
     try {
-      // Hacer la solicitud POST
-      const response = await fetch(
-        'http://desarrollo-test.com/api/usuarios/getUserByUid',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({uid: uid}), // Convertir los datos a JSON
-        },
-      );
-
+      // Hacer la solicitud POST utilizando Axios
+      const response = await api.post('/usuarios/getUserByUid', {
+        uid: uid,
+      });
+    
       // Verificar la respuesta del servidor
-      if (response.ok) {
-        const result = await response.json();
-
-        if (result.message == 'Usuario encontrado') {
-          console.log('Este es el usuario encontrado1234444', result.userData); // Aquí puedes manejar la respuesta
-          setNameTaller(result.userData.nombre);
-
-          setChecked(result.userData.agenteAutorizado);
-
-          setNombre(
-            result.userData.nombre == undefined ? '' : result.userData.nombre,
-          );
-          setcedula(
-            result.userData.rif == undefined ? '' : result.userData.rif,
-          );
-          setEmail(
-            result.userData.email == undefined ? '' : result.userData.email,
-          );
-          setPhone(
-            result.userData.phone == undefined ? '' : result.userData.phone,
-          );
-
-          setDireccion(
-            result.userData.Direccion == undefined
-              ? ''
-              : result.userData.Direccion,
-          );
-          setRegComercial(
-            result.userData.RegComercial == undefined
-              ? ''
-              : result.userData.RegComercial,
-          );
-          setCaracteristicas(
-            result.userData.Caracteristicas == undefined
-              ? ''
-              : result.userData.Caracteristicas,
-          );
-          setTarifa(
-            result.userData.Tarifa == undefined ? '' : result.userData.Tarifa,
-          );
-          setExperiencia(
-            result.userData.Experiencia == undefined
-              ? ''
-              : result.userData.Experiencia,
-          );
-          setLinkFacebook(
-            result.userData.LinkFacebook == undefined
-              ? ''
-              : result.userData.LinkFacebook,
-          );
-          setLinkInstagram(
-            result.userData.LinkInstagram == undefined
-              ? ''
-              : result.userData.LinkInstagram,
-          );
-          setLinkTiktok(
-            result.userData.LinkTiktok == undefined
-              ? ''
-              : result.userData.LinkTiktok,
-          );
-          setGarantia(
-            result.userData.Garantia == undefined
-              ? ''
-              : result.userData.Garantia,
-          );
-          setseguro(
-            result.userData.seguro == undefined ? '' : result.userData.seguro,
-          );
-        } else {
-        }
+      const result = response.data;
+    
+      if (result.message === 'Usuario encontrado') {
+        console.log('Este es el usuario encontrado:', result.userData);
+    
+        setNameTaller(result.userData.nombre);
+        setChecked(result.userData.agenteAutorizado);
+    
+        // Manejar y asignar los valores con validación de undefined
+        setNombre(result.userData.nombre || '');
+        setcedula(result.userData.rif || '');
+        setEmail(result.userData.email || '');
+        setPhone(result.userData.phone || '');
+        setDireccion(result.userData.Direccion || '');
+        setRegComercial(result.userData.RegComercial || '');
+        setCaracteristicas(result.userData.Caracteristicas || '');
+        setTarifa(result.userData.Tarifa || '');
+        setExperiencia(result.userData.Experiencia || '');
+        setLinkFacebook(result.userData.LinkFacebook || '');
+        setLinkInstagram(result.userData.LinkInstagram || '');
+        setLinkTiktok(result.userData.LinkTiktok || '');
+        setGarantia(result.userData.Garantia || '');
+        setseguro(result.userData.seguro || '');
       } else {
-        console.error('Error en la solicitud:', response.statusText);
+        console.log('Usuario no encontrado');
       }
     } catch (error) {
-      console.error('Error en la solicitud:', error);
+      if (error.response) {
+        console.error('Error en la solicitud:', error.response.statusText);
+      } else {
+        console.error('Error en la solicitud:', error.message);
+      }
     }
+    
   };
 
   const {
@@ -264,88 +216,68 @@ const FormTaller = () => {
       console.log('Aprobar');
 
       try {
-        // Hacer la solicitud POST
-        const response = await fetch(
-          'http://desarrollo-test.com/api/usuarios/actualizarStatusUsuario',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({uid: uidTaller, nuevoStatus: 'Aprobado'}), // Convertir los datos a JSON
-          },
-        );
-
+        // Hacer la solicitud POST utilizando Axios
+        const response = await api.post('/usuarios/actualizarStatusUsuario', {
+          uid: uidTaller,
+          nuevoStatus: 'Aprobado',
+        });
+      
         // Verificar la respuesta del servidor
-        if (response.ok) {
-          const result = await response.json();
-          console.log('Este es el usuario nuevo ', result); // Aquí puedes manejar la respuesta
-
-          if (
-            result.message ==
-            'El estado del usuario ha sido actualizado exitosamente'
-          ) {
-            showToast('Se ha aprobado el taller exitosamente');
-            setModalVisible(false);
-            navigation.goBack('');
-          } else {
-            showToast('Ha ocurrido un error');
-            setModalVisible(false);
-            navigation.goBack('');
-          }
+        const result = response.data;
+      
+        if (result.message === 'El estado del usuario ha sido actualizado exitosamente') {
+          showToast('Se ha aprobado el taller exitosamente');
+          setModalVisible(false);
+          navigation.goBack();
         } else {
-          console.error('Error en la solicitud:', response);
           showToast('Ha ocurrido un error');
           setModalVisible(false);
-          navigation.goBack('');
+          navigation.goBack();
         }
       } catch (error) {
+        // Manejo de errores
+        if (error.response) {
+          console.error('Error en la solicitud:', error.response.statusText);
+        } else {
+          console.error('Error en la solicitud:', error.message);
+        }
         showToast('Ha ocurrido un error');
         setModalVisible(false);
-        navigation.goBack('');
+        navigation.goBack();
       }
+      
     } else {
       try {
-        // Hacer la solicitud POST
-        const response = await fetch(
-          'http://desarrollo-test.com/api/usuarios/actualizarStatusUsuario',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({uid: uidTaller, nuevoStatus: 'Rechazado'}), // Convertir los datos a JSON
-          },
-        );
-
+        // Hacer la solicitud POST utilizando Axios
+        const response = await api.post('/usuarios/actualizarStatusUsuario', {
+          uid: uidTaller,
+          nuevoStatus: 'Rechazado',
+        });
+      
         // Verificar la respuesta del servidor
-        if (response.ok) {
-          const result = await response.json();
-          console.log('Este es el usuario nuevo ', result); // Aquí puedes manejar la respuesta
-
-          if (
-            result.message ==
-            'El estado del usuario ha sido actualizado exitosamente'
-          ) {
-            showToast('Se ha rechazado el taller');
-            setModalVisible(false);
-            navigation.goBack('');
-          } else {
-            showToast('Ha ocurrido un error');
-            setModalVisible(false);
-            navigation.goBack('');
-          }
+        const result = response.data;
+      
+        if (result.message === 'El estado del usuario ha sido actualizado exitosamente') {
+          showToast('Se ha rechazado el taller');
+          setModalVisible(false);
+          navigation.goBack();
         } else {
-          console.error('Error en la solicitud:', response);
           showToast('Ha ocurrido un error');
           setModalVisible(false);
-          navigation.goBack('');
+          navigation.goBack();
         }
       } catch (error) {
+        // Manejo de errores
+        if (error.response) {
+          console.error('Error en la solicitud:', error.response.statusText);
+        } else {
+          console.error('Error en la solicitud:', error.message);
+        }
         showToast('Ha ocurrido un error');
         setModalVisible(false);
-        navigation.goBack('');
+        navigation.goBack();
       }
+      
     }
   };
 
@@ -420,11 +352,11 @@ const FormTaller = () => {
               isChecked={isCheckedName}
               style={{
                 marginTop: 30,
-                color: '#4D66FF',
+                color: '#2D3261',
                 marginRight: 10,
                 marginRight: 10,
               }}
-              checkedCheckBoxColor="#4D66FF"
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedName(!isCheckedName);
               }}
@@ -452,8 +384,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isRif}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisRif(!isRif);
               }}
@@ -485,8 +417,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedDireccion}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedDireccion(!isCheckedDireccion);
               }}
@@ -519,8 +451,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedRegistroComercial}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedRegistroComercial(!isCheckedRegistroComercial);
               }}
@@ -559,8 +491,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedTelefono}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedTelefono(!isCheckedTelefono);
               }}
@@ -597,8 +529,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedEmail}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedEmail(!isCheckedEmail);
               }}
@@ -626,8 +558,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedCaracteristicas}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedCaracteristicas(!isCheckedCaracteristicas);
               }}
@@ -662,8 +594,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedAgente}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedAgente(!isCheckedAgente);
               }}
@@ -712,8 +644,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedExperiencia}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedExperiencia(!isCheckedExperiencia);
               }}
@@ -745,8 +677,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedFacebook}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedFacebook(!isCheckedFacebook);
               }}
@@ -775,8 +707,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedInstagram}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedInstagram(!isCheckedInstagram);
               }}
@@ -808,8 +740,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedTiktok}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedTiktok(!isCheckedTiktok);
               }}
@@ -839,8 +771,8 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedSeguro}
-              style={{marginTop: 30, color: '#4D66FF', marginRight: 10}}
-              checkedCheckBoxColor="#4D66FF"
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedSeguro(!isCheckedSeguro);
               }}

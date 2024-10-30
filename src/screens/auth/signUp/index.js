@@ -9,7 +9,7 @@ import {
   ToastAndroid,
   Button,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 // import AuthContainer from '../../../commonComponents/authContainer';
 // import {
 //   confirmPasswords,
@@ -28,29 +28,30 @@ import React, {useState, useEffect} from 'react';
 // } from '../../../constant';
 import TextInputs from '../../../commonComponents/textInputs';
 import NavigationButton from '../../../commonComponents/navigationButton';
-import {commonStyles} from '../../../style/commonStyle.css';
-import {external} from '../../../style/external.css';
+import { commonStyles } from '../../../style/commonStyle.css';
+import { external } from '../../../style/external.css';
 import styles from './style.css';
 import appColors from '../../../themes/appColors';
-import {Email} from '../../../assets/icons/email';
-import {Call, Key} from '../../../utils/icon';
-import {useValues} from '../../../../App';
+import { Email } from '../../../assets/icons/email';
+import { Call, Key } from '../../../utils/icon';
+import { useValues } from '../../../../App';
 
 import UserImage from '../../../assets/newImage/user.png';
 import KeyImage from '../../../assets/newImage/key.png';
 
-import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
+import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Picker} from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 
 
 import Icons from 'react-native-vector-icons/FontAwesome'
 import Icons2 from 'react-native-vector-icons/FontAwesome5'
+import api from '../../../../axiosInstance'; 
 
 
 
-const SignUp = ({navigation}) => {
+const SignUp = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [cedula, setcedula] = useState(0);
   const [Nombre, setNombre] = useState('');
@@ -81,11 +82,11 @@ const SignUp = ({navigation}) => {
 
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
-    {key: 'Cliente', title: 'Cliente'},
-    {key: 'Taller', title: 'Taller'},
+    { key: 'Cliente', title: 'Cliente' },
+    { key: 'Taller', title: 'Taller' },
   ]);
 
-  useEffect(() => {}, [isGetOtpDisabled]);
+  useEffect(() => { }, [isGetOtpDisabled]);
 
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -155,66 +156,54 @@ const SignUp = ({navigation}) => {
           cedula: selectedPrefix + "" + cedula,
           phone: phone,
           typeUser: 'Cliente',
-          email: email,
-          password:password
+          email: email.toLowerCase(),
+          password: password.toLowerCase()
         };
 
         console.log(infoUserCreated)
 
         try {
-          // Hacer la solicitud POST
-          const response = await fetch(
-            'http://desarrollo-test.com/api/usuarios/SaveClient',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
-            },
-          );
+          // Hacer la solicitud POST utilizando Axios
+          const response = await api.post('/usuarios/SaveClient', infoUserCreated);
 
           // Verificar la respuesta del servidor
-          console.log(response);
+          console.log(response); // Mostrar la respuesta completa
 
-          if (response.ok) {
-            const result = await response.json();
-            console.log(result); // Aquí puedes manejar la respuesta
+          const result = response.data; // Los datos vienen directamente de response.data
+          console.log(result); // Aquí puedes manejar la respuesta
 
-            try {
-              const jsonValue = JSON.stringify(infoUserCreated);
-              console.log(jsonValue);
-              await AsyncStorage.setItem('@userInfo', jsonValue);
-            } catch (e) {
-              console.log(e);
-            }
-            setNombre('');
-            setcedula(0);
-            setEmail('');
-            setPhone(0);
-            setPassword('');
-            setConfirmPassword('');
-            settypeOfView('');
-            setSelectedPrefix('J-');
-
-            showToast('Usuario creado exitosamente');
-            setGetOtpDisabled(false);
-            navigation.navigate('Login');
-          } else {
-            const errorText = await response.text(); // Obtener el texto de error si la respuesta no fue exitosa
-            try {
-              const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
-              console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
-              setGetOtpDisabled(false);
-              showToast(errorJson.message);
-            } catch (e) {
-              console.error('Error al procesar la respuesta de error:', e);
-              console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
-            }
+          try {
+            const jsonValue = JSON.stringify(infoUserCreated);
+            console.log(jsonValue);
+            await AsyncStorage.setItem('@userInfo', jsonValue);
+          } catch (e) {
+            console.log(e);
           }
-        } catch (error) {
-          console.error('Error en la solicitud:', error);
+
+          // Limpiar los campos del formulario
+          setNombre('');
+          setcedula(0);
+          setEmail('');
+          setPhone(0);
+          setPassword('');
+          setConfirmPassword('');
+          settypeOfView('');
+          setSelectedPrefix('J-');
+
+          showToast('Usuario creado exitosamente');
           setGetOtpDisabled(false);
+          navigation.navigate('Login');
+        } catch (error) {
+          if (error.response) {
+            // La solicitud se hizo y el servidor respondió con un código de estado
+            console.error('Error al guardar el usuario:', error.response.data.message);
+            setGetOtpDisabled(false);
+            showToast(error.response.data.message); // Mostrar el mensaje de error del servidor
+          } else {
+            // La solicitud fue hecha pero no se recibió respuesta
+            console.error('Error en la solicitud:', error);
+            setGetOtpDisabled(false);
+          }
         }
       } else {
         setGetOtpDisabled(false);
@@ -240,65 +229,56 @@ const SignUp = ({navigation}) => {
           rif: selectedPrefix + "" + cedula,
           phone: phone,
           typeUser: 'Taller',
-          email: email,
-          password:password
+          email: email.toLowerCase(),
+          password: password.toLowerCase()
         };
 
         console.log(infoUserCreated);
 
         try {
-          // Hacer la solicitud POST
-          const response = await fetch(
-            'http://desarrollo-test.com/api/usuarios/SaveTaller',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(infoUserCreated), // Convertir los datos a JSON
-            },
-          );
-
+          // Hacer la solicitud POST utilizando Axios
+          const response = await api.post('/usuarios/SaveTaller', infoUserCreated);
+      
           // Verificar la respuesta del servidor
-          if (response.ok) {
-            const result = await response.json();
-            console.log(result); // Aquí puedes manejar la respuesta
-
-            try {
-              const jsonValue = JSON.stringify(infoUserCreated);
-              console.log(jsonValue);
-              await AsyncStorage.setItem('@userInfo', jsonValue);
-            } catch (e) {
-              console.log(e);
-            }
-            setNombre('');
-            setcedula(0);
-            setEmail('');
-            setPhone(0);
-            setPassword('');
-            setConfirmPassword('');
-            settypeOfView('');
-            setSelectedPrefix('J-');
-
-            showToast('Usuario creado exitosamente');
-            setGetOtpDisabled(false);
-            navigation.navigate('Login');
-          } else {
-            const errorText = await response.text(); // Obtener el texto de error si la respuesta no fue exitosa
-            try {
-              const errorJson = JSON.parse(errorText); // Intentar convertir el texto a JSON
-              console.error('Error al guardar el usuario:', errorJson.message); // Acceder a la propiedad "message"
-              setGetOtpDisabled(false);
-              showToast(errorJson.message);
-            } catch (e) {
-              console.error('Error al procesar la respuesta de error:', e);
-              console.error('Texto de error sin formato JSON:', errorText); // Mostrar el texto de error original si no se pudo parsear
-            }
+          console.log(response); // Mostrar la respuesta completa
+      
+          const result = response.data; // Los datos vienen directamente de response.data
+          console.log(result); // Aquí puedes manejar la respuesta
+      
+          try {
+            const jsonValue = JSON.stringify(infoUserCreated);
+            console.log(jsonValue);
+            await AsyncStorage.setItem('@userInfo', jsonValue);
+          } catch (e) {
+            console.log(e);
           }
-        } catch (error) {
-          console.error('Error en la solicitud:', error);
+      
+          // Limpiar los campos del formulario
+          setNombre('');
+          setcedula(0);
+          setEmail('');
+          setPhone(0);
+          setPassword('');
+          setConfirmPassword('');
+          settypeOfView('');
+          setSelectedPrefix('J-');
+      
+          showToast('Usuario creado exitosamente');
           setGetOtpDisabled(false);
-          showToast('Error al crear al usuario, por favor validar formulario');
+          navigation.navigate('Login');
+        } catch (error) {
+          if (error.response) {
+            // La solicitud se hizo y el servidor respondió con un código de estado
+            const errorMessage = error.response.data.message || 'Error al crear el usuario.';
+            console.error('Error al guardar el usuario:', errorMessage);
+            setGetOtpDisabled(false);
+            showToast(errorMessage); // Mostrar el mensaje de error del servidor
+          } else {
+            // La solicitud fue hecha pero no se recibió respuesta
+            console.error('Error en la solicitud:', error);
+            setGetOtpDisabled(false);
+            showToast('Error al crear al usuario, por favor validar formulario');
+          }
         }
       } else {
         showToast('Error al crear al usuario, por favor validar formulario');
@@ -306,7 +286,7 @@ const SignUp = ({navigation}) => {
       }
     }
   };
-  const {bgFullStyle, textColorStyle, t, textRTLStyle} = useValues();
+  const { bgFullStyle, textColorStyle, t, textRTLStyle } = useValues();
 
   // const showToast = (type, text1, position, visibilityTime, autoHide) => {
   //   Toast.show({
@@ -334,7 +314,7 @@ const SignUp = ({navigation}) => {
   };
 
   return (
-    <View style={[styles.container, {backgroundColor: bgFullStyle}]}>
+    <View style={[styles.container, { backgroundColor: bgFullStyle }]}>
       <Text
         style={{
           fontSize: 20,
@@ -344,14 +324,14 @@ const SignUp = ({navigation}) => {
         }}>
         Regístrate ahora {typeOfView != '' ? '(' + typeOfView + ')' : null}
       </Text>
-      <Text style={{fontSize: 13, color: 'gray', marginBottom: 10}}>
+      <Text style={{ fontSize: 13, color: 'gray', marginBottom: 10 }}>
         Regístrate ya sea como cliente o taller
       </Text>
 
       {typeOfView === 'Cliente' ? (
         // ****************************** FOMRULARIO PARA CLIENTES ***********************************************
 
-        <ScrollView style={{marginBottom: 15}}>
+        <ScrollView style={{ marginBottom: 15 }}>
           <View>
             <TextInputs
               title="Nombre y Apellido"
@@ -376,18 +356,18 @@ const SignUp = ({navigation}) => {
               <Text style={styles.errorStyle}>{NombreError}</Text>
             )}
 
-            <View style={{marginTop: 5}}>
+            <View style={{ marginTop: 5 }}>
               <Text
                 style={[
                   styles.headingContainer,
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
+                  { color: textColorStyle },
+                  { textAlign: textRTLStyle },
                 ]}>
                 Cedula
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 {/* Select para elegir "J-" o "G-" */}
                 <View
                   style={{
@@ -413,7 +393,7 @@ const SignUp = ({navigation}) => {
                 </View>
 
                 {/* TextInput para el número de RIF */}
-                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
+                <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
                   <TextInputs
                     title=""
                     value={cedula}
@@ -433,7 +413,7 @@ const SignUp = ({navigation}) => {
                     }}
                     keyboardType="numeric"
                     icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                    style={{height: 50}} // Altura para el TextInput
+                    style={{ height: 50 }} // Altura para el TextInput
                   />
                 </View>
               </View>
@@ -552,7 +532,7 @@ const SignUp = ({navigation}) => {
         </ScrollView>
       ) : typeOfView === 'Taller' ? (
         // ****************************** FOMRULARIO PARA TALLERES ***********************************************
-        <ScrollView style={{marginBottom: 15}}>
+        <ScrollView style={{ marginBottom: 15 }}>
           <View>
             <TextInputs
               title="Nombre del Taller"
@@ -577,19 +557,19 @@ const SignUp = ({navigation}) => {
               <Text style={styles.errorStyle}>{NombreError}</Text>
             )}
 
-            <View style={{marginTop: 5}}>
+            <View style={{ marginTop: 5 }}>
               {/* Texto "RIF" arriba de los inputs */}
               <Text
                 style={[
                   styles.headingContainer,
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
+                  { color: textColorStyle },
+                  { textAlign: textRTLStyle },
                 ]}>
                 Registro de Información Fiscal (RIF)
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 {/* Select para elegir "J-" o "G-" */}
                 <View
                   style={{
@@ -615,7 +595,7 @@ const SignUp = ({navigation}) => {
                 </View>
 
                 {/* TextInput para el número de RIF */}
-                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
+                <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
                   <TextInputs
                     title=""
                     value={cedula}
@@ -635,7 +615,7 @@ const SignUp = ({navigation}) => {
                     }}
                     keyboardType="numeric"
                     icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                    style={{height: 50}} // Altura para el TextInput
+                    style={{ height: 50 }} // Altura para el TextInput
                   />
                 </View>
               </View>
@@ -752,7 +732,7 @@ const SignUp = ({navigation}) => {
       ) : null}
 
       {typeOfView == '' ? (
-        <View style={{flex: 1, marginTop: '5%'}}>
+        <View style={{ flex: 1, marginTop: '5%' }}>
           <TouchableOpacity
             onPress={() => handleClientePress()}
             style={stylesCard.boxContainer}>
@@ -761,7 +741,7 @@ const SignUp = ({navigation}) => {
               style={[
                 commonStyles.titleText19,
                 external.ph_5,
-                {color: textColorStyle},
+                { color: textColorStyle },
               ]}>
               Cliente
             </Text>
@@ -775,7 +755,7 @@ const SignUp = ({navigation}) => {
               style={[
                 commonStyles.titleText19,
                 external.ph_5,
-                {color: textColorStyle},
+                { color: textColorStyle },
               ]}>
               Taller
             </Text>
@@ -788,7 +768,7 @@ const SignUp = ({navigation}) => {
           title="Registrarse"
           onPress={onHandleChange}
           disabled={isGetOtpDisabled}
-          backgroundColor={isGetOtpDisabled ? '#D1D6DE' : '#4D66FF'}
+          backgroundColor={isGetOtpDisabled ? '#848688' : '#2D3261'}
           color={isGetOtpDisabled ? '#051E47' : appColors.screenBg}
         />
       ) : null}
@@ -802,7 +782,7 @@ const SignUp = ({navigation}) => {
             style={[
               commonStyles.titleText19,
               external.ph_5,
-              {color: textColorStyle},
+              { color: textColorStyle },
             ]}>
             Ingresar
           </Text>
@@ -828,7 +808,7 @@ const stylesCard = StyleSheet.create({
     marginBottom: 20, // Espaciado entre las cajas
     elevation: 3, // Sombra para Android
     shadowColor: '#000', // Sombra para iOS
-    shadowOffset: {width: 0, height: 2},
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },

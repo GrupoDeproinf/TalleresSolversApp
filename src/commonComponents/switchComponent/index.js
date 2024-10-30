@@ -15,7 +15,7 @@ const SwitchComponent = ({Enable, onPress}) => {
     <View>
       <SwitchToggle
         circleColorOff={'#76777A'}
-        circleColorOn={'#4D66FF'}
+        circleColorOn={'#2D3261'}
         backgroundColorOn={'#292D41'}
         backgroundColorOff={'#2F3137'}
         switchOn={Enable}

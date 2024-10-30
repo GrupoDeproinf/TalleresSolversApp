@@ -25,7 +25,7 @@ const NotificationContainer = () => {
             <Text
               style={[
                 commonStyles.hederH2,
-                {fontSize: fontSizes.FONT17, color: '#4D66FF'},
+                {fontSize: fontSizes.FONT17, color: '#2D3261'},
               ]}>
               {clearAll}
             </Text>
