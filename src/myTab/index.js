@@ -5,7 +5,8 @@ import HomeScreen from '../screens/homeScreen';
 import CategoryScreen from '../screens/categoryScreen';
 import MyBeg from '../screens/emptyScreen/myBeg';
 import ProfileScreen from '../screens/profileScreen';
-import TalleresContainer from '../screens/Talleres'
+import TalleresContainer from '../screens/Talleres';
+import ServiciosContainer from '../screens/Servicios';
 import {
   Category,
   CategoryLight,
@@ -16,16 +17,15 @@ import {
   ProfileLight,
   ProfileTab,
   Setting,
-  
 } from '../utils/icon';
 import images from '../utils/images';
 import {external} from '../style/external.css';
 import LinearGradient from 'react-native-linear-gradient';
 import {useValues} from '../../App';
 import {windowHeight, windowWidth} from '../themes/appConstant';
-import Icons from 'react-native-vector-icons/FontAwesome'
-import Icons2 from 'react-native-vector-icons/Entypo'
-
+import Icons from 'react-native-vector-icons/FontAwesome';
+import Icons2 from 'react-native-vector-icons/Entypo';
+import Icons3 from 'react-native-vector-icons/FontAwesome5';
 
 const Tab = createBottomTabNavigator();
 
@@ -112,7 +112,6 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
   );
 };
 
-
 // Tabs usuarios clientes
 
 const MyTabs = () => {
@@ -129,8 +128,10 @@ const MyTabs = () => {
         component={HomeScreen}
         options={{
           tabBarLabel: 'Home',
-          tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8"/>,
-          activeTabBarIcon: () => <Icons name="home" size={30} color="#2D3261"/>
+          tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8" />,
+          activeTabBarIcon: () => (
+            <Icons name="home" size={30} color="#2D3261" />
+          ),
         }}
       />
       <Tab.Screen
@@ -142,13 +143,26 @@ const MyTabs = () => {
           activeTabBarIcon: () => <Category />,
         }}
       />
-      <Tab.Screen
+      
+      {/* <Tab.Screen
         name="MyBeg"
         component={MyBeg}
         options={{
           tabBarLabel: 'My Bag',
           tabBarIcon: () => <MyBegDis />,
           activeTabBarIcon: () => <MyBegs />,
+        }}
+      /> */}
+
+      <Tab.Screen
+        name="Servicios"
+        component={ServiciosContainer}
+        options={{
+          tabBarLabel: 'Servicios',
+          tabBarIcon: () => <Icons3 name="tools" size={30} color="#9BA6B8" />,
+          activeTabBarIcon: () => (
+            <Icons3 name="tools" size={30} color="#2D3261" />
+          ),
         }}
       />
 
@@ -157,8 +171,10 @@ const MyTabs = () => {
         component={TalleresContainer}
         options={{
           tabBarLabel: 'Talleres',
-          tabBarIcon: () => <Icons name="car" size={30} color="#9BA6B8"/>,
-          activeTabBarIcon: () => <Icons name="car" size={30} color="#2D3261"/>,
+          tabBarIcon: () => <Icons name="car" size={30} color="#9BA6B8" />,
+          activeTabBarIcon: () => (
+            <Icons name="car" size={30} color="#2D3261" />
+          ),
         }}
       />
 

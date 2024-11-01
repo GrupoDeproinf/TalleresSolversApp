@@ -7,7 +7,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 
-const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArrow, showClose }) => {
+const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArrow, showClose, showNewService }) => {
   const {
     linearColorStyle,
     textColorStyle,
@@ -39,6 +39,11 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
   };
 
 
+  const createorEditService = async () => {
+    console.log("Aquiii estoy")
+  };
+
+
   return (
     <View style={[styles.container, { flexDirection: viewRTLStyle }]}>
 
@@ -62,12 +67,22 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
         ) : null
       }
 
+{
+        showNewService ? (
+          <TouchableOpacity onPress={createorEditService} style={{marginRight:-55}}>
+            <Text style={{ color: '#2D3261' }}>Agregar</Text>
+          </TouchableOpacity>
+
+        ) : null
+      }
+      
 
 
 
 
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginLeft: -60 }}>
-        <Text style={[styles.titleText, { color: textColorStyle }]}>{title} {showClose}</Text>
+
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', marginLeft: showClose == true ? -60 : 20  }}>
+        <Text style={[styles.titleText, { color: textColorStyle }]}>{title}</Text>
       </View>
 
 
