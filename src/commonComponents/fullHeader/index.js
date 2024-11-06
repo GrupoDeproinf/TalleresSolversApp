@@ -41,6 +41,9 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
 
   const createorEditService = async () => {
     console.log("Aquiii estoy")
+
+    navigationScreen.navigate('FormService', {uid: ''});
+
   };
 
 

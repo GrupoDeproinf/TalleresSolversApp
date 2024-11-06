@@ -66,7 +66,7 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
   };
 
   const goToPreview = (data) =>{
-    console.log(data)
+    navigation.navigate('ProductDetailOne', {uid: data.id, typeUser:"Taller"});
   }
 
   const renderItem = ({item}) => (

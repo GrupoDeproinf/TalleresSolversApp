@@ -27,6 +27,8 @@ const TextInputs = ({
   height,
   editable,
   textDecorationLine,
+  minHeight,
+  textAlignVertical
 }) => {
   const [error, setError] = useState('');
 
@@ -92,6 +94,7 @@ const TextInputs = ({
                   {height: height},
                   {color: textColorStyle},
                   {textAlign: textRTLStyle},
+                  {minHeight:minHeight},
                   { 
                     textDecorationLine: textDecorationLine == undefined ? 'none' : textDecorationLine, // Línea en el centro
                   }

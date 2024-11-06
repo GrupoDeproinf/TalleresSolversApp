@@ -40,7 +40,8 @@ const RatingScreen = () => {
             </Text>
             <TouchableOpacity
               style={[external.fd_row, external.ai_center]}
-              onPress={() => navigation.navigate('RatingScreen')}>
+              // onPress={() => navigation.navigate('RatingScreen')}
+              >
               <Text
                 style={[
                   commonStyles.titleText19,
@@ -60,7 +61,7 @@ const RatingScreen = () => {
             ]}>
             <View style={styles.viewContainer}>
               <Text style={styles.fourPointOne}>4.1</Text>
-              <Text style={styles.outOfFive}>out of 5</Text>
+              <Text style={styles.outOfFive}>de 5</Text>
             </View>
             <View>
               {ratingScreen.map((item, index) => (

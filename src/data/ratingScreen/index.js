@@ -18,25 +18,25 @@ import images from '../../utils/images';
 export const ratingScreen = [
   {
     id: 0,
-    title: 'transData.excellent',
+    title: 'Excelente',
     range: 65,
     width: windowWidth(190),
   },
   {
     id: 1,
-    title: 'transData.veryGood',
+    title: 'Muy Bien',
     range: 35,
     width: windowWidth(120),
   },
   {
     id: 2,
-    title: 'transData.average',
+    title: 'Promedio',
     range: 15,
     width: windowWidth(73),
   },
   {
     id: 2,
-    title: 'transData.poor',
+    title: 'Pobre',
     range: 15,
     width: windowWidth(33),
   },

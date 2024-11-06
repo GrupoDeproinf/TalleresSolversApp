@@ -34,10 +34,14 @@ import appColors from '../../themes/appColors';
 import {RadioButton, Button} from 'react-native-paper';
 import {windowHeight} from '../../themes/appConstant';
 import NavigationButton from '../../commonComponents/navigationButton';
-import api from '../../../axiosInstance'; 
+import api from '../../../axiosInstance';
+import {Picker} from '@react-native-picker/picker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+import Icons from 'react-native-vector-icons/FontAwesome';
+import Icons2 from 'react-native-vector-icons/FontAwesome5';
 
 const FormTaller = () => {
-  const [NameServicio, setNameServicio] = useState('');
   const [isSelected, setSelection] = useState(false);
   const [email, setEmail] = useState('');
   const [cedula, setcedula] = useState(0);
@@ -91,17 +95,11 @@ const FormTaller = () => {
   const [LinkTiktokError, setLinkTiktokError] = useState('');
   const [LinkTiktokTyping, setLinkTiktokTyping] = useState(false);
 
-  const [Garantia, setGarantia] = useState('');
-  const [GarantiaError, setGarantiaError] = useState('');
-  const [GarantiaTyping, setGarantiaTyping] = useState(false);
-
   const [seguro, setseguro] = useState('');
   const [seguroError, setseguroError] = useState('');
   const [seguroTyping, setseguroTyping] = useState(false);
 
   // *******************************************
-
-  const [checked, setChecked] = useState('no'); // Valor i
 
   const [buttonColor, setButtonColor] = useState('#848688');
   const [disabledInput, setdisabledInput] = useState(false);
@@ -125,15 +123,34 @@ const FormTaller = () => {
   const [isCheckedTiktok, setisCheckedTiktok] = useState(false);
   const [isCheckedSeguro, setisCheckedSeguro] = useState(false);
 
-  const [isCheckedAgente, setisCheckedAgente] = useState(false);
-
-  const [modalVisible, setModalVisible] = useState(false);
-
   const [tipoAccion, settipoAccion] = useState('');
   const [uidTaller, setuidTaller] = useState('');
 
+  // Nuevo
 
   const [caracteristicas, setcaracteristicas] = useState([]);
+  const [caracteristicaSelected, setcaracteristicaSelected] = useState([]);
+  const [Subcaracteristicas, setSubcaracteristicas] = useState([]);
+  const [SubcaracteristicaSelected, setSubcaracteristicaSelected] = useState(
+    [],
+  );
+  const [NameServicio, setNameServicio] = useState('');
+  const [precio, setprecio] = useState(0);
+  const [setprecioError, setsetprecioError] = useState('');
+
+  const [Description, setDescription] = useState(0);
+  const [setDescriptionError, setsetDescriptionError] = useState('');
+
+  const [Garantia, setGarantia] = useState(0);
+  const [setGarantiaError, setsetGarantiaError] = useState('');
+
+  const [checked, setChecked] = useState('no'); // Valor i
+
+  const [isChecked, setisChecked] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [uidService, setuidService] = useState(false);
+
+  const [userStorage, setuserStorage] = useState(false);
 
   const stackNavigation = () => {
     navigation.reset({
@@ -145,86 +162,95 @@ const FormTaller = () => {
   useEffect(() => {
     const {uid} = route.params;
     setModalVisible(false);
-    getCaracteristicas()
+    getCaracteristicas();
+    getUserActive()
 
-    if (uid != undefined){
+    if (uid != undefined && uid != '') {
       setuidTaller(uid);
+
       getData(uid);
     } else {
-      setNameServicio("Nuevo Servicio")
+      setNameServicio('Nuevo Servicio');
+      setNombre('');
+      setcaracteristicaSelected('');
+      setSubcaracteristicaSelected('');
+      setprecio(0);
+      setDescription('');
+      setGarantia('');
+      setChecked('no');
+      setuidService('');
     }
-
   }, []);
 
-  const getCaracteristicas = async() => {
+  const getUserActive = async () => {
+    try {
+    const jsonValue = await AsyncStorage.getItem('@userInfo');
+    const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+    console.log('valor del storage1234***************************************************************************', user);
+    setuserStorage(user)
+  } catch (e) {
+    // error reading value
+    console.log(e);
+  }
+  }
+
+  const getCaracteristicas = async () => {
     try {
       // Hacer la solicitud GET utilizando Axios
       const response = await api.get('/usuarios/getActiveCategories', {
-          headers: {
-              'Content-Type': 'application/json',
-          },
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
-  
+
       // Verificar la respuesta del servidor
       if (response.status === 200) {
-          const result = response.data;
-          console.log("caraccteristicas de resultados", result); // Aquí puedes manejar la respuesta
-  
-          setcaracteristicas(result);
+        const result = response.data;
+        console.log('caraccteristicas de resultados1234', result.categories); // Aquí puedes manejar la respuesta
+
+        if (result.categories.length > 0) {
+          setcaracteristicaSelected(result.categories[0].id)
+          getSubcaracteristicas(result.categories[0].id);
+        }
+
+        setcaracteristicas(result.categories);
       } else {
-          setcaracteristicas([]);
+        setcaracteristicas([]);
       }
-  } catch (error) {
+    } catch (error) {
       setcaracteristicas([]);
       if (error.response) {
-          console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
+        console.error(
+          'Error en la solicitud:',
+          error.response.data.message || error.response.statusText,
+        );
       } else {
-          console.error('Error en la solicitud:', error.message);
+        console.error('Error en la solicitud:', error.message);
       }
-  }
-  }
+    }
+  };
 
-  const getData = async uid => {
+  const getSubcaracteristicas = async uid => {
+    console.log(uid);
     try {
       // Hacer la solicitud POST utilizando Axios
-      const response = await api.post('/usuarios/getServiceByUid', {
-        uid: uid,
-      });
-    
+      const response = await api.post(
+        '/usuarios/getSubcategoriesByCategoryUid',
+        {
+          uid_categoria: uid,
+        },
+      );
+
       // Verificar la respuesta del servidor
       const result = response.data;
-    
-      if (result.message === 'Servicio encontrado') {
-        console.log('Este es el usuario encontrado:', result.service);
 
-    
-        setNameServicio(result.service.nombre_servicio);
-        setNombre(result.service.nombre_servicio || '');
+      if (result.message === 'Subcategorías encontradas') {
+        console.log('Este es el usuario encontrado:', result.subcategories);
 
-        setNombre(result.service.nombre_servicio || '');
-
-        setNombre(result.service.nombre_servicio || '');
-
-
-
-
-
-        setChecked(result.service.agenteAutorizado);
-    
-        // Manejar y asignar los valores con validación de undefined
-        setcedula(result.service.rif || '');
-        setEmail(result.service.email || '');
-        setPhone(result.service.phone || '');
-        setDireccion(result.service.Direccion || '');
-        setRegComercial(result.service.RegComercial || '');
-        setCaracteristicas(result.service.Caracteristicas || '');
-        setTarifa(result.service.Tarifa || '');
-        setExperiencia(result.service.Experiencia || '');
-        setLinkFacebook(result.service.LinkFacebook || '');
-        setLinkInstagram(result.service.LinkInstagram || '');
-        setLinkTiktok(result.service.LinkTiktok || '');
-        setGarantia(result.service.Garantia || '');
-        setseguro(result.service.seguro || '');
+        if (result.subcategories.length > 0) {
+          setSubcaracteristicaSelected(result.subcategories[0].id)
+        }
+        setSubcaracteristicas(result.subcategories);
       } else {
         console.log('Usuario no encontrado');
       }
@@ -235,7 +261,40 @@ const FormTaller = () => {
         console.error('Error en la solicitud:', error.message);
       }
     }
-    
+  };
+
+  const getData = async uid => {
+    try {
+      // Hacer la solicitud POST utilizando Axios
+      const response = await api.post('/usuarios/getServiceByUid', {
+        uid: uid,
+      });
+
+      // Verificar la respuesta del servidor
+      const result = response.data;
+
+      if (result.message === 'Servicio encontrado') {
+        console.log('Este es el usuario encontrado:', result.service);
+        setNombre(result.service.nombre_servicio || '');
+
+        setNameServicio(result.service.nombre_servicio);
+        setcaracteristicaSelected(result.service.uid_categoria || '');
+        setSubcaracteristicaSelected(result.service.uid_subcategoria || '');
+        setprecio(result.service.precio || 0);
+        setDescription(result.service.descripcion || '');
+        setGarantia(result.service.garantia || '');
+        setChecked(result.service.estatus ? 'si' : 'no' || false);
+        setuidService(result.service.id || '');
+      } else {
+        console.log('Usuario no encontrado');
+      }
+    } catch (error) {
+      if (error.response) {
+        console.error('Error en la solicitud:', error.response.statusText);
+      } else {
+        console.error('Error en la solicitud:', error.message);
+      }
+    }
   };
 
   const {
@@ -245,6 +304,7 @@ const FormTaller = () => {
     textColorStyle,
     iconColorStyle,
     isDark,
+    textRTLStyle,
     t,
   } = useValues();
 
@@ -258,75 +318,86 @@ const FormTaller = () => {
   };
 
   const onConfirm = async () => {
-    console.log(tipoAccion);
-    console.log(uidTaller);
-    if (tipoAccion == 'Aprobar') {
-      console.log('Aprobar');
+    if (
+      Nombre != '' &&
+      Nombre != undefined &&
+      Nombre != undefined &&
+      caracteristicaSelected != '' &&
+      caracteristicaSelected != undefined &&
+      caracteristicaSelected != undefined &&
+      SubcaracteristicaSelected != '' &&
+      SubcaracteristicaSelected != undefined &&
+      SubcaracteristicaSelected != undefined &&
+      precio != '' &&
+      precio != undefined &&
+      precio != undefined &&
+      Description != '' &&
+      Description != undefined &&
+      Description != undefined &&
+      Garantia != '' &&
+      Garantia != undefined &&
+      Garantia != undefined
+    ) {
 
-      try {
-        // Hacer la solicitud POST utilizando Axios
-        const response = await api.post('/usuarios/actualizarStatusUsuario', {
-          uid: uidTaller,
-          nuevoStatus: 'Aprobado',
-        });
-      
-        // Verificar la respuesta del servidor
-        const result = response.data;
-      
-        if (result.message === 'El estado del usuario ha sido actualizado exitosamente') {
-          showToast('Se ha aprobado el taller exitosamente');
-          setModalVisible(false);
-          navigation.goBack();
-        } else {
+      // console.log("caracteristicas", caracteristicas)
+      console.log("Subcaracteristicas", Subcaracteristicas)
+
+      const categoria = caracteristicas.find(c => c.id === caracteristicaSelected)?.nombre || "";
+
+      const subcategoria = Subcaracteristicas.find(c => c.id === SubcaracteristicaSelected)?.nombre || "";
+
+      const dataFinal = {
+        id: uidService == undefined || uidService == '' ? '' : uidService ,
+        precio: precio,
+        uid_servicio: uidService == undefined || uidService == '' ? '' : uidService,
+        categoria: categoria,
+        uid_categoria: caracteristicaSelected,
+        taller: userStorage.nombre,
+        uid_taller: userStorage.uid,
+        nombre_servicio: Nombre,
+        descripcion: Description,
+        subcategoria: subcategoria,
+        uid_subcategoria: SubcaracteristicaSelected,
+        puntuacion:4,
+        garantia: Garantia,
+        estatus: checked == 'si' ? true : false,
+      };
+
+      console.log(dataFinal)
+        try {
+          // Hacer la solicitud POST utilizando Axios
+          const response = await api.post('/usuarios/saveOrUpdateService', dataFinal);
+          // Verificar la respuesta del servidor
+          const result = response.data;
+  
+          if (
+            result.message ===
+            'Servicio actualizado exitosamente' || result.message ===
+            'Servicio creado exitosamente'
+          ) {
+            showToast(result.message);
+            setModalVisible(false);
+            navigation.goBack();
+          } else {
+            showToast('Ha ocurrido un error');
+            setModalVisible(false);
+            navigation.goBack();
+          }
+        } catch (error) {
+          // Manejo de errores
+          if (error.response) {
+            console.error('Error en la solicitud:', error.response.statusText);
+          } else {
+            console.error('Error en la solicitud:', error.message);
+          }
           showToast('Ha ocurrido un error');
           setModalVisible(false);
           navigation.goBack();
         }
-      } catch (error) {
-        // Manejo de errores
-        if (error.response) {
-          console.error('Error en la solicitud:', error.response.statusText);
-        } else {
-          console.error('Error en la solicitud:', error.message);
-        }
-        showToast('Ha ocurrido un error');
-        setModalVisible(false);
-        navigation.goBack();
-      }
-      
     } else {
-      try {
-        // Hacer la solicitud POST utilizando Axios
-        const response = await api.post('/usuarios/actualizarStatusUsuario', {
-          uid: uidTaller,
-          nuevoStatus: 'Rechazado',
-        });
-      
-        // Verificar la respuesta del servidor
-        const result = response.data;
-      
-        if (result.message === 'El estado del usuario ha sido actualizado exitosamente') {
-          showToast('Se ha rechazado el taller');
-          setModalVisible(false);
-          navigation.goBack();
-        } else {
-          showToast('Ha ocurrido un error');
-          setModalVisible(false);
-          navigation.goBack();
-        }
-      } catch (error) {
-        // Manejo de errores
-        if (error.response) {
-          console.error('Error en la solicitud:', error.response.statusText);
-        } else {
-          console.error('Error en la solicitud:', error.message);
-        }
-        showToast('Ha ocurrido un error');
-        setModalVisible(false);
-        navigation.goBack();
-      }
-      
+      showToast('Ingrese la información requerida');
     }
+
   };
 
   const showToast = text => {
@@ -388,237 +459,182 @@ const FormTaller = () => {
       </View>
 
       <ScrollView style={{marginBottom: 15}}>
-        <View>
-          {/* Nombre y Apellido */}
+        <View style={{padding: 10}}>
+          {/* Caracteristicas */}
+          <Text
+            style={[
+              styles.headingContainer,
+              {color: textColorStyle},
+              {textAlign: textRTLStyle},
+            ]}>
+            Caracteristicas
+          </Text>
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               marginVertical: 10,
             }}>
+            <Icons2 name="grip-vertical" size={20} color="#9BA6B8" />
+            <Picker
+              selectedValue={caracteristicaSelected}
+              onValueChange={itemValue => {
+                console.log(itemValue);
+                getSubcaracteristicas(itemValue);
+                setcaracteristicaSelected(itemValue);
+              }}
+              style={{
+                width: '100%',
+                height: 0, // Altura para el Picker
+                color: 'black',
+              }}>
+              {caracteristicas.map(option => (
+                <Picker.Item
+                  key={option.id}
+                  label={option.nombre}
+                  value={option.id}
+                />
+              ))}
+            </Picker>
+          </View>
 
+          {/* Subcaracteristicas */}
+          {/* Caracteristicas */}
+          <Text
+            style={[
+              styles.headingContainer,
+              {color: textColorStyle},
+              {textAlign: textRTLStyle},
+            ]}>
+            Subcaracteristicas
+          </Text>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 10,
+            }}>
+            <Icons2 name="grip-horizontal" size={20} color="#9BA6B8" />
+            <Picker
+              selectedValue={SubcaracteristicaSelected}
+              onValueChange={itemValue => {
+                console.log(itemValue);
+                setSubcaracteristicaSelected(itemValue);
+              }}
+              style={{
+                width: '100%',
+                height: 0, // Altura para el Picker
+                color: 'black',
+              }}>
+              {Subcaracteristicas.map(option => (
+                <Picker.Item
+                  key={option.id}
+                  label={option.nombre}
+                  value={option.id}
+                />
+              ))}
+            </Picker>
+          </View>
+
+          {/* Nombre del servicio */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 10,
+              marginTop: -5,
+            }}>
             <TextInputs
               title="Nombre del servicio"
               value={Nombre}
-              textDecorationLine={isCheckedName ? 'line-through' : 'none'}
               onChangeText={text => {
                 setNombre(text);
                 setNombreError(text.trim() === '' ? 'Nombre es requerido' : '');
               }}
               onBlur={() => {}}
+              icon={<Icons name="gears" size={20} color="#9BA6B8" />}
             />
           </View>
 
-          {/* Registro de Información Fiscal (RIF) */}
+          {/* precio del servicio */}
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               marginVertical: 10,
             }}>
-            <CheckBox
-              isChecked={isRif}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisRif(!isRif);
-              }}
-            />
             <TextInputs
-              title="Registro de Información Fiscal (RIF)"
-              value={cedula}
-              editable={false}
-              textDecorationLine={isRif ? 'line-through' : 'none'}
-              placeHolder="Ingrese su RIF"
+              title="Precio"
+              value={precio}
+              placeHolder="Precio del servicio"
               onChangeText={text => {
                 const numericText = text.replace(/[^0-9]/g, '');
-                setcedula(numericText);
-                setcedulaError(
-                  numericText.trim() === '' ? 'Cedula es requerida' : '',
+                setprecio(numericText);
+                setsetprecioError(
+                  numericText.trim() === '' ? 'Precio es requerido' : '',
                 );
               }}
               onBlur={() => {}}
+              icon={<Icons name="money" size={20} color="#9BA6B8" />}
               keyboardType="numeric"
             />
           </View>
 
-          {/* Dirección del Taller */}
+          {/*Descripcion del servicio  */}
           <View
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               marginVertical: 10,
             }}>
-            <CheckBox
-              isChecked={isCheckedDireccion}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedDireccion(!isCheckedDireccion);
-              }}
-            />
             <TextInputs
-              title="Dirección del Taller"
-              placeHolder="Ingrese su direccion"
-              textDecorationLine={isCheckedDireccion ? 'line-through' : 'none'}
-              editable={false}
-              value={Direccion}
-              onChangeText={text => {
-                setDireccion(text);
-                setDireccionError(
-                  text.trim() === '' ? 'Direccion es requerida' : '',
-                );
-              }}
-              onBlur={() => {}}
-            />
-            {DireccionError !== '' && (
-              <Text style={styles.errorStyle}>{DireccionError}</Text>
-            )}
-          </View>
-
-          {/* Registro Comercial */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedRegistroComercial}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedRegistroComercial(!isCheckedRegistroComercial);
-              }}
-            />
-            <TextInputs
-              title="Registro Comercial"
-              value={RegComercial}
-              textDecorationLine={
-                isCheckedRegistroComercial ? 'line-through' : 'none'
-              }
-              editable={false}
-              placeHolder="Ingrese su Registro Comercial"
-              onChangeText={text => {
-                const numericText = text.replace(/[^0-9]/g, '');
-                setRegComercial(numericText);
-                setRegComercialError(
-                  numericText.trim() === ''
-                    ? 'Registro comercial es requerido'
-                    : '',
-                );
-              }}
-              onBlur={() => {}}
-              keyboardType="numeric"
-            />
-            {RegComercialError !== '' && (
-              <Text style={styles.errorStyle}>{RegComercialError}</Text>
-            )}
-          </View>
-
-          {/* Número Telefónico */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedTelefono}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedTelefono(!isCheckedTelefono);
-              }}
-            />
-            <TextInputs
-              title="Número Telefónico"
-              value={phone}
-              textDecorationLine={isCheckedTelefono ? 'line-through' : 'none'}
-              editable={false}
-              placeholder="Ingrese su número"
-              keyboardType="numeric"
-              onChangeText={text => {
-                const numericText = text.replace(/[^0-9]/g, '');
-                setPhone(numericText);
-                setPhoneError(
-                  numericText.trim() === ''
-                    ? 'Número telefónico requerido'
-                    : '',
-                );
-              }}
-              onBlur={() => {}}
-            />
-            {phoneError !== '' && (
-              <Text style={styles.errorStyle}>{phoneError}</Text>
-            )}
-          </View>
-
-          {/* Email */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedEmail}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedEmail(!isCheckedEmail);
-              }}
-            />
-            <TextInputs
-              title="Email"
-              value={email}
-              editable={false}
-              textDecorationLine={isCheckedEmail ? 'line-through' : 'none'}
-              placeHolder="Ingrese su email"
-              onChangeText={text => {
-                setEmail(text);
-                setEmailError(text.trim() === '' ? 'Email es requerido' : '');
-              }}
-              onBlur={() => {}}
-            />
-          </View>
-
-          {/* Caracteristicas del Taller */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedCaracteristicas}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedCaracteristicas(!isCheckedCaracteristicas);
-              }}
-            />
-
-            <TextInputs
-              title="Caracteristicas del taller"
-              editable={false}
-              textDecorationLine={
-                isCheckedCaracteristicas ? 'line-through' : 'none'
-              }
-              value={Caracteristicas}
-              placeHolder="Característica del taller (tipo de piso, si posee fosa, rampla, entre otras condiciones, gatos elevadores)"
+              title="Descripción del servicio"
+              value={Description}
+              placeHolder="Descripción del servicio"
               multiline={true}
-              numberOfLines={4}
+              numberOfLines={10}
+              // minHeight= {600}
+              // height={400}
+              // textAlignVertical= {'top'}
               onChangeText={text => {
-                setCaracteristicas(text);
-                setCaracteristicasError(
-                  text.trim() === '' ? 'Caracteristicas es requerido' : '',
+                setDescription(text);
+                setsetDescriptionError(
+                  text.trim() === '' ? 'Descripción es requerida' : '',
                 );
               }}
               onBlur={() => {}}
+              icon={<Icons name="file-text" size={20} color="#9BA6B8" />}
             />
           </View>
 
+          {/* Garantia del servicio */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 10,
+            }}>
+            <TextInputs
+              title="Garantía del servicio"
+              value={Garantia}
+              placeHolder="Garantía del servicio"
+              multiline={true}
+              numberOfLines={10}
+              // minHeight= {600}
+              // height={400}
+              // textAlignVertical= {'top'}
+              onChangeText={text => {
+                setGarantia(text);
+                setsetGarantiaError(
+                  text.trim() === '' ? 'Garantía es requerida' : '',
+                );
+              }}
+              onBlur={() => {}}
+              icon={<Icons name="file-text-o" size={20} color="#9BA6B8" />}
+            />
+          </View>
+
+          {/* Estado del servicio */}
           <View
             style={{
               flexDirection: 'row',
@@ -626,23 +642,13 @@ const FormTaller = () => {
               marginVertical: 10,
               marginTop: -15,
             }}>
-            <CheckBox
-              isChecked={isCheckedAgente}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedAgente(!isCheckedAgente);
-              }}
-            />
-
             <Text
               style={{
                 marginBottom: 10,
                 color: 'black',
                 marginTop: 35,
-                textDecorationLine: isCheckedAgente ? 'line-through' : 'none',
               }}>
-              ¿Es un Agente Autorizado?
+              ¿Publicado?
             </Text>
 
             <View
@@ -653,7 +659,6 @@ const FormTaller = () => {
               }}>
               <RadioButton
                 value="si"
-                disabled={true}
                 status={checked === 'si' ? 'checked' : 'unchecked'}
                 onPress={() => setChecked('si')}
               />
@@ -661,171 +666,11 @@ const FormTaller = () => {
 
               <RadioButton
                 value="no"
-                disabled={true}
                 status={checked === 'no' ? 'checked' : 'unchecked'}
                 onPress={() => setChecked('no')}
               />
               <Text style={{color: 'black'}}>No</Text>
             </View>
-          </View>
-
-          {/* Tiempo de experiencia */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedExperiencia}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedExperiencia(!isCheckedExperiencia);
-              }}
-            />
-            <TextInputs
-              title="Tiempo de experiencia"
-              editable={false}
-              textDecorationLine={
-                isCheckedExperiencia ? 'line-through' : 'none'
-              }
-              value={Experiencia}
-              placeHolder="Ingrese su tiempo de experiencia"
-              onChangeText={text => {
-                setExperiencia(text);
-                setExperienciaError(
-                  text.trim() === '' ? 'Experiencia es requerido' : '',
-                );
-              }}
-              onBlur={() => {}}
-            />
-          </View>
-
-          {/* Enlaces a Redes Sociales */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedFacebook}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedFacebook(!isCheckedFacebook);
-              }}
-            />
-            <TextInputs
-              title="Link de Facebook"
-              textDecorationLine={isCheckedFacebook ? 'line-through' : 'none'}
-              editable={false}
-              value={LinkFacebook}
-              placeHolder="Ingrese el enlace a su Facebook"
-              onChangeText={text => {
-                setLinkFacebook(text);
-                setLinkFacebookError(
-                  text.trim() === '' ? 'Link de Facebook es requerido' : '',
-                );
-              }}
-              onBlur={() => {}}
-            />
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedInstagram}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedInstagram(!isCheckedInstagram);
-              }}
-            />
-            <TextInputs
-              title="Link de Instagram"
-              editable={false}
-              textDecorationLine={isCheckedInstagram ? 'line-through' : 'none'}
-              value={LinkInstagram}
-              placeHolder="Ingrese el enlace a su Instagram"
-              onChangeText={text => {
-                setLinkInstagram(text);
-                setLinkInstagramError(
-                  text.trim() === '' ? 'Link de Instagram es requerido' : '',
-                );
-              }}
-              onBlur={() => {}}
-            />
-            {LinkInstagramError !== '' && (
-              <Text style={styles.errorStyle}>{LinkInstagramError}</Text>
-            )}
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedTiktok}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedTiktok(!isCheckedTiktok);
-              }}
-            />
-            <TextInputs
-              title="Link de TikTok"
-              editable={false}
-              value={LinkTiktok}
-              textDecorationLine={isCheckedTiktok ? 'line-through' : 'none'}
-              placeHolder="Ingrese el enlace a su TikTok"
-              onChangeText={text => {
-                setLinkTiktok(text);
-                setLinkTiktokError(
-                  text.trim() === '' ? 'Link de TikTok es requerido' : '',
-                );
-              }}
-              onBlur={() => {}}
-            />
-          </View>
-
-          {/* Seguro */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedSeguro}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedSeguro(!isCheckedSeguro);
-              }}
-            />
-            <TextInputs
-              title="Seguro"
-              editable={false}
-              value={seguro}
-              placeHolder="Ingrese su seguro"
-              textDecorationLine={isCheckedSeguro ? 'line-through' : 'none'}
-              onChangeText={text => {
-                setseguro(text);
-                setseguroError(text.trim() === '' ? 'Seguro es requerido' : '');
-              }}
-              onBlur={() => {}}
-            />
-            {seguroError !== '' && (
-              <Text style={styles.errorStyle}>{seguroError}</Text>
-            )}
           </View>
         </View>
       </ScrollView>
@@ -838,22 +683,9 @@ const FormTaller = () => {
             marginBottom: 15, // Margen entre los botones
           }}>
           <NavigationButton
-            title="Aprobar solicitud"
+            title="Guardar Cambios"
             onPress={() => onHandleChange('Aprobar')}
             backgroundColor={'#28a745'}
-            color={appColors.screenBg}
-          />
-        </View>
-
-        <View
-          style={{
-            backgroundColor: buttonColor,
-            borderRadius: windowHeight(20),
-          }}>
-          <NavigationButton
-            title="Rechazar solicitud"
-            onPress={() => onHandleChange('Rechazar')}
-            backgroundColor={'#D32F2F'}
             color={appColors.screenBg}
           />
         </View>
@@ -867,7 +699,7 @@ const FormTaller = () => {
         <View style={stylesModal.container}>
           <View style={stylesModal.modalView}>
             <Text style={stylesModal.modalText}>
-              ¿Estás seguro de que quieres {tipoAccion} este taller?
+              ¿Estás seguro de que quieres aplicar estos cambios?
             </Text>
             <View style={stylesModal.buttonContainer}>
               <TouchableOpacity

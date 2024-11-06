@@ -43,6 +43,7 @@ export default Images = {
   beg: require('../assets/images/signUp/bag.gif'),
   darkBag: require('../assets/images/darkModeGIF/darkEmpty.gif'),
   user: require('../assets/images/profile/user.png'),
+  service: require('../assets/images/profile/user.png'),
   notification: require('../assets/images/signUp/notification.gif'),
   box: require('../assets/images/othersCategory/box.png'),
   offerOne: require('../assets/images/offer/offerOne.png'),

@@ -1,5 +1,5 @@
-import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
-import React from 'react';
+import {ScrollView, Text, TouchableOpacity, View, ToastAndroid,} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import BottomContainer from '../../../commonComponents/bottomContainer';
 import {commonStyles} from '../../../style/commonStyle.css';
 import {windowWidth} from '../../../themes/appConstant';
@@ -20,10 +20,107 @@ import KeyFeatures from '../../../components/productDetail/productOne/keyFeature
 import RatingScreen from '../../../components/productDetail/productOne/reviewScreen';
 import {useValues} from '../../../../App';
 import SliderDetails from '../../../components/productDetail/productOne/sliderDetails';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import api from '../../../../axiosInstance';
 
 const ProductDetailOne = ({navigation}) => {
   const {bgFullStyle, textColorStyle, t, textRTLStyle, iconColorStyle} =
     useValues();
+
+  const route = useRoute();
+
+  const [DataService, setDataService] = useState({
+    categoria: '',
+    descripcion: '',
+    estatus: true,
+    garantia: '',
+    id: '',
+    nombre_servicio: '',
+    precio: '',
+    puntuacion: '',
+    subcategoria: '',
+    taller: '',
+    uid_categoria: '',
+    uid_servicio: '',
+    uid_subcategoria: '',
+    uid_taller: '',
+  });
+
+  const [uidService, setuidService] = useState('');
+  const [typeUserLogged, settypeUserLogged] = useState('');
+
+  useEffect(() => {
+    const {uid, typeUser} = route.params;
+    getService(uid);
+    setuidService(uid);
+    settypeUserLogged(typeUser);
+  }, []);
+
+  const getService = async uid => {
+    try {
+      // Hacer la solicitud POST utilizando Axios
+      const response = await api.post('/usuarios/getServiceByUid', {
+        uid: uid,
+      });
+
+      // Verificar la respuesta del servidor
+      const result = response.data;
+
+      if (result.message === 'Servicio encontrado') {
+        console.log(
+          'Este es el usuario encontrado:*******************************************',
+          result.service,
+        );
+
+        setDataService(result.service);
+      } else {
+        console.log('Servicio no encontrado');
+      }
+    } catch (error) {
+      if (error.response) {
+        console.error('Error en la solicitud:', error.response.statusText);
+      } else {
+        console.error('Error en la solicitud:', error.message);
+      }
+    }
+  };
+
+  const PublicarService = async() => {
+    console.log(DataService);
+
+    try {
+      // Hacer la solicitud POST utilizando Axios
+      const response = await api.post('/usuarios/saveOrUpdateService', DataService);
+      // Verificar la respuesta del servidor
+      const result = response.data;
+
+      if (
+        result.message ===
+        'Servicio actualizado exitosamente' || result.message ===
+        'Servicio creado exitosamente'
+      ) {
+        showToast("Servicio Publicado con exito");
+        navigation.goBack();
+      } else {
+        showToast('Ha ocurrido un error');
+        navigation.goBack();
+      }
+    } catch (error) {
+      // Manejo de errores
+      if (error.response) {
+        console.error('Error en la solicitud:', error.response.statusText);
+      } else {
+        console.error('Error en la solicitud:', error.message);
+      }
+      showToast('Ha ocurrido un error');
+      navigation.goBack();
+    }
+  };
+
+  const showToast = text => {
+    ToastAndroid.show(text, ToastAndroid.SHORT);
+  };
+
   return (
     <View
       style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
@@ -41,26 +138,41 @@ const ProductDetailOne = ({navigation}) => {
                 {color: textColorStyle},
                 {textAlign: textRTLStyle},
               ]}>
-              {t('transData.Beatssolo3')}
+              {/* {t('transData.Beatssolo3')}  */}
+              {DataService.nombre_servicio}
             </Text>
             <Text
               style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
-              {t('transData.headphones')}
+              {DataService.categoria}
             </Text>
-            <DetailsTextContainer />
-            <DescriptionText />
-            <InfoContainer />
-            <BrandData />
+            <DetailsTextContainer DataService={DataService} />
+
+            {/* <DescriptionText /> */}
+
+            <InfoContainer
+              title={'Descripción'}
+              text={DataService.descripcion}
+            />
+
+            <BrandData DataService={DataService} />
+
             <IconProduct />
-            <KeyFeatures />
+
+            <InfoContainer title={'Garantía'} text={DataService.garantia} />
+
+            {/* <KeyFeatures /> */}
           </View>
         </View>
         <RatingScreen />
-        <Text style={styles.writeYourReview}>{writeYourReview}</Text>
+
+        {typeUserLogged != 'Taller' ? (
+          <Text style={styles.writeYourReview}>{writeYourReview}</Text>
+        ) : null}
+
         <View style={[external.mh_20, external.mt_20]}>
           <H3HeadingCategory
-            value={'Similar Products'}
-            seeall={t('transData.seeAll')}
+            value={'Productos Similares'}
+            seeall={'Ver todos'}
           />
           <NewArrivalBigContainer
             data={newArrivalBigData}
@@ -69,26 +181,50 @@ const ProductDetailOne = ({navigation}) => {
           />
         </View>
       </ScrollView>
+
       <View style={styles.bottomContainerView}>
         <BottomContainer
           leftValue={
-            <View style={[external.fd_row, external.ai_center, external.mh_20]}>
+            typeUserLogged === 'Taller' ? (
+              <TouchableOpacity
+                style={[external.fd_row, external.ai_center, external.mh_20]}
+                onPress={() => navigation.goBack()}>
+                <View style={[external.mh_15, external.fd_row, external.ai_center]}>
+                  {/* <Plus color={iconColorStyle} /> */}
+                  <Text style={[styles.addToBeg, {color: textColorStyle}]}>
+                    Volver
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            ) : (
               <View
-                style={[external.mh_15, external.fd_row, external.ai_center]}>
-                <Plus color={iconColorStyle} />
-                <Text style={[styles.addToBeg, {color: textColorStyle}]}>
-                  {addtoBag}
-                </Text>
+                style={[external.fd_row, external.ai_center, external.mh_20]}>
+                <View
+                  style={[external.mh_15, external.fd_row, external.ai_center]}>
+                  <Plus color={iconColorStyle} />
+                  <Text style={[styles.addToBeg, {color: textColorStyle}]}>
+                    {addtoBag}
+                  </Text>
+                </View>
               </View>
-            </View>
+            )
           }
           value={
-            <TouchableOpacity
-              onPress={() => navigation.navigate('AddtocartOne')}
-              style={[external.fd_row, external.ai_center, external.pt_4]}>
-              <Cart />
-              <Text style={styles.buyNowText}>{buyNow}</Text>
-            </TouchableOpacity>
+            typeUserLogged === 'Taller' ? (
+              <TouchableOpacity
+                onPress={() => PublicarService()}
+                style={[external.fd_row, external.ai_center, external.pt_4]}>
+                <Cart />
+                <Text style={styles.buyNowText}>Publicar</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => navigation.navigate('AddtocartOne')}
+                style={[external.fd_row, external.ai_center, external.pt_4]}>
+                <Cart />
+                <Text style={styles.buyNowText}>{buyNow}</Text>
+              </TouchableOpacity>
+            )
           }
         />
       </View>

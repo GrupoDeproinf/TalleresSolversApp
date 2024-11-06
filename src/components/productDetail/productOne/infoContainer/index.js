@@ -7,7 +7,7 @@ import {zebronicText} from '../../../../constant';
 import {fontSizes} from '../../../../themes/appConstant';
 import {useValues} from '../../../../../App';
 
-const InfoContainer = () => {
+const InfoContainer = ({title, text}) => {
   const {textColorStyle, t} = useValues();
 
   return (
@@ -19,7 +19,7 @@ const InfoContainer = () => {
             {fontSize: fontSizes.FONT17},
             {color: textColorStyle},
           ]}>
-          Details :
+          {title} :
         </Text>
         <Text
           style={[
@@ -27,7 +27,7 @@ const InfoContainer = () => {
             external.pt_5,
             {color: textColorStyle},
           ]}>
-          {t('transData.zebronicText')}
+          {text}
         </Text>
       </View>
     </View>
