@@ -1,6 +1,12 @@
 import {StyleSheet} from 'react-native';
 import {commonStyles} from '../../style/commonStyle.css';
 import {fontSizes} from '../../themes/appConstant';
+import {external} from '../../style/external.css';
+
+import {
+  windowHeight,
+  windowWidth,
+} from '../../themes/appConstant';
 
 
 const styles = StyleSheet.create({
@@ -9,6 +15,58 @@ const styles = StyleSheet.create({
     color: '#2D3261',
     fontSize: fontSizes.FONT17,
   },
+
+
+  headingContainer: {
+    ...commonStyles.titleText19,
+  },
+  container2: {
+    ...external.fd_row,
+    ...external.pt_10,
+    ...external.as_center,
+  },
+  flexView: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginHorizontal: windowHeight(14),
+  },
+  imgStyle1: {
+    width: windowWidth(330),
+    height: windowHeight(220),
+    alignSelf: 'center',
+  },
+  bagIsEmptyText: {
+    ...commonStyles.titleText19,
+    ...external.ti_center,
+    fontSize: fontSizes.FONT23,
+  },
+  bagisEmptySomething: {
+    ...commonStyles.subtitleText,
+    ...external.ti_center,
+    ...external.mt_3,
+    ...external.mb_20,
+    fontSize: fontSizes.FONT19,
+    marginTop:20
+  },
+  imgStyle: {
+    width: windowWidth(90),
+    height: windowHeight(54),
+    marginTop: windowHeight(24),
+    alignSelf: 'center',
+    resizeMode: 'contain',
+  },
+  editIconStyle: {
+    backgroundColor: '#F3F5FB',
+    width: windowHeight(24),
+    height: windowHeight(24),
+    borderRadius: windowHeight(24),
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'flex-end',
+    top: '55%',
+  },
+
 });
 
 export default styles;

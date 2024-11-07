@@ -40,6 +40,10 @@ import FormTaller from '../screens/FormTaller'
 import FormService from '../screens/FormService'
 
 import TalleresContainer from '../screens/Talleres'
+import Planscreen from '../screens/profileScreen/planes';
+
+import ReportarPago from '../screens/ReportarPago';
+
 
 
 const Stack = createNativeStackNavigator();
@@ -71,7 +75,12 @@ const MyStack = () => {
           name="NotificationContainer"
           component={NotificationContainer}
         />
+
         <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} />
+
+
+        <Stack.Screen name="ReportarPago" component={ReportarPago} />
+
         <Stack.Screen name="WhishlitContainer" component={WhishlitContainer} /> 
         
          
@@ -82,6 +91,7 @@ const MyStack = () => {
 
 
         <Stack.Screen name="TalleresContainer" component={TalleresContainer} />  
+        <Stack.Screen name="Planscreen" component={Planscreen} />
 
 
 
