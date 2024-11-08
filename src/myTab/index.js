@@ -24,8 +24,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import {useValues} from '../../App';
 import {windowHeight, windowWidth} from '../themes/appConstant';
 import Icons from 'react-native-vector-icons/FontAwesome';
-import Icons2 from 'react-native-vector-icons/Entypo';
 import Icons3 from 'react-native-vector-icons/FontAwesome5';
+import Icons2 from 'react-native-vector-icons/Entypo';
 
 const Tab = createBottomTabNavigator();
 

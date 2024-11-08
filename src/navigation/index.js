@@ -44,6 +44,8 @@ import Planscreen from '../screens/profileScreen/planes';
 
 import ReportarPago from '../screens/ReportarPago';
 
+import ServiciosContainer from '../screens/Servicios'
+
 
 
 const Stack = createNativeStackNavigator();
@@ -79,7 +81,8 @@ const MyStack = () => {
         <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} />
 
 
-        <Stack.Screen name="ReportarPago" component={ReportarPago} />
+        <Stack.Screen name="ReportarPago" component={ReportarPago} /> 
+        <Stack.Screen name="ServiciosContainer" component={ServiciosContainer} /> 
 
         <Stack.Screen name="WhishlitContainer" component={WhishlitContainer} /> 
         
