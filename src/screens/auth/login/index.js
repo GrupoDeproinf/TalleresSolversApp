@@ -125,7 +125,7 @@ const SignIn = ({navigation}) => {
   };
   const {linearColorStyleTwo, linearColorStyle} = useValues();
   return (
-    <View style={[styles.container, {backgroundColor: bgFullStyle}]}>
+    <View style={[styles.container, {backgroundColor: bgFullStyle, padding: 40}]}>
       <AuthContainer
         title="Bienvenido a Solvers"
         subtitle="Garantiza que tu vehículo funcione de manera eficiente y segura"

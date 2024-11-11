@@ -99,7 +99,7 @@ const ForgetPassword = ({navigation}) => {
   }, [email, emailError]);
   const {t, bgFullStyle, iconColorStyle} = useValues();
   return (
-    <View style={[styles.headingContainer, {backgroundColor: bgFullStyle}]}>
+    <View style={[styles.headingContainer, {backgroundColor: bgFullStyle,}]}>
       <AuthContainer
         title="¿Olvido la contraseña?"
         subtitle="Ingrese su correo y restablezca su contraseña"

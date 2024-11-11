@@ -126,6 +126,14 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
               Subcategoria: {t(item.subcategoria)}
             </Text>
 
+            <Text
+              style={[styles.datoSub, {textAlign: textRTLStyle}]}
+              numberOfLines={1} // Limita a una línea y agrega "..." si el texto es demasiado largo
+              ellipsizeMode="tail" // Agrega "..." al final del texto truncado
+            >
+              Publicado: {item.estatus ? 'Si' : 'No'}
+            </Text>
+
             <View
               style={{
                 flexDirection: 'row', // Alinea los elementos en una fila

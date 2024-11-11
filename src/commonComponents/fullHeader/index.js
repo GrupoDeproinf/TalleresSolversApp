@@ -1,5 +1,5 @@
-import { Text, TouchableOpacity, View } from 'react-native';
-import React from 'react';
+import { Text, TouchableOpacity, View, StyleSheet, Modal } from 'react-native';
+import React, {useState, useEffect} from 'react';
 import { BackLeft } from '../../utils/icon';
 import styles from './style.css';
 import { useValues } from '../../../App';
@@ -7,7 +7,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 
-const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArrow, showClose, showNewService }) => {
+const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArrow, showClose, showNewService, cantServices }) => {
   const {
     linearColorStyle,
     textColorStyle,
@@ -17,6 +17,18 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
   } = useValues();
 
   const navigationScreen = useNavigation();
+
+  const [modalVisible, setModalVisible] = useState(false);
+
+
+  useEffect(() => {
+    const unsubscribe = navigationScreen.addListener('focus', () => {
+      setModalVisible(false)
+    });
+
+    return unsubscribe; // Limpia el listener cuando el componente se desmonta
+  }, [navigationScreen]);
+
 
 
   const CloseSesion = async () => {
@@ -40,11 +52,25 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
 
 
   const createorEditService = async () => {
-    console.log("Aquiii estoy")
+    console.log("Aquiii estoy 123123")
 
-    navigationScreen.navigate('FormService', {uid: ''});
+    if (Number(cantServices) == 0 || Number(cantServices) < 0){
+      setModalVisible(true)
+    } else {
+      navigationScreen.navigate('FormService', {uid: ''});
+      setModalVisible(false)
+    }
 
   };
+
+  const onCancel = () => {
+    setModalVisible(false);
+  };
+
+
+  const gotoPlans = () =>{
+    navigationScreen.navigate('Planscreen');
+  }
 
 
   return (
@@ -108,8 +134,91 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
           </LinearGradient>
         </TouchableOpacity>
       )}
+
+
+
+      {/* Modal de no tiene servicios disponible */}
+
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={modalVisible}
+        onRequestClose={onCancel}>
+        <View style={stylesModal.container}>
+          <View style={stylesModal.modalView}>
+            <Text style={stylesModal.modalText}>
+              Usted ha alcanzado la cantidad máxima de servicios permitidos en su plan. Para crear nuevos servicios, debe actualizar su plan.
+            </Text>
+            <View style={stylesModal.buttonContainer}>
+              <TouchableOpacity
+                style={stylesModal.buttonYes}
+                onPress={gotoPlans}>
+                <Text style={stylesModal.buttonText}>Ir a planes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={stylesModal.buttonNo} onPress={onCancel}>
+                <Text style={stylesModal.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+
     </View>
   );
 };
+
+const stylesModal = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#333',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonYes: {
+    backgroundColor: 'green', // Color del botón "Sí"
+    borderRadius: 5,
+    padding: 10,
+    width: '48%', // Ajustar ancho para espacio entre botones
+    alignItems: 'center',
+  },
+  buttonNo: {
+    backgroundColor: 'red', // Color del botón "No"
+    borderRadius: 5,
+    padding: 10,
+    width: '48%', // Ajustar ancho para espacio entre botones
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white', // Color del texto del botón
+    fontWeight: 'bold',
+  },
+});
 
 export default FullHeader;
