@@ -1,35 +1,39 @@
-import {Image, Text, TouchableOpacity, View, ToastAndroid} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import { Image, Text, TouchableOpacity, View, ToastAndroid, Button } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import HeaderContainer from '../../commonComponents/headingContainer';
-import {successfullyReset} from '../../constant';
-import {external} from '../../style/external.css';
+import { successfullyReset } from '../../constant';
+import { external } from '../../style/external.css';
 import appColors from '../../themes/appColors';
-import {commonStyles} from '../../style/commonStyle.css';
-import {fontSizes, windowWidth} from '../../themes/appConstant';
+import { commonStyles } from '../../style/commonStyle.css';
+import { fontSizes, windowWidth } from '../../themes/appConstant';
 import SolidLine from '../../commonComponents/solidLine';
-import {otherPaymentMode, paymentData} from '../../data/paymentData';
+import { otherPaymentMode, paymentData } from '../../data/paymentData';
 import DashedBorderComponent from '../../commonComponents/dashBorder';
 import BottomContainer from '../../commonComponents/bottomContainer';
-import {Cross, SendMoney} from '../../utils/icon';
+import { Cross, SendMoney } from '../../utils/icon';
 import RadioButton from '../../commonComponents/radioButton';
-import {styles} from './style.css';
+import { styles } from './style.css';
 import CommonModal from '../../commonComponents/commonModel';
 import images from '../../utils/images';
 import NavigationButton from '../../commonComponents/navigationButton';
 import TextInputs from '../../commonComponents/textInputs';
-import {useValues} from '../../../App';
+import { useValues } from '../../../App';
 import LinearGradient from 'react-native-linear-gradient';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import api from '../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Picker} from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 
 import Icons from 'react-native-vector-icons/FontAwesome';
 import Icons3 from 'react-native-vector-icons/FontAwesome5';
 
 import Icons4 from 'react-native-vector-icons/FontAwesome6';
 
-const ReportarPago = ({navigation}) => {
+
+import { launchImageLibrary } from 'react-native-image-picker';
+import { Buffer } from 'buffer'
+
+const ReportarPago = ({ navigation }) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [addItem, setAddItem] = useState(false);
@@ -58,6 +62,11 @@ const ReportarPago = ({navigation}) => {
 
   const [dataPlan, setdataPlan] = useState();
 
+  const [imageUri, setImageUri] = useState(null);
+  const [base64, setBase64] = useState('');
+
+
+
   const paymentDatas = index => {
     setSelectedItem(index === selectedItem ? null : index);
   };
@@ -81,7 +90,7 @@ const ReportarPago = ({navigation}) => {
   const route = useRoute();
 
   useEffect(() => {
-    const {data} = route.params;
+    const { data } = route.params;
     setdataPlan(data)
     setPrecioPago(Number(data.monto));
     setnombrePlan(data.nombre);
@@ -143,17 +152,17 @@ const ReportarPago = ({navigation}) => {
         console.log(userLogged)
 
         const dataFinal = {
-          uid:userLogged.uid,
-          emailZelle:emailZelle,
-          cod_ref:cod_ref,
-          bancoTranfe:bancoTranfe,
-          identificacion:identificacion,
-          telefono:telefono,
-          amount:Number(dataPlan.monto),
-          paymentMethod:"Zelle",
-          nombre:dataPlan.nombre,
-          vigencia:dataPlan.vigencia,
-          cant_services:dataPlan.cantidad_servicios,
+          uid: userLogged.uid,
+          emailZelle: emailZelle,
+          cod_ref: cod_ref,
+          bancoTranfe: bancoTranfe,
+          identificacion: identificacion,
+          telefono: telefono,
+          amount: Number(dataPlan.monto),
+          paymentMethod: "Zelle",
+          nombre: dataPlan.nombre,
+          vigencia: dataPlan.vigencia,
+          cant_services: dataPlan.cantidad_servicios,
         }
 
         console.log("objeto final", dataFinal)
@@ -164,17 +173,17 @@ const ReportarPago = ({navigation}) => {
         showToast('No puede dejar campos vacíos');
       } else {
         const dataFinal = {
-          uid:userLogged.uid,
-          emailZelle:emailZelle,
-          cod_ref:nro_referencia,
-          bancoTranfe:bancoTranfe,
-          identificacion:identificacion,
-          telefono:telefono,
-          amount:Number(dataPlan.monto),
-          paymentMethod:"Transferencia",
-          nombre:dataPlan.nombre,
-          vigencia:dataPlan.vigencia,
-          cant_services:dataPlan.cantidad_servicios,
+          uid: userLogged.uid,
+          emailZelle: emailZelle,
+          cod_ref: nro_referencia,
+          bancoTranfe: bancoTranfe,
+          identificacion: identificacion,
+          telefono: telefono,
+          amount: Number(dataPlan.monto),
+          paymentMethod: "Transferencia",
+          nombre: dataPlan.nombre,
+          vigencia: dataPlan.vigencia,
+          cant_services: dataPlan.cantidad_servicios,
         }
         console.log("objeto final", dataFinal)
         SendInfo(dataFinal)
@@ -184,17 +193,17 @@ const ReportarPago = ({navigation}) => {
         showToast('No puede dejar campos vacíos');
       } else {
         const dataFinal = {
-          uid:userLogged.uid,
-          emailZelle:emailZelle,
-          cod_ref:nro_referencia,
-          bancoTranfe:bancoTranfe,
-          identificacion:identificacion,
-          telefono:telefono,
-          amount:Number(dataPlan.monto),
-          paymentMethod:"Pago Móvil",
-          nombre:dataPlan.nombre,
-          vigencia:dataPlan.vigencia,
-          cant_services:dataPlan.cantidad_servicios,
+          uid: userLogged.uid,
+          emailZelle: emailZelle,
+          cod_ref: nro_referencia,
+          bancoTranfe: bancoTranfe,
+          identificacion: identificacion,
+          telefono: telefono,
+          amount: Number(dataPlan.monto),
+          paymentMethod: "Pago Móvil",
+          nombre: dataPlan.nombre,
+          vigencia: dataPlan.vigencia,
+          cant_services: dataPlan.cantidad_servicios,
         }
 
         console.log("objeto final", dataFinal)
@@ -206,17 +215,17 @@ const ReportarPago = ({navigation}) => {
         showToast('No puede dejar campos vacíos');
       } else {
         const dataFinal = {
-          uid:userLogged.uid,
-          emailZelle:emailZelle,
-          cod_ref:nro_referencia,
-          bancoTranfe:bancoTranfe,
-          identificacion:identificacion,
-          telefono:telefono,
-          amount:Number(dataPlan.monto),
-          paymentMethod:"Efectivo",
-          nombre:dataPlan.nombre,
-          vigencia:dataPlan.vigencia,
-          cant_services:dataPlan.cantidad_servicios,
+          uid: userLogged.uid,
+          emailZelle: emailZelle,
+          cod_ref: nro_referencia,
+          bancoTranfe: bancoTranfe,
+          identificacion: identificacion,
+          telefono: telefono,
+          amount: Number(dataPlan.monto),
+          paymentMethod: "Efectivo",
+          nombre: dataPlan.nombre,
+          vigencia: dataPlan.vigencia,
+          cant_services: dataPlan.cantidad_servicios,
         }
 
         console.log("objeto final", dataFinal)
@@ -226,7 +235,7 @@ const ReportarPago = ({navigation}) => {
     }
   };
 
-  const SendInfo = async(infoUserCreated) => {
+  const SendInfo = async (infoUserCreated) => {
     try {
       // Hacer la solicitud POST utilizando Axios
       const response = await api.post('/usuarios/ReportarPagoData', infoUserCreated);
@@ -236,7 +245,7 @@ const ReportarPago = ({navigation}) => {
 
       const result = response.data; // Los datos vienen directamente de response.data
       console.log(result); // Aquí puedes manejar la respuesta
-      
+
       closeSecondModel()
       setModalVisible(true)
       // navigation.navigate('Login');
@@ -271,39 +280,61 @@ const ReportarPago = ({navigation}) => {
     ToastAndroid.show(text, ToastAndroid.SHORT);
   };
 
+
+  const selectImage = () => {
+    const options = {
+      mediaType: 'photo',
+      includeBase64: true,
+    };
+
+    launchImageLibrary(options, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else {
+        const source = { uri: response.assets[0].uri };
+        setImageUri(source);
+        const base64String = response.assets[0].base64;
+        setBase64(base64String);
+      }
+    });
+  };
+
+
   return (
     <View
-      style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
+      style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle }]}>
       <View style={[external.mh_20]}>
         <HeaderContainer value="Reportar Pago" />
         <LinearGradient
-          start={{x: 0.0, y: 0.0}}
-          end={{x: 0.0, y: 1.0}}
+          start={{ x: 0.0, y: 0.0 }}
+          end={{ x: 0.0, y: 1.0 }}
           colors={colors}
           style={[
             styles.viewContainer,
-            {shadowColor: appColors.shadowColor, borderradius: 6},
+            { shadowColor: appColors.shadowColor, borderradius: 6 },
           ]}>
           <LinearGradient
-            start={{x: 0.0, y: 0.0}}
-            end={{x: 0.0, y: 1.0}}
+            start={{ x: 0.0, y: 0.0 }}
+            end={{ x: 0.0, y: 1.0 }}
             colors={linearColorStyle}
             style={[
               styles.menuItemContent,
-              {shadowColor: appColors.shadowColor},
+              { shadowColor: appColors.shadowColor },
             ]}>
             <View
               style={[
                 external.fd_row,
                 external.js_space,
-                {flexDirection: viewRTLStyle},
+                { flexDirection: viewRTLStyle },
               ]}>
               <Text
                 style={[
                   commonStyles.subtitleText,
                   external.mh_15,
                   external.mt_10,
-                  {color: textColorStyle, fontSize: fontSizes.FONT19},
+                  { color: textColorStyle, fontSize: fontSizes.FONT19 },
                 ]}>
                 Seleccione tipo de Pago
               </Text>
@@ -329,7 +360,7 @@ const ReportarPago = ({navigation}) => {
                         external.fd_row,
                         external.p_10,
                         external.ai_center,
-                        {flexDirection: viewRTLStyle},
+                        { flexDirection: viewRTLStyle },
                       ]}>
                       {/* <Image style={styles.imgGround} source={item.img} /> */}
 
@@ -346,7 +377,7 @@ const ReportarPago = ({navigation}) => {
                           name="dollar-sign"
                           size={30}
                           color="#2D3261"
-                          style={{marginRight: 16}}
+                          style={{ marginRight: 16 }}
                         />
                       )}
 
@@ -355,7 +386,7 @@ const ReportarPago = ({navigation}) => {
                           name="square-phone"
                           size={30}
                           color="#2D3261"
-                          style={{marginRight: 12}}
+                          style={{ marginRight: 12 }}
                         />
                       )}
 
@@ -364,7 +395,7 @@ const ReportarPago = ({navigation}) => {
                           name="money-bill"
                           size={30}
                           color="#2D3261"
-                          style={{marginRight: 0}}
+                          style={{ marginRight: 0 }}
                         />
                       )}
 
@@ -372,7 +403,7 @@ const ReportarPago = ({navigation}) => {
                         <Text
                           style={[
                             commonStyles.subtitleText,
-                            {color: textColorStyle, textAlign: textRTLStyle},
+                            { color: textColorStyle, textAlign: textRTLStyle },
                           ]}>
                           {t(item.tipo_pago)}
                         </Text>
@@ -382,35 +413,35 @@ const ReportarPago = ({navigation}) => {
                             <Text
                               style={[
                                 commonStyles.subtitleText,
-                                {textAlign: textRTLStyle},
+                                { textAlign: textRTLStyle },
                               ]}>
                               {t('Cuenta: ' + item.cuenta)}
                             </Text>
                             <Text
                               style={[
                                 commonStyles.subtitleText,
-                                {textAlign: textRTLStyle},
+                                { textAlign: textRTLStyle },
                               ]}>
                               {t('Titular: ' + item.titular)}
                             </Text>
                             <Text
                               style={[
                                 commonStyles.subtitleText,
-                                {textAlign: textRTLStyle},
+                                { textAlign: textRTLStyle },
                               ]}>
                               {t('Cedula/RIF: ' + item.cedula_rif)}
                             </Text>
                             <Text
                               style={[
                                 commonStyles.subtitleText,
-                                {textAlign: textRTLStyle},
+                                { textAlign: textRTLStyle },
                               ]}>
                               {t('Tipo: ' + item.tipo_cuenta)}
                             </Text>
                             <Text
                               style={[
                                 commonStyles.subtitleText,
-                                {textAlign: textRTLStyle},
+                                { textAlign: textRTLStyle },
                               ]}>
                               {t('Banco: ' + item.banco)}
                             </Text>
@@ -422,21 +453,21 @@ const ReportarPago = ({navigation}) => {
                             <Text
                               style={[
                                 commonStyles.subtitleText,
-                                {textAlign: textRTLStyle},
+                                { textAlign: textRTLStyle },
                               ]}>
                               {t('Número: ' + item.telefono)}
                             </Text>
                             <Text
                               style={[
                                 commonStyles.subtitleText,
-                                {textAlign: textRTLStyle},
+                                { textAlign: textRTLStyle },
                               ]}>
                               {t('Cedula/RIF: ' + item.cedula_rif)}
                             </Text>
                             <Text
                               style={[
                                 commonStyles.subtitleText,
-                                {textAlign: textRTLStyle},
+                                { textAlign: textRTLStyle },
                               ]}>
                               {t('Banco: ' + item.banco)}
                             </Text>
@@ -448,14 +479,14 @@ const ReportarPago = ({navigation}) => {
                             <Text
                               style={[
                                 commonStyles.subtitleText,
-                                {textAlign: textRTLStyle},
+                                { textAlign: textRTLStyle },
                               ]}>
                               {t('Email: ' + item.email)}
                             </Text>
                             <Text
                               style={[
                                 commonStyles.subtitleText,
-                                {textAlign: textRTLStyle},
+                                { textAlign: textRTLStyle },
                               ]}>
                               {t('Codigo: ' + item.num_ref)}
                             </Text>
@@ -540,7 +571,7 @@ const ReportarPago = ({navigation}) => {
       <View style={[external.fx_1, external.js_end]}>
         <BottomContainer
           leftValue={
-            <Text style={[styles.priceText, {color: textColorStyle}]}>
+            <Text style={[styles.priceText, { color: textColorStyle }]}>
               ${PrecioPago}{' '}
               <Text style={[commonStyles.subtitleText]}>({nombrePlan})</Text>
             </Text>
@@ -583,7 +614,7 @@ const ReportarPago = ({navigation}) => {
               style={[
                 commonStyles.hederH2,
                 external.ti_center,
-                {color: textColorStyle},
+                { color: textColorStyle },
               ]}>
               {'Felicitaciones !!'}
             </Text>
@@ -591,7 +622,7 @@ const ReportarPago = ({navigation}) => {
               style={[
                 commonStyles.subtitleText,
                 external.ti_center,
-                {fontSize: fontSizes.FONT19},
+                { fontSize: fontSizes.FONT19 },
               ]}>
               {
                 'Se ha cargado su reporte de pago. Ahora debe esperar a que el administrador apruebe su ingreso.'
@@ -601,7 +632,7 @@ const ReportarPago = ({navigation}) => {
               <NavigationButton
                 backgroundColor={'#2D3261'}
                 title="Ir al inicio"
-                onPress={() => navigation.navigate('ServiciosContainer')}
+                onPress={() => navigation.navigate('DrawerScreen')}
                 color={appColors.screenBg}
               />
               {/* <View style={[external.mt_15]}>
@@ -635,7 +666,7 @@ const ReportarPago = ({navigation}) => {
                   external.js_space,
                 ]}>
                 <Text
-                  style={[commonStyles.titleText19, {color: textColorStyle}]}>
+                  style={[commonStyles.titleText19, { color: textColorStyle }]}>
                   Reportar Pago (Precio: ${PrecioPago})
                 </Text>
               </View>
@@ -656,6 +687,17 @@ const ReportarPago = ({navigation}) => {
                 keyboardType="numeric"
               />
 
+                {/* <Button title="Select Image" onPress={selectImage} />
+                {imageUri && (
+                  <Image source={imageUri} style={{ width: 200, height: 200 }} />
+                )}
+                {base64 ? (
+                  <Text>{base64.substring(0, 100)}...</Text> // Muestra una parte del base64
+                ) : (
+                  <Text>No image selected</Text>
+                )} */}
+
+
               <View
                 style={[
                   external.fd_row,
@@ -663,7 +705,7 @@ const ReportarPago = ({navigation}) => {
                   external.js_space,
                   external.mt_30,
                 ]}>
-                <View style={{width: windowWidth(200)}}>
+                <View style={{ width: windowWidth(200) }}>
                   <NavigationButton
                     backgroundColor={appColors.screenBg}
                     title={'Cancelar'}
@@ -672,7 +714,7 @@ const ReportarPago = ({navigation}) => {
                     onPress={closeSecondModel}
                   />
                 </View>
-                <View style={{width: windowWidth(200)}}>
+                <View style={{ width: windowWidth(200) }}>
                   <NavigationButton
                     backgroundColor={'#2D3261'}
                     title={'Reportar Pago'}
@@ -691,7 +733,7 @@ const ReportarPago = ({navigation}) => {
                   external.js_space,
                 ]}>
                 <Text
-                  style={[commonStyles.titleText19, {color: textColorStyle}]}>
+                  style={[commonStyles.titleText19, { color: textColorStyle }]}>
                   Reportar Pago (Precio: ${PrecioPago})
                 </Text>
               </View>
@@ -712,18 +754,18 @@ const ReportarPago = ({navigation}) => {
                 placeHolder={'Ingrese su banco'}
               />
 
-              <View style={{marginTop: 5}}>
+              <View style={{ marginTop: 5 }}>
                 <Text
                   style={[
                     styles.headingContainer,
-                    {color: textColorStyle},
-                    {textAlign: textRTLStyle},
+                    { color: textColorStyle },
+                    { textAlign: textRTLStyle },
                   ]}>
                   Identificación
                 </Text>
 
                 {/* Contenedor para el Picker y el TextInput */}
-                <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   {/* Select para elegir "J-" o "G-" */}
                   <View
                     style={{
@@ -749,7 +791,7 @@ const ReportarPago = ({navigation}) => {
                   </View>
 
                   {/* TextInput para el número de RIF */}
-                  <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
+                  <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
                     <TextInputs
                       title=""
                       value={identificacion}
@@ -770,7 +812,7 @@ const ReportarPago = ({navigation}) => {
                   external.js_space,
                   external.mt_30,
                 ]}>
-                <View style={{width: windowWidth(200)}}>
+                <View style={{ width: windowWidth(200) }}>
                   <NavigationButton
                     backgroundColor={appColors.screenBg}
                     title={'Cancelar'}
@@ -779,7 +821,7 @@ const ReportarPago = ({navigation}) => {
                     onPress={closeSecondModel}
                   />
                 </View>
-                <View style={{width: windowWidth(200)}}>
+                <View style={{ width: windowWidth(200) }}>
                   <NavigationButton
                     backgroundColor={'#2D3261'}
                     title={'Reportar Pago'}
@@ -798,7 +840,7 @@ const ReportarPago = ({navigation}) => {
                   external.js_space,
                 ]}>
                 <Text
-                  style={[commonStyles.titleText19, {color: textColorStyle}]}>
+                  style={[commonStyles.titleText19, { color: textColorStyle }]}>
                   Reportar Pago (Precio: ${PrecioPago})
                 </Text>
               </View>
@@ -836,7 +878,7 @@ const ReportarPago = ({navigation}) => {
                   external.js_space,
                   external.mt_30,
                 ]}>
-                <View style={{width: windowWidth(200)}}>
+                <View style={{ width: windowWidth(200) }}>
                   <NavigationButton
                     backgroundColor={appColors.screenBg}
                     title={'Cancelar'}
@@ -845,7 +887,7 @@ const ReportarPago = ({navigation}) => {
                     onPress={closeSecondModel}
                   />
                 </View>
-                <View style={{width: windowWidth(200)}}>
+                <View style={{ width: windowWidth(200) }}>
                   <NavigationButton
                     backgroundColor={'#2D3261'}
                     title={'Reportar Pago'}
@@ -864,7 +906,7 @@ const ReportarPago = ({navigation}) => {
                   external.js_space,
                 ]}>
                 <Text
-                  style={[commonStyles.titleText19, {color: textColorStyle}]}>
+                  style={[commonStyles.titleText19, { color: textColorStyle }]}>
                   Reportar Pago (Precio: ${PrecioPago})
                 </Text>
               </View>
@@ -887,7 +929,7 @@ const ReportarPago = ({navigation}) => {
                   external.js_space,
                   external.mt_30,
                 ]}>
-                <View style={{width: windowWidth(200)}}>
+                <View style={{ width: windowWidth(200) }}>
                   <NavigationButton
                     backgroundColor={appColors.screenBg}
                     title={'Cancelar'}
@@ -896,7 +938,7 @@ const ReportarPago = ({navigation}) => {
                     onPress={closeSecondModel}
                   />
                 </View>
-                <View style={{width: windowWidth(200)}}>
+                <View style={{ width: windowWidth(200) }}>
                   <NavigationButton
                     backgroundColor={'#2D3261'}
                     title={'Reportar Pago'}

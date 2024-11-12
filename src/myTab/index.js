@@ -191,4 +191,224 @@ const MyTabs = () => {
   );
 };
 
-export default MyTabs;
+const MyTabsCliente = () => {
+  return (
+    <Tab.Navigator
+      screenOptions={{headerShown: false}}
+      tabBar={props => <CustomTabBar {...props} />}
+      tabBarOptions={{
+        activeTintColor: '#000000',
+        inactiveTintColor: '#808080',
+      }}>
+      <Tab.Screen
+        name="HomeScreen"
+        component={HomeScreen}
+        options={{
+          tabBarLabel: 'Home',
+          tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8" />,
+          activeTabBarIcon: () => (
+            <Icons name="home" size={30} color="#2D3261" />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="CategoryScreen"
+        component={CategoryScreen}
+        options={{
+          tabBarLabel: 'Category',
+          tabBarIcon: () => <CategoryLight />,
+          activeTabBarIcon: () => <Category />,
+        }}
+      />
+      
+      {/* <Tab.Screen
+        name="MyBeg"
+        component={MyBeg}
+        options={{
+          tabBarLabel: 'My Bag',
+          tabBarIcon: () => <MyBegDis />,
+          activeTabBarIcon: () => <MyBegs />,
+        }}
+      /> */}
+
+      {/* <Tab.Screen
+        name="Servicios"
+        component={ServiciosContainer}
+        options={{
+          tabBarLabel: 'Servicios',
+          tabBarIcon: () => <Icons3 name="tools" size={30} color="#9BA6B8" />,
+          activeTabBarIcon: () => (
+            <Icons3 name="tools" size={30} color="#2D3261" />
+          ),
+        }}
+      /> */}
+
+      {/* <Tab.Screen
+        name="Talleres"
+        component={TalleresContainer}
+        options={{
+          tabBarLabel: 'Talleres',
+          tabBarIcon: () => <Icons name="car" size={30} color="#9BA6B8" />,
+          activeTabBarIcon: () => (
+            <Icons name="car" size={30} color="#2D3261" />
+          ),
+        }}
+      /> */}
+
+      <Tab.Screen
+        name="ProfileScreen"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Profile',
+          tabBarIcon: () => <ProfileLight />,
+          activeTabBarIcon: () => <ProfileTab />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
+const MyTabsTaller = () => {
+  return (
+    <Tab.Navigator
+      screenOptions={{headerShown: false}}
+      tabBar={props => <CustomTabBar {...props} />}
+      tabBarOptions={{
+        activeTintColor: '#000000',
+        inactiveTintColor: '#808080',
+      }}>
+      <Tab.Screen
+        name="HomeScreen"
+        component={HomeScreen}
+        options={{
+          tabBarLabel: 'Home',
+          tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8" />,
+          activeTabBarIcon: () => (
+            <Icons name="home" size={30} color="#2D3261" />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="CategoryScreen"
+        component={CategoryScreen}
+        options={{
+          tabBarLabel: 'Category',
+          tabBarIcon: () => <CategoryLight />,
+          activeTabBarIcon: () => <Category />,
+        }}
+      />
+      
+      {/* <Tab.Screen
+        name="MyBeg"
+        component={MyBeg}
+        options={{
+          tabBarLabel: 'My Bag',
+          tabBarIcon: () => <MyBegDis />,
+          activeTabBarIcon: () => <MyBegs />,
+        }}
+      /> */}
+
+      <Tab.Screen
+        name="Servicios"
+        component={ServiciosContainer}
+        options={{
+          tabBarLabel: 'Servicios',
+          tabBarIcon: () => <Icons3 name="tools" size={30} color="#9BA6B8" />,
+          activeTabBarIcon: () => (
+            <Icons3 name="tools" size={30} color="#2D3261" />
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="ProfileScreen"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Profile',
+          tabBarIcon: () => <ProfileLight />,
+          activeTabBarIcon: () => <ProfileTab />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
+const MyTabsAdmin = () => {
+  return (
+    <Tab.Navigator
+      screenOptions={{headerShown: false}}
+      tabBar={props => <CustomTabBar {...props} />}
+      tabBarOptions={{
+        activeTintColor: '#000000',
+        inactiveTintColor: '#808080',
+      }}>
+      <Tab.Screen
+        name="HomeScreen"
+        component={HomeScreen}
+        options={{
+          tabBarLabel: 'Home',
+          tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8" />,
+          activeTabBarIcon: () => (
+            <Icons name="home" size={30} color="#2D3261" />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="CategoryScreen"
+        component={CategoryScreen}
+        options={{
+          tabBarLabel: 'Category',
+          tabBarIcon: () => <CategoryLight />,
+          activeTabBarIcon: () => <Category />,
+        }}
+      />
+      
+      {/* <Tab.Screen
+        name="MyBeg"
+        component={MyBeg}
+        options={{
+          tabBarLabel: 'My Bag',
+          tabBarIcon: () => <MyBegDis />,
+          activeTabBarIcon: () => <MyBegs />,
+        }}
+      /> */}
+
+      {/* <Tab.Screen
+        name="Servicios"
+        component={ServiciosContainer}
+        options={{
+          tabBarLabel: 'Servicios',
+          tabBarIcon: () => <Icons3 name="tools" size={30} color="#9BA6B8" />,
+          activeTabBarIcon: () => (
+            <Icons3 name="tools" size={30} color="#2D3261" />
+          ),
+        }}
+      /> */}
+
+      <Tab.Screen
+        name="Talleres"
+        component={TalleresContainer}
+        options={{
+          tabBarLabel: 'Talleres',
+          tabBarIcon: () => <Icons name="car" size={30} color="#9BA6B8" />,
+          activeTabBarIcon: () => (
+            <Icons name="car" size={30} color="#2D3261" />
+          ),
+        }}
+      />
+
+      <Tab.Screen
+        name="ProfileScreen"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Profile',
+          tabBarIcon: () => <ProfileLight />,
+          activeTabBarIcon: () => <ProfileTab />,
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
+export { MyTabs, MyTabsCliente, MyTabsTaller, MyTabsAdmin };
+

@@ -305,16 +305,18 @@ const SignUp = ({ navigation }) => {
   // Funciones para manejar los clics
   const handleClientePress = () => {
     console.log('Cliente Card Pressed2');
+    setSelectedPrefix("V-")
     settypeOfView('Cliente');
   };
 
   const handleTallerPress = () => {
     console.log('Taller Card Pressed1');
+    setSelectedPrefix("J-")
     settypeOfView('Taller');
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: bgFullStyle }]}>
+    <View style={[styles.container, { backgroundColor: bgFullStyle, padding: 30 }]}>
       <Text
         style={{
           fontSize: 20,

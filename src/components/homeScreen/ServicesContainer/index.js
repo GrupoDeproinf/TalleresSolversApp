@@ -21,8 +21,10 @@ import {windowHeight} from '../../../themes/appConstant';
 import {useValues} from '../../../../App';
 import appColors from '../../../themes/appColors';
 import {useNavigation} from '@react-navigation/native';
-import Icons from 'react-native-vector-icons/FontAwesome';
 import {Snackbar} from 'react-native-paper';
+
+import Icons from 'react-native-vector-icons/FontAwesome';
+import Icons2 from 'react-native-vector-icons/FontAwesome5';
 
 import notImageFound from '../../../assets/noimageold.jpeg';
 
@@ -71,112 +73,117 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
 
   const renderItem = ({item}) => (
     <TouchableOpacity onPress={() => goToDetail(item)} activeOpacity={0.9}>
-      <LinearGradient
-        start={{x: 0.0, y: 0.0}}
-        end={{x: 0.0, y: 1.0}}
-        colors={colors}
-        style={[
-          styles.container,
-          {shadowColor: appColors.shadowColor},
-          {flexDirection: viewRTLStyle},
-        ]}>
-        <LinearGradient
-          start={{x: 0.0, y: 0.0}}
-          end={{x: 0.0, y: 1.0}}
-          colors={linearColorStyle}
-          style={[
-            styles.menuItemContent,
-            {shadowColor: appColors.shadowColor},
-            {flexDirection: viewRTLStyle},
-          ]}>
-          <View
-            style={[styles.imageContainer, {backgroundColor: imageContainer}]}>
-            {item.img == null ? (
-              <Image style={styles.image} source={notImageFound} />
-            ) : (
-              <Image style={styles.image} source={item.img} />
-            )}
+  <LinearGradient
+    start={{x: 0.0, y: 0.0}}
+    end={{x: 0.0, y: 1.0}}
+    colors={colors}
+    style={[
+      styles.container,
+      {shadowColor: appColors.shadowColor},
+      {flexDirection: viewRTLStyle},
+    ]}>
+    <LinearGradient
+      start={{x: 0.0, y: 0.0}}
+      end={{x: 0.0, y: 1.0}}
+      colors={linearColorStyle}
+      style={[
+        styles.menuItemContent,
+        {shadowColor: appColors.shadowColor},
+        {flexDirection: viewRTLStyle},
+      ]}>
+        {item.estatus && (
+          <View style={{position: 'absolute', top: 5, left: 5}}>
+            {/* <i className="fas fa-check-circle" style={{color: 'green', fontSize: 20}}></i> */}
+            <Icons2 name="certificate" size={20} color="#2D3261" />
           </View>
-          <View style={styles.textContainer}>
-            <View
-              style={[styles.ratingContainer, {flexDirection: viewRTLStyle}]}>
-              <Text
-                style={[
-                  styles.title,
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
-                ]}>
-                {t(item.nombre_servicio)}
-              </Text>
-              <TouchableOpacity style={styles.ratingContainer}>
-                <YellowStar />
-                <Text style={[styles.ratingText]}>{t(item.puntuacion)}</Text>
-              </TouchableOpacity>
-            </View>
+        )}
+      <View style={{position: 'relative'}}>
+        <View style={[styles.imageContainer, {backgroundColor: imageContainer}]}>
+          {item.img == null ? (
+            <Image style={styles.image} source={notImageFound} />
+          ) : (
+            <Image style={styles.image} source={item.img} />
+          )}
+        </View>
+      </View>
+      <View style={styles.textContainer}>
+        <View style={[styles.ratingContainer, {flexDirection: viewRTLStyle}]}>
+          <Text style={[styles.title, {color: textColorStyle}, {textAlign: textRTLStyle}]}>
+            {t(item.nombre_servicio)}
+          </Text>
+          <TouchableOpacity style={styles.ratingContainer}>
+            <YellowStar />
+            <Text style={[styles.ratingText]}>{t(item.puntuacion)}</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={[styles.datoSub, {textAlign: textRTLStyle}]}>
+          Categoria: {t(item.categoria)}
+        </Text>
+        <Text
+          style={[styles.datoSub, {textAlign: textRTLStyle}]}
+          numberOfLines={1} // Limita a una línea y agrega "..." si el texto es demasiado largo
+          ellipsizeMode="tail" // Agrega "..." al final del texto truncado
+        >
+          Subcategoria: {Array.isArray(item.subcategoria) ? item.subcategoria[0].nombre_subcategoria : t(item.subcategoria)}
+        </Text>
+        <Text
+          style={[styles.datoSub, {textAlign: textRTLStyle}]}
+          numberOfLines={1} // Limita a una línea y agrega "..." si el texto es demasiado largo
+          ellipsizeMode="tail" // Agrega "..." al final del texto truncado
+        >
+          Publicado: <Text style={{fontWeight: 'bold'}}>{item.estatus ? 'Si' : 'No'}</Text>
+        </Text>
 
-            <Text style={[styles.datoSub, {textAlign: textRTLStyle}]}>
-              Categoria: {t(item.categoria)}
-            </Text>
-
+        <View
+          style={{
+            flexDirection: 'row', // Alinea los elementos en una fila
+            alignItems: 'center', // Alinea verticalmente los elementos al centro
+            justifyContent: 'space-between', // Espacio entre los elementos
+          }}>
+          <TouchableOpacity
+            onPress={() => {
+              goToPreview(item)
+            }}>
             <Text
-              style={[styles.datoSub, {textAlign: textRTLStyle}]}
+              style={[
+                styles.datoSub,
+                {
+                  textAlign: textRTLStyle,
+                  fontSize: 14,
+                  color: '#2D3261', // Color del texto
+                  textDecorationLine: 'underline', // Agrega subrayado
+                },
+              ]}
               numberOfLines={1} // Limita a una línea y agrega "..." si el texto es demasiado largo
               ellipsizeMode="tail" // Agrega "..." al final del texto truncado
             >
-              Subcategoria: {t(item.subcategoria)}
+              Preview
             </Text>
+          </TouchableOpacity>
+          <Text
+            style={{
+              fontSize: 18,
+              color: '#2D3261',
+              fontWeight: 'bold',
+              textAlign: 'right',
+              marginRight: 30,
+              marginTop: 10,
+            }}>
+            ${item.precio}
+          </Text>
+          {/* Mostrar el hint (Snackbar) solo para el item actual */}
+          <Snackbar
+            visible={visibleHint === item.uid}
+            onDismiss={onDismissHint}
+            duration={900}>
+            {statusLabel}
+          </Snackbar>
+        </View>
+      </View>
+    </LinearGradient>
+  </LinearGradient>
+</TouchableOpacity>
 
-            <View
-              style={{
-                flexDirection: 'row', // Alinea los elementos en una fila
-                alignItems: 'center', // Alinea verticalmente los elementos al centro
-                justifyContent: 'space-between', // Espacio entre los elementos
-              }}>
-              <TouchableOpacity
-                onPress={() => {
-                  goToPreview(item)
-                }}>
-                <Text
-                  style={[
-                    styles.datoSub,
-                    {
-                      textAlign: textRTLStyle,
-                      fontSize: 14,
-                      color: '#2D3261', // Color del texto
-                      textDecorationLine: 'underline', // Agrega subrayado
-                    },
-                  ]}
-                  numberOfLines={1} // Limita a una línea y agrega "..." si el texto es demasiado largo
-                  ellipsizeMode="tail" // Agrega "..." al final del texto truncado
-                >
-                  Preview
-                </Text>
-              </TouchableOpacity>
-
-              <Text
-                style={{
-                  fontSize: 18,
-                  color: '#2D3261',
-                  fontWeight: 'bold',
-                  textAlign: 'right',
-                  marginRight: 30,
-                  marginTop: 10,
-                }}>
-                ${item.precio}
-              </Text>
-
-              {/* Mostrar el hint (Snackbar) solo para el item actual */}
-              <Snackbar
-                visible={visibleHint === item.uid}
-                onDismiss={onDismissHint}
-                duration={900}>
-                {statusLabel}
-              </Snackbar>
-            </View>
-          </View>
-        </LinearGradient>
-      </LinearGradient>
-    </TouchableOpacity>
   );
 
   return (

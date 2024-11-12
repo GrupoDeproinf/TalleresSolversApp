@@ -148,9 +148,16 @@ const FormTaller = () => {
 
   const [isChecked, setisChecked] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible2, setModalVisible2] = useState(false);
   const [uidService, setuidService] = useState(false);
 
   const [userStorage, setuserStorage] = useState(false);
+
+  const [cantServices, setcantServices] = useState(0);
+  
+  const navigationScreen = useNavigation();
+
+  const [publicOrigin, setpublicOrigin] = useState(false);
 
   const stackNavigation = () => {
     navigation.reset({
@@ -162,15 +169,15 @@ const FormTaller = () => {
   useEffect(() => {
     const {uid} = route.params;
     setModalVisible(false);
-    getCaracteristicas();
     getUserActive()
-
+    getDataServiceActivos()
+    
     if (uid != undefined && uid != '') {
       setuidTaller(uid);
-
       getData(uid);
     } else {
       setNameServicio('Nuevo Servicio');
+      getCaracteristicas(true);
       setNombre('');
       setcaracteristicaSelected('');
       setSubcaracteristicaSelected('');
@@ -194,7 +201,7 @@ const FormTaller = () => {
   }
   }
 
-  const getCaracteristicas = async () => {
+  const getCaracteristicas = async (loadData) => {
     try {
       // Hacer la solicitud GET utilizando Axios
       const response = await api.get('/usuarios/getActiveCategories', {
@@ -206,13 +213,14 @@ const FormTaller = () => {
       // Verificar la respuesta del servidor
       if (response.status === 200) {
         const result = response.data;
-        console.log('caraccteristicas de resultados1234', result.categories); // Aquí puedes manejar la respuesta
+        console.log('caraccteristicas de resultados123435345345345', result.categories[0].id); // Aquí puedes manejar la respuesta
 
         if (result.categories.length > 0) {
-          setcaracteristicaSelected(result.categories[0].id)
-          getSubcaracteristicas(result.categories[0].id);
+          if (loadData){
+            setcaracteristicaSelected(result.categories[0].id)
+            getSubcaracteristicas(result.categories[0].id, true);
+          }
         }
-
         setcaracteristicas(result.categories);
       } else {
         setcaracteristicas([]);
@@ -230,8 +238,9 @@ const FormTaller = () => {
     }
   };
 
-  const getSubcaracteristicas = async uid => {
-    console.log(uid);
+  const getSubcaracteristicas = async (uid, loadData) => {
+    console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",uid);
+    console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
     try {
       // Hacer la solicitud POST utilizando Axios
       const response = await api.post(
@@ -248,7 +257,9 @@ const FormTaller = () => {
         console.log('Este es el usuario encontrado:', result.subcategories);
 
         if (result.subcategories.length > 0) {
-          setSubcaracteristicaSelected(result.subcategories[0].id)
+          if (loadData){
+            setSubcaracteristicaSelected(result.subcategories[0].id)
+          }
         }
         setSubcaracteristicas(result.subcategories);
       } else {
@@ -278,13 +289,21 @@ const FormTaller = () => {
         setNombre(result.service.nombre_servicio || '');
 
         setNameServicio(result.service.nombre_servicio);
+
+
         setcaracteristicaSelected(result.service.uid_categoria || '');
         setSubcaracteristicaSelected(result.service.uid_subcategoria || '');
+        getCaracteristicas(false)
+        getSubcaracteristicas(result.service.uid_categoria, false);
+
         setprecio(result.service.precio || 0);
         setDescription(result.service.descripcion || '');
         setGarantia(result.service.garantia || '');
         setChecked(result.service.estatus ? 'si' : 'no' || false);
         setuidService(result.service.id || '');
+
+        setpublicOrigin(result.service.estatus)
+
       } else {
         console.log('Usuario no encontrado');
       }
@@ -309,12 +328,35 @@ const FormTaller = () => {
   } = useValues();
 
   const onHandleChange = type => {
-    settipoAccion(type);
-    setModalVisible(true);
+    console.log(checked)
+    console.log(cantServices)
+
+    if (checked == "no"){
+      settipoAccion(type);
+      setModalVisible(true);
+    } else {
+      if (publicOrigin){
+        settipoAccion(type);
+        setModalVisible(true);
+      } else {
+        if (Number(cantServices) == 0 || Number(cantServices) < 0){
+          setModalVisible2(true)
+        } else {
+          settipoAccion(type);
+          setModalVisible(true);
+        }
+      }
+    }
+
+
   };
 
   const onCancel = () => {
     setModalVisible(false);
+  };
+
+  const onCancel2 = () => {
+    setModalVisible2(false);
   };
 
   const onConfirm = async () => {
@@ -361,6 +403,7 @@ const FormTaller = () => {
         puntuacion:4,
         garantia: Garantia,
         estatus: checked == 'si' ? true : false,
+        publicOrigin:publicOrigin
       };
 
       console.log(dataFinal)
@@ -399,6 +442,45 @@ const FormTaller = () => {
     }
 
   };
+
+
+  const getDataServiceActivos = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('@userInfo');
+      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+      try {
+        // Hacer la solicitud POST utilizando Axios
+        const response = await api.post('/usuarios/getUserByUid', {
+          uid: user.uid,
+        });
+      
+        // Verificar la respuesta del servidor
+        const result = response.data;
+      
+        if (result.message === 'Usuario encontrado') {
+          console.log("result.userData.subscripcion_actual", result.userData.subscripcion_actual)
+          setcantServices(result.userData.subscripcion_actual.cantidad_servicios)
+
+
+        } else {
+          console.log('Usuario no encontrado');
+        }
+      } catch (error) {
+        if (error.response) {
+          console.error('Error en la solicitud122222:', error.response.statusText);
+        } else {
+          console.error('Error en la solicitud:12323423', error.message);
+        }
+      }
+    } catch (e) {
+      console.log(e)
+    }
+  };
+
+  const gotoPlans = () =>{
+    navigationScreen.navigate('Planscreen');
+  }
+
 
   const showToast = text => {
     ToastAndroid.show(text, ToastAndroid.SHORT);
@@ -714,6 +796,33 @@ const FormTaller = () => {
           </View>
         </View>
       </Modal>
+
+
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={modalVisible2}
+        onRequestClose={onCancel2}>
+        <View style={stylesModal.container}>
+          <View style={stylesModal.modalView}>
+            <Text style={stylesModal.modalText}>
+              Usted ha alcanzado la cantidad máxima de servicios permitidos en su plan. Para crear nuevos servicios, debe actualizar su plan.
+            </Text>
+            <View style={stylesModal.buttonContainer}>
+              <TouchableOpacity
+                style={stylesModal.buttonYes}
+                onPress={gotoPlans}>
+                <Text style={stylesModal.buttonText}>Ir a planes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={stylesModal.buttonNo} onPress={onCancel2}>
+                <Text style={stylesModal.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+
     </View>
   );
 };
