@@ -70,6 +70,7 @@ const ServiciosContainer = ({ navigation }) => {
             setshowServices(false)
             setdataServicios([])
           } else if (result.userData.subscripcion_actual.status == "Aprobado"){
+            console.log("aprobado")
             setshowPlanes(false)
             setshowPorAprobar(false)
             setshowServices(true)

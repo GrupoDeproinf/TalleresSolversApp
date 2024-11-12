@@ -157,6 +157,8 @@ const FormTaller = () => {
   
   const navigationScreen = useNavigation();
 
+  const [publicOrigin, setpublicOrigin] = useState(false);
+
   const stackNavigation = () => {
     navigation.reset({
       index: 0,
@@ -299,6 +301,9 @@ const FormTaller = () => {
         setGarantia(result.service.garantia || '');
         setChecked(result.service.estatus ? 'si' : 'no' || false);
         setuidService(result.service.id || '');
+
+        setpublicOrigin(result.service.estatus)
+
       } else {
         console.log('Usuario no encontrado');
       }
@@ -330,11 +335,16 @@ const FormTaller = () => {
       settipoAccion(type);
       setModalVisible(true);
     } else {
-      if (Number(cantServices) == 0 || Number(cantServices) < 0){
-        setModalVisible2(true)
-      } else {
+      if (publicOrigin){
         settipoAccion(type);
         setModalVisible(true);
+      } else {
+        if (Number(cantServices) == 0 || Number(cantServices) < 0){
+          setModalVisible2(true)
+        } else {
+          settipoAccion(type);
+          setModalVisible(true);
+        }
       }
     }
 
@@ -393,6 +403,7 @@ const FormTaller = () => {
         puntuacion:4,
         garantia: Garantia,
         estatus: checked == 'si' ? true : false,
+        publicOrigin:publicOrigin
       };
 
       console.log(dataFinal)
