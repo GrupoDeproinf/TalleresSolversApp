@@ -16,10 +16,55 @@ import NewArrivalBigContainer from '../../components/homeScreenTwo/newArrivalTwo
 import {useValues} from '../../../App';
 import ProductSwiper from '../../components/homeScreen/productSwiper';
 import {useNavigation} from '@react-navigation/native';
+import api from '../../../axiosInstance';
 
 const HomeScreen = () => {
+
   const {bgFullStyle, t} = useValues();
   const navigation = useNavigation('');
+
+  const getData = async () => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('@userInfo');
+      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+
+      console.log("Userrrr1234444455555589789", user)
+
+      if (user.subscripcion_actual == undefined) {
+        setshowPlanes(true)
+      } else {
+
+      }
+
+
+        try {
+          // Hacer la solicitud GET utilizando Axios
+          const response = await api.post('/home/getServices');
+
+          console.log("Esto es el response",response.status)
+
+          // Verificar la respuesta del servidor
+          if (response.status === 200) {
+              const result = response.data;
+              console.log("usuarios de resultados", result.services); // Aquí puedes manejar la respuesta
+
+              console.log(result.services);
+          } else {
+            console.log([]);
+          }
+      } catch (error) {
+          console.error(error);
+      }
+
+
+    } catch (e) {
+      console.error(error)
+    }
+  };
+
+  useEffect(() => {
+    getData();
+  }, []);
 
   return (
     <ScrollView
