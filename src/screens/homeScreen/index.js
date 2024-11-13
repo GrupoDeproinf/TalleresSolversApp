@@ -1,5 +1,5 @@
 import {ScrollView} from 'react-native';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import HeaderContainer from '../../components/homeScreen/headerContainer';
 import SearchContainer from '../../components/homeScreen/searchContainer';
 import BannerContainer from '../../components/homeScreen/bannerContainer';
@@ -17,11 +17,14 @@ import {useValues} from '../../../App';
 import ProductSwiper from '../../components/homeScreen/productSwiper';
 import {useNavigation} from '@react-navigation/native';
 import api from '../../../axiosInstance';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import ShowProductsContainer from '../../components/homeScreen/showProducts';
 
 const HomeScreen = () => {
 
   const {bgFullStyle, t} = useValues();
   const navigation = useNavigation('');
+  const [data, setData] = useState();
 
   const getData = async () => {
     try {
@@ -30,27 +33,21 @@ const HomeScreen = () => {
 
       console.log("Userrrr1234444455555589789", user)
 
-      if (user.subscripcion_actual == undefined) {
-        setshowPlanes(true)
-      } else {
-
-      }
-
 
         try {
           // Hacer la solicitud GET utilizando Axios
-          const response = await api.post('/home/getServices');
+          const response = await api.get('/home/getServices');
 
-          console.log("Esto es el response",response.status)
+          console.log("Esto es el response",response)
 
           // Verificar la respuesta del servidor
           if (response.status === 200) {
               const result = response.data;
               console.log("usuarios de resultados", result.services); // Aquí puedes manejar la respuesta
 
-              console.log(result.services);
+              setData(result.services);
           } else {
-            console.log([]);
+            setData([]);
           }
       } catch (error) {
           console.error(error);
@@ -81,6 +78,12 @@ const HomeScreen = () => {
         show={true}
         showPlus={true}
       />
+      <ShowProductsContainer
+        data={data}
+        value={t('transData.newArrival')}
+        show={true}
+        showPlus={true}
+      />
       <TrendingContainer />
       <NewArrivalContainer
         data={newArrivalSmallData}
@@ -96,7 +99,7 @@ const HomeScreen = () => {
         horizontal={true}
         show={true}
       />
-      <TopBrandContainer />
+
     </ScrollView>
   );
 };

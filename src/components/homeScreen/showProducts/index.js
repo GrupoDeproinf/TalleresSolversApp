@@ -26,7 +26,7 @@ import {Snackbar} from 'react-native-paper';
 
 import notImageFound from '../../../assets/noimageold.jpeg';
 
-const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
+const ShowProductsContainer = ({data, value, show, showPlus, marginTop}) => {
   const {
     linearColorStyle,
     textColorStyle,
@@ -87,14 +87,14 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
             {shadowColor: appColors.shadowColor},
             {flexDirection: viewRTLStyle},
           ]}>
-          <View
+          {/* <View
             style={[styles.imageContainer, {backgroundColor: imageContainer}]}>
             {item.img == null ? (
               <Image style={styles.image} source={notImageFound} />
             ) : (
               <Image style={styles.image} source={item?.img} />
             )}
-          </View>
+          </View> */}
           <View style={styles.textContainer}>
             <View
               style={[styles.ratingContainer, {flexDirection: viewRTLStyle}]}>
@@ -118,7 +118,7 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
                 styles.datoSub,
                 {textAlign: textRTLStyle, marginBottom: -10},
               ]}>
-              Rif: {t(item.rif)}
+              Rif: {t(item.taller.rif)}
             </Text>
             <View
               style={[styles.priceContainer, {flexDirection: viewRTLStyle}]}>
@@ -134,7 +134,7 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
                 </Text>
               </View>
 
-              {
+              {/* {
                 item.status === "Pendiente" ? (
                   <TouchableOpacity
                     onPress={() => onLongPressHandler(item.uid, item.status)}>
@@ -171,17 +171,17 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
                     <Icons name="ban" size={23} color="red" />
                   </TouchableOpacity>
                 ) : null
-              }
+              } */}
 
 
 
               {/* Mostrar el hint (Snackbar) solo para el item actual */}
-              <Snackbar
+              {/* <Snackbar
                 visible={visibleHint === item.uid}
                 onDismiss={onDismissHint}
                 duration={900}>
                 {statusLabel}
-              </Snackbar>
+              </Snackbar> */}
             </View>
           </View>
         </LinearGradient>
@@ -201,4 +201,4 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
   );
 };
 
-export default NewArrivalContainer;
+export default ShowProductsContainer;
