@@ -396,12 +396,13 @@ const SignUp = ({ navigation }) => {
 
                 {/* TextInput para el número de RIF */}
                 <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
-                  <TextInputs
-                    title=""
-                    value={cedula}
-                    placeHolder="Ingrese el número de cedula"
-                    onChangeText={text => {
-                      const numericText = text.replace(/[^0-9]/g, '');
+                <TextInputs
+                  title=""
+                  value={cedula}
+                  placeHolder="Ingrese el número de cedula"
+                  onChangeText={text => {
+                    const numericText = text.replace(/[^0-9]/g, '');
+                    if (numericText.length <= 10) { // Limitar a 10 caracteres
                       setcedula(numericText);
                       setcedulaTyping(true);
                       if (numericText.trim() === '') {
@@ -409,14 +410,16 @@ const SignUp = ({ navigation }) => {
                       } else {
                         setcedulaError('');
                       }
-                    }}
-                    onBlur={() => {
-                      setcedulaTyping(false);
-                    }}
-                    keyboardType="numeric"
-                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                    style={{ height: 50 }} // Altura para el TextInput
-                  />
+                    }
+                  }}
+                  onBlur={() => {
+                    setcedulaTyping(false);
+                  }}
+                  keyboardType="numeric"
+                  icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
+                  style={{ height: 50 }} // Altura para el TextInput
+                />
+
                 </View>
               </View>
 
@@ -598,12 +601,13 @@ const SignUp = ({ navigation }) => {
 
                 {/* TextInput para el número de RIF */}
                 <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
-                  <TextInputs
-                    title=""
-                    value={cedula}
-                    placeHolder="Ingrese el número de RIF"
-                    onChangeText={text => {
-                      const numericText = text.replace(/[^0-9]/g, '');
+                <TextInputs
+                  title=""
+                  value={cedula}
+                  placeHolder="Ingrese el número de RIF"
+                  onChangeText={text => {
+                    const numericText = text.replace(/[^0-9]/g, '');
+                    if (numericText.length <= 10) { // Limitar a 10 caracteres
                       setcedula(numericText);
                       setcedulaTyping(true);
                       if (numericText.trim() === '') {
@@ -611,14 +615,15 @@ const SignUp = ({ navigation }) => {
                       } else {
                         setcedulaError('');
                       }
-                    }}
-                    onBlur={() => {
-                      setcedulaTyping(false);
-                    }}
-                    keyboardType="numeric"
-                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                    style={{ height: 50 }} // Altura para el TextInput
-                  />
+                    }
+                  }}
+                  onBlur={() => {
+                    setcedulaTyping(false);
+                  }}
+                  keyboardType="numeric"
+                  icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
+                  style={{ height: 50 }} // Altura para el TextInput
+                />
                 </View>
               </View>
 

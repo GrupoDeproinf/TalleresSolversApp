@@ -232,7 +232,7 @@ const ServiciosContainer = ({ navigation }) => {
             </Text>
 
             <Text style={[styles.bagisEmptySomething, { textAlign: 'center' }]}>
-            Debe esperar a que el administrador apruebe su pago para poder comenzar a publicar sus servicios.
+            Estamos verificando su pago en breve podra iniciar la publicacion de sus servicios.
             </Text>
           </View>
         </View>

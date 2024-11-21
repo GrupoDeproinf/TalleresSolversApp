@@ -27,11 +27,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import {RadioButton, Button} from 'react-native-paper';
 import {Picker} from '@react-native-picker/picker';
-import api from '../../../../axiosInstance'; 
+import api from '../../../../axiosInstance';
 
-import Icons from 'react-native-vector-icons/FontAwesome'
-import Icons2 from 'react-native-vector-icons/FontAwesome5'
-
+import Icons from 'react-native-vector-icons/FontAwesome';
+import Icons2 from 'react-native-vector-icons/FontAwesome5';
 
 const TallerProfileScreen = ({navigation}) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
@@ -125,18 +124,20 @@ const TallerProfileScreen = ({navigation}) => {
 
       try {
         // Hacer la solicitud POST utilizando Axios
-        const response = await api.post('/usuarios/getUserByUid', { uid: user.uid });
-      
+        const response = await api.post('/usuarios/getUserByUid', {
+          uid: user.uid,
+        });
+
         // Verificar la respuesta del servidor
         if (response.status === 200) {
           const result = response.data;
           console.log('Email:', result.userData.email); // Aquí puedes manejar la respuesta
-      
+
           setNombre(result.userData.nombre);
           setcedula(result.userData.rif);
           setEmail(result.userData.email);
           setPhone(result.userData.phone);
-      
+
           setDireccion(result.userData.Direccion);
           setRegComercial(result.userData.RegComercial);
           setCaracteristicas(result.userData.Caracteristicas);
@@ -147,9 +148,9 @@ const TallerProfileScreen = ({navigation}) => {
           setLinkTiktok(result.userData.LinkTiktok);
           setGarantia(result.userData.Garantia);
           setseguro(result.userData.seguro);
-      
+
           // Separar el prefijo del tipo de ID (rif) y asignarlo a los estados correspondientes
-          const typeID = result.userData.rif.split("-");
+          const typeID = result.userData.rif.split('-');
           setcedula(typeID[1] || '');
           setSelectedPrefix(`${typeID[0]}-`);
         } else {
@@ -157,12 +158,14 @@ const TallerProfileScreen = ({navigation}) => {
         }
       } catch (error) {
         if (error.response) {
-          console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
+          console.error(
+            'Error en la solicitud:',
+            error.response.data.message || error.response.statusText,
+          );
         } else {
           console.error('Error en la solicitud:', error.message);
         }
       }
-      
     } catch (e) {
       // error reading value
       console.log(e);
@@ -229,15 +232,18 @@ const TallerProfileScreen = ({navigation}) => {
 
       try {
         // Hacer la solicitud POST utilizando Axios
-        const response = await api.post('/usuarios/SaveTallerAll', infoUserCreated);
-      
-        console.log("response++++++++++", response.status)
+        const response = await api.post(
+          '/usuarios/SaveTallerAll',
+          infoUserCreated,
+        );
+
+        console.log('response++++++++++', response.status);
 
         // Verificar la respuesta del servidor
         if (response.status === 201) {
           const result = response.data;
           console.log(result); // Aquí puedes manejar la respuesta
-      
+
           try {
             const jsonValue = JSON.stringify(infoUserCreated);
             console.log(jsonValue);
@@ -245,12 +251,14 @@ const TallerProfileScreen = ({navigation}) => {
           } catch (e) {
             console.log(e);
           }
-      
+
           showToast('Actualizado correctamente');
           setdisabledInput(false);
           ChangeView();
         } else {
-          const errorText = response.data ? response.data.message : 'Error desconocido';
+          const errorText = response.data
+            ? response.data.message
+            : 'Error desconocido';
           console.error('Error al guardar el usuario:', errorText);
           setGetOtpDisabled(false);
           showToast(errorText);
@@ -258,14 +266,16 @@ const TallerProfileScreen = ({navigation}) => {
       } catch (error) {
         setdisabledInput(false);
         if (error.response) {
-          console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
+          console.error(
+            'Error en la solicitud:',
+            error.response.data.message || error.response.statusText,
+          );
           showToast(error.response.data.message || 'Error en la solicitud');
         } else {
           console.error('Error en la solicitud:', error.message);
           showToast('Error en la solicitud');
         }
       }
-      
     } else {
       setdisabledInput(false);
       showToast('Error al actualizar el usuario, por favor validar formulario');
@@ -280,7 +290,7 @@ const TallerProfileScreen = ({navigation}) => {
     iconColorStyle,
     isDark,
     t,
-    textRTLStyle
+    textRTLStyle,
   } = useValues();
 
   // const showToast = (type, text1, position, visibilityTime, autoHide) => {
@@ -417,7 +427,7 @@ const TallerProfileScreen = ({navigation}) => {
                   {color: textColorStyle},
                   {textAlign: textRTLStyle},
                 ]}>
-                Cedula
+                Registro de Información Fiscal (RIF)
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
@@ -448,27 +458,28 @@ const TallerProfileScreen = ({navigation}) => {
 
                 {/* TextInput para el número de RIF */}
                 <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
-                  <TextInputs
-                    title=""
-                    value={cedula}
-                    placeHolder="Ingrese el número de cedula"
-                    onChangeText={text => {
-                      const numericText = text.replace(/[^0-9]/g, '');
-                      setcedula(numericText);
-                      setcedulaTyping(true);
-                      if (numericText.trim() === '') {
-                        setcedulaError('Cedula es requerida');
-                      } else {
-                        setcedulaError('');
-                      }
-                    }}
-                    onBlur={() => {
-                      setcedulaTyping(false);
-                    }}
-                    keyboardType="numeric"
-                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                    style={{height: 50}} // Altura para el TextInput
-                  />
+                <TextInputs
+                  title=""
+                  value={cedula}
+                  placeHolder="Ingrese el número de RIF"
+                  onChangeText={text => {
+                    const numericText = text.replace(/[^0-9]/g, '').slice(0, 10); // Limitar a 10 caracteres
+                    setcedula(numericText);
+                    setcedulaTyping(true);
+                    if (numericText.trim() === '') {
+                      setcedulaError('RIF es requerido');
+                    } else {
+                      setcedulaError('');
+                    }
+                  }}
+                  onBlur={() => {
+                    setcedulaTyping(false);
+                  }}
+                  keyboardType="numeric"
+                  icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
+                  style={{height: 50}} // Altura para el TextInput
+                />
+
                 </View>
               </View>
 
@@ -510,7 +521,7 @@ const TallerProfileScreen = ({navigation}) => {
               placeHolder="Ingrese su Registro Comercial"
               onChangeText={text => {
                 // Eliminar cualquier caracter que no sea un número
-                const numericText = text.replace(/[^0-9]/g, '');
+                const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
                 setRegComercial(numericText);
                 setRegComercialTyping(true);
                 if (numericText.trim() === '') {
@@ -803,7 +814,7 @@ const TallerProfileScreen = ({navigation}) => {
           )}
         </ScrollView>
 
-        <View style={[external.fx_1, external.js_end, external.Pb_30]}>
+        <View>
           <View
             style={{
               backgroundColor: buttonColor,
@@ -826,13 +837,17 @@ const TallerProfileScreen = ({navigation}) => {
   if (!showForm) {
     return (
       <View
-        style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
-        <View style={[styles.container]}>
+        style={[
+          commonStyles.commonContainer,
+          {backgroundColor: bgFullStyle, flex: 1},
+        ]}>
+        {/* <View style={[styles.container, {flex: 1}]}>
           <View
             style={[
               external.ai_center,
               external.js_center,
               external.as_center,
+              {flex: 1, justifyContent: 'center', alignItems: 'center'},
             ]}>
             <Text
               style={[
@@ -843,9 +858,13 @@ const TallerProfileScreen = ({navigation}) => {
               Perfil de Taller
             </Text>
           </View>
-        </View>
+        </View> */}
 
-        <View style={styles.flexView}>
+        <View
+          style={[
+            styles.flexView,
+            {flex: 1, justifyContent: 'center', alignItems: 'center'},
+          ]}>
           <View
             style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
             <Image

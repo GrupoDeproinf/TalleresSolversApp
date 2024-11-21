@@ -22,7 +22,7 @@ export const profileData = [
   // },
   {
     id: 2,
-    title: 'Historial de servicios',
+    title: 'Mis Intereses',
     icon: <OrderHistory />,
     screenName: 'OrderHistory',
   },
@@ -38,12 +38,12 @@ export const profileData = [
   //   icon: <Cards />,
   //   screenName: 'PaymentScreen',
   // },
-  {
-    id: 5,
-    title: 'Cambiar clave',
-    icon: <Key width={24} height={24} />,
-    screenName: 'ChangePasswordScreen',
-  },
+  // {
+  //   id: 5,
+  //   title: 'Cambiar clave',
+  //   icon: <Key width={24} height={24} />,
+  //   screenName: 'ChangePasswordScreen',
+  // },
   {
     id: 6,
     title: 'Cerrar sesión',

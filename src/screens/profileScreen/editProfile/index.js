@@ -29,6 +29,8 @@ import CheckBox from 'react-native-check-box';
 import {Picker} from '@react-native-picker/picker';
 import Icons from 'react-native-vector-icons/FontAwesome'
 import Icons2 from 'react-native-vector-icons/FontAwesome5'
+
+import Icons3 from 'react-native-vector-icons/Fontisto'
 import api from '../../../../axiosInstance'; 
 
 
@@ -991,7 +993,7 @@ const EditProfile = ({navigation}) => {
                   setEmailError(text.trim() === '' ? 'Email es requerido' : '');
                 }}
                 onBlur={() => {}}
-                icon={<Icons name="file" size={20} color="#9BA6B8" />}
+                icon={<Icons3 name="email" size={20} color="#9BA6B8" />}
               />
             </View>
           </View>

@@ -110,7 +110,7 @@ const TextInputs = ({
                 }}
                 onBlur={handleValidation}
               />
-
+              
               {show && <Pressable style={[external.mh_10]}>{value}</Pressable>}
             </LinearGradient>
           </LinearGradient>

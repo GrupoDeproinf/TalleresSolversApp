@@ -28,13 +28,15 @@ const styles = StyleSheet.create({
   },
   orderContainer: {
     backgroundColor: '#2D3261',
-    top: windowHeight(11),
+    top: windowHeight(15),
     height: windowHeight(36),
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderTopStartRadius: 10,
-    marginHorizontal: 5,
-    width:90
+    // alignItems: 'center',
+    // justifyContent: 'center',
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+    borderBottomRightRadius:10,
+    marginHorizontal: 2,
+    width:80
   },
   img: {
     width: windowWidth(75),

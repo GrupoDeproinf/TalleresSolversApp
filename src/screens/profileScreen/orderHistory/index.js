@@ -108,7 +108,7 @@ const OrderHistory = () => {
         external.ph_20,
         {backgroundColor: bgFullStyle},
       ]}>
-      <HeaderContainer value="Historial de Servicios" />
+      <HeaderContainer value="Mis Intereses" />
       <FlatList data={orderHistoryData} renderItem={renderItem} />
     </View>
   );
