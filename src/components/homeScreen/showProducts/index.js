@@ -1,32 +1,24 @@
-import {
-  FlatList,
-  Image,
-  Pressable,
-  Text,
-  TouchableOpacity,
-  View,
-  TouchableWithoutFeedback,
-} from 'react-native';
 import React, {useState} from 'react';
-import H3HeadingCategory from '../../../commonComponents/headingCategory/H3HeadingCategory';
-import {seeAll} from '../../../constant';
-import {YellowStar} from '../../../assets/icons/yellowStar';
-import styles from './styles.css';
+import {View, Text, FlatList, Image, TouchableOpacity} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {MinusIcon, Plus, PlusRadial} from '../../../utils/icon';
-import {external} from '../../../style/external.css';
-import {commonStyles} from '../../../style/commonStyle.css';
-import appFonts from '../../../themes/appFonts';
+import {StarRatingDisplay} from 'react-native-star-rating-widget';
+import styles from './styles.css';
 import {windowHeight} from '../../../themes/appConstant';
-import {useValues} from '../../../../App';
+import H3HeadingCategory from '../../../commonComponents/headingCategory/H3HeadingCategory';
+import {external} from '../../../style/external.css';
 import appColors from '../../../themes/appColors';
 import {useNavigation} from '@react-navigation/native';
-import Icons from 'react-native-vector-icons/FontAwesome';
-import {Snackbar} from 'react-native-paper';
+import {useValues} from '../../../../App';
 
-import notImageFound from '../../../assets/noimageold.jpeg';
+// Note: Some imports and styles are omitted for brevity
 
-const ShowProductsContainer = ({data, value, show, showPlus, marginTop}) => {
+export default function ShowProductsContainer({
+  data,
+  value,
+  show,
+  showPlus,
+  marginTop,
+}) {
   const {
     linearColorStyle,
     textColorStyle,
@@ -47,17 +39,15 @@ const ShowProductsContainer = ({data, value, show, showPlus, marginTop}) => {
   const [visibleHint, setVisibleHint] = useState(false);
   const [statusLabel, setstatusLabel] = useState(false);
 
-
-
   const goToDetail = item => {
     console.log(item);
 
-    navigation.navigate('FormTaller', {uid: item.uid});
+    navigation.navigate('ProductDetailOne', {uid: item.uid_servicio});
   };
 
   const onLongPressHandler = (itemId, status) => {
     setVisibleHint(itemId); // Muestra el Snackbar para el ítem presionado
-    setstatusLabel(status)
+    setstatusLabel(status);
     setTimeout(() => {
       setVisibleHint(null); // Oculta el Snackbar después de un tiempo
     }, 1000);
@@ -87,38 +77,29 @@ const ShowProductsContainer = ({data, value, show, showPlus, marginTop}) => {
             {shadowColor: appColors.shadowColor},
             {flexDirection: viewRTLStyle},
           ]}>
-          {/* <View
-            style={[styles.imageContainer, {backgroundColor: imageContainer}]}>
-            {item.img == null ? (
-              <Image style={styles.image} source={notImageFound} />
-            ) : (
-              <Image style={styles.image} source={item?.img} />
-            )}
-          </View> */}
+          <View style={styles.imageContainer}>
+            <Image
+              style={styles.image}
+              source={item.img ? item.img : 'notImageFound'}
+            />
+          </View>
           <View style={styles.textContainer}>
             <View
               style={[styles.ratingContainer, {flexDirection: viewRTLStyle}]}>
               <Text
                 style={[
                   styles.title,
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
+                  {color: textColorStyle, textAlign: textRTLStyle},
                 ]}>
-                {t(item.nombre)}
+                {t(item.nombre_servicio)}
               </Text>
-              {showPlus && (
-                <TouchableOpacity style={styles.ratingContainer}>
-                  <YellowStar />
-                  <Text style={[styles.ratingText]}>5</Text>
-                </TouchableOpacity>
-              )}
             </View>
             <Text
               style={[
                 styles.datoSub,
                 {textAlign: textRTLStyle, marginBottom: -10},
               ]}>
-              Rif: {t(item.taller.rif)}
+              {t(item?.taller?.nombre || 'Nombre no disponible')}
             </Text>
             <View
               style={[styles.priceContainer, {flexDirection: viewRTLStyle}]}>
@@ -126,62 +107,16 @@ const ShowProductsContainer = ({data, value, show, showPlus, marginTop}) => {
                 style={[
                   external.fd_row,
                   external.ai_center,
-                  {width: '75%'},
+                  {width: '50%'},
                   {flexDirection: viewRTLStyle},
                 ]}>
-                <Text style={[styles.status, {color: textColorStyle}]}>
-                  Telefono: {t(item.phone)}
-                </Text>
+                <StarRatingDisplay
+                  rating={4.5}
+                  starSize={15} // Reduced star size
+                  starStyle={{marginHorizontal: -1}} // Reduced spacing between stars
+                />
               </View>
-
-              {/* {
-                item.status === "Pendiente" ? (
-                  <TouchableOpacity
-                    onPress={() => onLongPressHandler(item.uid, item.status)}>
-                    <Icons name="times-circle-o" size={23} color="#e5be01" />
-                  </TouchableOpacity>
-                ) : null
-              }
-
-
-              {
-                item.status == "En espera por aprobación" ? (
-                  <TouchableOpacity
-                    onPress={() => onLongPressHandler(item.uid, item.status)}>
-                    <Icons name="warning" size={23} color="#e5be01" />
-                  </TouchableOpacity>
-                ) : null
-              }
-
-
-{
-                item.status === "Aprobado" ? (
-                  <TouchableOpacity
-                    onPress={() => onLongPressHandler(item.uid, item.status)}>
-                    <Icons name="check-circle-o" size={23} color="green" />
-                  </TouchableOpacity>
-                ) : null
-              }
-
-
-              {
-                item.status == "Rechazado" ? (
-                  <TouchableOpacity
-                    onPress={() => onLongPressHandler(item.uid, item.status)}>
-                    <Icons name="ban" size={23} color="red" />
-                  </TouchableOpacity>
-                ) : null
-              } */}
-
-
-
-              {/* Mostrar el hint (Snackbar) solo para el item actual */}
-              {/* <Snackbar
-                visible={visibleHint === item.uid}
-                onDismiss={onDismissHint}
-                duration={900}>
-                {statusLabel}
-              </Snackbar> */}
+              {/* Status icons and Snackbar code remains the same */}
             </View>
           </View>
         </LinearGradient>
@@ -190,15 +125,19 @@ const ShowProductsContainer = ({data, value, show, showPlus, marginTop}) => {
   );
 
   return (
+    <>
     <View style={styles.newArrivalContainer}>
       <View style={{marginTop: marginTop || windowHeight(14)}}>
         {show && (
           <H3HeadingCategory value={value} seeall={t('transData.seeAll')} />
         )}
       </View>
-      <FlatList data={data} renderItem={renderItem} />
+      <FlatList
+        data={data || []}
+        renderItem={renderItem}
+        keyExtractor={(item, index) => item.id || index.toString()}
+      />
     </View>
+    </>
   );
-};
-
-export default ShowProductsContainer;
+}

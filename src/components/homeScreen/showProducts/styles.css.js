@@ -112,6 +112,9 @@ const styles = StyleSheet.create({
     paddingVertical: windowHeight(10),
     borderRadius: windowHeight(10),
   },
+  starsContainer: {
+    width: '50%',
+  }
 });
 
 export default styles;

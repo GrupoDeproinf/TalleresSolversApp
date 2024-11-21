@@ -43,9 +43,9 @@ const HomeScreen = () => {
           // Verificar la respuesta del servidor
           if (response.status === 200) {
               const result = response.data;
-              console.log("usuarios de resultados", result.services); // Aquí puedes manejar la respuesta
+              console.log("usuarios de resultados", result); // Aquí puedes manejar la respuesta
 
-              setData(result.services);
+              setData(result);
           } else {
             setData([]);
           }

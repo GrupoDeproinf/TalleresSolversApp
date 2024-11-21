@@ -6,9 +6,15 @@ import {commonStyles} from '../../../../style/commonStyle.css';
 import appColors from '../../../../themes/appColors';
 import {fontSizes} from '../../../../themes/appConstant';
 import {useValues} from '../../../../../App';
+import { t } from 'i18next';
 
 const BrandData = ({DataService}) => {
   const {textColorStyle, viewRTLStyle, textRTLStyle, isRTL} = useValues();
+
+  console.log('111111111111111111111111111111111111111111111111111111111111111111111111111');
+  console.log('Data Service', DataService);
+  console.log('111111111111111111111111111111111111111111111111111111111111111111111111111');
+  
 
   return (
     <View>
@@ -46,7 +52,7 @@ const BrandData = ({DataService}) => {
                   {textAlign: textRTLStyle},
                 ]}>
                 {/* {item.subttile} */}
-                {DataService?.categoria}
+                {DataService?.categoria ? DataService?.categoria : DataService?.nombre_categoria}
               </Text>
             </View>
           </View>
@@ -87,7 +93,7 @@ const BrandData = ({DataService}) => {
                   {textAlign: textRTLStyle},
                 ]}>
                 {/* {item.subttile} */}
-                {DataService?.subcategoria}
+                {Array.isArray(DataService?.subcategoria) ? DataService?.subcategoria[0]?.nombre_subcategoria : t(DataService?.subcategoria)}
               </Text>
             </View>
           </View>
