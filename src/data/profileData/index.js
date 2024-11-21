@@ -22,7 +22,7 @@ export const profileData = [
   // },
   {
     id: 2,
-    title: 'Historial de servicios',
+    title: 'Mis intereses',
     icon: <OrderHistory />,
     screenName: 'OrderHistory',
   },

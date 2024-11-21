@@ -1,5 +1,5 @@
 import {FlatList, Image, Text, View} from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import HeaderContainer from '../../../commonComponents/headingContainer';
 import {commonStyles} from '../../../style/commonStyle.css';
 import {external} from '../../../style/external.css';
@@ -10,6 +10,8 @@ import appFonts from '../../../themes/appFonts';
 import {useValues} from '../../../../App';
 import LinearGradient from 'react-native-linear-gradient';
 import {windowHeight} from '../../../themes/appConstant';
+import api from '../../../../axiosInstance';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const OrderHistory = () => {
   const {
@@ -27,6 +29,46 @@ const OrderHistory = () => {
   const colors = isDark
     ? ['#808184', '#2E3036']
     : [appColors.screenBg, appColors.screenBg];
+
+  const [dataService, setDataService] = useState();
+  const [dataUser, setDataUser] = useState();
+
+  const getDataServices = async () => {
+    const jsonValue = await AsyncStorage.getItem('@userInfo');
+    const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+    console.log('-----------------------------------------------------');
+    console.log('user', user);
+    console.log('-----------------------------------------------------');
+    setDataUser(user);
+  
+    try {
+      const response = await api.get('/home/getContactService');
+      const result = response.data;
+  
+      // Filtrar los datos por `uid`
+      if (user && user.uid) {
+        const filteredData = result.filter(item => item.usuario.id === user.uid);
+        setDataService(filteredData);
+        console.log('-----------------------------------------------------');
+        console.log('Filtered result', filteredData);
+        console.log('-----------------------------------------------------');
+      } else {
+        console.warn('UID del usuario no encontrado. Mostrando datos completos.');
+        setDataService(result);
+      }
+    } catch (error) {
+      if (error.response) {
+        console.error('Error en la solicitud:', error.response.statusText);
+      } else {
+        console.error('Error en la solicitud:', error.message);
+      }
+    }
+  };
+  
+
+  useEffect(() => {
+    getDataServices();
+  }, []);
 
   const renderItem = ({item}) => (
     <LinearGradient
@@ -60,15 +102,16 @@ const OrderHistory = () => {
                 {color: textColorStyle},
                 {textAlign: textRTLStyle},
               ]}>
-              {t(item.title)}
+              {t(item.nombre_servicio)}
             </Text>
+            
             <Text
               style={[
                 commonStyles.H1Banner,
                 {color: textColorStyle, fontFamily: appFonts.semiBold},
               ]}>
               {currSymbol}
-              {(currPrice * item.price).toFixed(2)}
+              {(currPrice * item.precio).toFixed(2)}
             </Text>
           </View>
           {/* <Text style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
@@ -80,6 +123,7 @@ const OrderHistory = () => {
               external.ai_center,
               {flexDirection: viewRTLStyle},
             ]}>
+              
             <Text
               style={[
                 styles.deliveryContainer,
@@ -108,8 +152,8 @@ const OrderHistory = () => {
         external.ph_20,
         {backgroundColor: bgFullStyle},
       ]}>
-      <HeaderContainer value="Historial de Servicios" />
-      <FlatList data={orderHistoryData} renderItem={renderItem} />
+      <HeaderContainer value="Mis intereses" />
+      <FlatList data={dataService} renderItem={renderItem} />
     </View>
   );
 };

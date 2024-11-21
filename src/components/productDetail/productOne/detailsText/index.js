@@ -31,9 +31,9 @@ const DetailsTextContainer = ({DataService}) => {
             {(currPrice * 556.45).toFixed(2)}
           </Text> */}
         </View>
-        <View style={styles.percentageOff}>
+        {/* <View style={styles.percentageOff}>
           <Text style={styles.textStyle}>10% off</Text>
-        </View>
+        </View> */}
       </View>
     </View>
   );
