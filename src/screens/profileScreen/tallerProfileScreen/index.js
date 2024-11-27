@@ -31,6 +31,7 @@ import api from '../../../../axiosInstance';
 
 import Icons from 'react-native-vector-icons/FontAwesome';
 import Icons2 from 'react-native-vector-icons/FontAwesome5';
+import CheckBox from 'react-native-check-box';
 
 const TallerProfileScreen = ({navigation}) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
@@ -110,6 +111,20 @@ const TallerProfileScreen = ({navigation}) => {
 
   const [selectedPrefix, setSelectedPrefix] = useState('J-'); // Default value 'J'
 
+  const [whats, setwhats] = useState(0);
+  const [whatsError, setwhatsError] = useState('');
+
+  const [metodosPago, setMetodosPago] = useState([
+    {label: 'Efectivo', value: 'efectivo', checked: false},
+    {label: 'Pago Móvil', value: 'pagoMovil', checked: false},
+    {label: 'Punto de venta', value: 'puntoVenta', checked: false},
+    {label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false},
+    {label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false},
+    {label: 'Transferencia', value: 'transferencia', checked: false},
+    {label: 'Zelle', value: 'zelle', checked: false},
+    {label: 'Zinli', value: 'zinli', checked: false},
+  ]);
+
   useEffect(() => {
     getData();
   }, []);
@@ -131,7 +146,7 @@ const TallerProfileScreen = ({navigation}) => {
         // Verificar la respuesta del servidor
         if (response.status === 200) {
           const result = response.data;
-          console.log('Email:', result.userData.email); // Aquí puedes manejar la respuesta
+          console.log('Email:', result.userData); // Aquí puedes manejar la respuesta
 
           setNombre(result.userData.nombre);
           setcedula(result.userData.rif);
@@ -148,6 +163,15 @@ const TallerProfileScreen = ({navigation}) => {
           setLinkTiktok(result.userData.LinkTiktok);
           setGarantia(result.userData.Garantia);
           setseguro(result.userData.seguro);
+
+          setwhats(result.userData.whatsapp);
+
+          const updatedMetodosPago = metodosPago.map(method => ({
+            ...method,
+            checked: result.userData.metodos_pago[method.value] || false,
+          }));
+
+          setMetodosPago(updatedMetodosPago);
 
           // Separar el prefijo del tipo de ID (rif) y asignarlo a los estados correspondientes
           const typeID = result.userData.rif.split('-');
@@ -198,7 +222,7 @@ const TallerProfileScreen = ({navigation}) => {
     const isEmailValid = validateEmail();
     const isPhoneValid = validatePhone();
 
-    setdisabledInput(true);
+    // setdisabledInput(true);
 
     if (
       isEmailValid == true &&
@@ -206,6 +230,11 @@ const TallerProfileScreen = ({navigation}) => {
       Nombre != '' &&
       cedula != 0
     ) {
+      const newFormatMP = metodosPago.reduce((acc, method) => {
+        acc[method.value] = method.checked;
+        return acc;
+      }, {});
+
       const infoUserCreated = {
         uid: uidUserConnected,
         nombre: Nombre == undefined ? '' : Nombre,
@@ -225,6 +254,8 @@ const TallerProfileScreen = ({navigation}) => {
         Garantia: Garantia == undefined ? '' : Garantia,
         seguro: seguro == undefined ? '' : seguro,
         agenteAutorizado: checked == undefined ? false : checked,
+        whatsapp: whats,
+        metodos_pago: newFormatMP,
       };
 
       console.log(infoUserCreated);
@@ -280,6 +311,12 @@ const TallerProfileScreen = ({navigation}) => {
       setdisabledInput(false);
       showToast('Error al actualizar el usuario, por favor validar formulario');
     }
+  };
+
+  const toggleCheckBox = index => {
+    const updatedMetodos = [...metodosPago];
+    updatedMetodos[index].checked = !updatedMetodos[index].checked;
+    setMetodosPago(updatedMetodos);
   };
 
   const {
@@ -458,28 +495,31 @@ const TallerProfileScreen = ({navigation}) => {
 
                 {/* TextInput para el número de RIF */}
                 <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
-                <TextInputs
-                  title=""
-                  value={cedula}
-                  placeHolder="Ingrese el número de RIF"
-                  onChangeText={text => {
-                    const numericText = text.replace(/[^0-9]/g, '').slice(0, 10); // Limitar a 10 caracteres
-                    setcedula(numericText);
-                    setcedulaTyping(true);
-                    if (numericText.trim() === '') {
-                      setcedulaError('RIF es requerido');
-                    } else {
-                      setcedulaError('');
-                    }
-                  }}
-                  onBlur={() => {
-                    setcedulaTyping(false);
-                  }}
-                  keyboardType="numeric"
-                  icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                  style={{height: 50}} // Altura para el TextInput
-                />
-
+                  <TextInputs
+                    title=""
+                    value={cedula}
+                    placeHolder="Ingrese el número de RIF"
+                    onChangeText={text => {
+                      const numericText = text
+                        .replace(/[^0-9]/g, '')
+                        .slice(0, 10); // Limitar a 10 caracteres
+                      if (numericText.length <= 10) {
+                        setcedula(numericText);
+                        setcedulaTyping(true);
+                        if (numericText.trim() === '') {
+                          setcedulaError('RIF es requerido');
+                        } else {
+                          setcedulaError('');
+                        }
+                      }
+                    }}
+                    onBlur={() => {
+                      setcedulaTyping(false);
+                    }}
+                    keyboardType="numeric"
+                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
+                    style={{height: 50}} // Altura para el TextInput
+                  />
                 </View>
               </View>
 
@@ -522,12 +562,14 @@ const TallerProfileScreen = ({navigation}) => {
               onChangeText={text => {
                 // Eliminar cualquier caracter que no sea un número
                 const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
-                setRegComercial(numericText);
-                setRegComercialTyping(true);
-                if (numericText.trim() === '') {
-                  setRegComercialError('Registro comercial es requerido');
-                } else {
-                  setRegComercialError('');
+                if (numericText.length <= 10) {
+                  setRegComercial(numericText);
+                  setRegComercialTyping(true);
+                  if (numericText.trim() === '') {
+                    setRegComercialError('Registro comercial es requerido');
+                  } else {
+                    setRegComercialError('');
+                  }
                 }
               }}
               onBlur={() => {
@@ -549,13 +591,15 @@ const TallerProfileScreen = ({navigation}) => {
               onChangeText={text => {
                 // Remove non-numeric characters using regex
                 const numericText = text.replace(/[^0-9]/g, '');
-                setPhone(numericText);
-                setCallTyping(true);
+                if (numericText.length <= 10) {
+                  setPhone(numericText);
+                  setCallTyping(true);
 
-                if (numericText.trim() === '') {
-                  setPhoneError('Número telefónico requerido');
-                } else {
-                  setPhoneError('');
+                  if (numericText.trim() === '') {
+                    setPhoneError('Número telefónico requerido');
+                  } else {
+                    setPhoneError('');
+                  }
                 }
               }}
               onBlur={() => {
@@ -568,6 +612,77 @@ const TallerProfileScreen = ({navigation}) => {
             {phoneError !== '' && (
               <Text style={styles.errorStyle}>{phoneError}</Text>
             )}
+
+            <TextInputs
+              title="Whatsapp"
+              value={whats}
+              placeHolder="Ingrese su número(4142617966)"
+              keyboardType="numeric"
+              onChangeText={text => {
+                // Remove non-numeric characters using regex
+                const numericText = text.replace(/[^0-9]/g, '');
+                if (numericText.length <= 10) {
+                  setwhats(numericText);
+                  setCallTyping(true);
+
+                  if (numericText.trim() === '') {
+                    setwhatsError('Número telefónico requerido');
+                  } else {
+                    setwhatsError('');
+                  }
+                }
+              }}
+              onBlur={() => {
+                validatewhats();
+                setCallTyping(false);
+              }}
+              icon={<Icons name="whatsapp" size={20} color="#9BA6B8" />}
+            />
+
+            {whatsError !== '' && (
+              <Text style={styles.errorStyle}>{whatsError}</Text>
+            )}
+
+            <View style={{marginTop: 5}}>
+              {/* Texto "RIF" arriba de los inputs */}
+              <Text
+                style={[
+                  styles.headingContainer,
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
+                ]}>
+                Metodos de Pago
+              </Text>
+
+              <View style={{padding: 10}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                  }}>
+                  {metodosPago.map((method, index) => (
+                    <View
+                      key={method.value}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginVertical: 5,
+                        width: '45%', // Ajusta el ancho para hacer columnas
+                      }}>
+                      <CheckBox
+                        isChecked={method.checked}
+                        onClick={() => toggleCheckBox(index)}
+                        checkBoxColor="#2D3261"
+                      />
+                      <Text style={{marginLeft: 10, color: 'black'}}>
+                        {method.label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
 
             <TextInputs
               title="Email"

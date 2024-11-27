@@ -9,7 +9,7 @@ import {
   ToastAndroid,
   Button,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 // import AuthContainer from '../../../commonComponents/authContainer';
 // import {
 //   confirmPasswords,
@@ -28,30 +28,30 @@ import React, { useState, useEffect } from 'react';
 // } from '../../../constant';
 import TextInputs from '../../../commonComponents/textInputs';
 import NavigationButton from '../../../commonComponents/navigationButton';
-import { commonStyles } from '../../../style/commonStyle.css';
-import { external } from '../../../style/external.css';
+import {commonStyles} from '../../../style/commonStyle.css';
+import {external} from '../../../style/external.css';
 import styles from './style.css';
 import appColors from '../../../themes/appColors';
-import { Email } from '../../../assets/icons/email';
-import { Call, Key } from '../../../utils/icon';
-import { useValues } from '../../../../App';
+import {Email} from '../../../assets/icons/email';
+import {Call, Key} from '../../../utils/icon';
+import {useValues} from '../../../../App';
 
 import UserImage from '../../../assets/newImage/user.png';
 import KeyImage from '../../../assets/newImage/key.png';
 
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Picker } from '@react-native-picker/picker';
+import {Picker} from '@react-native-picker/picker';
 
+import Icons from 'react-native-vector-icons/FontAwesome';
+import Icons2 from 'react-native-vector-icons/FontAwesome5';
 
-import Icons from 'react-native-vector-icons/FontAwesome'
-import Icons2 from 'react-native-vector-icons/FontAwesome5'
-import api from '../../../../axiosInstance'; 
+import Icons3 from 'react-native-vector-icons/Fontisto';
+import api from '../../../../axiosInstance';
+import CheckBox from 'react-native-check-box';
 
-
-
-const SignUp = ({ navigation }) => {
+const SignUp = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [cedula, setcedula] = useState(0);
   const [Nombre, setNombre] = useState('');
@@ -76,17 +76,31 @@ const SignUp = ({ navigation }) => {
 
   const [selectedPrefix, setSelectedPrefix] = useState('J-'); // Default value 'J'
 
-  // Variables para el tab
+  const [MetodosPagoSelected, setMetodosPagoSelected] = useState([]);
+
+  const [whats, setwhats] = useState(0);
+  const [whatsError, setwhatsError] = useState('');
+
+  const [metodosPago, setMetodosPago] = useState([
+    {label: 'Efectivo', value: 'efectivo', checked: false},
+    {label: 'Pago Móvil', value: 'pagoMovil', checked: false},
+    {label: 'Punto de venta', value: 'puntoVenta', checked: false},
+    {label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false},
+    {label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false},
+    {label: 'Transferencia', value: 'transferencia', checked: false},
+    {label: 'Zelle', value: 'zelle', checked: false},
+    {label: 'Zinli', value: 'zinli', checked: false},
+  ]);
 
   const layout = useWindowDimensions();
 
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
-    { key: 'Cliente', title: 'Cliente' },
-    { key: 'Taller', title: 'Taller' },
+    {key: 'Cliente', title: 'Cliente'},
+    {key: 'Taller', title: 'Taller'},
   ]);
 
-  useEffect(() => { }, [isGetOtpDisabled]);
+  useEffect(() => {}, [isGetOtpDisabled]);
 
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -153,18 +167,21 @@ const SignUp = ({ navigation }) => {
       ) {
         const infoUserCreated = {
           Nombre: Nombre,
-          cedula: selectedPrefix + "" + cedula,
+          cedula: selectedPrefix + '' + cedula,
           phone: phone,
           typeUser: 'Cliente',
           email: email.toLowerCase(),
-          password: password.toLowerCase()
+          password: password.toLowerCase(),
         };
 
-        console.log(infoUserCreated)
+        console.log(infoUserCreated);
 
         try {
           // Hacer la solicitud POST utilizando Axios
-          const response = await api.post('/usuarios/SaveClient', infoUserCreated);
+          const response = await api.post(
+            '/usuarios/SaveClient',
+            infoUserCreated,
+          );
 
           // Verificar la respuesta del servidor
           console.log(response); // Mostrar la respuesta completa
@@ -196,7 +213,10 @@ const SignUp = ({ navigation }) => {
         } catch (error) {
           if (error.response) {
             // La solicitud se hizo y el servidor respondió con un código de estado
-            console.error('Error al guardar el usuario:', error.response.data.message);
+            console.error(
+              'Error al guardar el usuario:',
+              error.response.data.message,
+            );
             setGetOtpDisabled(false);
             showToast(error.response.data.message); // Mostrar el mensaje de error del servidor
           } else {
@@ -222,29 +242,42 @@ const SignUp = ({ navigation }) => {
         isConfirmPasswordValid == true &&
         Nombre != '' &&
         cedula != 0 &&
-        cedula != ''
+        cedula != '' && whats != '' &&
+        whats != 0
       ) {
+        
+        const newFormatMP = metodosPago.reduce((acc, method) => {
+          acc[method.value] = method.checked;
+          return acc;
+        }, {});
+
         const infoUserCreated = {
           Nombre: Nombre,
-          rif: selectedPrefix + "" + cedula,
+          rif: selectedPrefix + '' + cedula,
           phone: phone,
           typeUser: 'Taller',
           email: email.toLowerCase(),
-          password: password.toLowerCase()
+          password: password.toLowerCase(),
+          whats:whats, 
+          metodos_pago:newFormatMP
         };
 
         console.log(infoUserCreated);
+        console.log("Aquiiiiiiiiiiiii123")
 
         try {
           // Hacer la solicitud POST utilizando Axios
-          const response = await api.post('/usuarios/SaveTaller', infoUserCreated);
-      
+          const response = await api.post(
+            '/usuarios/SaveTaller',
+            infoUserCreated,
+          );
+
           // Verificar la respuesta del servidor
           console.log(response); // Mostrar la respuesta completa
-      
+
           const result = response.data; // Los datos vienen directamente de response.data
           console.log(result); // Aquí puedes manejar la respuesta
-      
+
           try {
             const jsonValue = JSON.stringify(infoUserCreated);
             console.log(jsonValue);
@@ -252,7 +285,7 @@ const SignUp = ({ navigation }) => {
           } catch (e) {
             console.log(e);
           }
-      
+
           // Limpiar los campos del formulario
           setNombre('');
           setcedula(0);
@@ -262,14 +295,15 @@ const SignUp = ({ navigation }) => {
           setConfirmPassword('');
           settypeOfView('');
           setSelectedPrefix('J-');
-      
+
           showToast('Usuario creado exitosamente');
           setGetOtpDisabled(false);
           navigation.navigate('Login');
         } catch (error) {
           if (error.response) {
             // La solicitud se hizo y el servidor respondió con un código de estado
-            const errorMessage = error.response.data.message || 'Error al crear el usuario.';
+            const errorMessage =
+              error.response.data.message || 'Error al crear el usuario.';
             console.error('Error al guardar el usuario:', errorMessage);
             setGetOtpDisabled(false);
             showToast(errorMessage); // Mostrar el mensaje de error del servidor
@@ -277,16 +311,19 @@ const SignUp = ({ navigation }) => {
             // La solicitud fue hecha pero no se recibió respuesta
             console.error('Error en la solicitud:', error);
             setGetOtpDisabled(false);
-            showToast('Error al crear al usuario, por favor validar formulario');
+            showToast(
+              'Error al crear al usuario, por favor validar formulario',
+            );
           }
         }
+
       } else {
         showToast('Error al crear al usuario, por favor validar formulario');
         setGetOtpDisabled(false);
       }
     }
   };
-  const { bgFullStyle, textColorStyle, t, textRTLStyle } = useValues();
+  const {bgFullStyle, textColorStyle, t, textRTLStyle} = useValues();
 
   // const showToast = (type, text1, position, visibilityTime, autoHide) => {
   //   Toast.show({
@@ -305,18 +342,25 @@ const SignUp = ({ navigation }) => {
   // Funciones para manejar los clics
   const handleClientePress = () => {
     console.log('Cliente Card Pressed2');
-    setSelectedPrefix("V-")
+    setSelectedPrefix('V-');
     settypeOfView('Cliente');
   };
 
   const handleTallerPress = () => {
     console.log('Taller Card Pressed1');
-    setSelectedPrefix("J-")
+    setSelectedPrefix('J-');
     settypeOfView('Taller');
   };
 
+  const toggleCheckBox = index => {
+    const updatedMetodos = [...metodosPago];
+    updatedMetodos[index].checked = !updatedMetodos[index].checked;
+    setMetodosPago(updatedMetodos);
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: bgFullStyle, padding: 30 }]}>
+    <View
+      style={[styles.container, {backgroundColor: bgFullStyle, padding: 30}]}>
       <Text
         style={{
           fontSize: 20,
@@ -326,14 +370,14 @@ const SignUp = ({ navigation }) => {
         }}>
         Regístrate ahora {typeOfView != '' ? '(' + typeOfView + ')' : null}
       </Text>
-      <Text style={{ fontSize: 13, color: 'gray', marginBottom: 10 }}>
+      <Text style={{fontSize: 13, color: 'gray', marginBottom: 10}}>
         Regístrate ya sea como cliente o taller
       </Text>
 
       {typeOfView === 'Cliente' ? (
         // ****************************** FOMRULARIO PARA CLIENTES ***********************************************
 
-        <ScrollView style={{ marginBottom: 15 }}>
+        <ScrollView style={{marginBottom: 15}}>
           <View>
             <TextInputs
               title="Nombre y Apellido"
@@ -358,18 +402,18 @@ const SignUp = ({ navigation }) => {
               <Text style={styles.errorStyle}>{NombreError}</Text>
             )}
 
-            <View style={{ marginTop: 5 }}>
+            <View style={{marginTop: 5}}>
               <Text
                 style={[
                   styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
                 ]}>
                 Cedula
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
                 {/* Select para elegir "J-" o "G-" */}
                 <View
                   style={{
@@ -395,31 +439,31 @@ const SignUp = ({ navigation }) => {
                 </View>
 
                 {/* TextInput para el número de RIF */}
-                <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
-                <TextInputs
-                  title=""
-                  value={cedula}
-                  placeHolder="Ingrese el número de cedula"
-                  onChangeText={text => {
-                    const numericText = text.replace(/[^0-9]/g, '');
-                    if (numericText.length <= 10) { // Limitar a 10 caracteres
-                      setcedula(numericText);
-                      setcedulaTyping(true);
-                      if (numericText.trim() === '') {
-                        setcedulaError('Cedula es requerida');
-                      } else {
-                        setcedulaError('');
+                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
+                  <TextInputs
+                    title=""
+                    value={cedula}
+                    placeHolder="Ingrese el número de cedula"
+                    onChangeText={text => {
+                      const numericText = text.replace(/[^0-9]/g, '');
+                      if (numericText.length <= 10) {
+                        // Limitar a 10 caracteres
+                        setcedula(numericText);
+                        setcedulaTyping(true);
+                        if (numericText.trim() === '') {
+                          setcedulaError('Cedula es requerida');
+                        } else {
+                          setcedulaError('');
+                        }
                       }
-                    }
-                  }}
-                  onBlur={() => {
-                    setcedulaTyping(false);
-                  }}
-                  keyboardType="numeric"
-                  icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                  style={{ height: 50 }} // Altura para el TextInput
-                />
-
+                    }}
+                    onBlur={() => {
+                      setcedulaTyping(false);
+                    }}
+                    keyboardType="numeric"
+                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
+                    style={{height: 50}} // Altura para el TextInput
+                  />
                 </View>
               </View>
 
@@ -537,7 +581,7 @@ const SignUp = ({ navigation }) => {
         </ScrollView>
       ) : typeOfView === 'Taller' ? (
         // ****************************** FOMRULARIO PARA TALLERES ***********************************************
-        <ScrollView style={{ marginBottom: 15 }}>
+        <ScrollView style={{marginBottom: 15}}>
           <View>
             <TextInputs
               title="Nombre del Taller"
@@ -562,19 +606,19 @@ const SignUp = ({ navigation }) => {
               <Text style={styles.errorStyle}>{NombreError}</Text>
             )}
 
-            <View style={{ marginTop: 5 }}>
+            <View style={{marginTop: 5}}>
               {/* Texto "RIF" arriba de los inputs */}
               <Text
                 style={[
                   styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
                 ]}>
                 Registro de Información Fiscal (RIF)
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
                 {/* Select para elegir "J-" o "G-" */}
                 <View
                   style={{
@@ -600,30 +644,31 @@ const SignUp = ({ navigation }) => {
                 </View>
 
                 {/* TextInput para el número de RIF */}
-                <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
-                <TextInputs
-                  title=""
-                  value={cedula}
-                  placeHolder="Ingrese el número de RIF"
-                  onChangeText={text => {
-                    const numericText = text.replace(/[^0-9]/g, '');
-                    if (numericText.length <= 10) { // Limitar a 10 caracteres
-                      setcedula(numericText);
-                      setcedulaTyping(true);
-                      if (numericText.trim() === '') {
-                        setcedulaError('RIF es requerido');
-                      } else {
-                        setcedulaError('');
+                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
+                  <TextInputs
+                    title=""
+                    value={cedula}
+                    placeHolder="Ingrese el número de RIF"
+                    onChangeText={text => {
+                      const numericText = text.replace(/[^0-9]/g, '');
+                      if (numericText.length <= 10) {
+                        // Limitar a 10 caracteres
+                        setcedula(numericText);
+                        setcedulaTyping(true);
+                        if (numericText.trim() === '') {
+                          setcedulaError('RIF es requerido');
+                        } else {
+                          setcedulaError('');
+                        }
                       }
-                    }
-                  }}
-                  onBlur={() => {
-                    setcedulaTyping(false);
-                  }}
-                  keyboardType="numeric"
-                  icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                  style={{ height: 50 }} // Altura para el TextInput
-                />
+                    }}
+                    onBlur={() => {
+                      setcedulaTyping(false);
+                    }}
+                    keyboardType="numeric"
+                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
+                    style={{height: 50}} // Altura para el TextInput
+                  />
                 </View>
               </View>
 
@@ -666,13 +711,15 @@ const SignUp = ({ navigation }) => {
               onChangeText={text => {
                 // Remove non-numeric characters using regex
                 const numericText = text.replace(/[^0-9]/g, '');
-                setPhone(numericText);
-                setCallTyping(true);
-
-                if (numericText.trim() === '') {
-                  setPhoneError('Número telefónico requerido');
-                } else {
-                  setPhoneError('');
+                if (numericText.length <= 10) {
+                  setPhone(numericText);
+                  setCallTyping(true);
+  
+                  if (numericText.trim() === '') {
+                    setPhoneError('Número telefónico requerido');
+                  } else {
+                    setPhoneError('');
+                  }
                 }
               }}
               onBlur={() => {
@@ -687,6 +734,77 @@ const SignUp = ({ navigation }) => {
             {phoneError !== '' && (
               <Text style={styles.errorStyle}>{phoneError}</Text>
             )}
+
+            <TextInputs
+              title="Whatsapp"
+              value={whats}
+              placeHolder="Ingrese su número(4142617966)"
+              keyboardType="numeric"
+              onChangeText={text => {
+                // Remove non-numeric characters using regex
+                const numericText = text.replace(/[^0-9]/g, '');
+                if (numericText.length <= 10) {
+                  setwhats(numericText);
+                  setCallTyping(true);
+  
+                  if (numericText.trim() === '') {
+                    setwhatsError('Número telefónico requerido');
+                  } else {
+                    setwhatsError('');
+                  }
+                }
+              }}
+              onBlur={() => {
+                validatewhats();
+                setCallTyping(false);
+              }}
+              icon={<Icons name="whatsapp" size={20} color="#9BA6B8" />}
+            />
+
+            {whatsError !== '' && (
+              <Text style={styles.errorStyle}>{whatsError}</Text>
+            )}
+
+            <View style={{marginTop: 5}}>
+              {/* Texto "RIF" arriba de los inputs */}
+              <Text
+                style={[
+                  styles.headingContainer,
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
+                ]}>
+                Metodos de Pago
+              </Text>
+
+              <View style={{padding: 10}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                  }}>
+                  {metodosPago.map((method, index) => (
+                    <View
+                      key={method.value}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginVertical: 5,
+                        width: '45%', // Ajusta el ancho para hacer columnas
+                      }}>
+                      <CheckBox
+                        isChecked={method.checked}
+                        onClick={() => toggleCheckBox(index)}
+                        checkBoxColor="#2D3261"
+                      />
+                      <Text style={{marginLeft: 10, color: 'black'}}>
+                        {method.label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
 
             <TextInputs
               title="Contraseña"
@@ -739,7 +857,7 @@ const SignUp = ({ navigation }) => {
       ) : null}
 
       {typeOfView == '' ? (
-        <View style={{ flex: 1, marginTop: '5%' }}>
+        <View style={{flex: 1, marginTop: '5%'}}>
           <TouchableOpacity
             onPress={() => handleClientePress()}
             style={stylesCard.boxContainer}>
@@ -748,7 +866,7 @@ const SignUp = ({ navigation }) => {
               style={[
                 commonStyles.titleText19,
                 external.ph_5,
-                { color: textColorStyle },
+                {color: textColorStyle},
               ]}>
               Cliente
             </Text>
@@ -762,7 +880,7 @@ const SignUp = ({ navigation }) => {
               style={[
                 commonStyles.titleText19,
                 external.ph_5,
-                { color: textColorStyle },
+                {color: textColorStyle},
               ]}>
               Taller
             </Text>
@@ -789,7 +907,7 @@ const SignUp = ({ navigation }) => {
             style={[
               commonStyles.titleText19,
               external.ph_5,
-              { color: textColorStyle },
+              {color: textColorStyle},
             ]}>
             Ingresar
           </Text>
@@ -815,7 +933,7 @@ const stylesCard = StyleSheet.create({
     marginBottom: 20, // Espaciado entre las cajas
     elevation: 3, // Sombra para Android
     shadowColor: '#000', // Sombra para iOS
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },

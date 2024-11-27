@@ -74,31 +74,33 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
   const renderItem = ({item}) => (
     <TouchableOpacity onPress={() => goToDetail(item)} activeOpacity={0.9}>
   <LinearGradient
-    start={{x: 0.0, y: 0.0}}
-    end={{x: 0.0, y: 1.0}}
+    start={{ x: 0.0, y: 0.0 }}
+    end={{ x: 0.0, y: 1.0 }}
     colors={colors}
     style={[
       styles.container,
-      {shadowColor: appColors.shadowColor},
-      {flexDirection: viewRTLStyle},
-    ]}>
+      { shadowColor: appColors.shadowColor },
+      { flexDirection: viewRTLStyle },
+      item.estatus ? { borderColor: '#2D3261', borderWidth: 1, borderRadius: 5 } : {}, // Agregar borde aquí
+    ]}
+  >
     <LinearGradient
-      start={{x: 0.0, y: 0.0}}
-      end={{x: 0.0, y: 1.0}}
+      start={{ x: 0.0, y: 0.0 }}
+      end={{ x: 0.0, y: 1.0 }}
       colors={linearColorStyle}
       style={[
         styles.menuItemContent,
-        {shadowColor: appColors.shadowColor},
-        {flexDirection: viewRTLStyle},
-      ]}>
-        {item.estatus && (
-          <View style={{position: 'absolute', top: 5, left: 5}}>
-            {/* <i className="fas fa-check-circle" style={{color: 'green', fontSize: 20}}></i> */}
-            <Icons2 name="certificate" size={20} color="#2D3261" />
-          </View>
-        )}
-      <View style={{position: 'relative'}}>
-        <View style={[styles.imageContainer, {backgroundColor: imageContainer}]}>
+        { shadowColor: appColors.shadowColor },
+        { flexDirection: viewRTLStyle },
+      ]}
+    >
+      {item.estatus && (
+        <View style={{ position: 'absolute', top: 5, left: 5 }}>
+          <Icons2 name="certificate" size={20} color="#2D3261" />
+        </View>
+      )}
+      <View style={{ position: 'relative' }}>
+        <View style={[styles.imageContainer, { backgroundColor: imageContainer }]}>
           {item.img == null ? (
             <Image style={styles.image} source={notImageFound} />
           ) : (
@@ -107,8 +109,8 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
         </View>
       </View>
       <View style={styles.textContainer}>
-        <View style={[styles.ratingContainer, {flexDirection: viewRTLStyle}]}>
-          <Text style={[styles.title, {color: textColorStyle}, {textAlign: textRTLStyle}]}>
+        <View style={[styles.ratingContainer, { flexDirection: viewRTLStyle }]}>
+          <Text style={[styles.title, { color: textColorStyle }, { textAlign: textRTLStyle }]}>
             {t(item.nombre_servicio)}
           </Text>
           <TouchableOpacity style={styles.ratingContainer}>
@@ -116,48 +118,50 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
             <Text style={[styles.ratingText]}>{t(item.puntuacion)}</Text>
           </TouchableOpacity>
         </View>
-        <Text style={[styles.datoSub, {textAlign: textRTLStyle}]}>
+        <Text style={[styles.datoSub, { textAlign: textRTLStyle }]}>
           Categoria: {t(item.categoria)}
         </Text>
         <Text
-          style={[styles.datoSub, {textAlign: textRTLStyle}]}
-          numberOfLines={1} // Limita a una línea y agrega "..." si el texto es demasiado largo
-          ellipsizeMode="tail" // Agrega "..." al final del texto truncado
+          style={[styles.datoSub, { textAlign: textRTLStyle }]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
         >
           Subcategoria: {Array.isArray(item.subcategoria) ? item.subcategoria[0].nombre_subcategoria : t(item.subcategoria)}
         </Text>
         <Text
-          style={[styles.datoSub, {textAlign: textRTLStyle}]}
-          numberOfLines={1} // Limita a una línea y agrega "..." si el texto es demasiado largo
-          ellipsizeMode="tail" // Agrega "..." al final del texto truncado
+          style={[styles.datoSub, { textAlign: textRTLStyle }]}
+          numberOfLines={1}
+          ellipsizeMode="tail"
         >
-          Publicado: <Text style={{fontWeight: 'bold'}}>{item.estatus ? 'Si' : 'No'}</Text>
+          Publicado: <Text style={{ fontWeight: 'bold' }}>{item.estatus ? 'Si' : 'No'}</Text>
         </Text>
 
         <View
           style={{
-            flexDirection: 'row', // Alinea los elementos en una fila
-            alignItems: 'center', // Alinea verticalmente los elementos al centro
-            justifyContent: 'space-between', // Espacio entre los elementos
-          }}>
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
           <TouchableOpacity
             onPress={() => {
-              goToPreview(item)
-            }}>
+              goToPreview(item);
+            }}
+          >
             <Text
               style={[
                 styles.datoSub,
                 {
                   textAlign: textRTLStyle,
                   fontSize: 14,
-                  color: '#2D3261', // Color del texto
-                  textDecorationLine: 'underline', // Agrega subrayado
+                  color: '#2D3261',
+                  textDecorationLine: 'underline',
                 },
               ]}
-              numberOfLines={1} // Limita a una línea y agrega "..." si el texto es demasiado largo
-              ellipsizeMode="tail" // Agrega "..." al final del texto truncado
+              numberOfLines={1}
+              ellipsizeMode="tail"
             >
-              Preview
+              Ver mas
             </Text>
           </TouchableOpacity>
           <Text
@@ -168,14 +172,15 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
               textAlign: 'right',
               marginRight: 30,
               marginTop: 10,
-            }}>
+            }}
+          >
             ${item.precio}
           </Text>
-          {/* Mostrar el hint (Snackbar) solo para el item actual */}
           <Snackbar
             visible={visibleHint === item.uid}
             onDismiss={onDismissHint}
-            duration={900}>
+            duration={900}
+          >
             {statusLabel}
           </Snackbar>
         </View>
@@ -183,6 +188,7 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
     </LinearGradient>
   </LinearGradient>
 </TouchableOpacity>
+
 
   );
 

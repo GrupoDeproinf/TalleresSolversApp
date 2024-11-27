@@ -132,6 +132,23 @@ const FormTaller = () => {
   const [tipoAccion, settipoAccion] = useState('');
   const [uidTaller, setuidTaller] = useState('');
 
+  const [isCheckedWhats, setisCheckedWhats] = useState(false);
+
+  const [whats, setwhats] = useState(0);
+  const [whatsError, setwhatsError] = useState('');
+
+  const [metodosPago, setMetodosPago] = useState([
+    {label: 'Efectivo', value: 'efectivo', checked: false},
+    {label: 'Pago Móvil', value: 'pagoMovil', checked: false},
+    {label: 'Punto de venta', value: 'puntoVenta', checked: false},
+    {label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false},
+    {label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false},
+    {label: 'Transferencia', value: 'transferencia', checked: false},
+    {label: 'Zelle', value: 'zelle', checked: false},
+    {label: 'Zinli', value: 'zinli', checked: false},
+  ]);
+
+
   const stackNavigation = () => {
     navigation.reset({
       index: 0,
@@ -177,6 +194,15 @@ const FormTaller = () => {
         setLinkTiktok(result.userData.LinkTiktok || '');
         setGarantia(result.userData.Garantia || '');
         setseguro(result.userData.seguro || '');
+
+
+        setwhats(result.userData.whatsapp);
+
+        const updatedMetodosPago = metodosPago.map(method => ({ ...method, checked: result.userData.metodos_pago[method.value] || false })); 
+
+        setMetodosPago(updatedMetodosPago);
+
+
       } else {
         console.log('Usuario no encontrado');
       }
@@ -196,6 +222,7 @@ const FormTaller = () => {
     bgFullStyle,
     textColorStyle,
     iconColorStyle,
+    textRTLStyle,
     isDark,
     t,
   } = useValues();
@@ -519,6 +546,78 @@ const FormTaller = () => {
               <Text style={styles.errorStyle}>{phoneError}</Text>
             )}
           </View>
+
+
+            {/* whatsapp */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 10,
+            }}>
+            <CheckBox
+              isChecked={isCheckedWhats}
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
+              onClick={() => {
+                setisCheckedWhats(!isCheckedWhats);
+              }}
+            />
+            <TextInputs
+              title="Whatsapp"
+              value={whats}
+              textDecorationLine={isCheckedWhats ? 'line-through' : 'none'}
+              editable={false}
+              placeholder="Ingrese su número"
+              keyboardType="numeric"
+              onBlur={() => {}}
+            />
+          </View>
+
+          
+          <View style={{marginTop: 5}}>
+              {/* Texto "RIF" arriba de los inputs */}
+              <Text
+                style={[
+                  styles.headingContainer,
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
+                ]}>
+                Metodos de Pago
+              </Text>
+
+              <View style={{padding: 10}}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                  }}>
+                  {metodosPago.map((method, index) => (
+                    <View
+                      key={method.value}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginVertical: 5,
+                        width: '45%', // Ajusta el ancho para hacer columnas
+                      }}>
+                      <CheckBox
+                        isChecked={method.checked}
+                        onClick={() => toggleCheckBox(index)}
+                        checkBoxColor="#2D3261"
+                        disabled={true}
+                      />
+                      <Text style={{marginLeft: 10, color: 'black'}}>
+                        {method.label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
+
+
 
           {/* Email */}
           <View

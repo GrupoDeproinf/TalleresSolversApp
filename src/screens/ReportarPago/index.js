@@ -708,7 +708,7 @@ const ReportarPago = ({navigation}) => {
         closeModal={closeModal}
         title={successfullyReset}
         subtitle={
-          'Se ha cargado su reporte de pago. Ahora debe esperar a que el administrador apruebe su ingreso.'
+          'Estamos verificando su pago en breve podra iniciar la publicacion de sus servicios.'
         }
         value={
           <View>
@@ -734,7 +734,7 @@ const ReportarPago = ({navigation}) => {
                 {fontSize: fontSizes.FONT19},
               ]}>
               {
-                'Se ha cargado su reporte de pago. Ahora debe esperar a que el administrador apruebe su ingreso.'
+                'Estamos verificando su pago en breve podra iniciar la publicacion de sus servicios.'
               }
             </Text>
             <View style={[external.mt_20]}>
