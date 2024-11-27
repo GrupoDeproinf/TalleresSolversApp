@@ -129,11 +129,10 @@ const FormTaller = () => {
   // Nuevo
 
   const [caracteristicas, setcaracteristicas] = useState([]);
-  const [caracteristicaSelected, setcaracteristicaSelected] = useState([]);
+  const [caracteristicaSelected, setcaracteristicaSelected] = useState('');
   const [Subcaracteristicas, setSubcaracteristicas] = useState([]);
-  const [SubcaracteristicaSelected, setSubcaracteristicaSelected] = useState(
-    [],
-  );
+  const [SubcaracteristicaSelected, setSubcaracteristicaSelected] =
+    useState('');
   const [NameServicio, setNameServicio] = useState('');
   const [precio, setprecio] = useState(0);
   const [setprecioError, setsetprecioError] = useState('');
@@ -154,7 +153,7 @@ const FormTaller = () => {
   const [userStorage, setuserStorage] = useState(false);
 
   const [cantServices, setcantServices] = useState(0);
-  
+
   const navigationScreen = useNavigation();
 
   const [publicOrigin, setpublicOrigin] = useState(false);
@@ -169,9 +168,9 @@ const FormTaller = () => {
   useEffect(() => {
     const {uid} = route.params;
     setModalVisible(false);
-    getUserActive()
-    getDataServiceActivos()
-    
+    getUserActive();
+    getDataServiceActivos();
+
     if (uid != undefined && uid != '') {
       setuidTaller(uid);
       getData(uid);
@@ -186,22 +185,34 @@ const FormTaller = () => {
       setGarantia('');
       setChecked('no');
       setuidService('');
+      const inicial = [
+        {
+          id: '',
+          nombre: 'Seleccione una subcategoría',
+          descripcion: 'Seleccione una subcategoría',
+          estatus: true,
+        },
+      ];
+      setSubcaracteristicas(inicial);
     }
   }, []);
 
   const getUserActive = async () => {
     try {
-    const jsonValue = await AsyncStorage.getItem('@userInfo');
-    const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-    console.log('valor del storage1234***************************************************************************', user);
-    setuserStorage(user)
-  } catch (e) {
-    // error reading value
-    console.log(e);
-  }
-  }
+      const jsonValue = await AsyncStorage.getItem('@userInfo');
+      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+      console.log(
+        'valor del storage1234***************************************************************************',
+        user,
+      );
+      setuserStorage(user);
+    } catch (e) {
+      // error reading value
+      console.log(e);
+    }
+  };
 
-  const getCaracteristicas = async (loadData) => {
+  const getCaracteristicas = async loadData => {
     try {
       // Hacer la solicitud GET utilizando Axios
       const response = await api.get('/usuarios/getActiveCategories', {
@@ -213,13 +224,28 @@ const FormTaller = () => {
       // Verificar la respuesta del servidor
       if (response.status === 200) {
         const result = response.data;
-        console.log('caraccteristicas de resultados123435345345345', result.categories[0].id); // Aquí puedes manejar la respuesta
+        console.log(
+          'caraccteristicas de resultados123435345345345',
+          result.categories[0].id,
+        ); // Aquí puedes manejar la respuesta
 
         if (result.categories.length > 0) {
-          if (loadData){
-            setcaracteristicaSelected(result.categories[0].id)
-            getSubcaracteristicas(result.categories[0].id, true);
+          if (loadData) {
+            setcaracteristicaSelected('');
+            // getSubcaracteristicas(result.categories[0].id, true);
           }
+        }
+        if (result.categories.length > 0) {
+          result.categories.unshift({
+            id: '',
+            descripcion: 'Seleccione una categoría',
+            fechaCreacion: '',
+            logoUrl: '',
+            nombreUser: '',
+            uid: '',
+            estatus: true,
+            nombre: 'Seleccione una categoría',
+          });
         }
         setcaracteristicas(result.categories);
       } else {
@@ -239,8 +265,11 @@ const FormTaller = () => {
   };
 
   const getSubcaracteristicas = async (uid, loadData) => {
-    console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++",uid);
-    console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+    console.log(
+      '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++',
+      uid,
+    );
+    console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
     try {
       // Hacer la solicitud POST utilizando Axios
       const response = await api.post(
@@ -257,7 +286,7 @@ const FormTaller = () => {
         console.log('Este es el usuario encontrado:', result.subcategories);
 
         if (result.subcategories.length > 0) {
-          if (loadData){
+          if (loadData) {
             setSubcaracteristicaSelected(result.subcategories[0].id)
           }
         }
@@ -290,10 +319,9 @@ const FormTaller = () => {
 
         setNameServicio(result.service.nombre_servicio);
 
-
         setcaracteristicaSelected(result.service.uid_categoria || '');
         setSubcaracteristicaSelected(result.service.uid_subcategoria || '');
-        getCaracteristicas(false)
+        getCaracteristicas(false);
         getSubcaracteristicas(result.service.uid_categoria, false);
 
         setprecio(result.service.precio || 0);
@@ -302,8 +330,7 @@ const FormTaller = () => {
         setChecked(result.service.estatus ? 'si' : 'no' || false);
         setuidService(result.service.id || '');
 
-        setpublicOrigin(result.service.estatus)
-
+        setpublicOrigin(result.service.estatus);
       } else {
         console.log('Usuario no encontrado');
       }
@@ -328,27 +355,25 @@ const FormTaller = () => {
   } = useValues();
 
   const onHandleChange = type => {
-    console.log(checked)
-    console.log(cantServices)
+    console.log(checked);
+    console.log(cantServices);
 
-    if (checked == "no"){
+    if (checked == 'no') {
       settipoAccion(type);
       setModalVisible(true);
     } else {
-      if (publicOrigin){
+      if (publicOrigin) {
         settipoAccion(type);
         setModalVisible(true);
       } else {
-        if (Number(cantServices) == 0 || Number(cantServices) < 0){
-          setModalVisible2(true)
+        if (Number(cantServices) == 0 || Number(cantServices) < 0) {
+          setModalVisible2(true);
         } else {
           settipoAccion(type);
           setModalVisible(true);
         }
       }
     }
-
-
   };
 
   const onCancel = () => {
@@ -369,7 +394,6 @@ const FormTaller = () => {
       caracteristicaSelected != undefined &&
       SubcaracteristicaSelected != '' &&
       SubcaracteristicaSelected != undefined &&
-      SubcaracteristicaSelected != undefined &&
       precio != '' &&
       precio != undefined &&
       precio != undefined &&
@@ -380,18 +404,22 @@ const FormTaller = () => {
       Garantia != undefined &&
       Garantia != undefined
     ) {
-
       // console.log("caracteristicas", caracteristicas)
-      console.log("Subcaracteristicas", Subcaracteristicas)
+      console.log('Subcaracteristicas', Subcaracteristicas);
 
-      const categoria = caracteristicas.find(c => c.id === caracteristicaSelected)?.nombre || "";
+      const categoria =
+        caracteristicas.find(c => c.id === caracteristicaSelected)?.nombre ||
+        '';
 
-      const subcategoria = Subcaracteristicas.find(c => c.id === SubcaracteristicaSelected)?.nombre || "";
+      const subcategoria =
+        Subcaracteristicas.find(c => c.id === SubcaracteristicaSelected)
+          ?.nombre || '';
 
       const dataFinal = {
-        id: uidService == undefined || uidService == '' ? '' : uidService ,
+        id: uidService == undefined || uidService == '' ? '' : uidService,
         precio: precio,
-        uid_servicio: uidService == undefined || uidService == '' ? '' : uidService,
+        uid_servicio:
+          uidService == undefined || uidService == '' ? '' : uidService,
         categoria: categoria,
         uid_categoria: caracteristicaSelected,
         taller: userStorage.nombre,
@@ -400,49 +428,49 @@ const FormTaller = () => {
         descripcion: Description,
         subcategoria: subcategoria,
         uid_subcategoria: SubcaracteristicaSelected,
-        puntuacion:4,
+        puntuacion: 4,
         garantia: Garantia,
         estatus: checked == 'si' ? true : false,
-        publicOrigin:publicOrigin
+        publicOrigin: publicOrigin,
       };
 
-      console.log(dataFinal)
-        try {
-          // Hacer la solicitud POST utilizando Axios
-          const response = await api.post('/usuarios/saveOrUpdateService', dataFinal);
-          // Verificar la respuesta del servidor
-          const result = response.data;
-  
-          if (
-            result.message ===
-            'Servicio actualizado exitosamente' || result.message ===
-            'Servicio creado exitosamente'
-          ) {
-            showToast(result.message);
-            setModalVisible(false);
-            navigation.goBack();
-          } else {
-            showToast('Ha ocurrido un error');
-            setModalVisible(false);
-            navigation.goBack();
-          }
-        } catch (error) {
-          // Manejo de errores
-          if (error.response) {
-            console.error('Error en la solicitud:', error.response.statusText);
-          } else {
-            console.error('Error en la solicitud:', error.message);
-          }
+      console.log(dataFinal);
+      try {
+        // Hacer la solicitud POST utilizando Axios
+        const response = await api.post(
+          '/usuarios/saveOrUpdateService',
+          dataFinal,
+        );
+        // Verificar la respuesta del servidor
+        const result = response.data;
+
+        if (
+          result.message === 'Servicio actualizado exitosamente' ||
+          result.message === 'Servicio creado exitosamente'
+        ) {
+          showToast(result.message);
+          setModalVisible(false);
+          navigation.goBack();
+        } else {
           showToast('Ha ocurrido un error');
           setModalVisible(false);
           navigation.goBack();
         }
+      } catch (error) {
+        // Manejo de errores
+        if (error.response) {
+          console.error('Error en la solicitud:', error.response.statusText);
+        } else {
+          console.error('Error en la solicitud:', error.message);
+        }
+        showToast('Ha ocurrido un error');
+        setModalVisible(false);
+        navigation.goBack();
+      }
     } else {
       showToast('Ingrese la información requerida');
     }
-
   };
-
 
   const getDataServiceActivos = async () => {
     try {
@@ -453,34 +481,39 @@ const FormTaller = () => {
         const response = await api.post('/usuarios/getUserByUid', {
           uid: user.uid,
         });
-      
+
         // Verificar la respuesta del servidor
         const result = response.data;
-      
+
         if (result.message === 'Usuario encontrado') {
-          console.log("result.userData.subscripcion_actual", result.userData.subscripcion_actual)
-          setcantServices(result.userData.subscripcion_actual.cantidad_servicios)
-
-
+          console.log(
+            'result.userData.subscripcion_actual',
+            result.userData.subscripcion_actual,
+          );
+          setcantServices(
+            result.userData.subscripcion_actual.cantidad_servicios,
+          );
         } else {
           console.log('Usuario no encontrado');
         }
       } catch (error) {
         if (error.response) {
-          console.error('Error en la solicitud122222:', error.response.statusText);
+          console.error(
+            'Error en la solicitud122222:',
+            error.response.statusText,
+          );
         } else {
           console.error('Error en la solicitud:12323423', error.message);
         }
       }
     } catch (e) {
-      console.log(e)
+      console.log(e);
     }
   };
 
-  const gotoPlans = () =>{
+  const gotoPlans = () => {
     navigationScreen.navigate('Planscreen');
-  }
-
+  };
 
   const showToast = text => {
     ToastAndroid.show(text, ToastAndroid.SHORT);
@@ -797,7 +830,6 @@ const FormTaller = () => {
         </View>
       </Modal>
 
-
       <Modal
         transparent={true}
         animationType="slide"
@@ -806,7 +838,8 @@ const FormTaller = () => {
         <View style={stylesModal.container}>
           <View style={stylesModal.modalView}>
             <Text style={stylesModal.modalText}>
-              Usted ha alcanzado la cantidad máxima de servicios permitidos en su plan. Para crear nuevos servicios, debe actualizar su plan.
+              Usted ha alcanzado la cantidad máxima de servicios permitidos en
+              su plan. Para crear nuevos servicios, debe actualizar su plan.
             </Text>
             <View style={stylesModal.buttonContainer}>
               <TouchableOpacity
@@ -814,15 +847,15 @@ const FormTaller = () => {
                 onPress={gotoPlans}>
                 <Text style={stylesModal.buttonText}>Ir a planes</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={stylesModal.buttonNo} onPress={onCancel2}>
+              <TouchableOpacity
+                style={stylesModal.buttonNo}
+                onPress={onCancel2}>
                 <Text style={stylesModal.buttonText}>Cancelar</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
-
     </View>
   );
 };

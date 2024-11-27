@@ -4,6 +4,9 @@ import appColors from '../../themes/appColors';
 import {commonStyles} from '../../style/commonStyle.css';
 import {external} from '../../style/external.css';
 const styles = StyleSheet.create({
+  headingContainer: {
+    ...commonStyles.titleText19,
+  },
   container: {
     borderWidth: 0.3,
     marginHorizontal: windowWidth(25),

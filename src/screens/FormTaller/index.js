@@ -806,7 +806,7 @@ const FormTaller = () => {
           <NavigationButton
             title="Aprobar solicitud"
             onPress={() => onHandleChange('Aprobar')}
-            backgroundColor={'#28a745'}
+            backgroundColor={'#2D3261'}
             color={appColors.screenBg}
           />
         </View>
@@ -819,7 +819,7 @@ const FormTaller = () => {
           <NavigationButton
             title="Rechazar solicitud"
             onPress={() => onHandleChange('Rechazar')}
-            backgroundColor={'#D32F2F'}
+            backgroundColor={'#848688'}
             color={appColors.screenBg}
           />
         </View>
