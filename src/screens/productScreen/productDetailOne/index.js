@@ -40,6 +40,8 @@ import {
   ClipboardIcon,
   PhoneIcon,
 } from 'react-native-heroicons/outline'; // Importar íconos
+import {Linking} from 'react-native';
+import {TouchableHighlight} from 'react-native-gesture-handler';
 
 const ProductDetailOne = ({navigation}) => {
   const {bgFullStyle, textColorStyle, t, textRTLStyle, iconColorStyle} =
@@ -66,7 +68,7 @@ const ProductDetailOne = ({navigation}) => {
 
   const [uidService, setuidService] = useState('');
   const [typeUserLogged, settypeUserLogged] = useState('');
-  const [data, setData] = useState();
+  const [data, setData] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [dataUser, setDataUser] = useState();
 
@@ -74,7 +76,7 @@ const ProductDetailOne = ({navigation}) => {
     const {uid, typeUser} = route.params;
 
     getService(uid);
-    // getData(uid)
+    getData(uid);
     setuidService(uid);
     settypeUserLogged(typeUser);
   }, []);
@@ -83,9 +85,13 @@ const ProductDetailOne = ({navigation}) => {
     const jsonValue = await AsyncStorage.getItem('@userInfo');
     const user = jsonValue != null ? JSON.parse(jsonValue) : null;
     setDataUser(user);
-    console.log('111111111111111111111111111111111111111111111111111111111111111111')
+    console.log(
+      '111111111111111111111111111111111111111111111111111111111111111111',
+    );
     console.log('valor del storage', user);
-    console.log('111111111111111111111111111111111111111111111111111111111111111111')
+    console.log(
+      '111111111111111111111111111111111111111111111111111111111111111111',
+    );
 
     try {
       const response = await api.post('/usuarios/getServiceByUid', {
@@ -126,42 +132,56 @@ const ProductDetailOne = ({navigation}) => {
     }
   };
 
-  // const getData = async (id = null) => {
-  //   try {
-  //     const jsonValue = await AsyncStorage.getItem('@userInfo');
-  //     const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+  const getData = async (id = null) => {
+    try {
+      const jsonValue = await AsyncStorage.getItem('@userInfo');
+      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-  //     console.log("Usuario:", user);
+      console.log('Usuario:', user);
 
-  //     try {
-  //       // Realizar la solicitud GET para obtener todos los servicios
-  //       const response = await api.get('/home/getServices');
+      try {
+        // Realizar la solicitud GET para obtener todos los servicios
+        const response = await api.get('/home/getServices');
 
-  //       console.log("Esto es el response", response);
+        console.log('Esto es el response', response);
 
-  //       // Verificar la respuesta del servidor
-  //       if (response.status === 200) {
-  //         const allServices = response.data;
+        // Verificar la respuesta del servidor
+        if (response.status === 200) {
+          const allServices = response.data;
 
-  //         // Si se proporciona un ID, filtramos los datos localmente
-  //         const filteredData = id
-  //           ? allServices.filter(service => service.id === id)
-  //           : allServices;
+          // Si se proporciona un ID, filtramos los datos localmente
+          const filteredData = id
+            ? allServices.filter(service => service.uid_servicio === id)
+            : allServices;
+          console.clear();
+          console.log(
+            '*------------------------------------------------------------------*',
+          );
+          console.log('Resultado filtrado:', filteredData);
+          console.log(
+            '*------------------------------------------------------------------*',
+          );
 
-  //         console.log("Resultado filtrado:", filteredData);
+          console.log(
+            '*------------------------------------------------------------------*',
+          );
+          console.log('Resultado filtrado: metodos', filteredData[0]?.taller.metodos_pago);
+          console.log(
+            '*------------------------------------------------------------------*',
+          );
 
-  //         // Actualizar el estado con los datos filtrados
-  //         setData(filteredData);
-  //       } else {
-  //         setData([]);
-  //       }
-  //     } catch (error) {
-  //       console.error("Error en la solicitud:", error);
-  //     }
-  //   } catch (e) {
-  //     console.error("Error al obtener el usuario:", e);
-  //   }
-  // };
+          // Actualizar el estado con los datos filtrados
+          setData(filteredData);
+        } else {
+          setData([]);
+        }
+      } catch (error) {
+        console.error('Error en la solicitud:', error);
+      }
+    } catch (e) {
+      console.error('Error al obtener el usuario:', e);
+    }
+  };
 
   const PublicarService = async () => {
     console.log(DataService);
@@ -221,17 +241,17 @@ const ProductDetailOne = ({navigation}) => {
       usuario_nombre: dataUser?.nombre || '',
       usuario_email: dataUser?.email || '',
     };
-  
+
     try {
       // Realizar la solicitud al endpoint
       const response = await api.post('/home/contactService', servicePayload);
-  
+
       // Si llegamos aquí, la solicitud fue exitosa
       const responseData = response.data; // Axios ya procesa el JSON automáticamente
       console.log('Servicio guardado exitosamente:', responseData);
-  
+
       // Mostrar mensaje de éxito al usuario
-  
+
       // Abre el modal después de guardar exitosamente
       setModalVisible(true);
     } catch (error) {
@@ -239,24 +259,56 @@ const ProductDetailOne = ({navigation}) => {
       if (error.response) {
         // Errores del servidor (respuesta con error, por ejemplo, 400, 500)
         console.error('Error del servidor:', error.response.data);
-        
       } else if (error.request) {
         // La solicitud se realizó pero no hubo respuesta
         console.error('No se recibió respuesta del servidor:', error.request);
-       
       } else {
         // Otro tipo de error
         console.error('Error al configurar la solicitud:', error.message);
-      
       }
     }
   };
-  
 
   // Función para cerrar el modal
   const handleCloseModal = () => {
     setModalVisible(false);
   };
+
+  const renderItemModal = ({item}) => {
+    // Función para abrir enlaces
+    const openLink = url => {
+      Linking.openURL(url).catch(err =>
+        Alert.alert('Error', 'No se pudo abrir el enlace.'),
+      );
+    };
+
+    return (
+      <View style={styles.listItem}>
+        {/* WhatsApp */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => openLink(`https://wa.me/${item.ws}`)}>
+          <Text style={styles.text}>Abrir en WhatsApp</Text>
+        </TouchableOpacity>
+
+        {/* Llamada */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => openLink(`tel:${item.phone}`)}>
+          <Text style={styles.text}>Llamar</Text>
+        </TouchableOpacity>
+
+        {/* Mensaje de Texto */}
+        <TouchableOpacity
+          style={styles.button}
+          onPress={() => openLink(`sms:${item.phone}`)}>
+          <Text style={styles.text}>Enviar SMS</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const dataTest = [{phone: '4241436070'}];
 
   return (
     <View
@@ -282,7 +334,11 @@ const ProductDetailOne = ({navigation}) => {
             </Text>
             <Text
               style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
-              {DataService.categoria}
+              {DataService?.categoria ? DataService?.categoria : DataService?.nombre_categoria}
+            </Text>
+            <Text
+              style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
+              {data[0]?.taller?.estado}
             </Text>
             <DetailsTextContainer DataService={DataService} />
 
@@ -295,18 +351,18 @@ const ProductDetailOne = ({navigation}) => {
 
             <BrandData DataService={DataService} />
 
-            <IconProduct />
+            <IconProduct data={data[0]?.taller?.metodos_pago}/>
 
             <InfoContainer title={'Garantía'} text={DataService.garantia} />
 
             {/* <KeyFeatures /> */}
           </View>
         </View>
-        <RatingScreen />
+        {/* <RatingScreen /> */}
 
-        {typeUserLogged != 'Taller' ? (
+        {/* {typeUserLogged != 'Taller' ? (
           <Text style={styles.writeYourReview}>{writeYourReview}</Text>
-        ) : null}
+        ) : null} */}
 
         <View style={[external.mh_20, external.mt_20]}>
           <H3HeadingCategory
@@ -359,7 +415,12 @@ const ProductDetailOne = ({navigation}) => {
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                onPress={() => handleOpenModal()}
+                onPress={() =>
+                  // Linking.openURL(
+                  //   'whatsapp://send?text=hello&phone=584241919356',
+                  // )
+                  handleOpenModal()
+                }
                 style={[external.fd_row, external.ai_center, external.pt_4]}>
                 <Cart />
                 <Text style={styles.buyNowText}>Contactar</Text>
@@ -376,22 +437,36 @@ const ProductDetailOne = ({navigation}) => {
         <View style={styles.centeredView}>
           <View style={styles.modalView}>
             <FlatList
-              data={[
-                { id: '1', phone: '123-456-7890' },
-                { id: '2', phone: '987-654-3210' },
-                { id: '3', phone: '456-789-0123' },
-              ]}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
+              data={dataTest}
+              keyExtractor={item => item.id}
+              renderItem={({item}) => (
                 <View style={styles.listItem}>
-                  <PhoneIcon color="#2196F3" size={24} style={{ marginRight: 10 }} />
-                  <Text style={styles.phone}>{item.phone}</Text>
-                  <TouchableOpacity onPress={() => copyToClipboard(item.phone)}>
-                    <ClipboardDocumentIcon color="#333" size={24} />
+                  {/* WhatsApp */}
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={() =>
+                      Linking.openURL(`https://wa.me/+58${item.phone}`)
+                    }>
+                    <Text style={styles.text}>Abrir en WhatsApp</Text>
+                  </TouchableOpacity>
+
+                  {/* Llamada */}
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => Linking.openURL(`tel:0${item.phone}`)}>
+                    <Text style={styles.text}>Llamar</Text>
+                  </TouchableOpacity>
+
+                  {/* SMS */}
+                  <TouchableOpacity
+                    style={styles.button}
+                    onPress={() => Linking.openURL(`sms:0${item.phone}`)}>
+                    <Text style={styles.text}>Enviar SMS</Text>
                   </TouchableOpacity>
                 </View>
               )}
             />
+
             <Pressable
               style={[styles.button, styles.buttonClose]}
               onPress={handleCloseModal}>

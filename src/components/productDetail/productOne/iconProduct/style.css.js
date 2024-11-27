@@ -9,6 +9,29 @@ import appColors from '../../../../themes/appColors';
 import appFonts from '../../../../themes/appFonts';
 import {external} from '../../../../style/external.css';
 const styles = StyleSheet.create({
+  textTitle: {
+    color: '#263238',
+    marginTop: windowHeight(10),
+    marginBottom: windowHeight(0),
+    // backgroundColor: 'red',
+    fontWeight: '800',
+  },
+  gridContainer: {
+    width: '100%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  gridItem: {
+    width: '48%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    padding: windowHeight(10),
+    borderRadius: windowHeight(7),
+    marginBottom: windowHeight(10),
+    backgroundColor: '#F8F8FF',
+  },
   refreshIcon: {
     ...external.fd_row,
     ...external.ai_center,
@@ -40,7 +63,7 @@ const styles = StyleSheet.create({
     borderRadius: windowHeight(8),
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: windowHeight(8),
+    marginTop: windowHeight(0),
     marginHorizontal: windowHeight(3),
     width: windowWidth(78),
     height: windowHeight(48),

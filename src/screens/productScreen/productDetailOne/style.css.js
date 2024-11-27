@@ -9,6 +9,26 @@ import {
   windowWidth,
 } from '../../../themes/appConstant';
 const styles = StyleSheet.create({
+  listItem: {
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    padding: 10,
+    marginVertical: 5,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    elevation: 2, // Para sombreado en Android
+  },
+  button: {
+    padding: 10,
+    marginVertical: 5,
+    backgroundColor: '#2196F3',
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  text: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   centeredView: {
     flex: 1,
     justifyContent: 'center',
@@ -16,30 +36,51 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalView: {
-    width: '80%',
-    backgroundColor: 'white',
+    width: '90%',
+    backgroundColor: '#fff',
     borderRadius: 10,
-    paddingVertical: 20,
-    paddingHorizontal: 10,
-    alignItems: 'center',
+    padding: 20,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 5,
+    elevation: 5, // Sombra en Android
+  },
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)', // Si necesitas un fondo tenue
   },
   listItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
     justifyContent: 'space-between',
-    width: '100%',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    padding: 15,
+    marginVertical: 5,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    elevation: 1,
   },
+  button: {
+    padding: 10,
+    backgroundColor: '#2196F3',
+    borderRadius: 5,
+    alignItems: 'center',
+    marginVertical: 5,
+  },
+  text: {
+    color: '#000',
+    fontWeight: 'bold',
+  },
+  buttonClose: {
+    backgroundColor: '#f44336',
+  },
+  textStyle: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  
   phone: {
     fontSize: 16,
     fontWeight: 'bold',
@@ -47,6 +88,19 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
   },
+  container: {
+    padding: 10,
+    marginTop: 20,
+    backgroundColor: '#2196F3', // Fondo visible
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  welcome: {
+    color: '#fff', // Contraste con el fondo
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  
   icon: {
     marginLeft: 10,
   },
