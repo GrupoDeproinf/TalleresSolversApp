@@ -148,6 +148,12 @@ const FormTaller = () => {
     {label: 'Zinli', value: 'zinli', checked: false},
   ]);
 
+  const [isEstado, setisEstado] = useState(false);
+
+  const [estadoSelected, setestadoSelected] = useState(''); // Default value 'J'
+
+
+
 
   const stackNavigation = () => {
     navigation.reset({
@@ -194,6 +200,7 @@ const FormTaller = () => {
         setLinkTiktok(result.userData.LinkTiktok || '');
         setGarantia(result.userData.Garantia || '');
         setseguro(result.userData.seguro || '');
+        setestadoSelected(result.userData.estado || '');
 
 
         setwhats(result.userData.whatsapp);
@@ -509,6 +516,32 @@ const FormTaller = () => {
             )}
           </View>
 
+          {/* Estado */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 10,
+            }}>
+            <CheckBox
+              isChecked={isEstado}
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
+              onClick={() => {
+                console.log("Aquiii")
+                setisEstado(!isEstado);
+              }}
+            />
+            <TextInputs
+              title="Estado"
+              value={estadoSelected}
+              textDecorationLine={isEstado ? 'line-through' : 'none'}
+              editable={false}
+              keyboardType="string"
+              onBlur={() => {}}
+            />
+          </View>
+
           {/* Número Telefónico */}
           <View
             style={{
@@ -674,6 +707,7 @@ const FormTaller = () => {
               placeHolder="Característica del taller (tipo de piso, si posee fosa, rampla, entre otras condiciones, gatos elevadores)"
               multiline={true}
               numberOfLines={4}
+              height={150}
               onChangeText={text => {
                 setCaracteristicas(text);
                 setCaracteristicasError(
@@ -880,6 +914,7 @@ const FormTaller = () => {
               title="Seguro"
               editable={false}
               value={seguro}
+              height={150}
               placeHolder="Ingrese su seguro"
               textDecorationLine={isCheckedSeguro ? 'line-through' : 'none'}
               onChangeText={text => {

@@ -709,7 +709,7 @@ const FormTaller = () => {
               multiline={true}
               numberOfLines={10}
               // minHeight= {600}
-              // height={400}
+              height={150}
               // textAlignVertical= {'top'}
               onChangeText={text => {
                 setDescription(text);
@@ -736,7 +736,7 @@ const FormTaller = () => {
               multiline={true}
               numberOfLines={10}
               // minHeight= {600}
-              // height={400}
+              height={150}
               // textAlignVertical= {'top'}
               onChangeText={text => {
                 setGarantia(text);

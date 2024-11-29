@@ -28,6 +28,8 @@ const SignIn = ({navigation}) => {
   const [checkedData, setCheckedData] = useState(false);
   const [isSignInDisabled, setSignInDisabled] = useState(false);
 
+  const [showPass, setshowPass] = useState(true);
+
   useEffect(() => {
     setSignInDisabled(false)
     setEmail('')
@@ -124,6 +126,12 @@ const SignIn = ({navigation}) => {
     setCheckedData(!checkedData);
   };
   const {linearColorStyleTwo, linearColorStyle} = useValues();
+
+
+const changePassValue = () => {
+  setshowPass(!showPass)
+}
+
   return (
     <View style={[styles.container, {backgroundColor: bgFullStyle, padding: 40}]}>
       <AuthContainer
@@ -162,7 +170,9 @@ const SignIn = ({navigation}) => {
               title="Contraseña"
               value={password}
               placeHolder="Ingrese su contraseña"
-              secureTextEntry={true} 
+              secureTextEntry={showPass} 
+              showPass = {true}
+              changePassValue = {changePassValue}
               onChangeText={text => {
                 setPassword(text);
                 setPwdTyping(true);

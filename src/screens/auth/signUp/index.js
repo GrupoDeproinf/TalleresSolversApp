@@ -48,6 +48,7 @@ import Icons from 'react-native-vector-icons/FontAwesome';
 import Icons2 from 'react-native-vector-icons/FontAwesome5';
 
 import Icons3 from 'react-native-vector-icons/Fontisto';
+import Icons4 from 'react-native-vector-icons/Entypo';
 import api from '../../../../axiosInstance';
 import CheckBox from 'react-native-check-box';
 
@@ -91,6 +92,38 @@ const SignUp = ({navigation}) => {
     {label: 'Zelle', value: 'zelle', checked: false},
     {label: 'Zinli', value: 'zinli', checked: false},
   ]);
+
+  const [estadoSelected, setestadoSelected] = useState(''); // Default value 'J'
+
+
+  const [estadosVenezuela, setEstadosVenezuela] = useState([
+    { label: 'Seleccione un estado', value: ''},
+    { label: 'Amazonas', value: 'Amazonas'},
+    { label: 'Anzoátegui', value: 'Anzoátegui'},
+    { label: 'Apure', value: 'Apure'},
+    { label: 'Aragua', value: 'Aragua'},
+    { label: 'Barinas', value: 'Barinas'},
+    { label: 'Bolívar', value: 'Bolívar'},
+    { label: 'Carabobo', value: 'Carabobo'},
+    { label: 'Cojedes', value: 'Cojedes'},
+    { label: 'Delta Amacuro', value: 'Delta Amacuro'},
+    { label: 'Distrito Capital', value: 'Distrito Capital'},
+    { label: 'Falcón', value: 'Falcón'},
+    { label: 'Guárico', value: 'Guárico'},
+    { label: 'Lara', value: 'Lara'},
+    { label: 'Mérida', value: 'Mérida'},
+    { label: 'Miranda', value: 'Miranda'},
+    { label: 'Monagas', value: 'Monagas'},
+    { label: 'Nueva Esparta', value: 'Nueva Esparta'},
+    { label: 'Portuguesa', value: 'Portuguesa'},
+    { label: 'Sucre', value: 'Sucre'},
+    { label: 'Táchira', value: 'Táchira'},
+    { label: 'Trujillo', value: 'Trujillo'},
+    { label: 'Vargas', value: 'Vargas'},
+    { label: 'Yaracuy', value: 'Yaracuy'},
+    { label: 'Zulia', value: 'Zulia'}
+  ]);
+  
 
   const layout = useWindowDimensions();
 
@@ -243,7 +276,8 @@ const SignUp = ({navigation}) => {
         Nombre != '' &&
         cedula != 0 &&
         cedula != '' && whats != '' &&
-        whats != 0
+        whats != 0 &&
+        estadoSelected != ''
       ) {
         
         const newFormatMP = metodosPago.reduce((acc, method) => {
@@ -259,7 +293,8 @@ const SignUp = ({navigation}) => {
           email: email.toLowerCase(),
           password: password.toLowerCase(),
           whats:whats, 
-          metodos_pago:newFormatMP
+          metodos_pago:newFormatMP,
+          estado:estadoSelected
         };
 
         console.log(infoUserCreated);
@@ -702,6 +737,46 @@ const SignUp = ({navigation}) => {
             {emailError !== '' && (
               <Text style={styles.errorStyle}>{emailError}</Text>
             )}
+
+<View style={{marginTop: 5}}>
+              {/* Texto "RIF" arriba de los inputs */}
+              <Text
+                style={[
+                  styles.headingContainer,
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
+                ]}>
+                Estado
+              </Text>
+
+              {/* Contenedor para el Picker y el TextInput */}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              {/* Icono al lado del Picker */}
+              <Icons4 name="location" size={20} color="#9BA6B8" style={{ marginRight: 5, marginLeft:10 }} />
+              <View
+                style={{
+                  overflow: 'hidden',
+                  height: 50, // Asegurar que ambos tengan el mismo height
+                }}>
+                <Picker
+                  selectedValue={estadoSelected}
+                  onValueChange={itemValue => setestadoSelected(itemValue)}
+                  style={{
+                    width: 400,
+                    height: 50, // Ajustar la altura para el Picker
+                    color: 'black',
+                  }}
+                >
+                  {estadosVenezuela.map((estado) => (
+                    <Picker.Item key={estado.value} label={estado.label} value={estado.value} />
+                  ))}
+                </Picker>
+              </View>
+            </View>
+
+            </View>
+
+
 
             <TextInputs
               title="Número Telefónico"
