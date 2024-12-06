@@ -37,6 +37,8 @@ import Icons4 from 'react-native-vector-icons/Entypo';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Buffer } from 'buffer';
 
+import notImageFound from '../../../assets/noimageold.jpeg';
+
 const TallerProfileScreen = ({ navigation }) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
   const [emailValue, setEmailValue] = useState(smithaWilliamsMail);
@@ -134,6 +136,8 @@ const TallerProfileScreen = ({ navigation }) => {
 
   const [imagePerfil, setimagePerfil] = useState("");
   const [base64, setBase64] = useState(null);
+  
+  const [imageFirts, setimageFirts] = useState("");
 
 
 
@@ -178,7 +182,6 @@ const TallerProfileScreen = ({ navigation }) => {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-      console.log('valor del storage12345555', user.uid);
       setuidUserConnected(user.uid);
 
       try {
@@ -190,7 +193,6 @@ const TallerProfileScreen = ({ navigation }) => {
         // Verificar la respuesta del servidor
         if (response.status === 200) {
           const result = response.data;
-          console.log('Email:', result.userData); // Aquí puedes manejar la respuesta
 
           setNombre(result.userData.nombre);
           setcedula(result.userData.rif);
@@ -211,6 +213,8 @@ const TallerProfileScreen = ({ navigation }) => {
           setwhats(result.userData.whatsapp);
 
           setimagePerfil(result.userData.image_perfil);
+
+          setimageFirts(result.userData.image_perfil)
 
           setestadoSelected(result.userData.estado)
 
@@ -240,7 +244,6 @@ const TallerProfileScreen = ({ navigation }) => {
       }
     } catch (e) {
       // error reading value
-      console.log(e);
     }
   };
 
@@ -254,6 +257,9 @@ const TallerProfileScreen = ({ navigation }) => {
       return true;
     }
   };
+
+
+  const getImageName = (url) => url.split('/').pop();
 
   const validatePhone = () => {
     const phoneRegex = /^\d{10}$/;
@@ -271,6 +277,10 @@ const TallerProfileScreen = ({ navigation }) => {
     const isPhoneValid = validatePhone();
 
     // setdisabledInput(true);
+
+    console.log(getImageName(imageFirts))
+
+
 
     if (
       isEmailValid == true &&
@@ -305,11 +315,9 @@ const TallerProfileScreen = ({ navigation }) => {
         whatsapp: whats,
         metodos_pago: newFormatMP,
         estado: estadoSelected,
-        base64: base64 == null || base64 == undefined ? "" : base64
+        base64: base64 == null || base64 == undefined ? "" : base64,
+        imageTodelete: imageFirts != "" ? getImageName(imageFirts) : ""
       };
-
-      console.log(infoUserCreated);
-      console.log('Aquiiii1234');
 
       try {
         // Hacer la solicitud POST utilizando Axios
@@ -318,19 +326,15 @@ const TallerProfileScreen = ({ navigation }) => {
           infoUserCreated,
         );
 
-        console.log('response++++++++++', response.status);
 
         // Verificar la respuesta del servidor
         if (response.status === 201) {
           const result = response.data;
-          console.log(result); // Aquí puedes manejar la respuesta
 
           try {
             const jsonValue = JSON.stringify(infoUserCreated);
-            console.log(jsonValue);
             await AsyncStorage.setItem('@userInfo', jsonValue);
           } catch (e) {
-            console.log(e);
           }
 
           showToast('Actualizado correctamente');
@@ -367,9 +371,7 @@ const TallerProfileScreen = ({ navigation }) => {
   const selectImage = () => {
     launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
       if (response.didCancel) {
-        console.log('User cancelled image picker');
       } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
       } else {
         const source = { uri: response.assets[0].uri };
         const base64Data = response.assets[0].base64;
@@ -412,12 +414,10 @@ const TallerProfileScreen = ({ navigation }) => {
 
   // Funciones para manejar los clics
   const handleClientePress = () => {
-    console.log('Cliente Card Pressed23');
     settypeOfView('Cliente');
   };
 
   const handleTallerPress = () => {
-    console.log('Taller Card Pressed1');
     settypeOfView('Taller');
   };
 
@@ -434,7 +434,6 @@ const TallerProfileScreen = ({ navigation }) => {
   const CloseSesion = async () => {
     try {
       await AsyncStorage.removeItem('@userInfo');
-      console.log('Item removed successfully');
     } catch (error) {
       console.error('Error removing item:', error);
     }
@@ -488,23 +487,23 @@ const TallerProfileScreen = ({ navigation }) => {
 
           {imagePerfil == null || imagePerfil == "" ? (
             <TouchableOpacity onPress={selectImage}>
-              <ImageBackground
-                resizeMode="contain"
-                style={styles.imgStyle}
-                source={images.user}
-              >
-                <View
-                  style={[
-                    styles.editIconStyle,
-                    { backgroundColor: '#F3F5FB' },
-                    { borderRadius: 100 },
-                    { position: 'absolute', top: 0, right: 20, margin: 0 },
-                  ]}
-                >
-                  <Edit />
-                </View>
-              </ImageBackground>
-            </TouchableOpacity>
+            <Image
+              resizeMode="contain"
+              style={styles.imgStyle}
+              source={notImageFound} // Reemplaza esto con la variable que contiene tu imagen
+            />
+            <View
+              style={[
+                styles.editIconStyle,
+                { backgroundColor: '#F3F5FB' },
+                { borderRadius: 100 },
+                { position: 'absolute', top: 0, right: 20, margin: 0 },
+              ]}
+            >
+              <Edit />
+            </View>
+          </TouchableOpacity>
+          
           ) : (
             <TouchableOpacity onPress={selectImage}>
               <ImageBackground
@@ -544,7 +543,6 @@ const TallerProfileScreen = ({ navigation }) => {
               placeHolder="Ingrese su nombre y apellido"
               value={Nombre}
               onChangeText={text => {
-                console.log(text);
                 setNombre(text);
                 setNombreTyping(true);
                 if (text.trim() === '') {
@@ -642,7 +640,6 @@ const TallerProfileScreen = ({ navigation }) => {
               placeHolder="Ingrese su direccion"
               value={Direccion}
               onChangeText={text => {
-                console.log(text);
                 setDireccion(text);
                 setDireccionTyping(true);
                 if (text.trim() === '') {
@@ -910,7 +907,6 @@ const TallerProfileScreen = ({ navigation }) => {
             placeHolder="Tarifa"
             value={Tarifa}
             onChangeText={text => {
-              console.log(text);
               setTarifa(text);
               setTarifaTyping(true);
               if (text.trim() === '') {
@@ -935,7 +931,6 @@ const TallerProfileScreen = ({ navigation }) => {
             placeHolder="Tiempo de experiencia"
             value={Experiencia}
             onChangeText={text => {
-              console.log(text);
               setExperiencia(text);
               setExperienciaTyping(true);
               if (text.trim() === '') {
@@ -958,7 +953,6 @@ const TallerProfileScreen = ({ navigation }) => {
             placeHolder="https://www.facebook.com/"
             value={LinkFacebook}
             onChangeText={text => {
-              console.log(text);
               setLinkFacebook(text);
               // setLinkFacebookTyping(true);
               // if (text.trim() === '') {
@@ -981,7 +975,6 @@ const TallerProfileScreen = ({ navigation }) => {
             placeHolder="https://www.instagram.com/"
             value={LinkInstagram}
             onChangeText={text => {
-              console.log(text);
               setLinkInstagram(text);
               // setLinkInstagramTyping(true);
               // if (text.trim() === '') {
@@ -1004,7 +997,6 @@ const TallerProfileScreen = ({ navigation }) => {
             placeHolder="https://www.instagram.com/"
             value={LinkTiktok}
             onChangeText={text => {
-              console.log(text);
               setLinkTiktok(text);
               // setLinkTiktokTyping(true);
               // if (text.trim() === '') {
@@ -1027,7 +1019,6 @@ const TallerProfileScreen = ({ navigation }) => {
             placeHolder="Ingrese su garantia"
             value={Garantia}
             onChangeText={text => {
-              console.log(text);
               setGarantia(text);
               setGarantiaTyping(true);
               if (text.trim() === '') {
@@ -1053,7 +1044,6 @@ const TallerProfileScreen = ({ navigation }) => {
             value={seguro}
             height={150}
             onChangeText={text => {
-              console.log(text);
               setseguro(text);
               setseguroTyping(true);
               if (text.trim() === '') {

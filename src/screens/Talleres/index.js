@@ -46,11 +46,14 @@ const TalleresContainer = ({navigation}) => {
 
         try {
           // Hacer la solicitud GET utilizando Axios
-          const response = await api.get('/usuarios/getTalleres', {
-              headers: {
-                  'Content-Type': 'application/json',
-              },
+          const response = await api.post('/usuarios/getTalleres', {
+            estado: user.estado // Reemplaza 'tu_estado_aqui' con la variable del estado que deseas pasar
+          }, {
+            headers: {
+              'Content-Type': 'application/json',
+            },
           });
+          
       
           // Verificar la respuesta del servidor
           if (response.status === 200) {
@@ -84,7 +87,7 @@ const TalleresContainer = ({navigation}) => {
       <View style={[external.mh_20]}>
         <FullHeader
           showArrow={false}
-          show={true}
+          show={false}
           showClose={true}
           title="Talleres"
           text={

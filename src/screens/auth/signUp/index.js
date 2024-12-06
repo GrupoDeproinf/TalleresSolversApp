@@ -184,8 +184,6 @@ const SignUp = ({ navigation }) => {
 
     setGetOtpDisabled(true);
 
-    // console.log(base64)
-
     if (typeOfView == 'Cliente') {
       const isEmailValid = validateEmail();
       const isPhoneValid = validatePhone();

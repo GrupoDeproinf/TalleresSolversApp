@@ -80,9 +80,6 @@ const ReportarPago = ({navigation}) => {
 
   const [dataPlan, setdataPlan] = useState();
 
-  const [imageUri, setImageUri] = useState(null);
-  const [base64, setBase64] = useState('');
-
   const [date, setDate] = useState(new Date());
   const [open, setOpen] = useState(false);
 
@@ -144,6 +141,8 @@ const ReportarPago = ({navigation}) => {
     setDate(new Date());
     setmonto(0);
 
+    clearImage()
+
     setAddItem(false);
   };
 
@@ -159,7 +158,6 @@ const ReportarPago = ({navigation}) => {
   }, []);
 
   const getData = async () => {
-    console.log('Buscar metodos de pago');
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
@@ -177,7 +175,6 @@ const ReportarPago = ({navigation}) => {
         // Verificar la respuesta del servidor
         if (response.status === 200) {
           const result = response.data;
-          console.log('Metodos++++++++', result); // Aquí puedes manejar la respuesta
 
           setdataMetodos(result);
         } else {
@@ -196,13 +193,10 @@ const ReportarPago = ({navigation}) => {
       }
     } catch (e) {
       setdataMetodos([]);
-      console.log(e);
     }
   };
 
   const ReportarPagoData = () => {
-    console.log(metodoSelected);
-    console.log(monto);
 
     if (metodoSelected == 'Zelle') {
       if (
@@ -216,11 +210,7 @@ const ReportarPago = ({navigation}) => {
           'No puede dejar campos vacíos y el monto no puede ser igual a 0',
         );
       } else {
-        console.log(emailZelle);
-        console.log(cod_ref);
 
-        console.log(dataPlan);
-        console.log(userLogged);
 
         const dataFinal = {
           uid: userLogged.uid,
@@ -237,10 +227,10 @@ const ReportarPago = ({navigation}) => {
           cant_services: dataPlan.cantidad_servicios,
           date: date,
           montoPago: monto,
+          base64:base64 == null || base64 == '' ? '' : base64
         };
 
-        console.log('objeto final', dataFinal);
-        SendInfo(dataFinal)
+        SendInfo(dataFinal);
       }
     } else if (metodoSelected == 'Transferencia') {
       if (
@@ -273,8 +263,8 @@ const ReportarPago = ({navigation}) => {
           SelectedBancoDestino: SelectedBancoDestino,
           date: date,
           montoPago: monto,
+          base64:base64 == null || base64 == '' ? '' : base64
         };
-        console.log('objeto final', dataFinal);
         SendInfo(dataFinal);
       }
     } else if (metodoSelected == 'Pago Móvil') {
@@ -310,9 +300,9 @@ const ReportarPago = ({navigation}) => {
           SelectedBancoDestino: SelectedBancoDestino,
           date: date,
           montoPago: monto,
+          base64:base64 == null || base64 == '' ? '' : base64
         };
 
-        console.log('objeto final', dataFinal);
         SendInfo(dataFinal);
       }
     } else if (metodoSelected == 'Efectivo') {
@@ -344,8 +334,7 @@ const ReportarPago = ({navigation}) => {
           montoPago: monto,
         };
 
-        console.log('objeto final', dataFinal);
-        SendInfo(dataFinal)
+        SendInfo(dataFinal);
       }
     }
   };
@@ -359,10 +348,8 @@ const ReportarPago = ({navigation}) => {
       );
 
       // Verificar la respuesta del servidor
-      console.log(response); // Mostrar la respuesta completa
 
       const result = response.data; // Los datos vienen directamente de response.data
-      console.log(result); // Aquí puedes manejar la respuesta
 
       closeSecondModel();
       setModalVisible(true);
@@ -401,24 +388,37 @@ const ReportarPago = ({navigation}) => {
     ToastAndroid.show(text, ToastAndroid.SHORT);
   };
 
-  const selectImage = () => {
-    const options = {
-      mediaType: 'photo',
-      includeBase64: true,
-    };
+  const [imageUri, setImageUri] = useState(null);
+  const [base64, setBase64] = useState(null);
 
-    launchImageLibrary(options, response => {
+  const selectImage = () => {
+    launchImageLibrary({mediaType: 'photo', includeBase64: true}, response => {
       if (response.didCancel) {
-        console.log('User cancelled image picker');
       } else if (response.error) {
-        console.log('ImagePicker Error: ', response.error);
       } else {
         const source = {uri: response.assets[0].uri};
-        setImageUri(source);
-        const base64String = response.assets[0].base64;
-        setBase64(base64String);
+        const base64Data = response.assets[0].base64;
+
+        // Calcular el tamaño del archivo base64 en bytes
+        const base64Length =
+          base64Data.length * (3 / 4) -
+          (base64Data.slice(-2) === '=='
+            ? 2
+            : base64Data.slice(-1) === '='
+            ? 1
+            : 0);
+        const sizeInKB = base64Length / 1024;
+        const sizeInMB = sizeInKB / 1024;
+
+        setImageUri(source.uri);
+        setBase64(base64Data);
       }
     });
+  };
+
+  const clearImage = () => {
+    setImageUri(null);
+    setBase64(null);
   };
 
   return (
@@ -692,6 +692,7 @@ const ReportarPago = ({navigation}) => {
                 } else {
                   // setModalVisible(true);
                   setAddItem(true);
+                  clearImage()
                 }
               }}
               style={[external.fd_row, external.ai_center, external.pt_4]}>
@@ -761,7 +762,8 @@ const ReportarPago = ({navigation}) => {
       <Modal visible={addItem} transparent={false} animationType={'slide'}>
         <View style={styles.container}>
           {metodoSelected === 'Zelle' ? (
-            <View style={{marginTop: 20}}>
+            <ScrollView style={{marginBottom: 15}}>
+            <View>
               <View
                 style={[
                   external.fd_row,
@@ -774,6 +776,57 @@ const ReportarPago = ({navigation}) => {
                 </Text>
               </View>
               <SolidLine />
+
+              <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginTop: 10,
+                  }}>
+                  {imageUri && (
+                    <View style={stylesImage.imageContainer}>
+                      <Image
+                        source={{uri: imageUri}}
+                        style={{width: 200, height: 200}}
+                      />
+                      <TouchableOpacity
+                        style={stylesImage.closeButton}
+                        onPress={clearImage}>
+                        <Text style={stylesImage.closeButtonText}>X</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    style={[
+                      stylesImage.button,
+                      {
+                        borderWidth: 1,
+                        borderColor: '#2D3261',
+                        borderStyle: 'dotted', // Establecer el borde como interlineal
+                        borderRadius: 5, // Opcional: Añadir esquinas redondeadas
+                        backgroundColor: '#FFF',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        padding: 10,
+                        marginTop: 10,
+                      },
+                    ]}
+                    onPress={selectImage}>
+                    <Icons3 name="money-bill" size={15} color="#2D3261" />
+                    <Text
+                      style={[
+                        stylesImage.buttonText,
+                        {marginLeft: 10, color: '#2D3261'},
+                      ]}>
+                      Comprobante de Pago
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+
+              
 
               <TextInputs
                 title={'Email'}
@@ -808,7 +861,7 @@ const ReportarPago = ({navigation}) => {
                 title="Fecha del Pago"
               />
 
-              <View style={{marginTop: 50}}>
+              <View style={{marginTop: 10}}>
                 <View
                   style={{
                     backgroundColor: buttonColor,
@@ -837,186 +890,9 @@ const ReportarPago = ({navigation}) => {
                 </View>
               </View>
             </View>
+            </ScrollView>
           ) : metodoSelected === 'Transferencia' ? (
-            <View>
-              <View
-                style={[
-                  external.fd_row,
-                  external.ai_center,
-                  external.js_space,
-                ]}>
-                <Text
-                  style={[commonStyles.titleText19, {color: textColorStyle}]}>
-                  Reportar Pago (Precio: ${PrecioPago})
-                </Text>
-              </View>
-              <SolidLine />
-
-              <View>
-                <TextInputs
-                  title={'Nro de referencia'}
-                  placeHolder={'000000000'}
-                  onChangeText={text => {
-                    const numericText = text.replace(/[^0-9]/g, '');
-                    setnro_referencia(numericText);
-                  }}
-                  keyboardType="numeric"
-                />
-
-                <View style={{marginTop: 5}}>
-                  <Text
-                    style={[
-                      styles.headingContainer,
-                      {color: textColorStyle},
-                      {textAlign: textRTLStyle},
-                    ]}>
-                    Banco de origen
-                  </Text>
-
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                    }}>
-                    <View
-                      style={{
-                        overflow: 'hidden',
-                        height: 50,
-                        marginRight: 5,
-                      }}>
-                      <Picker
-                        selectedValue={SelectedBanco}
-                        onValueChange={itemValue => setSelectedBanco(itemValue)}
-                        style={{
-                          width: 400,
-                          height: 50, // Altura para el Picker
-                          color: 'black',
-                        }}>
-                        {bancos.map(banco => (
-                          <Picker.Item
-                            key={banco.label}
-                            label={banco.label}
-                            value={banco.label}
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={{marginTop: 5}}>
-                  <Text
-                    style={[
-                      styles.headingContainer,
-                      {color: textColorStyle},
-                      {textAlign: textRTLStyle},
-                    ]}>
-                    Banco Destino
-                  </Text>
-
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                    }}>
-                    <View
-                      style={{
-                        overflow: 'hidden',
-                        height: 50,
-                        marginRight: 5,
-                      }}>
-                      <Picker
-                        selectedValue={SelectedBancoDestino}
-                        onValueChange={itemValue =>
-                          setSelectedBancoDestino(itemValue)
-                        }
-                        style={{
-                          width: 500,
-                          height: 50, // Altura para el Picker
-                          color: 'black',
-                        }}>
-                        {bancos.map(banco => (
-                          <Picker.Item
-                            key={banco.label}
-                            label={banco.label}
-                            value={banco.label}
-                          />
-                        ))}
-                      </Picker>
-                    </View>
-                  </View>
-                </View>
-
-                <View style={{marginTop: 0}}>
-                  <TextInputs
-                    title={'Monto'}
-                    onChangeText={text => {
-                      const numericText = text.replace(/[^0-9]/g, '');
-                      setmonto(numericText);
-                    }}
-                    keyboardType="numeric"
-                    placeHolder={'Ingrese el monto'}
-                  />
-
-                  <Text
-                    style={[
-                      styles.headingContainer,
-                      {color: textColorStyle},
-                      {textAlign: textRTLStyle},
-                      {marginTop: 10}, // Agregar marginTop de 10
-                    ]}>
-                    Fecha del Pago
-                  </Text>
-
-                  <View
-                    style={{
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}>
-                    <DatePicker
-                      maximumDate={new Date()}
-                      date={date}
-                      onDateChange={setDate}
-                      theme="light"
-                      title="Fecha del Pago"
-                      style={{height: 150}} // Ajustar el tamaño
-                    />
-                  </View>
-                </View>
-
-                <View style={{marginBottom: 20}}>
-                  <View
-                    style={{
-                      backgroundColor: buttonColor,
-                      borderRadius: windowHeight(20),
-                      marginBottom: 5, // Margen entre los botones
-                    }}>
-                    <NavigationButton
-                      title="Reportar Pago"
-                      onPress={() => ReportarPagoData()}
-                      backgroundColor={'#2D3261'}
-                      color={'white'}
-                    />
-                  </View>
-
-                  <View
-                    style={{
-                      backgroundColor: buttonColor,
-                      borderRadius: windowHeight(20),
-                    }}>
-                    <NavigationButton
-                      title="Cancelar"
-                      onPress={() => closeSecondModel()}
-                      backgroundColor={'#848688'}
-                      color={'white'}
-                    />
-                  </View>
-                </View>
-              </View>
-            </View>
-          ) : metodoSelected === 'Pago Móvil' ? (
-            <View>
-              <ScrollView style={{marginBottom: 5}}>
+            <ScrollView style={{marginBottom: 15}}>
               <View>
                 <View
                   style={[
@@ -1030,6 +906,284 @@ const ReportarPago = ({navigation}) => {
                   </Text>
                 </View>
                 <SolidLine />
+
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginTop: 10,
+                  }}>
+                  {imageUri && (
+                    <View style={stylesImage.imageContainer}>
+                      <Image
+                        source={{uri: imageUri}}
+                        style={{width: 200, height: 200}}
+                      />
+                      <TouchableOpacity
+                        style={stylesImage.closeButton}
+                        onPress={clearImage}>
+                        <Text style={stylesImage.closeButtonText}>X</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    style={[
+                      stylesImage.button,
+                      {
+                        borderWidth: 1,
+                        borderColor: '#2D3261',
+                        borderStyle: 'dotted', // Establecer el borde como interlineal
+                        borderRadius: 5, // Opcional: Añadir esquinas redondeadas
+                        backgroundColor: '#FFF',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        padding: 10,
+                        marginTop: 10,
+                      },
+                    ]}
+                    onPress={selectImage}>
+                    <Icons3 name="money-bill" size={15} color="#2D3261" />
+                    <Text
+                      style={[
+                        stylesImage.buttonText,
+                        {marginLeft: 10, color: '#2D3261'},
+                      ]}>
+                      Comprobante de Pago
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <View>
+                  <TextInputs
+                    title={'Nro de referencia'}
+                    placeHolder={'000000000'}
+                    onChangeText={text => {
+                      const numericText = text.replace(/[^0-9]/g, '');
+                      setnro_referencia(numericText);
+                    }}
+                    keyboardType="numeric"
+                  />
+
+                  <View style={{marginTop: 5}}>
+                    <Text
+                      style={[
+                        styles.headingContainer,
+                        {color: textColorStyle},
+                        {textAlign: textRTLStyle},
+                      ]}>
+                      Banco de origen
+                    </Text>
+
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}>
+                      <View
+                        style={{
+                          overflow: 'hidden',
+                          height: 50,
+                          marginRight: 5,
+                        }}>
+                        <Picker
+                          selectedValue={SelectedBanco}
+                          onValueChange={itemValue =>
+                            setSelectedBanco(itemValue)
+                          }
+                          style={{
+                            width: 400,
+                            height: 50, // Altura para el Picker
+                            color: 'black',
+                          }}>
+                          {bancos.map(banco => (
+                            <Picker.Item
+                              key={banco.label}
+                              label={banco.label}
+                              value={banco.label}
+                            />
+                          ))}
+                        </Picker>
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={{marginTop: 5}}>
+                    <Text
+                      style={[
+                        styles.headingContainer,
+                        {color: textColorStyle},
+                        {textAlign: textRTLStyle},
+                      ]}>
+                      Banco Destino
+                    </Text>
+
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                      }}>
+                      <View
+                        style={{
+                          overflow: 'hidden',
+                          height: 50,
+                          marginRight: 5,
+                        }}>
+                        <Picker
+                          selectedValue={SelectedBancoDestino}
+                          onValueChange={itemValue =>
+                            setSelectedBancoDestino(itemValue)
+                          }
+                          style={{
+                            width: 500,
+                            height: 50, // Altura para el Picker
+                            color: 'black',
+                          }}>
+                          {bancos.map(banco => (
+                            <Picker.Item
+                              key={banco.label}
+                              label={banco.label}
+                              value={banco.label}
+                            />
+                          ))}
+                        </Picker>
+                      </View>
+                    </View>
+                  </View>
+
+                  <View style={{marginTop: 0}}>
+                    <TextInputs
+                      title={'Monto'}
+                      onChangeText={text => {
+                        const numericText = text.replace(/[^0-9]/g, '');
+                        setmonto(numericText);
+                      }}
+                      keyboardType="numeric"
+                      placeHolder={'Ingrese el monto'}
+                    />
+
+                    <Text
+                      style={[
+                        styles.headingContainer,
+                        {color: textColorStyle},
+                        {textAlign: textRTLStyle},
+                        {marginTop: 10}, // Agregar marginTop de 10
+                      ]}>
+                      Fecha del Pago
+                    </Text>
+
+                    <View
+                      style={{
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}>
+                      <DatePicker
+                        maximumDate={new Date()}
+                        date={date}
+                        onDateChange={setDate}
+                        theme="light"
+                        title="Fecha del Pago"
+                        style={{height: 150}} // Ajustar el tamaño
+                      />
+                    </View>
+                  </View>
+
+                  <View style={{marginBottom: 20}}>
+                    <View
+                      style={{
+                        backgroundColor: buttonColor,
+                        borderRadius: windowHeight(20),
+                        marginBottom: 5, // Margen entre los botones
+                      }}>
+                      <NavigationButton
+                        title="Reportar Pago"
+                        onPress={() => ReportarPagoData()}
+                        backgroundColor={'#2D3261'}
+                        color={'white'}
+                      />
+                    </View>
+
+                    <View
+                      style={{
+                        backgroundColor: buttonColor,
+                        borderRadius: windowHeight(20),
+                      }}>
+                      <NavigationButton
+                        title="Cancelar"
+                        onPress={() => closeSecondModel()}
+                        backgroundColor={'#848688'}
+                        color={'white'}
+                      />
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </ScrollView>
+          ) : metodoSelected === 'Pago Móvil' ? (
+            // <View>
+            <ScrollView style={{marginBottom: 15}}>
+              <View>
+                <View
+                  style={[
+                    external.fd_row,
+                    external.ai_center,
+                    external.js_space,
+                  ]}>
+                  <Text
+                    style={[commonStyles.titleText19, {color: textColorStyle}]}>
+                    Reportar Pago (Precio: ${PrecioPago})
+                  </Text>
+                </View>
+                <SolidLine />
+
+                <View
+                  style={{
+                    flex: 1,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginTop: 10,
+                  }}>
+                  {imageUri && (
+                    <View style={stylesImage.imageContainer}>
+                      <Image
+                        source={{uri: imageUri}}
+                        style={{width: 200, height: 200}}
+                      />
+                      <TouchableOpacity
+                        style={stylesImage.closeButton}
+                        onPress={clearImage}>
+                        <Text style={stylesImage.closeButtonText}>X</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
+
+                  <TouchableOpacity
+                    style={[
+                      stylesImage.button,
+                      {
+                        borderWidth: 1,
+                        borderColor: '#2D3261',
+                        borderStyle: 'dotted', // Establecer el borde como interlineal
+                        borderRadius: 5, // Opcional: Añadir esquinas redondeadas
+                        backgroundColor: '#FFF',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        padding: 10,
+                        marginTop: 10,
+                      },
+                    ]}
+                    onPress={selectImage}>
+                    <Icons3 name="money-bill" size={15} color="#2D3261" />
+                    <Text
+                      style={[
+                        stylesImage.buttonText,
+                        {marginLeft: 10, color: '#2D3261'},
+                      ]}>
+                      Comprobante de Pago
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
                 <TextInputs
                   title={'Nro de referencia'}
@@ -1163,41 +1317,38 @@ const ReportarPago = ({navigation}) => {
                     />
                   </View>
                 </View>
-
               </View>
-              </ScrollView>
-
-                <View style={{marginBottom: 70}}>
-                  <View
-                    style={{
-                      backgroundColor: buttonColor,
-                      borderRadius: windowHeight(20),
-                      marginBottom: 5, // Margen entre los botones
-                    }}>
-                    <NavigationButton
-                      title="Reportar Pago"
-                      onPress={() => ReportarPagoData()}
-                      backgroundColor={'#2D3261'}
-                      color={'white'}
-                    />
-                  </View>
-
-                  <View
-                    style={{
-                      backgroundColor: buttonColor,
-                      borderRadius: windowHeight(20),
-                    }}>
-                    <NavigationButton
-                      title="Cancelar"
-                      onPress={() => closeSecondModel()}
-                      backgroundColor={'#848688'}
-                      color={'white'}
-                    />
-                  </View>
+              <View style={{marginBottom: 0, marginTop: 15}}>
+                <View
+                  style={{
+                    backgroundColor: buttonColor,
+                    borderRadius: windowHeight(20),
+                    marginBottom: 5, // Margen entre los botones
+                  }}>
+                  <NavigationButton
+                    title="Reportar Pago"
+                    onPress={() => ReportarPagoData()}
+                    backgroundColor={'#2D3261'}
+                    color={'white'}
+                  />
                 </View>
-            </View>
 
-          ) : metodoSelected === 'Efectivo' ? (
+                <View
+                  style={{
+                    backgroundColor: buttonColor,
+                    borderRadius: windowHeight(20),
+                  }}>
+                  <NavigationButton
+                    title="Cancelar"
+                    onPress={() => closeSecondModel()}
+                    backgroundColor={'#848688'}
+                    color={'white'}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+          ) : // </View>
+          metodoSelected === 'Efectivo' ? (
             <View style={{marginTop: 20}}>
               <View
                 style={[
@@ -1867,6 +2018,38 @@ const stylesKey = StyleSheet.create({
   btnContainer: {
     backgroundColor: 'white',
     marginTop: 12,
+  },
+});
+
+const stylesImage = StyleSheet.create({
+  button: {
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  imageContainer: {
+    position: 'relative',
+    marginTop: 20,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 
