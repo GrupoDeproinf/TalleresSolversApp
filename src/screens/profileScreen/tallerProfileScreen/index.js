@@ -9,24 +9,24 @@ import {
   Image,
   ToastAndroid,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import HeaderContainer from '../../../commonComponents/headingContainer';
-import {phoneMo, smithaWilliams, smithaWilliamsMail} from '../../../constant';
-import {commonStyles} from '../../../style/commonStyle.css';
-import {external} from '../../../style/external.css';
+import { phoneMo, smithaWilliams, smithaWilliamsMail } from '../../../constant';
+import { commonStyles } from '../../../style/commonStyle.css';
+import { external } from '../../../style/external.css';
 import styles from './style.css';
 import images from '../../../utils/images';
 import TextInputs from '../../../commonComponents/textInputs';
 import appColors from '../../../themes/appColors';
-import {Call, Edit, Profile, Key, BackLeft} from '../../../utils/icon';
-import {Email} from '../../../assets/icons/email';
+import { Call, Edit, Profile, Key, BackLeft } from '../../../utils/icon';
+import { Email } from '../../../assets/icons/email';
 import NavigationButton from '../../../commonComponents/navigationButton';
-import {windowHeight} from '../../../themes/appConstant';
-import {useValues} from '../../../../App';
+import { windowHeight } from '../../../themes/appConstant';
+import { useValues } from '../../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import {RadioButton, Button} from 'react-native-paper';
-import {Picker} from '@react-native-picker/picker';
+import { RadioButton, Button } from 'react-native-paper';
+import { Picker } from '@react-native-picker/picker';
 import api from '../../../../axiosInstance';
 
 import Icons from 'react-native-vector-icons/FontAwesome';
@@ -34,7 +34,10 @@ import Icons2 from 'react-native-vector-icons/FontAwesome5';
 import CheckBox from 'react-native-check-box';
 import Icons4 from 'react-native-vector-icons/Entypo';
 
-const TallerProfileScreen = ({navigation}) => {
+import { launchImageLibrary } from 'react-native-image-picker';
+import { Buffer } from 'buffer';
+
+const TallerProfileScreen = ({ navigation }) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
   const [emailValue, setEmailValue] = useState(smithaWilliamsMail);
   const [phoneValue, setPhoneValue] = useState(phoneMo);
@@ -116,52 +119,59 @@ const TallerProfileScreen = ({navigation}) => {
   const [whatsError, setwhatsError] = useState('');
 
   const [metodosPago, setMetodosPago] = useState([
-    {label: 'Efectivo', value: 'efectivo', checked: false},
-    {label: 'Pago Móvil', value: 'pagoMovil', checked: false},
-    {label: 'Punto de venta', value: 'puntoVenta', checked: false},
-    {label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false},
-    {label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false},
-    {label: 'Transferencia', value: 'transferencia', checked: false},
-    {label: 'Zelle', value: 'zelle', checked: false},
-    {label: 'Zinli', value: 'zinli', checked: false},
+    { label: 'Efectivo', value: 'efectivo', checked: false },
+    { label: 'Pago Móvil', value: 'pagoMovil', checked: false },
+    { label: 'Punto de venta', value: 'puntoVenta', checked: false },
+    { label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false },
+    { label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false },
+    { label: 'Transferencia', value: 'transferencia', checked: false },
+    { label: 'Zelle', value: 'zelle', checked: false },
+    { label: 'Zinli', value: 'zinli', checked: false },
   ]);
 
 
   const [estadoSelected, setestadoSelected] = useState(''); // Default value 'J'
 
+  const [imagePerfil, setimagePerfil] = useState("");
+  const [base64, setBase64] = useState(null);
+
+
 
   const [estadosVenezuela, setEstadosVenezuela] = useState([
-    { label: 'Seleccione un estado', value: ''},
-    { label: 'Amazonas', value: 'Amazonas'},
-    { label: 'Anzoátegui', value: 'Anzoátegui'},
-    { label: 'Apure', value: 'Apure'},
-    { label: 'Aragua', value: 'Aragua'},
-    { label: 'Barinas', value: 'Barinas'},
-    { label: 'Bolívar', value: 'Bolívar'},
-    { label: 'Carabobo', value: 'Carabobo'},
-    { label: 'Cojedes', value: 'Cojedes'},
-    { label: 'Delta Amacuro', value: 'Delta Amacuro'},
-    { label: 'Distrito Capital', value: 'Distrito Capital'},
-    { label: 'Falcón', value: 'Falcón'},
-    { label: 'Guárico', value: 'Guárico'},
-    { label: 'Lara', value: 'Lara'},
-    { label: 'Mérida', value: 'Mérida'},
-    { label: 'Miranda', value: 'Miranda'},
-    { label: 'Monagas', value: 'Monagas'},
-    { label: 'Nueva Esparta', value: 'Nueva Esparta'},
-    { label: 'Portuguesa', value: 'Portuguesa'},
-    { label: 'Sucre', value: 'Sucre'},
-    { label: 'Táchira', value: 'Táchira'},
-    { label: 'Trujillo', value: 'Trujillo'},
-    { label: 'Vargas', value: 'Vargas'},
-    { label: 'Yaracuy', value: 'Yaracuy'},
-    { label: 'Zulia', value: 'Zulia'}
+    { label: 'Seleccione un estado', value: '' },
+    { label: 'Amazonas', value: 'Amazonas' },
+    { label: 'Anzoátegui', value: 'Anzoátegui' },
+    { label: 'Apure', value: 'Apure' },
+    { label: 'Aragua', value: 'Aragua' },
+    { label: 'Barinas', value: 'Barinas' },
+    { label: 'Bolívar', value: 'Bolívar' },
+    { label: 'Carabobo', value: 'Carabobo' },
+    { label: 'Cojedes', value: 'Cojedes' },
+    { label: 'Delta Amacuro', value: 'Delta Amacuro' },
+    { label: 'Distrito Capital', value: 'Distrito Capital' },
+    { label: 'Falcón', value: 'Falcón' },
+    { label: 'Guárico', value: 'Guárico' },
+    { label: 'Lara', value: 'Lara' },
+    { label: 'Mérida', value: 'Mérida' },
+    { label: 'Miranda', value: 'Miranda' },
+    { label: 'Monagas', value: 'Monagas' },
+    { label: 'Nueva Esparta', value: 'Nueva Esparta' },
+    { label: 'Portuguesa', value: 'Portuguesa' },
+    { label: 'Sucre', value: 'Sucre' },
+    { label: 'Táchira', value: 'Táchira' },
+    { label: 'Trujillo', value: 'Trujillo' },
+    { label: 'Vargas', value: 'Vargas' },
+    { label: 'Yaracuy', value: 'Yaracuy' },
+    { label: 'Zulia', value: 'Zulia' }
   ]);
 
 
   useEffect(() => {
     getData();
   }, []);
+
+
+
 
   const getData = async () => {
     try {
@@ -199,6 +209,8 @@ const TallerProfileScreen = ({navigation}) => {
           setseguro(result.userData.seguro);
 
           setwhats(result.userData.whatsapp);
+
+          setimagePerfil(result.userData.image_perfil);
 
           setestadoSelected(result.userData.estado)
 
@@ -292,7 +304,8 @@ const TallerProfileScreen = ({navigation}) => {
         agenteAutorizado: checked == undefined ? false : checked,
         whatsapp: whats,
         metodos_pago: newFormatMP,
-        estado:estadoSelected
+        estado: estadoSelected,
+        base64: base64 == null || base64 == undefined ? "" : base64
       };
 
       console.log(infoUserCreated);
@@ -348,6 +361,22 @@ const TallerProfileScreen = ({navigation}) => {
       setdisabledInput(false);
       showToast('Error al actualizar el usuario, por favor validar formulario');
     }
+  };
+
+
+  const selectImage = () => {
+    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else {
+        const source = { uri: response.assets[0].uri };
+        const base64Data = response.assets[0].base64;
+        setimagePerfil(source.uri);
+        setBase64(base64Data);
+      }
+    });
   };
 
   const toggleCheckBox = index => {
@@ -424,7 +453,7 @@ const TallerProfileScreen = ({navigation}) => {
         style={[
           commonStyles.commonContainer,
           external.ph_20,
-          {backgroundColor: bgFullStyle},
+          { backgroundColor: bgFullStyle },
         ]}>
         {/* <HeaderContainer value="Perfil" /> */}
 
@@ -433,13 +462,13 @@ const TallerProfileScreen = ({navigation}) => {
             external.fd_row,
             external.ai_center,
             external.pt_15,
-            {justifyContent: 'space-between'},
-            {flexDirection: viewRTLStyle},
+            { justifyContent: 'space-between' },
+            { flexDirection: viewRTLStyle },
           ]}>
           <TouchableOpacity
             onPress={() => ChangeView()}
-            style={[external.fg_half, {flexDirection: viewRTLStyle}]}>
-            <View style={{transform: [{scale: imageRTLStyle}]}}>
+            style={[external.fg_half, { flexDirection: viewRTLStyle }]}>
+            <View style={{ transform: [{ scale: imageRTLStyle }] }}>
               <BackLeft />
             </View>
           </TouchableOpacity>
@@ -447,29 +476,68 @@ const TallerProfileScreen = ({navigation}) => {
             style={[
               commonStyles.hederH2,
               external.as_center,
-              {color: textColorStyle},
+              { color: textColorStyle },
             ]}>
             {/* Perfil */}
           </Text>
         </View>
 
+        {/* imagePerfil */}
+
         <View style={[external.as_center]}>
-          <ImageBackground
-            resizeMode="contain"
-            style={styles.imgStyle}
-            source={images.user}>
-            <View
-              style={[
-                styles.editIconStyle,
-                {backgroundColor: '#F3F5FB'},
-                {borderRadius: 100},
-              ]}>
-              <Edit />
-            </View>
-          </ImageBackground>
+
+          {imagePerfil == null || imagePerfil == "" ? (
+            <TouchableOpacity onPress={selectImage}>
+              <ImageBackground
+                resizeMode="contain"
+                style={styles.imgStyle}
+                source={images.user}
+              >
+                <View
+                  style={[
+                    styles.editIconStyle,
+                    { backgroundColor: '#F3F5FB' },
+                    { borderRadius: 100 },
+                    { position: 'absolute', top: 0, right: 20, margin: 0 },
+                  ]}
+                >
+                  <Edit />
+                </View>
+              </ImageBackground>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity onPress={selectImage}>
+              <ImageBackground
+                resizeMode="contain"
+                style={[styles.imgStyle, { height: 150, width: 150 }]} // Ajusta los valores según tus necesidades
+                source={{ uri: imagePerfil }} // Cambia esto a tu enlace de imagen
+              >
+                <View
+                  style={[
+                    styles.editIconStyle,
+                    {
+                      backgroundColor: '#F3F5FB',
+                      borderRadius: 100,
+                      position: 'absolute', // Posicionar absolutamente
+                      top: 0, // Ajustar al fondo
+                      right: 20, // Ajustar a la derecha
+                      margin: 0 // Agregar margen si es necesario
+                    },
+                  ]}
+                >
+                  <Edit />
+                </View>
+              </ImageBackground>
+            </TouchableOpacity>
+          )}
+
+
+
+
+
         </View>
 
-        <ScrollView style={{marginBottom: 15}}>
+        <ScrollView style={{ marginBottom: 15 }}>
           <View>
             <TextInputs
               title="Nombre y Apellido"
@@ -494,18 +562,18 @@ const TallerProfileScreen = ({navigation}) => {
               <Text style={styles.errorStyle}>{NombreError}</Text>
             )}
 
-            <View style={{marginTop: 5}}>
+            <View style={{ marginTop: 5 }}>
               <Text
                 style={[
                   styles.headingContainer,
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
+                  { color: textColorStyle },
+                  { textAlign: textRTLStyle },
                 ]}>
                 Registro de Información Fiscal (RIF)
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 {/* Select para elegir "J-" o "G-" */}
                 <View
                   style={{
@@ -531,7 +599,7 @@ const TallerProfileScreen = ({navigation}) => {
                 </View>
 
                 {/* TextInput para el número de RIF */}
-                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
+                <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
                   <TextInputs
                     title=""
                     value={cedula}
@@ -555,7 +623,7 @@ const TallerProfileScreen = ({navigation}) => {
                     }}
                     keyboardType="numeric"
                     icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                    style={{height: 50}} // Altura para el TextInput
+                    style={{ height: 50 }} // Altura para el TextInput
                   />
                 </View>
               </View>
@@ -620,41 +688,41 @@ const TallerProfileScreen = ({navigation}) => {
               <Text style={styles.errorStyle}>{RegComercialError}</Text>
             )}
 
-<View style={{marginTop: 5}}>
+            <View style={{ marginTop: 5 }}>
               {/* Texto "RIF" arriba de los inputs */}
               <Text
                 style={[
                   styles.headingContainer,
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
+                  { color: textColorStyle },
+                  { textAlign: textRTLStyle },
                 ]}>
                 Estado
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              {/* Icono al lado del Picker */}
-              <Icons4 name="location" size={20} color="#9BA6B8" style={{ marginRight: 5, marginLeft:10 }} />
-              <View
-                style={{
-                  overflow: 'hidden',
-                  height: 50, // Asegurar que ambos tengan el mismo height
-                }}>
-                <Picker
-                  selectedValue={estadoSelected}
-                  onValueChange={itemValue => setestadoSelected(itemValue)}
+                {/* Icono al lado del Picker */}
+                <Icons4 name="location" size={20} color="#9BA6B8" style={{ marginRight: 5, marginLeft: 10 }} />
+                <View
                   style={{
-                    width: 400,
-                    height: 50, // Ajustar la altura para el Picker
-                    color: 'black',
-                  }}
-                >
-                  {estadosVenezuela.map((estado) => (
-                    <Picker.Item key={estado.value} label={estado.label} value={estado.value} />
-                  ))}
-                </Picker>
+                    overflow: 'hidden',
+                    height: 50, // Asegurar que ambos tengan el mismo height
+                  }}>
+                  <Picker
+                    selectedValue={estadoSelected}
+                    onValueChange={itemValue => setestadoSelected(itemValue)}
+                    style={{
+                      width: 400,
+                      height: 50, // Ajustar la altura para el Picker
+                      color: 'black',
+                    }}
+                  >
+                    {estadosVenezuela.map((estado) => (
+                      <Picker.Item key={estado.value} label={estado.label} value={estado.value} />
+                    ))}
+                  </Picker>
+                </View>
               </View>
-            </View>
             </View>
 
 
@@ -718,18 +786,18 @@ const TallerProfileScreen = ({navigation}) => {
               <Text style={styles.errorStyle}>{whatsError}</Text>
             )}
 
-            <View style={{marginTop: 5}}>
+            <View style={{ marginTop: 5 }}>
               {/* Texto "RIF" arriba de los inputs */}
               <Text
                 style={[
                   styles.headingContainer,
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
+                  { color: textColorStyle },
+                  { textAlign: textRTLStyle },
                 ]}>
                 Metodos de Pago
               </Text>
 
-              <View style={{padding: 10}}>
+              <View style={{ padding: 10 }}>
                 <View
                   style={{
                     flexDirection: 'row',
@@ -750,7 +818,7 @@ const TallerProfileScreen = ({navigation}) => {
                         onClick={() => toggleCheckBox(index)}
                         checkBoxColor="#2D3261"
                       />
-                      <Text style={{marginLeft: 10, color: 'black'}}>
+                      <Text style={{ marginLeft: 10, color: 'black' }}>
                         {method.label}
                       </Text>
                     </View>
@@ -786,7 +854,7 @@ const TallerProfileScreen = ({navigation}) => {
             )}
           </View>
 
-          <Text style={{marginBottom: 10, color: 'black', marginTop: 15}}>
+          <Text style={{ marginBottom: 10, color: 'black', marginTop: 15 }}>
             ¿Es un Agente Autorizado?
           </Text>
 
@@ -801,14 +869,14 @@ const TallerProfileScreen = ({navigation}) => {
               status={checked === 'si' ? 'checked' : 'unchecked'}
               onPress={() => setChecked('si')}
             />
-            <Text style={{color: 'black'}}>Sí</Text>
+            <Text style={{ color: 'black' }}>Sí</Text>
 
             <RadioButton
               value="no"
               status={checked === 'no' ? 'checked' : 'unchecked'}
               onPress={() => setChecked('no')}
             />
-            <Text style={{color: 'black'}}>No</Text>
+            <Text style={{ color: 'black' }}>No</Text>
           </View>
 
           <TextInputs
@@ -1029,7 +1097,7 @@ const TallerProfileScreen = ({navigation}) => {
       <View
         style={[
           commonStyles.commonContainer,
-          {backgroundColor: bgFullStyle, flex: 1},
+          { backgroundColor: bgFullStyle, flex: 1 },
         ]}>
         {/* <View style={[styles.container, {flex: 1}]}>
           <View
@@ -1053,31 +1121,31 @@ const TallerProfileScreen = ({navigation}) => {
         <View
           style={[
             styles.flexView,
-            {flex: 1, justifyContent: 'center', alignItems: 'center'},
+            { flex: 1, justifyContent: 'center', alignItems: 'center' },
           ]}>
           <View
-            style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+            style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
             <Image
               source={require('../../../assets/solverslogo.jpg')} // Asegúrate de que la ruta sea correcta
-              style={{width: 100, height: 100, marginBottom: 20}} // Aumentar el tamaño de la imagen y agregar marginBottom
+              style={{ width: 100, height: 100, marginBottom: 20 }} // Aumentar el tamaño de la imagen y agregar marginBottom
               resizeMode="contain" // Esto asegura que la imagen mantenga sus proporciones
             />
 
             <Text
               style={[
                 styles.bagIsEmptyText,
-                {color: textColorStyle, textAlign: 'center'},
+                { color: textColorStyle, textAlign: 'center' },
               ]}>
               Su taller ha sido registrado parcialmente.
             </Text>
 
-            <Text style={[styles.bagisEmptySomething, {textAlign: 'center'}]}>
+            <Text style={[styles.bagisEmptySomething, { textAlign: 'center' }]}>
               ¡Ya casi está! Solo completa tu perfil y pronto te visitaremos
               para darte el visto bueno.
             </Text>
           </View>
 
-          <View style={{width: '100%'}}>
+          <View style={{ width: '100%' }}>
             <NavigationButton
               title="Continuar Registro"
               backgroundColor={'#2D3261'}
@@ -1086,7 +1154,7 @@ const TallerProfileScreen = ({navigation}) => {
             />
           </View>
 
-          <View style={{width: '100%', marginBottom: 25, marginTop: 10}}>
+          <View style={{ width: '100%', marginBottom: 25, marginTop: 10 }}>
             <NavigationButton
               title="Cerrar Sesión"
               backgroundColor={'#848688'}

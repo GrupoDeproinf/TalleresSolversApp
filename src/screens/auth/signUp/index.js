@@ -184,7 +184,7 @@ const SignUp = ({ navigation }) => {
 
     setGetOtpDisabled(true);
 
-    console.log(base64)
+    // console.log(base64)
 
     if (typeOfView == 'Cliente') {
       const isEmailValid = validateEmail();
@@ -199,7 +199,7 @@ const SignUp = ({ navigation }) => {
         isConfirmPasswordValid == true &&
         Nombre != '' &&
         cedula != 0 &&
-        cedula != ''
+        cedula != '' && estadoSelected != ''
       ) {
         const infoUserCreated = {
           Nombre: Nombre,
@@ -208,7 +208,8 @@ const SignUp = ({ navigation }) => {
           typeUser: 'Cliente',
           email: email.toLowerCase(),
           password: password.toLowerCase(),
-          base64:base64
+          estado: estadoSelected,
+          base64: base64
         };
 
         console.log(infoUserCreated);
@@ -299,6 +300,7 @@ const SignUp = ({ navigation }) => {
           whats: whats,
           metodos_pago: newFormatMP,
           estado: estadoSelected,
+          base64: base64
         };
 
         console.log(infoUserCreated);
@@ -408,11 +410,21 @@ const SignUp = ({ navigation }) => {
       } else {
         const source = { uri: response.assets[0].uri };
         const base64Data = response.assets[0].base64;
+        
+        // Calcular el tamaño del archivo base64 en bytes
+        const base64Length = base64Data.length * (3 / 4) - (base64Data.slice(-2) === '==' ? 2 : base64Data.slice(-1) === '=' ? 1 : 0);
+        const sizeInKB = base64Length / 1024;
+        const sizeInMB = sizeInKB / 1024;
+  
+        console.log(`Size in KB: ${sizeInKB.toFixed(2)} KB`);
+        console.log(`Size in MB: ${sizeInMB.toFixed(2)} MB`);
+  
         setImageUri(source.uri);
         setBase64(base64Data);
       }
     });
   };
+  
 
   const clearImage = () => {
     setImageUri(null);
@@ -439,7 +451,62 @@ const SignUp = ({ navigation }) => {
         // ****************************** FOMRULARIO PARA CLIENTES ***********************************************
 
         <ScrollView style={{ marginBottom: 15 }}>
+
+
           <View>
+
+          <View
+              style={{
+                flex: 1,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginTop: 10,
+              }}>
+
+              {imageUri && (
+                <View style={stylesImage.imageContainer}>
+                  <Image
+                    source={{ uri: imageUri }}
+                    style={{ width: 200, height: 200 }}
+                  />
+                  <TouchableOpacity
+                    style={stylesImage.closeButton}
+                    onPress={clearImage}>
+                    <Text style={stylesImage.closeButtonText}>X</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <TouchableOpacity
+                style={[
+                  stylesImage.button,
+                  {
+                    borderWidth: 1,
+                    borderColor: '#2D3261',
+                    borderStyle: 'dotted', // Establecer el borde como interlineal
+                    borderRadius: 5, // Opcional: Añadir esquinas redondeadas
+                    backgroundColor: '#FFF',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 10,
+                    marginTop: 10
+                  },
+                ]}
+                onPress={selectImage}
+              >
+                <Icons name="user" size={15} color="#2D3261" />
+                <Text style={[stylesImage.buttonText, { marginLeft: 10, color: '#2D3261' }]}>
+                  Foto de perfil
+                </Text>
+              </TouchableOpacity>
+
+
+
+            </View>
+
+
+
+
             <TextInputs
               title="Nombre y Apellido"
               placeHolder="Ingrese su nombre y apellido"
@@ -558,6 +625,52 @@ const SignUp = ({ navigation }) => {
               <Text style={styles.errorStyle}>{emailError}</Text>
             )}
 
+<View style={{ marginTop: 5 }}>
+              {/* Texto "RIF" arriba de los inputs */}
+              <Text
+                style={[
+                  styles.headingContainer,
+                  { color: textColorStyle },
+                  { textAlign: textRTLStyle },
+                ]}>
+                Estado
+              </Text>
+
+              {/* Contenedor para el Picker y el TextInput */}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {/* Icono al lado del Picker */}
+                <Icons4
+                  name="location"
+                  size={20}
+                  color="#9BA6B8"
+                  style={{ marginRight: 5, marginLeft: 10 }}
+                />
+                <View
+                  style={{
+                    overflow: 'hidden',
+                    height: 50, // Asegurar que ambos tengan el mismo height
+                  }}>
+                  <Picker
+                    selectedValue={estadoSelected}
+                    onValueChange={itemValue => setestadoSelected(itemValue)}
+                    style={{
+                      width: 400,
+                      height: 50, // Ajustar la altura para el Picker
+                      color: 'black',
+                    }}>
+                    {estadosVenezuela.map(estado => (
+                      <Picker.Item
+                        key={estado.value}
+                        label={estado.label}
+                        value={estado.value}
+                      />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+            </View>
+
+
             <TextInputs
               title="Número Telefónico"
               value={phone}
@@ -638,8 +751,14 @@ const SignUp = ({ navigation }) => {
             {confirmPasswordError !== '' && (
               <Text style={styles.errorStyle}>{confirmPasswordError}</Text>
             )}
+          </View>
+        </ScrollView>
+      ) : typeOfView === 'Taller' ? (
+        // ****************************** FOMRULARIO PARA TALLERES ***********************************************
+        <ScrollView style={{ marginBottom: 15 }}>
+          <View>
 
-            <View
+          <View
               style={{
                 flex: 1,
                 justifyContent: 'center',
@@ -665,27 +784,29 @@ const SignUp = ({ navigation }) => {
                 style={[
                   stylesImage.button,
                   {
-                    backgroundColor: '#2D3261',
+                    borderWidth: 1,
+                    borderColor: '#2D3261',
+                    borderStyle: 'dotted', // Establecer el borde como interlineal
+                    borderRadius: 5, // Opcional: Añadir esquinas redondeadas
+                    backgroundColor: '#FFF',
                     flexDirection: 'row',
                     alignItems: 'center',
-                    marginTop:10
+                    padding: 10,
+                    marginTop: 10
                   },
                 ]}
-                onPress={selectImage}>
-                <Icons name="user" size={15} color="#FFFF" />
-                <Text style={[stylesImage.buttonText, { marginLeft: 10 }]}>
+                onPress={selectImage}
+              >
+                <Icons name="user" size={15} color="#2D3261" />
+                <Text style={[stylesImage.buttonText, { marginLeft: 10, color: '#2D3261' }]}>
                   Foto de perfil
                 </Text>
               </TouchableOpacity>
 
 
+
             </View>
-          </View>
-        </ScrollView>
-      ) : typeOfView === 'Taller' ? (
-        // ****************************** FOMRULARIO PARA TALLERES ***********************************************
-        <ScrollView style={{ marginBottom: 15 }}>
-          <View>
+
             <TextInputs
               title="Nombre del Taller"
               placeHolder="Ingrese el nombre"
