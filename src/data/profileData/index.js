@@ -52,3 +52,12 @@ export const profileData = [
     screenName: '',
   },
 ];
+
+export const profileDataAdmin = [
+  {
+    id: 6,
+    title: 'Cerrar sesión',
+    icon: <LogOut />,
+    screenName: '',
+  },
+];

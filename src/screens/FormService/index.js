@@ -326,8 +326,8 @@ const FormTaller = () => {
 
         setpublicOrigin(result.service.estatus);
 
-        setimagePerfil(result.service.image_servicio || '')
-        setimageFirts(result.service.image_servicio || '')
+        setimagePerfil(result.service.service_image || '')
+        setimageFirts(result.service.service_image || '')
 
       } else {
       }
@@ -857,12 +857,11 @@ const FormTaller = () => {
           <NavigationButton
             title="Guardar Cambios"
             onPress={() => onHandleChange('Aprobar')}
-            backgroundColor={'#28a745'}
+            backgroundColor={'#2D3261'}
             color={appColors.screenBg}
           />
         </View>
       </View>
-
       <Modal
         transparent={true}
         animationType="slide"

@@ -55,6 +55,8 @@ import CheckBox from 'react-native-check-box';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Buffer } from 'buffer';
 
+import MapComponent from '../../map'
+
 const SignUp = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [cedula, setcedula] = useState(0);
@@ -1120,6 +1122,11 @@ const SignUp = ({ navigation }) => {
               }
             />
           </View>
+
+          {/* <View style={stylesMap.container}> 
+            <MapComponent initialRegion={{ latitude: 37.7749, longitude: -122.4194, latitudeDelta: 0.015, longitudeDelta: 0.015 }} /> 
+          </View> */}
+
         </ScrollView>
       ) : null}
 
@@ -1185,6 +1192,9 @@ const SignUp = ({ navigation }) => {
 };
 
 export default SignUp;
+
+const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'center', alignItems: 'center', },});
+
 
 const stylesCard = StyleSheet.create({
   containerBox: {

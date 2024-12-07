@@ -101,10 +101,10 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
       )}
       <View style={{ position: 'relative' }}>
         <View style={[styles.imageContainer, { backgroundColor: imageContainer }]}>
-          {item.img == null ? (
+          {item.service_image == null ? (
             <Image style={styles.image} source={notImageFound} />
           ) : (
-            <Image style={styles.image} source={item.img} />
+            <Image style={styles.image} source={{uri:item.service_image}} />
           )}
         </View>
       </View>

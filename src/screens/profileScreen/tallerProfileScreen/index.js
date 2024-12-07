@@ -276,9 +276,8 @@ const TallerProfileScreen = ({ navigation }) => {
     const isEmailValid = validateEmail();
     const isPhoneValid = validatePhone();
 
-    // setdisabledInput(true);
+    setdisabledInput(true);
 
-    console.log(getImageName(imageFirts))
 
 
 
@@ -315,8 +314,8 @@ const TallerProfileScreen = ({ navigation }) => {
         whatsapp: whats,
         metodos_pago: newFormatMP,
         estado: estadoSelected,
-        base64: base64 == null || base64 == undefined ? "" : base64,
-        imageTodelete: imageFirts != "" ? getImageName(imageFirts) : ""
+        base64: base64 == null || base64 == undefined || base64 == ''  ? "" : base64,
+        imageTodelete: imageFirts != ""  && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == ''  ? "" : getImageName(imageFirts) : "" 
       };
 
       try {
