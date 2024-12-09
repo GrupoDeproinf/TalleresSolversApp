@@ -273,16 +273,10 @@ import {
     };
   
     const onHandleChange = async () => {
-        console.log("jdfsgvljsdghfjk")
       const isEmailValid = validateEmail();
       const isPhoneValid = validatePhone();
   
       setdisabledInput(true);
-  console.log("1++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        console.log(imageFirts)
-      console.log("2++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-  
-  
   
       if (
         isEmailValid == true &&
@@ -319,7 +313,6 @@ import {
           imageTodelete: imageFirts != ""  && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == ''  ? "" : getImageName(imageFirts) : "" 
         };
 
-        console.log(infoUserCreated)
   
         try {
           // Hacer la solicitud POST utilizando Axios
