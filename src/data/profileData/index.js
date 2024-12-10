@@ -26,6 +26,13 @@ export const profileData = [
     icon: <OrderHistory />,
     screenName: 'OrderHistory',
   },
+
+  {
+    id: 3,
+    title: 'Planes',
+    icon: <OrderHistory />,
+    screenName: 'Planes',
+  },
   // {
   //   id: 3,
   //   title: 'transData.setting',
