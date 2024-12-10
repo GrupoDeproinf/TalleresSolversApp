@@ -9,30 +9,37 @@ import {
   Image,
   ToastAndroid,
 } from 'react-native';
-import React, {useState, useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import HeaderContainer from '../../../commonComponents/headingContainer';
-import {phoneMo, smithaWilliams, smithaWilliamsMail} from '../../../constant';
-import {commonStyles} from '../../../style/commonStyle.css';
-import {external} from '../../../style/external.css';
+import { phoneMo, smithaWilliams, smithaWilliamsMail } from '../../../constant';
+import { commonStyles } from '../../../style/commonStyle.css';
+import { external } from '../../../style/external.css';
 import styles from './style.css';
 import images from '../../../utils/images';
 import TextInputs from '../../../commonComponents/textInputs';
 import appColors from '../../../themes/appColors';
-import {Call, Edit, Profile, Key, BackLeft} from '../../../utils/icon';
-import {Email} from '../../../assets/icons/email';
+import { Call, Edit, Profile, Key, BackLeft } from '../../../utils/icon';
+import { Email } from '../../../assets/icons/email';
 import NavigationButton from '../../../commonComponents/navigationButton';
-import {windowHeight} from '../../../themes/appConstant';
-import {useValues} from '../../../../App';
+import { windowHeight } from '../../../themes/appConstant';
+import { useValues } from '../../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import {RadioButton, Button} from 'react-native-paper';
-import {Picker} from '@react-native-picker/picker';
+import { RadioButton, Button } from 'react-native-paper';
+import { Picker } from '@react-native-picker/picker';
 import api from '../../../../axiosInstance';
 
 import Icons from 'react-native-vector-icons/FontAwesome';
 import Icons2 from 'react-native-vector-icons/FontAwesome5';
+import CheckBox from 'react-native-check-box';
+import Icons4 from 'react-native-vector-icons/Entypo';
 
-const TallerProfileScreen = ({navigation}) => {
+import { launchImageLibrary } from 'react-native-image-picker';
+import { Buffer } from 'buffer';
+
+import notImageFound from '../../../assets/noimageold.jpeg';
+
+const TallerProfileScreen = ({ navigation }) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
   const [emailValue, setEmailValue] = useState(smithaWilliamsMail);
   const [phoneValue, setPhoneValue] = useState(phoneMo);
@@ -110,16 +117,71 @@ const TallerProfileScreen = ({navigation}) => {
 
   const [selectedPrefix, setSelectedPrefix] = useState('J-'); // Default value 'J'
 
+  const [whats, setwhats] = useState(0);
+  const [whatsError, setwhatsError] = useState('');
+
+  const [metodosPago, setMetodosPago] = useState([
+    { label: 'Efectivo', value: 'efectivo', checked: false },
+    { label: 'Pago Móvil', value: 'pagoMovil', checked: false },
+    { label: 'Punto de venta', value: 'puntoVenta', checked: false },
+    { label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false },
+    { label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false },
+    { label: 'Transferencia', value: 'transferencia', checked: false },
+    { label: 'Zelle', value: 'zelle', checked: false },
+    { label: 'Zinli', value: 'zinli', checked: false },
+  ]);
+
+
+  const [estadoSelected, setestadoSelected] = useState(''); // Default value 'J'
+
+  const [imagePerfil, setimagePerfil] = useState("");
+  const [base64, setBase64] = useState(null);
+  
+  const [imageFirts, setimageFirts] = useState("");
+
+
+
+  const [estadosVenezuela, setEstadosVenezuela] = useState([
+    { label: 'Seleccione un estado', value: '' },
+    { label: 'Amazonas', value: 'Amazonas' },
+    { label: 'Anzoátegui', value: 'Anzoátegui' },
+    { label: 'Apure', value: 'Apure' },
+    { label: 'Aragua', value: 'Aragua' },
+    { label: 'Barinas', value: 'Barinas' },
+    { label: 'Bolívar', value: 'Bolívar' },
+    { label: 'Carabobo', value: 'Carabobo' },
+    { label: 'Cojedes', value: 'Cojedes' },
+    { label: 'Delta Amacuro', value: 'Delta Amacuro' },
+    { label: 'Distrito Capital', value: 'Distrito Capital' },
+    { label: 'Falcón', value: 'Falcón' },
+    { label: 'Guárico', value: 'Guárico' },
+    { label: 'Lara', value: 'Lara' },
+    { label: 'Mérida', value: 'Mérida' },
+    { label: 'Miranda', value: 'Miranda' },
+    { label: 'Monagas', value: 'Monagas' },
+    { label: 'Nueva Esparta', value: 'Nueva Esparta' },
+    { label: 'Portuguesa', value: 'Portuguesa' },
+    { label: 'Sucre', value: 'Sucre' },
+    { label: 'Táchira', value: 'Táchira' },
+    { label: 'Trujillo', value: 'Trujillo' },
+    { label: 'Vargas', value: 'Vargas' },
+    { label: 'Yaracuy', value: 'Yaracuy' },
+    { label: 'Zulia', value: 'Zulia' }
+  ]);
+
+
   useEffect(() => {
     getData();
   }, []);
+
+
+
 
   const getData = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-      console.log('valor del storage12345555', user.uid);
       setuidUserConnected(user.uid);
 
       try {
@@ -131,7 +193,6 @@ const TallerProfileScreen = ({navigation}) => {
         // Verificar la respuesta del servidor
         if (response.status === 200) {
           const result = response.data;
-          console.log('Email:', result.userData.email); // Aquí puedes manejar la respuesta
 
           setNombre(result.userData.nombre);
           setcedula(result.userData.rif);
@@ -148,6 +209,21 @@ const TallerProfileScreen = ({navigation}) => {
           setLinkTiktok(result.userData.LinkTiktok);
           setGarantia(result.userData.Garantia);
           setseguro(result.userData.seguro);
+
+          setwhats(result.userData.whatsapp);
+
+          setimagePerfil(result.userData.image_perfil);
+
+          setimageFirts(result.userData.image_perfil)
+
+          setestadoSelected(result.userData.estado)
+
+          const updatedMetodosPago = metodosPago.map(method => ({
+            ...method,
+            checked: result.userData.metodos_pago[method.value] || false,
+          }));
+
+          setMetodosPago(updatedMetodosPago);
 
           // Separar el prefijo del tipo de ID (rif) y asignarlo a los estados correspondientes
           const typeID = result.userData.rif.split('-');
@@ -168,7 +244,6 @@ const TallerProfileScreen = ({navigation}) => {
       }
     } catch (e) {
       // error reading value
-      console.log(e);
     }
   };
 
@@ -182,6 +257,9 @@ const TallerProfileScreen = ({navigation}) => {
       return true;
     }
   };
+
+
+  const getImageName = (url) => url.split('/').pop();
 
   const validatePhone = () => {
     const phoneRegex = /^\d{10}$/;
@@ -200,12 +278,20 @@ const TallerProfileScreen = ({navigation}) => {
 
     setdisabledInput(true);
 
+
+
+
     if (
       isEmailValid == true &&
       isPhoneValid == true &&
       Nombre != '' &&
-      cedula != 0
+      cedula != 0 && estadoSelected != ''
     ) {
+      const newFormatMP = metodosPago.reduce((acc, method) => {
+        acc[method.value] = method.checked;
+        return acc;
+      }, {});
+
       const infoUserCreated = {
         uid: uidUserConnected,
         nombre: Nombre == undefined ? '' : Nombre,
@@ -225,10 +311,12 @@ const TallerProfileScreen = ({navigation}) => {
         Garantia: Garantia == undefined ? '' : Garantia,
         seguro: seguro == undefined ? '' : seguro,
         agenteAutorizado: checked == undefined ? false : checked,
+        whatsapp: whats,
+        metodos_pago: newFormatMP,
+        estado: estadoSelected,
+        base64: base64 == null || base64 == undefined || base64 == ''  ? "" : base64,
+        imageTodelete: imageFirts != ""  && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == ''  ? "" : getImageName(imageFirts) : "" 
       };
-
-      console.log(infoUserCreated);
-      console.log('Aquiiii1234');
 
       try {
         // Hacer la solicitud POST utilizando Axios
@@ -237,19 +325,15 @@ const TallerProfileScreen = ({navigation}) => {
           infoUserCreated,
         );
 
-        console.log('response++++++++++', response.status);
 
         // Verificar la respuesta del servidor
         if (response.status === 201) {
           const result = response.data;
-          console.log(result); // Aquí puedes manejar la respuesta
 
           try {
             const jsonValue = JSON.stringify(infoUserCreated);
-            console.log(jsonValue);
             await AsyncStorage.setItem('@userInfo', jsonValue);
           } catch (e) {
-            console.log(e);
           }
 
           showToast('Actualizado correctamente');
@@ -282,6 +366,26 @@ const TallerProfileScreen = ({navigation}) => {
     }
   };
 
+
+  const selectImage = () => {
+    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
+      if (response.didCancel) {
+      } else if (response.error) {
+      } else {
+        const source = { uri: response.assets[0].uri };
+        const base64Data = response.assets[0].base64;
+        setimagePerfil(source.uri);
+        setBase64(base64Data);
+      }
+    });
+  };
+
+  const toggleCheckBox = index => {
+    const updatedMetodos = [...metodosPago];
+    updatedMetodos[index].checked = !updatedMetodos[index].checked;
+    setMetodosPago(updatedMetodos);
+  };
+
   const {
     imageRTLStyle,
     viewRTLStyle,
@@ -309,12 +413,10 @@ const TallerProfileScreen = ({navigation}) => {
 
   // Funciones para manejar los clics
   const handleClientePress = () => {
-    console.log('Cliente Card Pressed23');
     settypeOfView('Cliente');
   };
 
   const handleTallerPress = () => {
-    console.log('Taller Card Pressed1');
     settypeOfView('Taller');
   };
 
@@ -331,7 +433,6 @@ const TallerProfileScreen = ({navigation}) => {
   const CloseSesion = async () => {
     try {
       await AsyncStorage.removeItem('@userInfo');
-      console.log('Item removed successfully');
     } catch (error) {
       console.error('Error removing item:', error);
     }
@@ -350,7 +451,7 @@ const TallerProfileScreen = ({navigation}) => {
         style={[
           commonStyles.commonContainer,
           external.ph_20,
-          {backgroundColor: bgFullStyle},
+          { backgroundColor: bgFullStyle },
         ]}>
         {/* <HeaderContainer value="Perfil" /> */}
 
@@ -359,13 +460,13 @@ const TallerProfileScreen = ({navigation}) => {
             external.fd_row,
             external.ai_center,
             external.pt_15,
-            {justifyContent: 'space-between'},
-            {flexDirection: viewRTLStyle},
+            { justifyContent: 'space-between' },
+            { flexDirection: viewRTLStyle },
           ]}>
           <TouchableOpacity
             onPress={() => ChangeView()}
-            style={[external.fg_half, {flexDirection: viewRTLStyle}]}>
-            <View style={{transform: [{scale: imageRTLStyle}]}}>
+            style={[external.fg_half, { flexDirection: viewRTLStyle }]}>
+            <View style={{ transform: [{ scale: imageRTLStyle }] }}>
               <BackLeft />
             </View>
           </TouchableOpacity>
@@ -373,36 +474,74 @@ const TallerProfileScreen = ({navigation}) => {
             style={[
               commonStyles.hederH2,
               external.as_center,
-              {color: textColorStyle},
+              { color: textColorStyle },
             ]}>
             {/* Perfil */}
           </Text>
         </View>
 
+        {/* imagePerfil */}
+
         <View style={[external.as_center]}>
-          <ImageBackground
-            resizeMode="contain"
-            style={styles.imgStyle}
-            source={images.user}>
+
+          {imagePerfil == null || imagePerfil == "" ? (
+            <TouchableOpacity onPress={selectImage}>
+            <Image
+              resizeMode="contain"
+              style={styles.imgStyle}
+              source={notImageFound} // Reemplaza esto con la variable que contiene tu imagen
+            />
             <View
               style={[
                 styles.editIconStyle,
-                {backgroundColor: '#F3F5FB'},
-                {borderRadius: 100},
-              ]}>
+                { backgroundColor: '#F3F5FB' },
+                { borderRadius: 100 },
+                { position: 'absolute', top: 0, right: 20, margin: 0 },
+              ]}
+            >
               <Edit />
             </View>
-          </ImageBackground>
+          </TouchableOpacity>
+          
+          ) : (
+            <TouchableOpacity onPress={selectImage}>
+              <ImageBackground
+                resizeMode="contain"
+                style={[styles.imgStyle, { height: 150, width: 150 }]} // Ajusta los valores según tus necesidades
+                source={{ uri: imagePerfil }} // Cambia esto a tu enlace de imagen
+              >
+                <View
+                  style={[
+                    styles.editIconStyle,
+                    {
+                      backgroundColor: '#F3F5FB',
+                      borderRadius: 100,
+                      position: 'absolute', // Posicionar absolutamente
+                      top: 0, // Ajustar al fondo
+                      right: 20, // Ajustar a la derecha
+                      margin: 0 // Agregar margen si es necesario
+                    },
+                  ]}
+                >
+                  <Edit />
+                </View>
+              </ImageBackground>
+            </TouchableOpacity>
+          )}
+
+
+
+
+
         </View>
 
-        <ScrollView style={{marginBottom: 15}}>
+        <ScrollView style={{ marginBottom: 15 }}>
           <View>
             <TextInputs
               title="Nombre y Apellido"
               placeHolder="Ingrese su nombre y apellido"
               value={Nombre}
               onChangeText={text => {
-                console.log(text);
                 setNombre(text);
                 setNombreTyping(true);
                 if (text.trim() === '') {
@@ -420,18 +559,18 @@ const TallerProfileScreen = ({navigation}) => {
               <Text style={styles.errorStyle}>{NombreError}</Text>
             )}
 
-            <View style={{marginTop: 5}}>
+            <View style={{ marginTop: 5 }}>
               <Text
                 style={[
                   styles.headingContainer,
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
+                  { color: textColorStyle },
+                  { textAlign: textRTLStyle },
                 ]}>
                 Registro de Información Fiscal (RIF)
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 {/* Select para elegir "J-" o "G-" */}
                 <View
                   style={{
@@ -457,29 +596,32 @@ const TallerProfileScreen = ({navigation}) => {
                 </View>
 
                 {/* TextInput para el número de RIF */}
-                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
-                <TextInputs
-                  title=""
-                  value={cedula}
-                  placeHolder="Ingrese el número de RIF"
-                  onChangeText={text => {
-                    const numericText = text.replace(/[^0-9]/g, '').slice(0, 10); // Limitar a 10 caracteres
-                    setcedula(numericText);
-                    setcedulaTyping(true);
-                    if (numericText.trim() === '') {
-                      setcedulaError('RIF es requerido');
-                    } else {
-                      setcedulaError('');
-                    }
-                  }}
-                  onBlur={() => {
-                    setcedulaTyping(false);
-                  }}
-                  keyboardType="numeric"
-                  icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                  style={{height: 50}} // Altura para el TextInput
-                />
-
+                <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
+                  <TextInputs
+                    title=""
+                    value={cedula}
+                    placeHolder="Ingrese el número de RIF"
+                    onChangeText={text => {
+                      const numericText = text
+                        .replace(/[^0-9]/g, '')
+                        .slice(0, 10); // Limitar a 10 caracteres
+                      if (numericText.length <= 10) {
+                        setcedula(numericText);
+                        setcedulaTyping(true);
+                        if (numericText.trim() === '') {
+                          setcedulaError('RIF es requerido');
+                        } else {
+                          setcedulaError('');
+                        }
+                      }
+                    }}
+                    onBlur={() => {
+                      setcedulaTyping(false);
+                    }}
+                    keyboardType="numeric"
+                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
+                    style={{ height: 50 }} // Altura para el TextInput
+                  />
                 </View>
               </View>
 
@@ -497,7 +639,6 @@ const TallerProfileScreen = ({navigation}) => {
               placeHolder="Ingrese su direccion"
               value={Direccion}
               onChangeText={text => {
-                console.log(text);
                 setDireccion(text);
                 setDireccionTyping(true);
                 if (text.trim() === '') {
@@ -522,12 +663,14 @@ const TallerProfileScreen = ({navigation}) => {
               onChangeText={text => {
                 // Eliminar cualquier caracter que no sea un número
                 const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
-                setRegComercial(numericText);
-                setRegComercialTyping(true);
-                if (numericText.trim() === '') {
-                  setRegComercialError('Registro comercial es requerido');
-                } else {
-                  setRegComercialError('');
+                if (numericText.length <= 10) {
+                  setRegComercial(numericText);
+                  setRegComercialTyping(true);
+                  if (numericText.trim() === '') {
+                    setRegComercialError('Registro comercial es requerido');
+                  } else {
+                    setRegComercialError('');
+                  }
                 }
               }}
               onBlur={() => {
@@ -541,6 +684,44 @@ const TallerProfileScreen = ({navigation}) => {
               <Text style={styles.errorStyle}>{RegComercialError}</Text>
             )}
 
+            <View style={{ marginTop: 5 }}>
+              {/* Texto "RIF" arriba de los inputs */}
+              <Text
+                style={[
+                  styles.headingContainer,
+                  { color: textColorStyle },
+                  { textAlign: textRTLStyle },
+                ]}>
+                Estado
+              </Text>
+
+              {/* Contenedor para el Picker y el TextInput */}
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                {/* Icono al lado del Picker */}
+                <Icons4 name="location" size={20} color="#9BA6B8" style={{ marginRight: 5, marginLeft: 10 }} />
+                <View
+                  style={{
+                    overflow: 'hidden',
+                    height: 50, // Asegurar que ambos tengan el mismo height
+                  }}>
+                  <Picker
+                    selectedValue={estadoSelected}
+                    onValueChange={itemValue => setestadoSelected(itemValue)}
+                    style={{
+                      width: 400,
+                      height: 50, // Ajustar la altura para el Picker
+                      color: 'black',
+                    }}
+                  >
+                    {estadosVenezuela.map((estado) => (
+                      <Picker.Item key={estado.value} label={estado.label} value={estado.value} />
+                    ))}
+                  </Picker>
+                </View>
+              </View>
+            </View>
+
+
             <TextInputs
               title="Número Telefónico"
               value={phone}
@@ -549,13 +730,15 @@ const TallerProfileScreen = ({navigation}) => {
               onChangeText={text => {
                 // Remove non-numeric characters using regex
                 const numericText = text.replace(/[^0-9]/g, '');
-                setPhone(numericText);
-                setCallTyping(true);
+                if (numericText.length <= 10) {
+                  setPhone(numericText);
+                  setCallTyping(true);
 
-                if (numericText.trim() === '') {
-                  setPhoneError('Número telefónico requerido');
-                } else {
-                  setPhoneError('');
+                  if (numericText.trim() === '') {
+                    setPhoneError('Número telefónico requerido');
+                  } else {
+                    setPhoneError('');
+                  }
                 }
               }}
               onBlur={() => {
@@ -568,6 +751,77 @@ const TallerProfileScreen = ({navigation}) => {
             {phoneError !== '' && (
               <Text style={styles.errorStyle}>{phoneError}</Text>
             )}
+
+            <TextInputs
+              title="Whatsapp"
+              value={whats}
+              placeHolder="Ingrese su número(4142617966)"
+              keyboardType="numeric"
+              onChangeText={text => {
+                // Remove non-numeric characters using regex
+                const numericText = text.replace(/[^0-9]/g, '');
+                if (numericText.length <= 10) {
+                  setwhats(numericText);
+                  setCallTyping(true);
+
+                  if (numericText.trim() === '') {
+                    setwhatsError('Número telefónico requerido');
+                  } else {
+                    setwhatsError('');
+                  }
+                }
+              }}
+              onBlur={() => {
+                validatewhats();
+                setCallTyping(false);
+              }}
+              icon={<Icons name="whatsapp" size={20} color="#9BA6B8" />}
+            />
+
+            {whatsError !== '' && (
+              <Text style={styles.errorStyle}>{whatsError}</Text>
+            )}
+
+            <View style={{ marginTop: 5 }}>
+              {/* Texto "RIF" arriba de los inputs */}
+              <Text
+                style={[
+                  styles.headingContainer,
+                  { color: textColorStyle },
+                  { textAlign: textRTLStyle },
+                ]}>
+                Metodos de Pago
+              </Text>
+
+              <View style={{ padding: 10 }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-between',
+                  }}>
+                  {metodosPago.map((method, index) => (
+                    <View
+                      key={method.value}
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginVertical: 5,
+                        width: '45%', // Ajusta el ancho para hacer columnas
+                      }}>
+                      <CheckBox
+                        isChecked={method.checked}
+                        onClick={() => toggleCheckBox(index)}
+                        checkBoxColor="#2D3261"
+                      />
+                      <Text style={{ marginLeft: 10, color: 'black' }}>
+                        {method.label}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            </View>
 
             <TextInputs
               title="Email"
@@ -596,7 +850,7 @@ const TallerProfileScreen = ({navigation}) => {
             )}
           </View>
 
-          <Text style={{marginBottom: 10, color: 'black', marginTop: 15}}>
+          <Text style={{ marginBottom: 10, color: 'black', marginTop: 15 }}>
             ¿Es un Agente Autorizado?
           </Text>
 
@@ -611,14 +865,14 @@ const TallerProfileScreen = ({navigation}) => {
               status={checked === 'si' ? 'checked' : 'unchecked'}
               onPress={() => setChecked('si')}
             />
-            <Text style={{color: 'black'}}>Sí</Text>
+            <Text style={{ color: 'black' }}>Sí</Text>
 
             <RadioButton
               value="no"
               status={checked === 'no' ? 'checked' : 'unchecked'}
               onPress={() => setChecked('no')}
             />
-            <Text style={{color: 'black'}}>No</Text>
+            <Text style={{ color: 'black' }}>No</Text>
           </View>
 
           <TextInputs
@@ -627,8 +881,7 @@ const TallerProfileScreen = ({navigation}) => {
             placeHolder="Característica del taller (tipo de piso, si posee fosa, rampla, entre otras condiciones, gatos elevadores)"
             multiline={true}
             numberOfLines={4}
-            height={1000}
-            style={{height: 1000, marginBottom: 50}}
+            height={150}
             onChangeText={text => {
               setCaracteristicas(text);
               setCaracteristicasTyping(true);
@@ -653,7 +906,6 @@ const TallerProfileScreen = ({navigation}) => {
             placeHolder="Tarifa"
             value={Tarifa}
             onChangeText={text => {
-              console.log(text);
               setTarifa(text);
               setTarifaTyping(true);
               if (text.trim() === '') {
@@ -678,7 +930,6 @@ const TallerProfileScreen = ({navigation}) => {
             placeHolder="Tiempo de experiencia"
             value={Experiencia}
             onChangeText={text => {
-              console.log(text);
               setExperiencia(text);
               setExperienciaTyping(true);
               if (text.trim() === '') {
@@ -701,7 +952,6 @@ const TallerProfileScreen = ({navigation}) => {
             placeHolder="https://www.facebook.com/"
             value={LinkFacebook}
             onChangeText={text => {
-              console.log(text);
               setLinkFacebook(text);
               // setLinkFacebookTyping(true);
               // if (text.trim() === '') {
@@ -724,7 +974,6 @@ const TallerProfileScreen = ({navigation}) => {
             placeHolder="https://www.instagram.com/"
             value={LinkInstagram}
             onChangeText={text => {
-              console.log(text);
               setLinkInstagram(text);
               // setLinkInstagramTyping(true);
               // if (text.trim() === '') {
@@ -747,7 +996,6 @@ const TallerProfileScreen = ({navigation}) => {
             placeHolder="https://www.instagram.com/"
             value={LinkTiktok}
             onChangeText={text => {
-              console.log(text);
               setLinkTiktok(text);
               // setLinkTiktokTyping(true);
               // if (text.trim() === '') {
@@ -770,7 +1018,6 @@ const TallerProfileScreen = ({navigation}) => {
             placeHolder="Ingrese su garantia"
             value={Garantia}
             onChangeText={text => {
-              console.log(text);
               setGarantia(text);
               setGarantiaTyping(true);
               if (text.trim() === '') {
@@ -794,8 +1041,8 @@ const TallerProfileScreen = ({navigation}) => {
             title="Seguro del taller"
             placeHolder="Ingrese su seguro"
             value={seguro}
+            height={150}
             onChangeText={text => {
-              console.log(text);
               setseguro(text);
               setseguroTyping(true);
               if (text.trim() === '') {
@@ -839,7 +1086,7 @@ const TallerProfileScreen = ({navigation}) => {
       <View
         style={[
           commonStyles.commonContainer,
-          {backgroundColor: bgFullStyle, flex: 1},
+          { backgroundColor: bgFullStyle, flex: 1 },
         ]}>
         {/* <View style={[styles.container, {flex: 1}]}>
           <View
@@ -863,31 +1110,31 @@ const TallerProfileScreen = ({navigation}) => {
         <View
           style={[
             styles.flexView,
-            {flex: 1, justifyContent: 'center', alignItems: 'center'},
+            { flex: 1, justifyContent: 'center', alignItems: 'center' },
           ]}>
           <View
-            style={{justifyContent: 'center', alignItems: 'center', flex: 1}}>
+            style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
             <Image
               source={require('../../../assets/solverslogo.jpg')} // Asegúrate de que la ruta sea correcta
-              style={{width: 100, height: 100, marginBottom: 20}} // Aumentar el tamaño de la imagen y agregar marginBottom
+              style={{ width: 100, height: 100, marginBottom: 20 }} // Aumentar el tamaño de la imagen y agregar marginBottom
               resizeMode="contain" // Esto asegura que la imagen mantenga sus proporciones
             />
 
             <Text
               style={[
                 styles.bagIsEmptyText,
-                {color: textColorStyle, textAlign: 'center'},
+                { color: textColorStyle, textAlign: 'center' },
               ]}>
               Su taller ha sido registrado parcialmente.
             </Text>
 
-            <Text style={[styles.bagisEmptySomething, {textAlign: 'center'}]}>
+            <Text style={[styles.bagisEmptySomething, { textAlign: 'center' }]}>
               ¡Ya casi está! Solo completa tu perfil y pronto te visitaremos
               para darte el visto bueno.
             </Text>
           </View>
 
-          <View style={{width: '100%'}}>
+          <View style={{ width: '100%' }}>
             <NavigationButton
               title="Continuar Registro"
               backgroundColor={'#2D3261'}
@@ -896,7 +1143,7 @@ const TallerProfileScreen = ({navigation}) => {
             />
           </View>
 
-          <View style={{width: '100%', marginBottom: 25, marginTop: 10}}>
+          <View style={{ width: '100%', marginBottom: 25, marginTop: 10 }}>
             <NavigationButton
               title="Cerrar Sesión"
               backgroundColor={'#848688'}

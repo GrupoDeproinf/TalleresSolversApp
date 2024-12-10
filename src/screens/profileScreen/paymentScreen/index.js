@@ -22,6 +22,9 @@ import appColors from '../../../themes/appColors';
 import {fontSizes} from '../../../themes/appConstant';
 import { otherPaymentMode } from '../../../data/paymentData';
 
+
+
+
 const PaymentScreen = () => {
   const {bgFullStyle, textRTLStyle, viewRTLStyle, t, textColorStyle} =
     useValues();
@@ -38,6 +41,7 @@ const PaymentScreen = () => {
   const valData = () => {
     setCheckedData(!checkedData);
   };
+
   return (
     <View
       style={[

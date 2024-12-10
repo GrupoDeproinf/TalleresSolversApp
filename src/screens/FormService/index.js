@@ -41,6 +41,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icons from 'react-native-vector-icons/FontAwesome';
 import Icons2 from 'react-native-vector-icons/FontAwesome5';
 
+import notImageFound from '../../assets/noimageold.jpeg';
+import { launchImageLibrary } from 'react-native-image-picker';
+import { Buffer } from 'buffer';
+
 const FormTaller = () => {
   const [isSelected, setSelection] = useState(false);
   const [email, setEmail] = useState('');
@@ -158,6 +162,12 @@ const FormTaller = () => {
 
   const [publicOrigin, setpublicOrigin] = useState(false);
 
+  const [imagePerfil, setimagePerfil] = useState("");
+  const [base64, setBase64] = useState(null);
+  
+  const [imageFirts, setimageFirts] = useState("");
+
+
   const stackNavigation = () => {
     navigation.reset({
       index: 0,
@@ -201,14 +211,10 @@ const FormTaller = () => {
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-      console.log(
-        'valor del storage1234***************************************************************************',
-        user,
-      );
+     
       setuserStorage(user);
     } catch (e) {
       // error reading value
-      console.log(e);
     }
   };
 
@@ -224,10 +230,6 @@ const FormTaller = () => {
       // Verificar la respuesta del servidor
       if (response.status === 200) {
         const result = response.data;
-        console.log(
-          'caraccteristicas de resultados123435345345345',
-          result.categories[0].id,
-        ); // Aquí puedes manejar la respuesta
 
         if (result.categories.length > 0) {
           if (loadData) {
@@ -265,11 +267,6 @@ const FormTaller = () => {
   };
 
   const getSubcaracteristicas = async (uid, loadData) => {
-    console.log(
-      '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++',
-      uid,
-    );
-    console.log('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++');
     try {
       // Hacer la solicitud POST utilizando Axios
       const response = await api.post(
@@ -283,7 +280,6 @@ const FormTaller = () => {
       const result = response.data;
 
       if (result.message === 'Subcategorías encontradas') {
-        console.log('Este es el usuario encontrado:', result.subcategories);
 
         if (result.subcategories.length > 0) {
           if (loadData) {
@@ -292,7 +288,6 @@ const FormTaller = () => {
         }
         setSubcaracteristicas(result.subcategories);
       } else {
-        console.log('Usuario no encontrado');
       }
     } catch (error) {
       if (error.response) {
@@ -314,7 +309,6 @@ const FormTaller = () => {
       const result = response.data;
 
       if (result.message === 'Servicio encontrado') {
-        console.log('Este es el usuario encontrado:', result.service);
         setNombre(result.service.nombre_servicio || '');
 
         setNameServicio(result.service.nombre_servicio);
@@ -331,8 +325,11 @@ const FormTaller = () => {
         setuidService(result.service.id || '');
 
         setpublicOrigin(result.service.estatus);
+
+        setimagePerfil(result.service.service_image || '')
+        setimageFirts(result.service.service_image || '')
+
       } else {
-        console.log('Usuario no encontrado');
       }
     } catch (error) {
       if (error.response) {
@@ -355,8 +352,6 @@ const FormTaller = () => {
   } = useValues();
 
   const onHandleChange = type => {
-    console.log(checked);
-    console.log(cantServices);
 
     if (checked == 'no') {
       settipoAccion(type);
@@ -383,6 +378,8 @@ const FormTaller = () => {
   const onCancel2 = () => {
     setModalVisible2(false);
   };
+  
+  const getImageName = (url) => url.split('/').pop();
 
   const onConfirm = async () => {
     if (
@@ -404,9 +401,6 @@ const FormTaller = () => {
       Garantia != undefined &&
       Garantia != undefined
     ) {
-      // console.log("caracteristicas", caracteristicas)
-      console.log('Subcaracteristicas', Subcaracteristicas);
-
       const categoria =
         caracteristicas.find(c => c.id === caracteristicaSelected)?.nombre ||
         '';
@@ -432,9 +426,10 @@ const FormTaller = () => {
         garantia: Garantia,
         estatus: checked == 'si' ? true : false,
         publicOrigin: publicOrigin,
+        base64:base64,
+        imageTodelete: imageFirts != "" ? getImageName(imageFirts) : ""
       };
 
-      console.log(dataFinal);
       try {
         // Hacer la solicitud POST utilizando Axios
         const response = await api.post(
@@ -486,15 +481,11 @@ const FormTaller = () => {
         const result = response.data;
 
         if (result.message === 'Usuario encontrado') {
-          console.log(
-            'result.userData.subscripcion_actual',
-            result.userData.subscripcion_actual,
-          );
+          
           setcantServices(
             result.userData.subscripcion_actual.cantidad_servicios,
           );
         } else {
-          console.log('Usuario no encontrado');
         }
       } catch (error) {
         if (error.response) {
@@ -507,7 +498,6 @@ const FormTaller = () => {
         }
       }
     } catch (e) {
-      console.log(e);
     }
   };
 
@@ -518,6 +508,21 @@ const FormTaller = () => {
   const showToast = text => {
     ToastAndroid.show(text, ToastAndroid.SHORT);
   };
+
+
+  const selectImage = () => {
+    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
+      if (response.didCancel) {
+      } else if (response.error) {
+      } else {
+        const source = { uri: response.assets[0].uri };
+        const base64Data = response.assets[0].base64;
+        setimagePerfil(source.uri);
+        setBase64(base64Data);
+      }
+    });
+  };
+
 
   return (
     <View
@@ -557,21 +562,71 @@ const FormTaller = () => {
         </Text>
       </View>
 
+        
       <View style={[external.as_center]}>
+
+        {imagePerfil == null || imagePerfil == "" ? (
+          <TouchableOpacity onPress={selectImage}>
+          <Image
+            resizeMode="contain"
+            style={[styles.imgStyle, { height: 130, width: 130 }]}
+            source={notImageFound} // Reemplaza esto con la variable que contiene tu imagen
+          />
+          <View
+            style={[
+              styles.editIconStyle,
+              { backgroundColor: '#F3F5FB' },
+              { borderRadius: 100 },
+              { position: 'absolute', top: 20, right: 0, margin: 0 },
+            ]}
+          >
+            <Edit />
+          </View>
+        </TouchableOpacity>
+
+        ) : (
+          <TouchableOpacity onPress={selectImage}>
+            <ImageBackground
+              resizeMode="contain"
+              style={[styles.imgStyle, { height: 150, width: 150 }]} // Ajusta los valores según tus necesidades
+              source={{ uri: imagePerfil }} // Cambia esto a tu enlace de imagen
+            >
+              <View
+                style={[
+                  styles.editIconStyle,
+                  {
+                    backgroundColor: '#F3F5FB',
+                    borderRadius: 100,
+                    position: 'absolute', // Posicionar absolutamente
+                    top: 0, // Ajustar al fondo
+                    right: 20, // Ajustar a la derecha
+                    margin: 0 // Agregar margen si es necesario
+                  },
+                ]}
+              >
+                <Edit />
+              </View>
+            </ImageBackground>
+          </TouchableOpacity>
+        )}
+        </View>
+
+
+      {/* <View style={[external.as_center]}>
         <ImageBackground
           resizeMode="contain"
           style={styles.imgStyle}
           source={images.user}>
-          {/* <View
+          <View
             style={[
               styles.editIconStyle,
               {backgroundColor: '#F3F5FB'},
               {borderRadius: 100},
             ]}>
             <Edit />
-          </View> */}
+          </View>
         </ImageBackground>
-      </View>
+      </View> */}
 
       <ScrollView style={{marginBottom: 15}}>
         <View style={{padding: 10}}>
@@ -594,7 +649,6 @@ const FormTaller = () => {
             <Picker
               selectedValue={caracteristicaSelected}
               onValueChange={itemValue => {
-                console.log(itemValue);
                 getSubcaracteristicas(itemValue);
                 setcaracteristicaSelected(itemValue);
               }}
@@ -633,7 +687,6 @@ const FormTaller = () => {
             <Picker
               selectedValue={SubcaracteristicaSelected}
               onValueChange={itemValue => {
-                console.log(itemValue);
                 setSubcaracteristicaSelected(itemValue);
               }}
               style={{
@@ -660,6 +713,7 @@ const FormTaller = () => {
               marginTop: -5,
             }}>
             <TextInputs
+              fullWidth={290}
               title="Nombre del servicio"
               value={Nombre}
               onChangeText={text => {
@@ -679,6 +733,7 @@ const FormTaller = () => {
               marginVertical: 10,
             }}>
             <TextInputs
+              fullWidth={290}
               title="Precio"
               value={precio}
               placeHolder="Precio del servicio"
@@ -703,13 +758,14 @@ const FormTaller = () => {
               marginVertical: 10,
             }}>
             <TextInputs
+              fullWidth={290}
               title="Descripción del servicio"
               value={Description}
               placeHolder="Descripción del servicio"
               multiline={true}
               numberOfLines={10}
               // minHeight= {600}
-              // height={400}
+              height={150}
               // textAlignVertical= {'top'}
               onChangeText={text => {
                 setDescription(text);
@@ -730,13 +786,14 @@ const FormTaller = () => {
               marginVertical: 10,
             }}>
             <TextInputs
+              fullWidth={290}
               title="Garantía del servicio"
               value={Garantia}
               placeHolder="Garantía del servicio"
               multiline={true}
               numberOfLines={10}
               // minHeight= {600}
-              // height={400}
+              height={150}
               // textAlignVertical= {'top'}
               onChangeText={text => {
                 setGarantia(text);
@@ -800,12 +857,11 @@ const FormTaller = () => {
           <NavigationButton
             title="Guardar Cambios"
             onPress={() => onHandleChange('Aprobar')}
-            backgroundColor={'#28a745'}
+            backgroundColor={'#2D3261'}
             color={appColors.screenBg}
           />
         </View>
       </View>
-
       <Modal
         transparent={true}
         animationType="slide"

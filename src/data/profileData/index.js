@@ -45,12 +45,22 @@ export const profileData = [
   //   icon: <Cards />,
   //   screenName: 'PaymentScreen',
   // },
-  // {
-  //   id: 5,
-  //   title: 'Cambiar clave',
-  //   icon: <Key width={24} height={24} />,
-  //   screenName: 'ChangePasswordScreen',
-  // },
+  {
+    id: 5,
+    title: 'Cambiar clave',
+    icon: <Key width={24} height={24} />,
+    // screenName: 'ChangePasswordScreen',
+    screenName: 'ForgetPassword',
+  },
+  {
+    id: 6,
+    title: 'Cerrar sesión',
+    icon: <LogOut />,
+    screenName: '',
+  },
+];
+
+export const profileDataAdmin = [
   {
     id: 6,
     title: 'Cerrar sesión',

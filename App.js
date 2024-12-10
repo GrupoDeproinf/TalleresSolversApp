@@ -25,6 +25,7 @@ LogBox.ignoreLogs(['Your specific warning here']);
 
 export const CommonContext = createContext();
 
+
 const App = () => {
   useEffect(() => {
     LogBox.ignoreAllLogs();

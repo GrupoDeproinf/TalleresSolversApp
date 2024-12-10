@@ -111,6 +111,8 @@ dependencies {
 
     implementation project(':react-native-vector-icons')
 
+    implementation 'com.google.android.gms:play-services-maps:17.0.0'
+
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}")
     debugImplementation("com.facebook.flipper:flipper-network-plugin:${FLIPPER_VERSION}") {
         exclude group:'com.squareup.okhttp3', module:'okhttp'

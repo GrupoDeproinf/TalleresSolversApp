@@ -89,10 +89,10 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
           ]}>
           <View
             style={[styles.imageContainer, {backgroundColor: imageContainer}]}>
-            {item.img == null ? (
+            {item.image_perfil == null || item.image_perfil == '' ? (
               <Image style={styles.image} source={notImageFound} />
             ) : (
-              <Image style={styles.image} source={item?.img} />
+              <Image style={styles.image} source={{ uri: item?.image_perfil }} />
             )}
           </View>
           <View style={styles.textContainer}>

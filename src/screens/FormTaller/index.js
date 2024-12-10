@@ -34,7 +34,9 @@ import appColors from '../../themes/appColors';
 import {RadioButton, Button} from 'react-native-paper';
 import {windowHeight} from '../../themes/appConstant';
 import NavigationButton from '../../commonComponents/navigationButton';
-import api from '../../../axiosInstance'; 
+import api from '../../../axiosInstance';
+
+import notImageFound from '../../assets/noimageold.jpeg';
 
 const FormTaller = () => {
   const [NameTaller, setNameTaller] = useState('');
@@ -132,6 +134,27 @@ const FormTaller = () => {
   const [tipoAccion, settipoAccion] = useState('');
   const [uidTaller, setuidTaller] = useState('');
 
+  const [isCheckedWhats, setisCheckedWhats] = useState(false);
+
+  const [whats, setwhats] = useState(0);
+  const [whatsError, setwhatsError] = useState('');
+
+  const [metodosPago, setMetodosPago] = useState([
+    {label: 'Efectivo', value: 'efectivo', checked: false},
+    {label: 'Pago Móvil', value: 'pagoMovil', checked: false},
+    {label: 'Punto de venta', value: 'puntoVenta', checked: false},
+    {label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false},
+    {label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false},
+    {label: 'Transferencia', value: 'transferencia', checked: false},
+    {label: 'Zelle', value: 'zelle', checked: false},
+    {label: 'Zinli', value: 'zinli', checked: false},
+  ]);
+
+  const [isEstado, setisEstado] = useState(false);
+  const [imagePerfil, setimagePerfil] = useState('');
+
+  const [estadoSelected, setestadoSelected] = useState(''); // Default value 'J'
+
   const stackNavigation = () => {
     navigation.reset({
       index: 0,
@@ -152,16 +175,16 @@ const FormTaller = () => {
       const response = await api.post('/usuarios/getUserByUid', {
         uid: uid,
       });
-    
+
       // Verificar la respuesta del servidor
       const result = response.data;
-    
+
       if (result.message === 'Usuario encontrado') {
         console.log('Este es el usuario encontrado:', result.userData);
-    
+
         setNameTaller(result.userData.nombre);
         setChecked(result.userData.agenteAutorizado);
-    
+
         // Manejar y asignar los valores con validación de undefined
         setNombre(result.userData.nombre || '');
         setcedula(result.userData.rif || '');
@@ -177,6 +200,18 @@ const FormTaller = () => {
         setLinkTiktok(result.userData.LinkTiktok || '');
         setGarantia(result.userData.Garantia || '');
         setseguro(result.userData.seguro || '');
+        setestadoSelected(result.userData.estado || '');
+
+        setimagePerfil(result.userData.image_perfil);
+
+        setwhats(result.userData.whatsapp);
+
+        const updatedMetodosPago = metodosPago.map(method => ({
+          ...method,
+          checked: result.userData.metodos_pago[method.value] || false,
+        }));
+
+        setMetodosPago(updatedMetodosPago);
       } else {
         console.log('Usuario no encontrado');
       }
@@ -187,7 +222,6 @@ const FormTaller = () => {
         console.error('Error en la solicitud:', error.message);
       }
     }
-    
   };
 
   const {
@@ -196,6 +230,7 @@ const FormTaller = () => {
     bgFullStyle,
     textColorStyle,
     iconColorStyle,
+    textRTLStyle,
     isDark,
     t,
   } = useValues();
@@ -221,11 +256,14 @@ const FormTaller = () => {
           uid: uidTaller,
           nuevoStatus: 'Aprobado',
         });
-      
+
         // Verificar la respuesta del servidor
         const result = response.data;
-      
-        if (result.message === 'El estado del usuario ha sido actualizado exitosamente') {
+
+        if (
+          result.message ===
+          'El estado del usuario ha sido actualizado exitosamente'
+        ) {
           showToast('Se ha aprobado el taller exitosamente');
           setModalVisible(false);
           navigation.goBack();
@@ -245,7 +283,6 @@ const FormTaller = () => {
         setModalVisible(false);
         navigation.goBack();
       }
-      
     } else {
       try {
         // Hacer la solicitud POST utilizando Axios
@@ -253,11 +290,14 @@ const FormTaller = () => {
           uid: uidTaller,
           nuevoStatus: 'Rechazado',
         });
-      
+
         // Verificar la respuesta del servidor
         const result = response.data;
-      
-        if (result.message === 'El estado del usuario ha sido actualizado exitosamente') {
+
+        if (
+          result.message ===
+          'El estado del usuario ha sido actualizado exitosamente'
+        ) {
           showToast('Se ha rechazado el taller');
           setModalVisible(false);
           navigation.goBack();
@@ -277,7 +317,6 @@ const FormTaller = () => {
         setModalVisible(false);
         navigation.goBack();
       }
-      
     }
   };
 
@@ -323,21 +362,23 @@ const FormTaller = () => {
         </Text>
       </View>
 
-      <View style={[external.as_center]}>
-        <ImageBackground
-          resizeMode="contain"
-          style={styles.imgStyle}
-          source={images.user}>
-          {/* <View
-            style={[
-              styles.editIconStyle,
-              {backgroundColor: '#F3F5FB'},
-              {borderRadius: 100},
-            ]}>
-            <Edit />
-          </View> */}
-        </ImageBackground>
+      {imagePerfil == '' ? (
+
+        <View style={[stylesImage.imageContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Image
+          source={notImageFound}
+          style={{ width: 100, height: 100 }}
+        />
+        </View>
+      ) : (
+        <View style={[stylesImage.imageContainer, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Image
+          source={{ uri: imagePerfil }}
+          style={{ width: 100, height: 100 }}
+        />
       </View>
+
+      )}
 
       <ScrollView style={{marginBottom: 15}}>
         <View>
@@ -363,6 +404,7 @@ const FormTaller = () => {
             />
 
             <TextInputs
+              fullWidth={270}
               title="Nombre y Apellido"
               editable={false}
               value={Nombre}
@@ -391,6 +433,7 @@ const FormTaller = () => {
               }}
             />
             <TextInputs
+              fullWidth={270}
               title="Registro de Información Fiscal (RIF)"
               value={cedula}
               editable={false}
@@ -424,6 +467,7 @@ const FormTaller = () => {
               }}
             />
             <TextInputs
+              fullWidth={270}
               title="Dirección del Taller"
               placeHolder="Ingrese su direccion"
               textDecorationLine={isCheckedDireccion ? 'line-through' : 'none'}
@@ -458,6 +502,7 @@ const FormTaller = () => {
               }}
             />
             <TextInputs
+              fullWidth={270}
               title="Registro Comercial"
               value={RegComercial}
               textDecorationLine={
@@ -482,6 +527,33 @@ const FormTaller = () => {
             )}
           </View>
 
+          {/* Estado */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 10,
+            }}>
+            <CheckBox
+              isChecked={isEstado}
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
+              onClick={() => {
+                console.log('Aquiii');
+                setisEstado(!isEstado);
+              }}
+            />
+            <TextInputs
+              fullWidth={270}
+              title="Estado"
+              value={estadoSelected}
+              textDecorationLine={isEstado ? 'line-through' : 'none'}
+              editable={false}
+              keyboardType="string"
+              onBlur={() => {}}
+            />
+          </View>
+
           {/* Número Telefónico */}
           <View
             style={{
@@ -498,6 +570,7 @@ const FormTaller = () => {
               }}
             />
             <TextInputs
+              fullWidth={270}
               title="Número Telefónico"
               value={phone}
               textDecorationLine={isCheckedTelefono ? 'line-through' : 'none'}
@@ -520,6 +593,75 @@ const FormTaller = () => {
             )}
           </View>
 
+          {/* whatsapp */}
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginVertical: 10,
+            }}>
+            <CheckBox
+              isChecked={isCheckedWhats}
+              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              checkedCheckBoxColor="#2D3261"
+              onClick={() => {
+                setisCheckedWhats(!isCheckedWhats);
+              }}
+            />
+            <TextInputs
+              fullWidth={270}
+              title="Whatsapp"
+              value={whats}
+              textDecorationLine={isCheckedWhats ? 'line-through' : 'none'}
+              editable={false}
+              placeholder="Ingrese su número"
+              keyboardType="numeric"
+              onBlur={() => {}}
+            />
+          </View>
+
+          <View style={{marginTop: 5}}>
+            {/* Texto "RIF" arriba de los inputs */}
+            <Text
+              style={[
+                styles.headingContainer,
+                {color: textColorStyle},
+                {textAlign: textRTLStyle},
+              ]}>
+              Metodos de Pago
+            </Text>
+
+            <View style={{padding: 10}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  justifyContent: 'space-between',
+                }}>
+                {metodosPago.map((method, index) => (
+                  <View
+                    key={method.value}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginVertical: 5,
+                      width: '45%', // Ajusta el ancho para hacer columnas
+                    }}>
+                    <CheckBox
+                      isChecked={method.checked}
+                      onClick={() => toggleCheckBox(index)}
+                      checkBoxColor="#2D3261"
+                      disabled={true}
+                    />
+                    <Text style={{marginLeft: 10, color: 'black'}}>
+                      {method.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+
           {/* Email */}
           <View
             style={{
@@ -536,6 +678,7 @@ const FormTaller = () => {
               }}
             />
             <TextInputs
+              fullWidth={270}
               title="Email"
               value={email}
               editable={false}
@@ -566,6 +709,7 @@ const FormTaller = () => {
             />
 
             <TextInputs
+              fullWidth={270}
               title="Caracteristicas del taller"
               editable={false}
               textDecorationLine={
@@ -575,6 +719,7 @@ const FormTaller = () => {
               placeHolder="Característica del taller (tipo de piso, si posee fosa, rampla, entre otras condiciones, gatos elevadores)"
               multiline={true}
               numberOfLines={4}
+              height={150}
               onChangeText={text => {
                 setCaracteristicas(text);
                 setCaracteristicasError(
@@ -651,6 +796,7 @@ const FormTaller = () => {
               }}
             />
             <TextInputs
+              fullWidth={270}
               title="Tiempo de experiencia"
               editable={false}
               textDecorationLine={
@@ -684,6 +830,7 @@ const FormTaller = () => {
               }}
             />
             <TextInputs
+              fullWidth={270}
               title="Link de Facebook"
               textDecorationLine={isCheckedFacebook ? 'line-through' : 'none'}
               editable={false}
@@ -714,6 +861,7 @@ const FormTaller = () => {
               }}
             />
             <TextInputs
+              fullWidth={270}
               title="Link de Instagram"
               editable={false}
               textDecorationLine={isCheckedInstagram ? 'line-through' : 'none'}
@@ -747,6 +895,7 @@ const FormTaller = () => {
               }}
             />
             <TextInputs
+              fullWidth={270}
               title="Link de TikTok"
               editable={false}
               value={LinkTiktok}
@@ -778,9 +927,11 @@ const FormTaller = () => {
               }}
             />
             <TextInputs
+              fullWidth={270}
               title="Seguro"
               editable={false}
               value={seguro}
+              height={150}
               placeHolder="Ingrese su seguro"
               textDecorationLine={isCheckedSeguro ? 'line-through' : 'none'}
               onChangeText={text => {
@@ -851,6 +1002,38 @@ const FormTaller = () => {
     </View>
   );
 };
+
+const stylesImage = StyleSheet.create({
+  button: {
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  imageContainer: {
+    position: 'relative',
+    marginTop: 20,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+});
 
 const stylesModal = StyleSheet.create({
   container: {

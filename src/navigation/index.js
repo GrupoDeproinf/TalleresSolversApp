@@ -47,6 +47,8 @@ import ReportarPago from '../screens/ReportarPago';
 import ServiciosContainer from '../screens/Servicios'
 import PlanesContainer from '../screens/Planes';
 
+import TallerEditProfileScreen from '../screens/profileScreen/editProfileTaller';
+
 
 
 const Stack = createNativeStackNavigator();
@@ -100,7 +102,8 @@ const MyStack = () => {
 
 
         <Stack.Screen name="EditProfile" component={EditProfile} />
-        <Stack.Screen name="TallerProfileScreen" component={TallerProfileScreen} />
+        <Stack.Screen name="TallerProfileScreen" component={TallerProfileScreen} /> 
+        <Stack.Screen name="TallerEditProfileScreen" component={TallerEditProfileScreen} /> 
         <Stack.Screen name="OrderHistory" component={OrderHistory} />
         <Stack.Screen name="HomeScreenTwo" component={HomeScreenTwo} />
         <Stack.Screen name="OfferScreen" component={OfferScreen} />

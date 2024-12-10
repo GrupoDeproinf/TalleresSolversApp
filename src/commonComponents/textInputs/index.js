@@ -1,4 +1,4 @@
-import {Pressable, Text, TextInput, View} from 'react-native';
+import {Pressable, Text, TextInput, View, TouchableOpacity} from 'react-native';
 import React, {useState} from 'react';
 import styles from './style.css';
 import {external} from '../../style/external.css';
@@ -6,6 +6,7 @@ import appColors from '../../themes/appColors';
 import {useValues} from '../../../App';
 import LinearGradient from 'react-native-linear-gradient';
 import {windowHeight} from '../../themes/appConstant';
+import Icons from 'react-native-vector-icons/Entypo';
 
 const TextInputs = ({
   title,
@@ -28,7 +29,9 @@ const TextInputs = ({
   editable,
   textDecorationLine,
   minHeight,
-  textAlignVertical
+  textAlignVertical,
+  showPass,
+  changePassValue,
 }) => {
   const [error, setError] = useState('');
 
@@ -68,6 +71,8 @@ const TextInputs = ({
               show ? styles.textInputView : styles.withoutShow,
               {shadowColor: appColors.shadowColor},
               {width: fullWidth || '100%'},
+              {height: height},
+              {flexDirection: 'row', alignItems: 'center'}, // Asegurar que el contenido esté en fila
             ]}>
             <LinearGradient
               start={{x: 0.0, y: 0.0}}
@@ -79,8 +84,10 @@ const TextInputs = ({
                 {flexDirection: viewRTLStyle},
                 {width: fullWidthTwo || '100%'},
                 {paddingHorizontal: paddingHorizontalTwo || windowHeight(8)},
+                {flex: 1}, // Asegurar que tome el espacio disponible
               ]}>
-              {icon}
+              <View style={{marginLeft: 5}}>{icon}</View>
+
               <TextInput
                 keyboardType={keyboardType}
                 secureTextEntry={secureTextEntry}
@@ -94,11 +101,13 @@ const TextInputs = ({
                   {height: height},
                   {color: textColorStyle},
                   {textAlign: textRTLStyle},
-                  {minHeight:minHeight},
-                  { 
-                    textDecorationLine: textDecorationLine == undefined ? 'none' : textDecorationLine, // Línea en el centro
-                  }
-
+                  {minHeight: minHeight},
+                  {
+                    textDecorationLine:
+                      textDecorationLine == undefined
+                        ? 'none'
+                        : textDecorationLine, // Línea en el centro
+                  },
                 ]}
                 placeholder={placeHolder}
                 placeholderTextColor={color || appColors.subtitle}
@@ -110,11 +119,22 @@ const TextInputs = ({
                 }}
                 onBlur={handleValidation}
               />
-              
+
               {show && <Pressable style={[external.mh_10]}>{value}</Pressable>}
             </LinearGradient>
+
+            {showPass == true ? (
+              <TouchableOpacity
+                onPress={changePassValue}
+                style={{marginRight: 10}}>
+                <View>
+                  <Icons name="eye" size={23} color="#2D3261" />
+                </View>
+              </TouchableOpacity>
+            ) : null}
           </LinearGradient>
         </View>
+
         {error !== '' && (
           <Text style={{color: 'red', marginTop: 5}}>{error}</Text>
         )}
