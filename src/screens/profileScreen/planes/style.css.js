@@ -1,73 +1,54 @@
 import {StyleSheet} from 'react-native';
+import {commonStyles} from '../../../style/commonStyle.css';
 import {
   fontSizes,
   windowHeight,
   windowWidth,
 } from '../../../themes/appConstant';
+import {external} from '../../../style/external.css';
 import appColors from '../../../themes/appColors';
-import {commonStyles} from '../../../style/commonStyle.css';
+
 const styles = StyleSheet.create({
-  contianer: {
+  headerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  scrollView: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+  },
+  planCard: {
+    backgroundColor: '#fff',
     borderRadius: 10,
-    marginTop: windowHeight(10),
-    flexDirection: 'row',
-    alignItems: 'center',
-    overflow: 'hidden',
-    width: '99.5%',
-    padding: 1,
-    elevation: 1,
-    margin: 1,
+    padding: 16,
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  grayBoxContainer: {
-    width: windowWidth(108),
-    height: windowHeight(70),
-    backgroundColor: appColors.bgLayer,
-    borderRadius: windowHeight(10),
-    alignItems: 'center',
-    justifyContent: 'center',
+  planTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 5,
   },
-  orderContainer: {
-    backgroundColor: '#2D3261',
-    top: windowHeight(15),
-    height: windowHeight(36),
-    // alignItems: 'center',
-    // justifyContent: 'center',
-    borderTopLeftRadius: 10,
-    borderTopRightRadius: 10,
-    borderBottomRightRadius:10,
-    marginHorizontal: 2,
-    width:80
+  planDescription: {
+    fontSize: 14,
+    color: '#555',
+    marginBottom: 10,
   },
-  img: {
-    width: windowWidth(75),
-    height: windowHeight(46),
-    resizeMode: 'contain',
+  planPrice: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
   },
-  titleContainer: {
-    ...commonStyles.subtitleText,
-    color: appColors.titleText,
-    width: '45%',
-    fontSize: fontSizes.FONT19,
-    flexGrow: 0.54,
-  },
-  deliveryContainer: {
-    ...commonStyles.subtitleText,
-    color: appColors.titleText,
-    width: '57%',
-  },
-  buyAgain: {
-    ...commonStyles.titleText19,
-    paddingHorizontal: windowHeight(5),
-    color: 'white',
-    fontSize: fontSizes.FONT14,
-  },
-  menuItemContent: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    width: '100%',
-    paddingVertical: windowHeight(9),
-    paddingHorizontal: windowHeight(9),
-    borderRadius: windowHeight(9),
+  noDataText: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginTop: 20,
   },
 });
 

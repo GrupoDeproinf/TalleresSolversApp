@@ -45,6 +45,7 @@ import Planscreen from '../screens/profileScreen/planes';
 import ReportarPago from '../screens/ReportarPago';
 
 import ServiciosContainer from '../screens/Servicios'
+import PlanesContainer from '../screens/Planes';
 
 import TallerEditProfileScreen from '../screens/profileScreen/editProfileTaller';
 
@@ -128,6 +129,10 @@ const MyStack = () => {
         <Stack.Screen
           name="ProductDetailThree"
           component={ProductDetailThree}
+        />
+        <Stack.Screen
+          name="Planes"
+          component={PlanesContainer}
         />
       </Stack.Navigator>
     </NavigationContainer>

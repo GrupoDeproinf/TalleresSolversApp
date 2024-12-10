@@ -42,6 +42,7 @@ import {
 } from 'react-native-heroicons/outline'; // Importar íconos
 import {Linking} from 'react-native';
 import {TouchableHighlight} from 'react-native-gesture-handler';
+import IconContact from '../../../components/productDetail/productOne/iconContact';
 
 const ProductDetailOne = ({navigation}) => {
   const {bgFullStyle, textColorStyle, t, textRTLStyle, iconColorStyle} =
@@ -71,6 +72,7 @@ const ProductDetailOne = ({navigation}) => {
   const [data, setData] = useState('');
   const [modalVisible, setModalVisible] = useState(false);
   const [dataUser, setDataUser] = useState();
+  const [dataProductCategory, setDataProductCategory] = useState('');
 
   useEffect(() => {
     const {uid, typeUser} = route.params;
@@ -85,13 +87,7 @@ const ProductDetailOne = ({navigation}) => {
     const jsonValue = await AsyncStorage.getItem('@userInfo');
     const user = jsonValue != null ? JSON.parse(jsonValue) : null;
     setDataUser(user);
-    console.log(
-      '111111111111111111111111111111111111111111111111111111111111111111',
-    );
-    console.log('valor del storage', user);
-    console.log(
-      '111111111111111111111111111111111111111111111111111111111111111111',
-    );
+    
 
     try {
       const response = await api.post('/usuarios/getServiceByUid', {
@@ -106,20 +102,9 @@ const ProductDetailOne = ({navigation}) => {
       };
 
       if (result.message === 'Servicio encontrado') {
-        console.log(
-          'Este es el usuario encontrado:*******************************************',
-          resultData.service,
-        );
-        console.log(
-          '3333333333333333333333333333333333333333333333333333333333333',
-        );
-        console.log('uid', uid);
-        console.log('user', dataUser);
-        console.log(
-          '3333333333333333333333333333333333333333333333333333333333333',
-        );
 
         setDataService(resultData.service);
+        getAdditionalServices(resultData?.service?.nombre_categoria ? resultData?.service?.nombre_categoria : resultData?.service?.categoria, resultData?.service?.uid_servicio);
       } else {
         console.log('Servicio no encontrado');
       }
@@ -143,8 +128,6 @@ const ProductDetailOne = ({navigation}) => {
         // Realizar la solicitud GET para obtener todos los servicios
         const response = await api.get('/home/getServices');
 
-        console.log('Esto es el response', response);
-
         // Verificar la respuesta del servidor
         if (response.status === 200) {
           const allServices = response.data;
@@ -153,22 +136,6 @@ const ProductDetailOne = ({navigation}) => {
           const filteredData = id
             ? allServices.filter(service => service.uid_servicio === id)
             : allServices;
-          console.clear();
-          console.log(
-            '*------------------------------------------------------------------*',
-          );
-          console.log('Resultado filtrado:', filteredData);
-          console.log(
-            '*------------------------------------------------------------------*',
-          );
-
-          console.log(
-            '*------------------------------------------------------------------*',
-          );
-          console.log('Resultado filtrado: metodos', filteredData[0]?.taller.metodos_pago);
-          console.log(
-            '*------------------------------------------------------------------*',
-          );
 
           // Actualizar el estado con los datos filtrados
           setData(filteredData);
@@ -182,6 +149,38 @@ const ProductDetailOne = ({navigation}) => {
       console.error('Error al obtener el usuario:', e);
     }
   };
+
+  const getAdditionalServices = async (category, id) => {
+    try {
+        // Realizar la solicitud GET con parámetros
+        const response = await api.post('/home/getServicesByCategory', {
+                nombre_categoria: category,
+                id: id
+        });
+
+        console.log('-------------------- Response Data --------------------');
+        console.log('Esto es el response data:', response.data);
+        console.log('------------------------------------------------------');
+
+        // Verificar la respuesta del servidor
+        if (response.status === 200) {
+            const allServices = response.data;
+
+            console.log('*------------- Resultado Filtrado -------------*');
+            console.log('Resultado filtrado:', allServices);
+            console.log('*---------------------------------------------*');
+
+            // Actualizar el estado con los datos filtrados
+            setDataProductCategory(allServices);
+        } else {
+            console.warn('Respuesta no exitosa. Estado:', response.status);
+            setDataProductCategory([]);
+        }
+    } catch (error) {
+        console.error('Error en la solicitud de categoría:', error.message || error);
+    }
+};
+
 
   const PublicarService = async () => {
     console.log(DataService);
@@ -334,7 +333,7 @@ const ProductDetailOne = ({navigation}) => {
             </Text>
             <Text
               style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
-              {DataService?.categoria ? DataService?.categoria : DataService?.nombre_categoria}
+              {data[0]?.taller?.nombre}
             </Text>
             <Text
               style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
@@ -351,7 +350,8 @@ const ProductDetailOne = ({navigation}) => {
 
             <BrandData DataService={DataService} />
 
-            <IconProduct data={data[0]?.taller?.metodos_pago}/>
+            <IconProduct data={data[0]?.taller?.metodos_pago} />
+            <IconContact data={data[0]?.taller} />
 
             <InfoContainer title={'Garantía'} text={DataService.garantia} />
 
@@ -367,10 +367,10 @@ const ProductDetailOne = ({navigation}) => {
         <View style={[external.mh_20, external.mt_20]}>
           <H3HeadingCategory
             value={'Productos Similares'}
-            seeall={'Ver todos'}
+            // seeall={'Ver todos'}
           />
           <NewArrivalBigContainer
-            data={newArrivalBigData}
+            data={dataProductCategory}
             horizontal={true}
             width={windowWidth(205)}
           />
@@ -416,10 +416,10 @@ const ProductDetailOne = ({navigation}) => {
             ) : (
               <TouchableOpacity
                 onPress={() =>
-                  // Linking.openURL(
-                  //   'whatsapp://send?text=hello&phone=584241919356',
-                  // )
-                  handleOpenModal()
+                  Linking.openURL(
+                    `whatsapp://send?text=hello&phone=+58${data[0]?.taller.phone}`,
+                  )
+                  // handleOpenModal()
                 }
                 style={[external.fd_row, external.ai_center, external.pt_4]}>
                 <Cart />
