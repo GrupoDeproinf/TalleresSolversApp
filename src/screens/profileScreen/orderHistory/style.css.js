@@ -43,13 +43,15 @@ const styles = StyleSheet.create({
   titleContainer: {
     ...commonStyles.subtitleText,
     color: appColors.titleText,
-    width: '45%',
-    fontSize: fontSizes.FONT19,
+    width: '35%',
+    fontSize: fontSizes.FONT13,
     flexGrow: 0.54,
   },
   deliveryContainer: {
     ...commonStyles.subtitleText,
     color: appColors.titleText,
+    fontSize: fontSizes.FONT13,
+
     width: '57%',
   },
   buyAgain: {

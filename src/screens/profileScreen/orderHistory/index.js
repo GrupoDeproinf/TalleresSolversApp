@@ -12,6 +12,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import {windowHeight} from '../../../themes/appConstant';
 import api from '../../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import moment from 'moment';
 
 const OrderHistory = () => {
   const {
@@ -32,6 +34,8 @@ const OrderHistory = () => {
 
   const [dataService, setDataService] = useState();
   const [dataUser, setDataUser] = useState();
+
+  const navigate = useNavigation()
 
   const getDataServices = async () => {
     const jsonValue = await AsyncStorage.getItem('@userInfo');
@@ -96,7 +100,7 @@ const OrderHistory = () => {
               {flexDirection: viewRTLStyle},
             ]}>
             <Text
-              numberOfLines={1}
+              numberOfLines={2}
               style={[
                 styles.titleContainer,
                 {color: textColorStyle},
@@ -131,14 +135,14 @@ const OrderHistory = () => {
                 {textAlign: textRTLStyle},
               ]}>
               {/* {t('transData.deliverd')} */}
-              Fecha: {item.date}
+              Fecha: {moment(item.date).format('DD/MM/YYYY')}
             </Text>
             <View
               style={[
                 styles.orderContainer,
                 {borderTopEndRadius: isRTL ? windowHeight(9) : undefined},
               ]}>
-              <Text style={styles.buyAgain}>Comprar</Text>
+              <Text style={styles.buyAgain} onPress={() => (navigate.navigate('ProductDetailOne', {uid: item.uid_servicio}))}>Ver</Text>
             </View>
           </View>
         </View>

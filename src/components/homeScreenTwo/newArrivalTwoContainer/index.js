@@ -35,10 +35,17 @@ const NewArrivalBigContainer = ({
   } = useValues();
   const color = isDark ? appColors.blackBg : appColors.bgLayout;
   const navigation = useNavigation();
+
+  const goToDetail = item => {
+    console.log(item);
+
+    navigation.navigate('ProductDetailOne', {uid: item.uid_servicio});
+  }; 
+
   const renderItem = ({item}) => (
     <TouchableOpacity
       activeOpacity={0.9}
-      onPress={() => navigation.navigate('ProductDetailOne')}>
+      onPress={() => goToDetail(item)}>
       <LinearGradient
         start={{x: 0.0, y: 0.0}}
         end={{x: 0.0, y: 1.0}}
@@ -56,9 +63,7 @@ const NewArrivalBigContainer = ({
           <View style={[styles.imgContainer, {backgroundColor: color}]}>
             <Image style={styles.img} source={item.img} />
           </View>
-          <View style={styles.plusICon}>
-            <PlusIcon />
-          </View>
+          
           <View style={[external.ph_10, external.pt_10]}>
             <Text
               style={[
@@ -66,11 +71,11 @@ const NewArrivalBigContainer = ({
                 {color: textColorStyle},
                 {textAlign: textRTLStyle},
               ]}>
-              {t(item.title)}
+              {t(item.nombre_servicio)}
             </Text>
             <Text
               style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
-              {t(item.subtitle)}
+              {t(item.taller)}
             </Text>
             <View
               style={[
@@ -86,10 +91,10 @@ const NewArrivalBigContainer = ({
                     {textAlign: textRTLStyle},
                   ]}>
                   {currSymbol}
-                  {(currPrice * item.price).toFixed(2)}
+                  {(currPrice * item.precio).toFixed(2)}
                 </Text>
               </View>
-              <View
+              {/* <View
                 style={[
                   external.fd_row,
                   external.ai_center,
@@ -97,7 +102,7 @@ const NewArrivalBigContainer = ({
                 ]}>
                 <YellowStar />
                 <Text style={styles.ratingContainer}>{item.rating}</Text>
-              </View>
+              </View> */}
             </View>
           </View>
         </LinearGradient>
