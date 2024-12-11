@@ -9,6 +9,8 @@ const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
   const [location, setLocation] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
+  const [showbutton, setshowbutton] = useState(true);
+
   const mapStyle = [
     // Aquí puedes añadir tu estilo personalizado para el mapa
   ];
@@ -26,32 +28,48 @@ const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
         }
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        setshowbutton(true)
         console.log('Permiso de ubicación concedido');
         console.log(useThisCoo)
         console.log(initialRegion)
         if (!useThisCoo) {
           getCurrentLocation();
         }else {
+          
+          if (initialRegion.latitude != undefined && initialRegion.latitude != '' &&
+            initialRegion.longitude != undefined && initialRegion.longitude != ''
+          ) {
+            setLocation({
+              latitude:initialRegion.latitude,
+              longitude:initialRegion.longitude,
+              latitudeDelta: 0.015,
+              longitudeDelta: 0.0121,
+            });
+          } else {
+            getCurrentLocation();
+          }
+        }
+      } else {
+        console.log('Permiso de ubicación denegado');
+        setshowbutton(false)
+      }
+    } else {
+      if (!useThisCoo) {
+        getCurrentLocation();
+      } else {
+        if (initialRegion.latitude != undefined && initialRegion.latitude != '' &&
+          initialRegion.longitude != undefined && initialRegion.longitude != ''
+        ) {
           setLocation({
             latitude:initialRegion.latitude,
             longitude:initialRegion.longitude,
             latitudeDelta: 0.015,
             longitudeDelta: 0.0121,
           });
+        } else {
+          getCurrentLocation();
         }
-      } else {
-        console.log('Permiso de ubicación denegado');
-      }
-    } else {
-      if (!useThisCoo) {
-        getCurrentLocation();
-      } else {
-        setLocation({
-          latitude:initialRegion.latitude,
-          longitude:initialRegion.longitude,
-          latitudeDelta: 0.015,
-          longitudeDelta: 0.0121,
-        });
+
       }
     }
   };
@@ -90,28 +108,37 @@ const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity
-        style={[
-          stylesImage.button,
-          {
-            borderWidth: 1,
-            borderColor: '#2D3261',
-            borderStyle: 'dotted',
-            borderRadius: 5,
-            backgroundColor: '#FFF',
-            flexDirection: 'row',
-            alignItems: 'center',
-            padding: 10,
-            marginTop: 10,
-          },
-        ]}
-        onPress={() => setModalVisible(true)}
-      >
-        <Icons name="map-marker" size={15} color="#2D3261" />
-        <Text style={[stylesImage.buttonText, { marginLeft: 10, color: '#2D3261' }]}>
-          Ubicación
-        </Text>
-      </TouchableOpacity>
+
+      {
+        showbutton ? (
+          <TouchableOpacity
+            style={[
+              stylesImage.button,
+              {
+                borderWidth: 1,
+                borderColor: '#2D3261',
+                borderStyle: 'dotted',
+                borderRadius: 5,
+                backgroundColor: '#FFF',
+                flexDirection: 'row',
+                alignItems: 'center',
+                padding: 10,
+                marginTop: 10,
+                width:200
+              },
+            ]}
+            onPress={() => setModalVisible(true)}
+          >
+            <Icons name="map-marker" size={15} color="#2D3261" />
+            <Text style={[stylesImage.buttonText, { marginLeft: 10, color: '#2D3261' }]}>
+              Ubicación
+            </Text>
+          </TouchableOpacity>
+        ) : null
+      }
+
+
+
       <Modal
         animationType="slide"
         transparent={false}

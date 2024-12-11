@@ -737,6 +737,11 @@ const TallerProfileScreen = ({ navigation }) => {
               </View>
             </View>
 
+            <View style={[stylesMap.container, { marginTop: 5, marginBottom:15 }]}>
+            <MapComponent initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={true} 
+              returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
+            </View>
+
 
             <TextInputs
               title="Número Telefónico"
@@ -1075,12 +1080,6 @@ const TallerProfileScreen = ({ navigation }) => {
           {seguroError !== '' && (
             <Text style={styles.errorStyle}>{seguroError}</Text>
           )}
-
-
-          <View style={stylesMap.container}> 
-            <MapComponent initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={true} 
-            returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
-          </View>
 
         </ScrollView>
 

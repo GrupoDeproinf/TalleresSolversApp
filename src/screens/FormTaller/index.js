@@ -586,6 +586,16 @@ try{
             />
           </View>
 
+          {
+              lat != undefined && lat != '' &&
+              lng != undefined && lng != ''  ? (
+                <View style={[stylesMap.container, { marginTop: 5, marginBottom:15 }]}>
+                  <MapComponent initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={false} 
+                  returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
+                </View>
+              ) : null
+            }
+
           {/* Número Telefónico */}
           <View
             style={{
@@ -976,16 +986,6 @@ try{
               <Text style={styles.errorStyle}>{seguroError}</Text>
             )}
           </View>
-
-            {
-              lat != undefined && lat != '' &&
-              lng != undefined && lng != ''  ? (
-                <View style={stylesMap.container}> 
-                  <MapComponent initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={false} 
-                  returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
-                </View>
-              ) : null
-            }
 
         </View>
       </ScrollView>

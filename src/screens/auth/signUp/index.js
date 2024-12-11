@@ -439,6 +439,7 @@ const SignUp = ({ navigation }) => {
   };
 
   const GetCoordenadas = (location) => {
+    console.log(location)
     setlat(location.latitude)
     setlng(location.longitude)
   }
@@ -984,6 +985,14 @@ const SignUp = ({ navigation }) => {
               </View>
             </View>
 
+
+            <View style={[stylesMap.container, { marginTop: 5, marginBottom:15 }]}>
+              <MapComponent initialRegion={{ latitude: 37.7749, longitude: -122.4194, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={true} 
+              returnFunction = {GetCoordenadas} useThisCoo = {false}/> 
+            </View>
+
+          
+
             <TextInputs
               title="Número Telefónico"
               value={phone}
@@ -1133,11 +1142,6 @@ const SignUp = ({ navigation }) => {
                 <Key color={isConfTyping ? '#051E47' : appColors.subtitle} />
               }
             />
-          </View>
-
-          <View style={stylesMap.container}> 
-            <MapComponent initialRegion={{ latitude: 37.7749, longitude: -122.4194, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={true} 
-            returnFunction = {GetCoordenadas} useThisCoo = {false}/> 
           </View>
 
         </ScrollView>

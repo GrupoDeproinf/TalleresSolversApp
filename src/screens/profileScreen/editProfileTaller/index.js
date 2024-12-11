@@ -144,6 +144,8 @@ const TallerEditProfileScreen = ({ navigation }) => {
   const [lat, setlat] = useState('');
   const [lng, setlng] = useState('');
 
+  const [dataUserLogged, setdataUserLogged] = useState(null);
+
 
 
   const [estadosVenezuela, setEstadosVenezuela] = useState([
@@ -239,6 +241,9 @@ const TallerEditProfileScreen = ({ navigation }) => {
           const typeID = result.userData.rif.split('-');
           setcedula(typeID[1] || '');
           setSelectedPrefix(`${typeID[0]}-`);
+
+          setdataUserLogged(result.userData)
+
         } else {
           console.error('Error en la solicitud:', response.statusText);
         }
@@ -304,9 +309,9 @@ const TallerEditProfileScreen = ({ navigation }) => {
         nombre: Nombre == undefined ? '' : Nombre,
         rif: cedula == undefined ? '' : selectedPrefix + '' + cedula,
         phone: phone == undefined ? '' : phone,
-        typeUser: 'Taller',
+        // typeUser: 'Taller',
         email: email == undefined ? '' : email,
-        status: 'En espera por aprobación',
+        // status: 'En espera por aprobación',
         Direccion: Direccion == undefined ? '' : Direccion,
         RegComercial: RegComercial == undefined ? '' : RegComercial,
         Caracteristicas: Caracteristicas == undefined ? '' : Caracteristicas,
@@ -340,12 +345,6 @@ const TallerEditProfileScreen = ({ navigation }) => {
         // Verificar la respuesta del servidor
         if (response.status === 201) {
           const result = response.data;
-
-          try {
-            const jsonValue = JSON.stringify(infoUserCreated);
-            await AsyncStorage.setItem('@userInfo', jsonValue);
-          } catch (e) {
-          }
 
           showToast('Actualizado correctamente');
           setdisabledInput(false);
@@ -737,6 +736,17 @@ const TallerEditProfileScreen = ({ navigation }) => {
             </View>
 
 
+              {
+                dataUserLogged != undefined ? (
+                  <View style={[stylesMap.container, { marginTop: 5, marginBottom:15 }]}>
+                    <MapComponent initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={true} 
+                    returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
+                  </View>
+                ) : null
+              }
+
+
+
             <TextInputs
               title="Número Telefónico"
               value={phone}
@@ -1074,17 +1084,6 @@ const TallerEditProfileScreen = ({ navigation }) => {
           {seguroError !== '' && (
             <Text style={styles.errorStyle}>{seguroError}</Text>
           )}
-
-          {
-             lat != undefined && lat != '' &&
-             lng != undefined && lng != ''  ? (
-              <View style={stylesMap.container}> 
-                <MapComponent initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={true} 
-                returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
-              </View>
-
-             ) : null
-          }
 
         </ScrollView>
 
