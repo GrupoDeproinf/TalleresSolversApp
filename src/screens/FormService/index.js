@@ -282,11 +282,26 @@ const FormTaller = () => {
       if (result.message === 'Subcategorías encontradas') {
 
         if (result.subcategories.length > 0) {
+          console.log("aqui****************************************************** ", loadData)
           if (loadData) {
+            console.log("entras aqui ?")
             setSubcaracteristicaSelected(result.subcategories[0].id)
           }
+
+          const inicial = {
+              id: '',
+              nombre: 'Seleccione una subcategoría',
+              descripcion: 'Seleccione una subcategoría',
+              estatus: true,
+            }
+          
+          console.log(result.subcategories)
+
+          result.subcategories.unshift(inicial)
         }
+        
         setSubcaracteristicas(result.subcategories);
+
       } else {
       }
     } catch (error) {
@@ -649,7 +664,7 @@ const FormTaller = () => {
             <Picker
               selectedValue={caracteristicaSelected}
               onValueChange={itemValue => {
-                getSubcaracteristicas(itemValue);
+                getSubcaracteristicas(itemValue, false);
                 setcaracteristicaSelected(itemValue);
               }}
               style={{
@@ -687,6 +702,7 @@ const FormTaller = () => {
             <Picker
               selectedValue={SubcaracteristicaSelected}
               onValueChange={itemValue => {
+                console.log("Estoy en el select")
                 setSubcaracteristicaSelected(itemValue);
               }}
               style={{
