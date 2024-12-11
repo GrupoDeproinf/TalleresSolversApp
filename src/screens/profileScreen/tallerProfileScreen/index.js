@@ -39,6 +39,8 @@ import { Buffer } from 'buffer';
 
 import notImageFound from '../../../assets/noimageold.jpeg';
 
+import MapComponent from '../../map'
+
 const TallerProfileScreen = ({ navigation }) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
   const [emailValue, setEmailValue] = useState(smithaWilliamsMail);
@@ -139,6 +141,9 @@ const TallerProfileScreen = ({ navigation }) => {
   
   const [imageFirts, setimageFirts] = useState("");
 
+  const [lat, setlat] = useState('');
+  const [lng, setlng] = useState('');
+
 
 
   const [estadosVenezuela, setEstadosVenezuela] = useState([
@@ -218,6 +223,11 @@ const TallerProfileScreen = ({ navigation }) => {
 
           setestadoSelected(result.userData.estado)
 
+          if (result.userData.ubicacion != undefined){
+            setlat(result.userData.ubicacion.lat)
+            setlng(result.userData.ubicacion.lng)
+          }
+
           const updatedMetodosPago = metodosPago.map(method => ({
             ...method,
             checked: result.userData.metodos_pago[method.value] || false,
@@ -278,9 +288,6 @@ const TallerProfileScreen = ({ navigation }) => {
 
     setdisabledInput(true);
 
-
-
-
     if (
       isEmailValid == true &&
       isPhoneValid == true &&
@@ -315,7 +322,11 @@ const TallerProfileScreen = ({ navigation }) => {
         metodos_pago: newFormatMP,
         estado: estadoSelected,
         base64: base64 == null || base64 == undefined || base64 == ''  ? "" : base64,
-        imageTodelete: imageFirts != ""  && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == ''  ? "" : getImageName(imageFirts) : "" 
+        imageTodelete: imageFirts != ""  && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == ''  ? "" : getImageName(imageFirts) : "",
+        ubicacion: {
+          lat:lat,
+          lng:lng
+        }
       };
 
       try {
@@ -444,6 +455,11 @@ const TallerProfileScreen = ({ navigation }) => {
       console.error('Error logging out:', error);
     }
   };
+
+  const GetCoordenadas = (location) => {
+    setlat(location.latitude)
+    setlng(location.longitude)
+  }
 
   if (showForm) {
     return (
@@ -1059,6 +1075,13 @@ const TallerProfileScreen = ({ navigation }) => {
           {seguroError !== '' && (
             <Text style={styles.errorStyle}>{seguroError}</Text>
           )}
+
+
+          <View style={stylesMap.container}> 
+            <MapComponent initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={true} 
+            returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
+          </View>
+
         </ScrollView>
 
         <View>
@@ -1156,5 +1179,8 @@ const TallerProfileScreen = ({ navigation }) => {
     );
   }
 };
+
+
+const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'center', alignItems: 'center', },});
 
 export default TallerProfileScreen;

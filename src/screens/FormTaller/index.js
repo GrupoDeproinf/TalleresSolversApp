@@ -37,6 +37,8 @@ import NavigationButton from '../../commonComponents/navigationButton';
 import api from '../../../axiosInstance';
 
 import notImageFound from '../../assets/noimageold.jpeg';
+import MapComponent from '../map'
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FormTaller = () => {
   const [NameTaller, setNameTaller] = useState('');
@@ -139,6 +141,9 @@ const FormTaller = () => {
   const [whats, setwhats] = useState(0);
   const [whatsError, setwhatsError] = useState('');
 
+  const [lat, setlat] = useState('');
+  const [lng, setlng] = useState('');
+
   const [metodosPago, setMetodosPago] = useState([
     {label: 'Efectivo', value: 'efectivo', checked: false},
     {label: 'Pago Móvil', value: 'pagoMovil', checked: false},
@@ -206,6 +211,12 @@ const FormTaller = () => {
 
         setwhats(result.userData.whatsapp);
 
+        console.log("aquiiiiiiiiiiiiiiiiiiiiiiiii1234", result.userData.ubicacion)
+        if (result.userData.ubicacion != undefined){
+          setlat(result.userData.ubicacion.lat)
+          setlng(result.userData.ubicacion.lng)
+        }
+
         const updatedMetodosPago = metodosPago.map(method => ({
           ...method,
           checked: result.userData.metodos_pago[method.value] || false,
@@ -247,19 +258,29 @@ const FormTaller = () => {
   const onConfirm = async () => {
     console.log(tipoAccion);
     console.log(uidTaller);
+try{
+    const jsonValue = await AsyncStorage.getItem('@userInfo');
+    const userLogged = jsonValue != null ? JSON.parse(jsonValue) : null;
+
+    console.log(userLogged.nombre)
+    console.log(userLogged.uid)
+  
     if (tipoAccion == 'Aprobar') {
       console.log('Aprobar');
-
+  
+  
       try {
         // Hacer la solicitud POST utilizando Axios
         const response = await api.post('/usuarios/actualizarStatusUsuario', {
           uid: uidTaller,
           nuevoStatus: 'Aprobado',
+          certificador_nombre: userLogged.nombre,
+          certificador_key: userLogged.uid,
         });
-
+  
         // Verificar la respuesta del servidor
         const result = response.data;
-
+  
         if (
           result.message ===
           'El estado del usuario ha sido actualizado exitosamente'
@@ -289,11 +310,13 @@ const FormTaller = () => {
         const response = await api.post('/usuarios/actualizarStatusUsuario', {
           uid: uidTaller,
           nuevoStatus: 'Rechazado',
+          certificador_nombre: userLogged.nombre,
+          certificado_key: userLogged.uid,
         });
-
+  
         // Verificar la respuesta del servidor
         const result = response.data;
-
+  
         if (
           result.message ===
           'El estado del usuario ha sido actualizado exitosamente'
@@ -318,11 +341,20 @@ const FormTaller = () => {
         navigation.goBack();
       }
     }
+  } catch (e) {
+    // error reading value
+    console.log(e)
+  }
+
   };
 
   const showToast = text => {
     ToastAndroid.show(text, ToastAndroid.SHORT);
   };
+
+  const GetCoordenadas = () =>{
+
+  }
 
   return (
     <View
@@ -944,6 +976,17 @@ const FormTaller = () => {
               <Text style={styles.errorStyle}>{seguroError}</Text>
             )}
           </View>
+
+            {
+              lat != undefined && lat != '' &&
+              lng != undefined && lng != ''  ? (
+                <View style={stylesMap.container}> 
+                  <MapComponent initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={false} 
+                  returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
+                </View>
+              ) : null
+            }
+
         </View>
       </ScrollView>
 
@@ -1002,6 +1045,8 @@ const FormTaller = () => {
     </View>
   );
 };
+
+const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'center', alignItems: 'center', },});
 
 const stylesImage = StyleSheet.create({
   button: {
