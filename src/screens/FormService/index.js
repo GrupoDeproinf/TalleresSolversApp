@@ -349,17 +349,20 @@ const FormTaller = () => {
 
         // setimagePerfil(result.service.service_image || '')
         // setimageFirts(result.service.service_image || '')
-
-        if (result.service.service_image?.length > 0){
-          const dataFinal = []
-          result.service.service_image.forEach(x => {
+        
+        if (result.service.service_image?.length > 0) {
+          const dataFinal = [];
+        
+          await Promise.all(result.service.service_image.map(async (x) => {
+            const base64 = await convertUrlToBase64(x);
             const data = {
-              uri:x,
-              base64:""
-            }
-            dataFinal.push(data)
-          });
-          setImages(dataFinal)
+              uri: x,
+              base64: base64,
+            };
+            dataFinal.push(data);
+          }));
+        
+          setImages(dataFinal);
         }
       } 
     } catch (error) {
@@ -506,6 +509,21 @@ const FormTaller = () => {
     }
   };
 
+
+  const convertUrlToBase64 = async (imageUrl) => {
+    const response = await fetch(imageUrl);
+    const blob = await response.blob();
+  
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        resolve(reader.result.split(',')[1]); // Obtiene solo el base64 sin el prefijo
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
   const getDataServiceActivos = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
@@ -567,9 +585,9 @@ const FormTaller = () => {
             base64: asset.base64,
           }));
 
-          if (uidService != '') {
-            setIsEdit(true)
-          }
+          // if (uidService != '') {
+          //   setIsEdit(true)
+          // }
 
           setImages([...newImages, ...images]); // Añadir nuevas imágenes al inicio de la lista
         }
