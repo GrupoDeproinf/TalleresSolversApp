@@ -9,6 +9,7 @@ import {
   Image,
   ToastAndroid,
   Modal,
+  ActivityIndicator
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import ErrorContainer from '../../commonComponents/errorContainer';
@@ -319,6 +320,8 @@ const FormTaller = () => {
     }
   };
 
+  const [loading, setLoading] = useState(false);
+
   const getData = async uid => {
     try {
       // Hacer la solicitud POST utilizando Axios
@@ -349,10 +352,12 @@ const FormTaller = () => {
 
         // setimagePerfil(result.service.service_image || '')
         // setimageFirts(result.service.service_image || '')
-        
+
         if (result.service.service_image?.length > 0) {
+          setLoading(true)
+
           const dataFinal = [];
-        
+
           await Promise.all(result.service.service_image.map(async (x) => {
             const base64 = await convertUrlToBase64(x);
             const data = {
@@ -361,12 +366,14 @@ const FormTaller = () => {
             };
             dataFinal.push(data);
           }));
-          
+
           console.log("ya esta aqui la data")
 
           setImages(dataFinal);
+          setLoading(false)
+
         }
-      } 
+      }
     } catch (error) {
       if (error.response) {
         console.error('Error en la solicitud:', error.response.statusText);
@@ -524,7 +531,7 @@ const FormTaller = () => {
       throw error;
     }
   };
-  
+
 
 
   const getDataServiceActivos = async () => {
@@ -599,10 +606,6 @@ const FormTaller = () => {
   };
 
   const removeImage = (index) => {
-
-    console.log(index)
-    // Agregar logica para eliminar de una vez la imagen en caso de que se este editando y se elimine una 
-
     const newImages = images.filter((_, i) => i !== index);
     setImages(newImages);
   };
@@ -672,9 +675,14 @@ const FormTaller = () => {
                 Agregar imagen
               </Text>
             </View>
-            {images.length === 0 ? null : (
+            {images.length === 0 && loading ? (
+              <View style={[styles.loadingContainer, { marginLeft: 50 }]}>
+              <ActivityIndicator size="large" color="#2D3261" />
+            </View>
+            
+            ) : (
               images.map((image, index) => (
-                <View key={index} style={{ position: 'relative', marginRight: -30 }}>
+                <View key={index} style={{ position: 'relative', marginRight: 5 }}>
                   <ImageBackground
                     resizeMode="contain"
                     style={{ height: 130, width: 130 }} // Ajusta los valores según tus necesidades
@@ -698,6 +706,7 @@ const FormTaller = () => {
                 </View>
               ))
             )}
+
           </View>
         </ScrollView>
 
