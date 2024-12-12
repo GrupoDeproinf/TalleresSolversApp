@@ -361,7 +361,9 @@ const FormTaller = () => {
             };
             dataFinal.push(data);
           }));
-        
+          
+          console.log("ya esta aqui la data")
+
           setImages(dataFinal);
         }
       } 
@@ -511,18 +513,19 @@ const FormTaller = () => {
 
 
   const convertUrlToBase64 = async (imageUrl) => {
-    const response = await fetch(imageUrl);
-    const blob = await response.blob();
+    try {
+      const response = await api.get(imageUrl, {
+        responseType: 'arraybuffer'
+      });
+      const base64 = Buffer.from(response.data, 'binary').toString('base64');
+      return base64;
+    } catch (error) {
+      console.error('Error convirtiendo la URL a base64:', error);
+      throw error;
+    }
+  };
   
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        resolve(reader.result.split(',')[1]); // Obtiene solo el base64 sin el prefijo
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
+
 
   const getDataServiceActivos = async () => {
     try {
