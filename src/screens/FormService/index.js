@@ -10,7 +10,7 @@ import {
   ToastAndroid,
   Modal,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import ErrorContainer from '../../commonComponents/errorContainer';
 import {
   addNow,
@@ -19,23 +19,23 @@ import {
   whishlistEmptyDesc,
 } from '../../constant';
 import images from '../../utils/images';
-import {commonStyles} from '../../style/commonStyle.css';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {useValues} from '../../../App';
+import { commonStyles } from '../../style/commonStyle.css';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useValues } from '../../../App';
 import HeaderContainer from '../../commonComponents/headingContainer';
 import CheckBox from 'react-native-check-box';
 
-import {external} from '../../style/external.css';
-import {Call, Edit, Profile, Key, BackLeft} from '../../utils/icon';
+import { external } from '../../style/external.css';
+import { Call, Edit, Profile, Key, BackLeft } from '../../utils/icon';
 import styles from './style.css';
 import TextInputs from '../../commonComponents/textInputs';
-import {Email} from '../../assets/icons/email';
+import { Email } from '../../assets/icons/email';
 import appColors from '../../themes/appColors';
-import {RadioButton, Button} from 'react-native-paper';
-import {windowHeight} from '../../themes/appConstant';
+import { RadioButton, Button } from 'react-native-paper';
+import { windowHeight } from '../../themes/appConstant';
 import NavigationButton from '../../commonComponents/navigationButton';
 import api from '../../../axiosInstance';
-import {Picker} from '@react-native-picker/picker';
+import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import Icons from 'react-native-vector-icons/FontAwesome';
@@ -164,19 +164,25 @@ const FormTaller = () => {
 
   const [imagePerfil, setimagePerfil] = useState("");
   const [base64, setBase64] = useState(null);
-  
+
   const [imageFirts, setimageFirts] = useState("");
+
+  const [images, setImages] = useState([]); // Lista de imágenes
+
+  const [IsEdit, setIsEdit] = useState(false);
+
+
 
 
   const stackNavigation = () => {
     navigation.reset({
       index: 0,
-      routes: [{name: 'MyTabs'}],
+      routes: [{ name: 'MyTabs' }],
     });
   };
 
   useEffect(() => {
-    const {uid} = route.params;
+    const { uid } = route.params;
     setModalVisible(false);
     getUserActive();
     getDataServiceActivos();
@@ -211,7 +217,7 @@ const FormTaller = () => {
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-     
+
       setuserStorage(user);
     } catch (e) {
       // error reading value
@@ -289,17 +295,17 @@ const FormTaller = () => {
           }
 
           const inicial = {
-              id: '',
-              nombre: 'Seleccione una subcategoría',
-              descripcion: 'Seleccione una subcategoría',
-              estatus: true,
-            }
-          
+            id: '',
+            nombre: 'Seleccione una subcategoría',
+            descripcion: 'Seleccione una subcategoría',
+            estatus: true,
+          }
+
           console.log(result.subcategories)
 
           result.subcategories.unshift(inicial)
         }
-        
+
         setSubcaracteristicas(result.subcategories);
 
       } else {
@@ -341,11 +347,21 @@ const FormTaller = () => {
 
         setpublicOrigin(result.service.estatus);
 
-        setimagePerfil(result.service.service_image || '')
-        setimageFirts(result.service.service_image || '')
+        // setimagePerfil(result.service.service_image || '')
+        // setimageFirts(result.service.service_image || '')
 
-      } else {
-      }
+        if (result.service.service_image?.length > 0){
+          const dataFinal = []
+          result.service.service_image.forEach(x => {
+            const data = {
+              uri:x,
+              base64:""
+            }
+            dataFinal.push(data)
+          });
+          setImages(dataFinal)
+        }
+      } 
     } catch (error) {
       if (error.response) {
         console.error('Error en la solicitud:', error.response.statusText);
@@ -393,7 +409,7 @@ const FormTaller = () => {
   const onCancel2 = () => {
     setModalVisible2(false);
   };
-  
+
   const getImageName = (url) => url.split('/').pop();
 
   const onConfirm = async () => {
@@ -424,6 +440,12 @@ const FormTaller = () => {
         Subcaracteristicas.find(c => c.id === SubcaracteristicaSelected)
           ?.nombre || '';
 
+      let newImages = [];
+      if (images.length > 0) {
+        newImages = images.map(x => x.base64);
+      }
+
+
       const dataFinal = {
         id: uidService == undefined || uidService == '' ? '' : uidService,
         precio: precio,
@@ -441,9 +463,11 @@ const FormTaller = () => {
         garantia: Garantia,
         estatus: checked == 'si' ? true : false,
         publicOrigin: publicOrigin,
-        base64:base64,
-        imageTodelete: imageFirts != "" ? getImageName(imageFirts) : ""
+        images: newImages.length == 0 ? "" : newImages,
+        edit: IsEdit
       };
+
+      // console.log(dataFinal)
 
       try {
         // Hacer la solicitud POST utilizando Axios
@@ -496,7 +520,7 @@ const FormTaller = () => {
         const result = response.data;
 
         if (result.message === 'Usuario encontrado') {
-          
+
           setcantServices(
             result.userData.subscripcion_actual.cantidad_servicios,
           );
@@ -526,26 +550,50 @@ const FormTaller = () => {
 
 
   const selectImage = () => {
-    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
-      if (response.didCancel) {
-      } else if (response.error) {
-      } else {
-        const source = { uri: response.assets[0].uri };
-        const base64Data = response.assets[0].base64;
-        setimagePerfil(source.uri);
-        setBase64(base64Data);
-      }
-    });
+    launchImageLibrary(
+      {
+        mediaType: 'photo',
+        includeBase64: true,
+        selectionLimit: 0, // 0 para permitir seleccionar múltiples imágenes
+      },
+      response => {
+        if (response.didCancel) {
+          // Manejar cancelación
+        } else if (response.error) {
+          // Manejar error
+        } else {
+          const newImages = response.assets.map(asset => ({
+            uri: asset.uri,
+            base64: asset.base64,
+          }));
+
+          if (uidService != '') {
+            setIsEdit(true)
+          }
+
+          setImages([...newImages, ...images]); // Añadir nuevas imágenes al inicio de la lista
+        }
+      },
+    );
   };
 
+  const removeImage = (index) => {
+
+    console.log(index)
+    // Agregar logica para eliminar de una vez la imagen en caso de que se este editando y se elimine una 
+
+    const newImages = images.filter((_, i) => i !== index);
+    setImages(newImages);
+  };
 
   return (
     <View
       style={[
         commonStyles.commonContainer,
         external.ph_20,
-        {backgroundColor: bgFullStyle},
-      ]}>
+        { backgroundColor: bgFullStyle },
+      ]}
+    >
       {/* <HeaderContainer value="Perfil" /> */}
 
       <View
@@ -553,15 +601,16 @@ const FormTaller = () => {
           external.fd_row,
           external.ai_center,
           external.pt_15,
-          {justifyContent: 'center'}, // Cambiado a 'center' para centrar el contenido
-          {flexDirection: viewRTLStyle},
-        ]}>
+          { justifyContent: 'center' }, // Cambiado a 'center' para centrar el contenido
+          { flexDirection: viewRTLStyle },
+        ]}
+      >
         {/* Botón de retroceso */}
         <TouchableOpacity
           onPress={() => navigation.goBack('')}
-          style={{position: 'absolute', left: 0}} // Posiciona el botón de retroceso en la esquina izquierda
+          style={{ position: 'absolute', left: 0 }} // Posiciona el botón de retroceso en la esquina izquierda
         >
-          <View style={{transform: [{scale: imageRTLStyle}]}}>
+          <View style={{ transform: [{ scale: imageRTLStyle }] }}>
             <BackLeft />
           </View>
         </TouchableOpacity>
@@ -571,86 +620,80 @@ const FormTaller = () => {
           style={[
             commonStyles.hederH2,
             external.as_center,
-            {color: textColorStyle},
-          ]}>
+            { color: textColorStyle },
+          ]}
+        >
           {NameServicio}
         </Text>
       </View>
 
-        
-      <View style={[external.as_center]}>
+      <View style={[external.as_center, { flexDirection: 'row' }]}>
+        <ScrollView horizontal={true} style={{ width: '100%', maxHeight: 150 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
+            <View style={{ alignItems: 'center', marginRight: 10 }}>
 
-        {imagePerfil == null || imagePerfil == "" ? (
-          <TouchableOpacity onPress={selectImage}>
-          <Image
-            resizeMode="contain"
-            style={[styles.imgStyle, { height: 130, width: 130 }]}
-            source={notImageFound} // Reemplaza esto con la variable que contiene tu imagen
-          />
-          <View
-            style={[
-              styles.editIconStyle,
-              { backgroundColor: '#F3F5FB' },
-              { borderRadius: 100 },
-              { position: 'absolute', top: 20, right: 0, margin: 0 },
-            ]}
-          >
-            <Edit />
-          </View>
-        </TouchableOpacity>
 
-        ) : (
-          <TouchableOpacity onPress={selectImage}>
-            <ImageBackground
-              resizeMode="contain"
-              style={[styles.imgStyle, { height: 150, width: 150 }]} // Ajusta los valores según tus necesidades
-              source={{ uri: imagePerfil }} // Cambia esto a tu enlace de imagen
-            >
-              <View
-                style={[
-                  styles.editIconStyle,
-                  {
-                    backgroundColor: '#F3F5FB',
-                    borderRadius: 100,
-                    position: 'absolute', // Posicionar absolutamente
-                    top: 0, // Ajustar al fondo
-                    right: 20, // Ajustar a la derecha
-                    margin: 0 // Agregar margen si es necesario
-                  },
-                ]}
+              <TouchableOpacity
+                onPress={selectImage}
+                style={{
+                  height: 60,
+                  width: 60,
+                  borderColor: '#2D3261',
+                  borderWidth: 2,
+                  borderRadius: 10,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                }}
               >
-                <Edit />
-              </View>
-            </ImageBackground>
-          </TouchableOpacity>
-        )}
-        </View>
-
-
-      {/* <View style={[external.as_center]}>
-        <ImageBackground
-          resizeMode="contain"
-          style={styles.imgStyle}
-          source={images.user}>
-          <View
-            style={[
-              styles.editIconStyle,
-              {backgroundColor: '#F3F5FB'},
-              {borderRadius: 100},
-            ]}>
-            <Edit />
+                <Icons name="plus" size={30} color="#2D3261" />
+              </TouchableOpacity>
+              <Text style={{ marginBottom: 5, color: '#2D3261', fontSize: 13 }}>
+                Agregar imagen
+              </Text>
+            </View>
+            {images.length === 0 ? null : (
+              images.map((image, index) => (
+                <View key={index} style={{ position: 'relative', marginRight: -30 }}>
+                  <ImageBackground
+                    resizeMode="contain"
+                    style={{ height: 130, width: 130 }} // Ajusta los valores según tus necesidades
+                    source={{ uri: image.uri }} // Cambia esto a tu enlace de imagen
+                  >
+                    <TouchableOpacity
+                      onPress={() => removeImage(index)}
+                      style={{
+                        position: 'absolute',
+                        top: 0, // Posiciona en la parte superior
+                        left: '50%', // Centra horizontalmente
+                        transform: [{ translateX: -15 }], // Ajusta según sea necesario para centrar el ícono
+                        backgroundColor: '#2D3261',
+                        borderRadius: 50,
+                        padding: 5,
+                      }}
+                    >
+                      <Icons name="times" size={15} color="#fff" />
+                    </TouchableOpacity>
+                  </ImageBackground>
+                </View>
+              ))
+            )}
           </View>
-        </ImageBackground>
-      </View> */}
+        </ScrollView>
 
-      <ScrollView style={{marginBottom: 15}}>
-        <View style={{padding: 10}}>
+
+      </View>
+
+
+
+
+      <ScrollView style={{ marginBottom: 15, marginTop: 15 }}>
+        <View style={{ padding: 10 }}>
           {/* Caracteristicas */}
           <Text
             style={[
               styles.headingContainer,
-              {color: textColorStyle},
-              {textAlign: textRTLStyle},
+              { color: textColorStyle },
+              { textAlign: textRTLStyle },
             ]}>
             Caracteristicas
           </Text>
@@ -687,8 +730,8 @@ const FormTaller = () => {
           <Text
             style={[
               styles.headingContainer,
-              {color: textColorStyle},
-              {textAlign: textRTLStyle},
+              { color: textColorStyle },
+              { textAlign: textRTLStyle },
             ]}>
             Subcaracteristicas
           </Text>
@@ -736,7 +779,7 @@ const FormTaller = () => {
                 setNombre(text);
                 setNombreError(text.trim() === '' ? 'Nombre es requerido' : '');
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
               icon={<Icons name="gears" size={20} color="#9BA6B8" />}
             />
           </View>
@@ -760,7 +803,7 @@ const FormTaller = () => {
                   numericText.trim() === '' ? 'Precio es requerido' : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
               icon={<Icons name="money" size={20} color="#9BA6B8" />}
               keyboardType="numeric"
             />
@@ -789,7 +832,7 @@ const FormTaller = () => {
                   text.trim() === '' ? 'Descripción es requerida' : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
               icon={<Icons name="file-text" size={20} color="#9BA6B8" />}
             />
           </View>
@@ -817,7 +860,7 @@ const FormTaller = () => {
                   text.trim() === '' ? 'Garantía es requerida' : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
               icon={<Icons name="file-text-o" size={20} color="#9BA6B8" />}
             />
           </View>
@@ -850,20 +893,20 @@ const FormTaller = () => {
                 status={checked === 'si' ? 'checked' : 'unchecked'}
                 onPress={() => setChecked('si')}
               />
-              <Text style={{color: 'black'}}>Sí</Text>
+              <Text style={{ color: 'black' }}>Sí</Text>
 
               <RadioButton
                 value="no"
                 status={checked === 'no' ? 'checked' : 'unchecked'}
                 onPress={() => setChecked('no')}
               />
-              <Text style={{color: 'black'}}>No</Text>
+              <Text style={{ color: 'black' }}>No</Text>
             </View>
           </View>
         </View>
       </ScrollView>
 
-      <View style={{marginBottom: 15}}>
+      <View style={{ marginBottom: 15 }}>
         <View
           style={{
             backgroundColor: buttonColor,
@@ -928,7 +971,16 @@ const FormTaller = () => {
           </View>
         </View>
       </Modal>
+
+
+
     </View>
+
+
+
+
+
+
   );
 };
 
