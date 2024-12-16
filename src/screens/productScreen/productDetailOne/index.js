@@ -317,7 +317,7 @@ const ProductDetailOne = ({navigation}) => {
         contentContainerStyle={[external.Pb_80]}
         style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
         <View>
-          <SliderDetails />
+          <SliderDetails data={DataService.service_image}/>
           <View style={[external.mh_20]}>
             <Text
               style={[

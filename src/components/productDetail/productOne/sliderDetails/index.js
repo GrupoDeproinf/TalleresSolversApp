@@ -13,7 +13,7 @@ import {Search} from '../../../../assets/icons/search';
 import {windowHeight} from '../../../../themes/appConstant';
 import {useNavigation} from '@react-navigation/native';
 
-const SliderDetails = () => {
+const SliderDetails = (data) => {
   const [selected, setSelected] = useState(0);
   const [productImage, setProductImage] = useState(images.productImage);
   const {isDark, textColorStyle, iconColorStyle} = useValues();
@@ -92,7 +92,7 @@ const SliderDetails = () => {
 
       <FlatList
         renderItem={renderItem}
-        data={sliderData}
+        data={data}
         horizontal
         style={[external.as_center, {marginTop: windowHeight(40)}]}
         // eslint-disable-next-line react/no-unstable-nested-components
