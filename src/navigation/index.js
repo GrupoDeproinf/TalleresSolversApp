@@ -45,7 +45,7 @@ import Planscreen from '../screens/profileScreen/planes';
 import ReportarPago from '../screens/ReportarPago';
 
 import ServiciosContainer from '../screens/Servicios'
-import PlanesContainer from '../screens/Planes';
+import PlanesContainer from '../screens/PlanesTaller';
 
 import TallerEditProfileScreen from '../screens/profileScreen/editProfileTaller';
 

@@ -19,6 +19,7 @@
     "@react-navigation/native": "^6.1.9",
     "@react-navigation/native-stack": "^6.9.17",
     "axios": "^1.7.7",
+    "datejs": "^1.0.0-rc3",
     "i": "^0.3.7",
     "i18next": "^23.10.1",
     "install": "^0.13.0",
