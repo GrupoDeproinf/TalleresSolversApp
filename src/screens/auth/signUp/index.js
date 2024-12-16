@@ -89,6 +89,9 @@ const SignUp = ({ navigation }) => {
   const [whats, setwhats] = useState(0);
   const [whatsError, setwhatsError] = useState('');
 
+  const [lat, setlat] = useState('');
+  const [lng, setlng] = useState('');
+
   const [metodosPago, setMetodosPago] = useState([
     { label: 'Efectivo', value: 'efectivo', checked: false },
     { label: 'Pago Móvil', value: 'pagoMovil', checked: false },
@@ -302,7 +305,9 @@ const SignUp = ({ navigation }) => {
           whats: whats,
           metodos_pago: newFormatMP,
           estado: estadoSelected,
-          base64: base64
+          base64: base64,
+          lat:lat,
+          lng:lng
         };
 
         console.log(infoUserCreated);
@@ -432,6 +437,12 @@ const SignUp = ({ navigation }) => {
     setImageUri(null);
     setBase64(null);
   };
+
+  const GetCoordenadas = (location) => {
+    console.log(location)
+    setlat(location.latitude)
+    setlng(location.longitude)
+  }
 
   return (
     <View
@@ -974,6 +985,14 @@ const SignUp = ({ navigation }) => {
               </View>
             </View>
 
+
+            <View style={[stylesMap.container, { marginTop: 5, marginBottom:15 }]}>
+              <MapComponent initialRegion={{ latitude: 37.7749, longitude: -122.4194, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={true} 
+              returnFunction = {GetCoordenadas} useThisCoo = {false}/> 
+            </View>
+
+          
+
             <TextInputs
               title="Número Telefónico"
               value={phone}
@@ -1123,10 +1142,6 @@ const SignUp = ({ navigation }) => {
                 <Key color={isConfTyping ? '#051E47' : appColors.subtitle} />
               }
             />
-          </View>
-
-          <View style={stylesMap.container}> 
-            <MapComponent initialRegion={{ latitude: 37.7749, longitude: -122.4194, latitudeDelta: 0.015, longitudeDelta: 0.015 }} /> 
           </View>
 
         </ScrollView>

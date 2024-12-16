@@ -104,7 +104,7 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
           {item.service_image == null ? (
             <Image style={styles.image} source={notImageFound} />
           ) : (
-            <Image style={styles.image} source={{uri:item.service_image}} />
+            <Image style={styles.image} source={{uri:item.service_image[0]}} />
           )}
         </View>
       </View>
