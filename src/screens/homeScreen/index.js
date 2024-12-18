@@ -1,5 +1,5 @@
 import {ScrollView} from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import HeaderContainer from '../../components/homeScreen/headerContainer';
 import SearchContainer from '../../components/homeScreen/searchContainer';
 import BannerContainer from '../../components/homeScreen/bannerContainer';
@@ -21,7 +21,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import ShowProductsContainer from '../../components/homeScreen/showProducts';
 
 const HomeScreen = () => {
-
   const {bgFullStyle, t} = useValues();
   const navigation = useNavigation('');
   const [data, setData] = useState();
@@ -31,31 +30,28 @@ const HomeScreen = () => {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-      console.log("Userrrr1234444455555589789", user)
+      console.log('Userrrr1234444455555589789', user);
 
+      try {
+        // Hacer la solicitud GET utilizando Axios
+        const response = await api.get('/home/getServices');
 
-        try {
-          // Hacer la solicitud GET utilizando Axios
-          const response = await api.get('/home/getServices');
+        console.log('Esto es el response', response);
 
-          console.log("Esto es el response",response)
+        // Verificar la respuesta del servidor
+        if (response.status === 200) {
+          const result = response.data;
+          console.log('usuarios de resultados', result); // Aquí puedes manejar la respuesta
 
-          // Verificar la respuesta del servidor
-          if (response.status === 200) {
-              const result = response.data;
-              console.log("usuarios de resultados", result); // Aquí puedes manejar la respuesta
-
-              setData(result);
-          } else {
-            setData([]);
-          }
+          setData(result);
+        } else {
+          setData([]);
+        }
       } catch (error) {
-          console.error(error);
+        console.error(error);
       }
-
-
     } catch (e) {
-      console.error(error)
+      console.error(error);
     }
   };
 
@@ -99,7 +95,6 @@ const HomeScreen = () => {
         horizontal={true}
         show={true}
       />
-
     </ScrollView>
   );
 };

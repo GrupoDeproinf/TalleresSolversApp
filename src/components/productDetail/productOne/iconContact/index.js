@@ -7,6 +7,7 @@ import {useValues} from '../../../../../App';
 import LinearGradient from 'react-native-linear-gradient';
 import appColors from '../../../../themes/appColors';
 import { Linking } from 'react-native';
+import MapComponent from '../../../../screens/map';
 
 const IconContact = data => {
   const {textColorStyle, linearColorStyle, isDark} = useValues();
@@ -23,6 +24,9 @@ const IconContact = data => {
       '...........................................................................',
     );
   }, []);
+
+
+
   return (
     <View style={[styles.view]}>
       <Text style={[styles.textTitle]}>Contacto</Text>
@@ -116,6 +120,8 @@ const IconContact = data => {
       </Text>
     </View>
   )}
+
+
           </View>
         </LinearGradient>
       </LinearGradient>
