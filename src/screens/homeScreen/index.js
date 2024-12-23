@@ -68,33 +68,33 @@ const HomeScreen = () => {
       <SearchContainer show={true} />
       <BannerContainer />
       <ProductSwiper />
-      <NewArrivalContainer
+      {/* <NewArrivalContainer
         data={newArrivalSmallData}
         value={t('transData.newArrival')}
         show={true}
         showPlus={true}
-      />
+      /> */}
       <ShowProductsContainer
         data={data}
         value={t('transData.newArrival')}
         show={true}
         showPlus={true}
       />
-      <TrendingContainer />
+      {/* <TrendingContainer /> */}
       <NewArrivalContainer
         data={newArrivalSmallData}
         value={t('transData.topRating')}
         show={true}
         showPlus={true}
       />
-      <DealContainer data={dealData} />
-      <NewArrivalBigContainer
+      {/* <DealContainer data={dealData} /> */}
+      {/* <NewArrivalBigContainer
         data={justWatchedData}
         width={178}
         value={t('transData.justWatcheds')}
         horizontal={true}
         show={true}
-      />
+      /> */}
     </ScrollView>
   );
 };
