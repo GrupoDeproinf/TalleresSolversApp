@@ -45,6 +45,7 @@ import {Linking} from 'react-native';
 import {TouchableHighlight} from 'react-native-gesture-handler';
 import IconContact from '../../../components/productDetail/productOne/iconContact';
 import MapComponent from '../../map';
+import MapRutaComponent from '../../mapRuta';
 
 const ProductDetailOne = ({navigation}) => {
   const {bgFullStyle, textColorStyle, t, textRTLStyle, iconColorStyle} =
@@ -75,6 +76,8 @@ const ProductDetailOne = ({navigation}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [dataUser, setDataUser] = useState();
   const [dataProductCategory, setDataProductCategory] = useState('');
+
+  const [showRuta, setshowRuta] = useState(false);
 
   useEffect(() => {
     const {uid, typeUser} = route.params;
@@ -268,6 +271,10 @@ const ProductDetailOne = ({navigation}) => {
 
   const GetCoordenadas = () => {};
 
+  const closeMapRutas = () => {
+    setshowRuta(false);
+  };
+
   const stylesMap = StyleSheet.create({
     container: {justifyContent: 'center', alignItems: 'center'},
   });
@@ -305,7 +312,6 @@ const ProductDetailOne = ({navigation}) => {
             </Text>
             <DetailsTextContainer DataService={DataService} />
 
-            {/* <DescriptionText /> */}
 
             <InfoContainer
               title={'Descripción'}
@@ -341,9 +347,12 @@ const ProductDetailOne = ({navigation}) => {
               style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
               <TouchableOpacity
                 onPress={() => {
-                  Linking.openURL(
-                    `https://www.google.com/maps/dir//${data[0]?.taller.ubicacion?.lat},${data[0]?.taller.ubicacion?.lng}`,
-                  );
+                  setshowRuta(true);
+                  // Linking.openURL(
+                  //   `https://www.google.com/maps/dir//${data[0]?.taller.ubicacion?.lat},${data[0]?.taller.ubicacion?.lng}`,
+                  // );
+
+
                 }}
                 style={[
                   stylesImage.button,
@@ -365,6 +374,28 @@ const ProductDetailOne = ({navigation}) => {
                 </Text>
               </TouchableOpacity>
             </View>
+
+            {data[0]?.taller.ubicacion?.lat != undefined &&
+            data[0]?.taller.ubicacion?.lat != '' &&
+            data[0]?.taller.ubicacion?.lng != undefined &&
+            data[0]?.taller.ubicacion?.lng != '' && showRuta == true ? (
+              <View
+                style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
+                <MapRutaComponent
+                  initialRegion={{
+                    latitude: data[0]?.taller.ubicacion?.lat,
+                    longitude: data[0]?.taller.ubicacion?.lng,
+                    latitudeDelta: 0.015,
+                    longitudeDelta: 0.015,
+                    name_taller:data[0]?.taller?.nombre
+                  }}
+                  edit={false}
+                  returnFunction={closeMapRutas}
+                  useThisCoo={true}
+                />
+              </View>
+            ) : null}
+
 
             <InfoContainer title={'Garantía'} text={DataService.garantia} />
 
