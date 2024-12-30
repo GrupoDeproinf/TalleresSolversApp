@@ -8,6 +8,8 @@ import LinearGradient from 'react-native-linear-gradient';
 import appColors from '../../../../themes/appColors';
 import {Linking} from 'react-native';
 import MapComponent from '../../../../screens/map';
+import api from '../../../../../axiosInstance';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const IconContact = data => {
   const {textColorStyle, linearColorStyle, isDark} = useValues();
@@ -19,7 +21,7 @@ const IconContact = data => {
     console.log(
       '...........................................................................',
     );
-    console.log('data Metodos: ', data.data[0]?.taller);
+    console.log('data Metodos: ', data.data[0]);
     console.log(
       '...........................................................................',
     );
@@ -30,11 +32,11 @@ const IconContact = data => {
     const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
     const servicePayload = {
-      id: data.data[0]?.id,
+      id: data.data[0]?.uid_servicio,
       nombre_servicio: data.data[0]?.nombre_servicio,
       precio: data.data[0]?.precio,
-      taller: data.data[0]?.taller,
-      uid_servicio: data.data[0]?.id,
+      taller: data.data[0]?.taller.nombre,
+      uid_servicio: data.data[0]?.uid_servicio,
       uid_taller: data.data[0]?.uid_taller,
       usuario_id: user?.uid || '',
       usuario_nombre: user?.nombre || '',
@@ -46,26 +48,26 @@ const IconContact = data => {
     console.log('servicePayload', servicePayload);
     console.log('-----------------------------------------------------');
 
-    // try {
-    //   // Realizar la solicitud al endpoint
-    //   const response = await api.post('/home/contactService', servicePayload);
+    try {
+      // Realizar la solicitud al endpoint
+      const response = await api.post('/home/contactService', servicePayload);
 
-    //   // Si llegamos aquí, la solicitud fue exitosa
-    //   const responseData = response.data; // Axios ya procesa el JSON automáticamente
-    //   console.log('Servicio guardado exitosamente:', responseData);
-    // } catch (error) {
-    //   // Manejar errores
-    //   if (error.response) {
-    //     // Errores del servidor (respuesta con error, por ejemplo, 400, 500)
-    //     console.error('Error del servidor:', error.response.data);
-    //   } else if (error.request) {
-    //     // La solicitud se realizó pero no hubo respuesta
-    //     console.error('No se recibió respuesta del servidor:', error.request);
-    //   } else {
-    //     // Otro tipo de error
-    //     console.error('Error al configurar la solicitud:', error.message);
-    //   }
-    // }
+      // Si llegamos aquí, la solicitud fue exitosa
+      const responseData = response.data; // Axios ya procesa el JSON automáticamente
+      console.log('Servicio guardado exitosamente:', responseData);
+    } catch (error) {
+      // Manejar errores
+      if (error.response) {
+        // Errores del servidor (respuesta con error, por ejemplo, 400, 500)
+        console.error('Error del servidor:', error.response.data);
+      } else if (error.request) {
+        // La solicitud se realizó pero no hubo respuesta
+        console.error('No se recibió respuesta del servidor:', error.request);
+      } else {
+        // Otro tipo de error
+        console.error('Error al configurar la solicitud:', error.message);
+      }
+    }
   };
 
   return (
