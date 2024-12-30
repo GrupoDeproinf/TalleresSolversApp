@@ -1,5 +1,5 @@
 import {Image, Text, View} from 'react-native';
-import React, {useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {external} from '../../../style/external.css';
 import IconBackground from '../../../commonComponents/iconBackGround';
 import {hiSmitha} from '../../../constant';
@@ -14,35 +14,30 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const HeaderContainer = ({onPress}) => {
   const navigation = useNavigation('');
   const {textColorStyle, viewRTLStyle, t} = useValues();
-  const [infoUser, setinfoUser] = useState(
-    {
-      uid:"",
-      nombre:"",
-      cedula:"",
-      phone:"",
-      typeUser:""
-    }
-  );
-
+  const [infoUser, setinfoUser] = useState({
+    uid: '',
+    nombre: '',
+    cedula: '',
+    phone: '',
+    typeUser: '',
+  });
 
   useEffect(() => {
-    getData()
+    getData();
   }, []);
-
 
   const getData = async () => {
     try {
-        const jsonValue = await AsyncStorage.getItem('@userInfo');
-        const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-        console.log("valor del storage", user);
+      const jsonValue = await AsyncStorage.getItem('@userInfo');
+      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+      console.log('valor del storage', user);
 
-        setinfoUser(user)
-    } catch(e) {
-        // error reading value
-        console.log(e)
+      setinfoUser(user);
+    } catch (e) {
+      // error reading value
+      console.log(e);
     }
-};
-
+  };
 
   return (
     <View
@@ -67,7 +62,7 @@ const HeaderContainer = ({onPress}) => {
         </View>
         <Image style={styles.img} source={images.hifi} />
       </View>
-      <View style={[external.fd_row, external.ai_center]}>
+      {/* <View style={[external.fd_row, external.ai_center]}>
         <IconBackground
           onPress={() => navigation.navigate('MyWhishList')}
           value={<Heart />}
@@ -82,7 +77,7 @@ const HeaderContainer = ({onPress}) => {
           onPress={() => navigation.navigate('NotificationScreen')}
           value={<Notification />}
         />
-      </View>
+      </View> */}
     </View>
   );
 };

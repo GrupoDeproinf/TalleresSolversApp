@@ -1,5 +1,5 @@
 import {FlatList, Image, Text, TouchableOpacity, View} from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import {external} from '../../../style/external.css';
 import {categoryData} from '../../../data/categoryData';
 import styles from './style.css';
@@ -37,8 +37,8 @@ const ProductContainer = () => {
           '=================================================================================',
         );
 
-        if (Array.isArray(result)) {
-          setCategories(result);
+        if (result) {
+          setCategories(result.categories);
         } else {
           console.warn(
             'La respuesta no contiene un array válido de categorías.',
@@ -84,7 +84,10 @@ const ProductContainer = () => {
             styles.menuItemContent,
             {shadowColor: appColors.shadowColor},
           ]}>
-          {/* <Image style={styles.imgContainer} source={item.img} /> */}
+          <Image
+            style={styles.imgContainer}
+            source={{uri: item.imageUrl}} // Asegúrate de envolver imageUrl en un objeto con 'uri'
+          />
         </LinearGradient>
       </LinearGradient>
       <Text style={[styles.title, {color: textColorStyle}]}>

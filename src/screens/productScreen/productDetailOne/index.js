@@ -89,7 +89,6 @@ const ProductDetailOne = ({navigation}) => {
     const jsonValue = await AsyncStorage.getItem('@userInfo');
     const user = jsonValue != null ? JSON.parse(jsonValue) : null;
     setDataUser(user);
-    
 
     try {
       const response = await api.post('/usuarios/getServiceByUid', {
@@ -104,9 +103,13 @@ const ProductDetailOne = ({navigation}) => {
       };
 
       if (result.message === 'Servicio encontrado') {
-
         setDataService(resultData.service);
-        getAdditionalServices(resultData?.service?.nombre_categoria ? resultData?.service?.nombre_categoria : resultData?.service?.categoria, resultData?.service?.uid_servicio);
+        getAdditionalServices(
+          resultData?.service?.nombre_categoria
+            ? resultData?.service?.nombre_categoria
+            : resultData?.service?.categoria,
+          resultData?.service?.uid_servicio,
+        );
       } else {
         console.log('Servicio no encontrado');
       }
@@ -154,35 +157,29 @@ const ProductDetailOne = ({navigation}) => {
 
   const getAdditionalServices = async (category, id) => {
     try {
-        // Realizar la solicitud GET con parámetros
-        const response = await api.post('/home/getServicesByCategory', {
-                nombre_categoria: category,
-                id: id
-        });
+      // Realizar la solicitud GET con parámetros
+      const response = await api.post('/home/getServicesByCategory', {
+        nombre_categoria: category,
+        id: id,
+      });
 
-        console.log('-------------------- Response Data --------------------');
-        console.log('Esto es el response data:', response.data);
-        console.log('------------------------------------------------------');
+      // Verificar la respuesta del servidor
+      if (response.status === 200) {
+        const allServices = response.data;
 
-        // Verificar la respuesta del servidor
-        if (response.status === 200) {
-            const allServices = response.data;
-
-            console.log('*------------- Resultado Filtrado -------------*');
-            console.log('Resultado filtrado:', allServices);
-            console.log('*---------------------------------------------*');
-
-            // Actualizar el estado con los datos filtrados
-            setDataProductCategory(allServices);
-        } else {
-            console.warn('Respuesta no exitosa. Estado:', response.status);
-            setDataProductCategory([]);
-        }
+        // Actualizar el estado con los datos filtrados
+        setDataProductCategory(allServices);
+      } else {
+        console.warn('Respuesta no exitosa. Estado:', response.status);
+        setDataProductCategory([]);
+      }
     } catch (error) {
-        console.error('Error en la solicitud de categoría:', error.message || error);
+      console.error(
+        'Error en la solicitud de categoría:',
+        error.message || error,
+      );
     }
-};
-
+  };
 
   const PublicarService = async () => {
     console.log(DataService);
@@ -230,46 +227,6 @@ const ProductDetailOne = ({navigation}) => {
     );
   };
 
-  const handleOpenModal = async () => {
-    const servicePayload = {
-      id: DataService.id,
-      nombre_servicio: DataService.nombre_servicio,
-      precio: DataService.precio,
-      taller: DataService.taller,
-      uid_servicio: DataService.id,
-      uid_taller: DataService.taller,
-      usuario_id: dataUser?.uid || '',
-      usuario_nombre: dataUser?.nombre || '',
-      usuario_email: dataUser?.email || '',
-    };
-
-    try {
-      // Realizar la solicitud al endpoint
-      const response = await api.post('/home/contactService', servicePayload);
-
-      // Si llegamos aquí, la solicitud fue exitosa
-      const responseData = response.data; // Axios ya procesa el JSON automáticamente
-      console.log('Servicio guardado exitosamente:', responseData);
-
-      // Mostrar mensaje de éxito al usuario
-
-      // Abre el modal después de guardar exitosamente
-      setModalVisible(true);
-    } catch (error) {
-      // Manejar errores
-      if (error.response) {
-        // Errores del servidor (respuesta con error, por ejemplo, 400, 500)
-        console.error('Error del servidor:', error.response.data);
-      } else if (error.request) {
-        // La solicitud se realizó pero no hubo respuesta
-        console.error('No se recibió respuesta del servidor:', error.request);
-      } else {
-        // Otro tipo de error
-        console.error('Error al configurar la solicitud:', error.message);
-      }
-    }
-  };
-
   // Función para cerrar el modal
   const handleCloseModal = () => {
     setModalVisible(false);
@@ -309,11 +266,11 @@ const ProductDetailOne = ({navigation}) => {
     );
   };
 
-  const GetCoordenadas = () =>{
+  const GetCoordenadas = () => {};
 
-  }
-
-const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'center', alignItems: 'center', },});
+  const stylesMap = StyleSheet.create({
+    container: {justifyContent: 'center', alignItems: 'center'},
+  });
   const dataTest = [{phone: '4241436070'}];
 
   return (
@@ -324,7 +281,7 @@ const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'cen
         contentContainerStyle={[external.Pb_80]}
         style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
         <View>
-          <SliderDetails data={DataService.service_image}/>
+          <SliderDetails data={DataService?.service_image} />
           <View style={[external.mh_20]}>
             <Text
               style={[
@@ -358,19 +315,56 @@ const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'cen
             <BrandData DataService={DataService} />
 
             <IconProduct data={data[0]?.taller?.metodos_pago} />
-            <IconContact data={data[0]?.taller} />
+            <IconContact data={data} />
 
-            {
-              
-                          data[0]?.taller.ubicacion?.lat != undefined && data[0]?.taller.ubicacion?.lat != '' &&
-                          data[0]?.taller.ubicacion?.lng != undefined && data[0]?.taller.ubicacion?.lng != ''  ? (
-                            <View style={[stylesMap.container, { marginTop: 5, marginBottom:15 }]}>
-                              
-                              <MapComponent initialRegion={{ latitude: data[0]?.taller.ubicacion?.lat, longitude: data[0]?.taller.ubicacion?.lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={false} 
-                              returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
-                            </View>
-                          ) : null
-                        }
+            {data[0]?.taller.ubicacion?.lat != undefined &&
+            data[0]?.taller.ubicacion?.lat != '' &&
+            data[0]?.taller.ubicacion?.lng != undefined &&
+            data[0]?.taller.ubicacion?.lng != '' ? (
+              <View
+                style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
+                <MapComponent
+                  initialRegion={{
+                    latitude: data[0]?.taller.ubicacion?.lat,
+                    longitude: data[0]?.taller.ubicacion?.lng,
+                    latitudeDelta: 0.015,
+                    longitudeDelta: 0.015,
+                  }}
+                  edit={false}
+                  returnFunction={GetCoordenadas}
+                  useThisCoo={true}
+                />
+              </View>
+            ) : null}
+
+            <View
+              style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
+              <TouchableOpacity
+                onPress={() => {
+                  Linking.openURL(
+                    `https://www.google.com/maps/dir//${data[0]?.taller.ubicacion?.lat},${data[0]?.taller.ubicacion?.lng}`,
+                  );
+                }}
+                style={[
+                  stylesImage.button,
+                  {
+                    borderWidth: 1,
+                    borderColor: '#2D3261',
+                    borderStyle: 'dotted',
+                    borderRadius: 5,
+                    backgroundColor: '#FFF',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    padding: 15,
+                    marginTop: 0,
+                    width: windowWidth(350),
+                  },
+                ]}>
+                <Text style={{color: '#2D3261', fontWeight: '700'}}>
+                  Ver en Google Maps
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             <InfoContainer title={'Garantía'} text={DataService.garantia} />
 
@@ -434,10 +428,11 @@ const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'cen
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                onPress={() =>
-                  Linking.openURL(
-                    `whatsapp://send?text=hello&phone=+58${data[0]?.taller.phone}`,
-                  )
+                onPress={
+                  () =>
+                    Linking.openURL(
+                      `whatsapp://send?text=hello&phone=+58${data[0]?.taller.phone}`,
+                    )
                   // handleOpenModal()
                 }
                 style={[external.fd_row, external.ai_center, external.pt_4]}>
@@ -497,5 +492,37 @@ const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'cen
     </View>
   );
 };
+
+const stylesImage = StyleSheet.create({
+  button: {
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  imageContainer: {
+    position: 'relative',
+    marginTop: 20,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+});
 
 export default ProductDetailOne;

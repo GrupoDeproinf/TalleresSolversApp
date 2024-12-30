@@ -8,32 +8,21 @@ import styles from './style';
 import {useValues} from '../../../../App';
 import api from '../../../../axiosInstance';
 
-const ProductSwiper = () => {
+const ProductSwiper = ({returnValues}) => {
   const [selectedItem, setSelectedItem] = useState(0);
   const {isRTL, t} = useValues();
-    const [categories, setCategories] = useState('');
-
+  const [categories, setCategories] = useState('');
 
   const getCategories = async () => {
     try {
-      // Realizar la solicitud GET utilizando Axios
       const response = await api.get('/usuarios/getActiveCategories', {
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
-      // Verificar que la respuesta del servidor sea exitosa
       if (response.status === 200) {
         const result = response.data;
-
-        console.log(
-          '=================================================================================',
-        );
-        console.log('response.data', result);
-        console.log(
-          '=================================================================================',
-        );
 
         if (Array.isArray(result.categories)) {
           setCategories(result.categories);
@@ -44,11 +33,9 @@ const ProductSwiper = () => {
           setCategories([]);
         }
       } else {
-        // Respuesta inesperada, establecer un array vacío
         setCategories([]);
       }
     } catch (error) {
-      // Manejar errores en la solicitud
       setCategories([]);
       if (error.response) {
         console.error(
@@ -71,7 +58,10 @@ const ProductSwiper = () => {
         styles.container,
         item.id === selectedItem ? styles.selectedMenuItem : null,
       ]}
-      onPress={() => setSelectedItem(item.id)}>
+      onPress={() => {
+        setSelectedItem(item.id);
+        returnValues(item.id); // Ahora sí funcionará correctamente
+      }}>
       <Text
         style={[
           commonStyles.subtitleText,
@@ -81,6 +71,7 @@ const ProductSwiper = () => {
       </Text>
     </TouchableOpacity>
   );
+
   return (
     <View style={[external.mh_20, external.mt_15]}>
       <SolidLine />

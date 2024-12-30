@@ -1,18 +1,22 @@
-import React, { useState } from 'react';
-import { FlatList, Image, TouchableOpacity, View } from 'react-native';
-import { sliderStyles } from './styles.css';
-import images from '../../../../utils/images';
-import { useValues } from '../../../../../App';
+import React, {useState} from 'react';
+import {FlatList, Image, TouchableOpacity, View, Text} from 'react-native';
+import {sliderStyles} from './styles.css';
+import notImageFound from '../../../../assets/noimageold.jpeg';
+import {useValues} from '../../../../../App';
 
-const SliderDetails = ({ data }) => {
+const SliderDetails = ({data}) => {
   const [selected, setSelected] = useState(0);
-  const { isDark } = useValues();
+  const {isDark} = useValues();
 
-  console.log('----------------------------------------------------------------')
-  console.log('data', data)
-  console.log('----------------------------------------------------------------')
+  // Validamos y normalizamos la data
+  const formattedData = Array.isArray(data)
+    ? data.map(url => ({service_image: url}))
+    : [];
 
-  const renderItem = ({ item, index }) => {
+  console.log('Data recibida:', data);
+  console.log('Formatted Data:', formattedData);
+
+  const renderItem = ({item, index}) => {
     const isSelected = index === selected;
     return (
       <TouchableOpacity
@@ -21,8 +25,7 @@ const SliderDetails = ({ data }) => {
           isSelected
             ? sliderStyles.sliderItemSelected
             : sliderStyles.sliderItemUnselected,
-        ]}
-      >
+        ]}>
         <Image
           style={[
             sliderStyles.sliderImage,
@@ -30,47 +33,60 @@ const SliderDetails = ({ data }) => {
               ? sliderStyles.sliderImageSelected
               : sliderStyles.sliderImageUnselected,
           ]}
-          source={item.images}
+          source={
+            item?.service_image ? {uri: item.service_image} : notImageFound
+          }
         />
       </TouchableOpacity>
     );
   };
 
-  // Si solo hay una imagen, mostramos una única vista
-  if (data?.length === 1) {
+  if (!formattedData || formattedData.length === 0) {
     return (
-      <View
-        style={[
-          sliderStyles.container,
-          { backgroundColor: isDark ? '#202329' : '#F3F5FB' },
-        ]}
-      >
+      <View style={sliderStyles.container}>
         <Image
-          style={sliderStyles.productImage}
-          source={data[0].images}
+          style={[
+            sliderStyles.productImage, // Estilo para la imagen principal
+            {
+              alignSelf: 'center', // Centramos la imagen
+              marginTop: 20, // Espaciado superior
+            },
+          ]}
+          source={notImageFound}
         />
       </View>
     );
   }
 
-  // Si hay varias imágenes, mostramos el carrusel
   return (
     <View
       style={[
         sliderStyles.container,
-        { backgroundColor: isDark ? '#202329' : '#F3F5FB' },
-      ]}
-    >
-      <Image style={sliderStyles.productImage} source={data[selected].images} />
-
-      <FlatList
-        renderItem={renderItem}
-        data={data}
-        horizontal
-        keyExtractor={(item, index) => index.toString()}
-        style={{ marginTop: 20 }}
-        ItemSeparatorComponent={() => <View style={sliderStyles.itemSeparator} />}
+        {backgroundColor: isDark ? '#202329' : '#F3F5FB'},
+      ]}>
+      {/* Imagen principal */}
+      <Image
+        style={sliderStyles.productImage}
+        source={
+          formattedData[selected]?.service_image
+            ? {uri: formattedData[selected].service_image}
+            : notImageFound
+        }
       />
+
+      {/* Lista de imágenes en miniatura */}
+      {formattedData.length > 1 && (
+        <FlatList
+          renderItem={renderItem}
+          data={formattedData}
+          horizontal
+          keyExtractor={(item, index) => index.toString()}
+          style={{marginTop: 20}}
+          ItemSeparatorComponent={() => (
+            <View style={sliderStyles.itemSeparator} />
+          )}
+        />
+      )}
     </View>
   );
 };

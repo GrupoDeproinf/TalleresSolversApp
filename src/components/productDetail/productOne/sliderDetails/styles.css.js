@@ -1,84 +1,66 @@
 import {StyleSheet} from 'react-native';
-import {fontSizes, windowHeight} from '../../../../themes/appConstant';
+import {
+  fontSizes,
+  windowHeight,
+  windowWidth,
+} from '../../../../themes/appConstant';
 
 export const sliderStyles = StyleSheet.create({
   container: {
-    backgroundColor: '#F3F5FB',
-    paddingHorizontal: 20,
+    backgroundColor: '#FFFFFF', // Fondo limpio y moderno
+    paddingHorizontal: 16,
     paddingTop: 20,
+    paddingBottom: 10,
     borderBottomLeftRadius: 20,
     borderBottomRightRadius: 20,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  titleText: {
-    marginLeft: '20%',
-    fontSize: fontSizes.FONT21,
-  },
-  iconContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconMargin: {
-    marginHorizontal: 5,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2, // Efecto de sombra en Android
   },
   productImage: {
     alignSelf: 'center',
-    height: windowHeight(160),
-    width: windowHeight(160),
+    height: windowHeight(200), // Tamaño más destacado
+    width: windowHeight(200),
     resizeMode: 'contain',
-    position: 'absolute',
-    top: windowHeight(50),
-  },
-  productImageTwo: {
-    height: windowHeight(160),
-    width: windowHeight(160),
-    position: 'absolute',
-    alignSelf: 'center',
-    resizeMode: 'contain',
-    bottom: -5,
-    zIndex: -9999,
-  },
-  sliderItemContainer: {
-    alignSelf: 'flex-end',
+    marginVertical: 16, // Espaciado con las miniaturas
   },
   sliderItemSelected: {
-    backgroundColor: 'white',
-    height: 50,
-    width: 55,
+    backgroundColor: '#E3E6EB', // Fondo gris claro para destacar selección
+    height: 60,
+    width: 60,
     alignItems: 'center',
     justifyContent: 'center',
-    borderTopRightRadius: 28,
-    borderTopLeftRadius: 28,
-    elevation: 1,
-    marginTop: 30,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#3B82F6', // Borde azul para destacar la imagen seleccionada
+    marginHorizontal: 5,
+    elevation: 3,
   },
   sliderItemUnselected: {
-    marginBottom: 10,
+    height: 50,
+    width: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F5FB', // Fondo gris claro
+    borderRadius: 10,
+    marginHorizontal: 5,
+    elevation: 1,
   },
   sliderImage: {
-    height: 27,
-    width: 27,
-    resizeMode: 'contain',
+    height: 45, // Ajustado para mejor escala en miniaturas
+    width: 45,
+    resizeMode: 'cover',
+    borderRadius: 5,
   },
   sliderImageSelected: {
-    opacity: 0.9,
+    opacity: 1, // Imagen completamente visible cuando está seleccionada
   },
   sliderImageUnselected: {
-    opacity: 0.4,
+    opacity: 0.7, // Imagen atenuada cuando no está seleccionada
   },
   itemSeparator: {
-    width: 25,
-  },
-  colorMap: {
-    height: 20,
-    width: 20,
-    borderRadius: 20,
-    marginVertical: 1,
-    marginBottom: 25,
-    top: 40,
+    width: 10, // Separación más estrecha para un diseño compacto
   },
 });

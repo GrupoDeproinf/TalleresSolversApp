@@ -6,7 +6,7 @@ import styles from './style.css';
 import {useValues} from '../../../../../App';
 import LinearGradient from 'react-native-linear-gradient';
 import appColors from '../../../../themes/appColors';
-import { Linking } from 'react-native';
+import {Linking} from 'react-native';
 import MapComponent from '../../../../screens/map';
 
 const IconContact = data => {
@@ -19,13 +19,54 @@ const IconContact = data => {
     console.log(
       '...........................................................................',
     );
-    console.log('data Metodos: ', data.data);
+    console.log('data Metodos: ', data.data[0]?.taller);
     console.log(
       '...........................................................................',
     );
   }, []);
 
+  const handleContact = async typeContact => {
+    const jsonValue = await AsyncStorage.getItem('@userInfo');
+    const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
+    const servicePayload = {
+      id: data.data[0]?.id,
+      nombre_servicio: data.data[0]?.nombre_servicio,
+      precio: data.data[0]?.precio,
+      taller: data.data[0]?.taller,
+      uid_servicio: data.data[0]?.id,
+      uid_taller: data.data[0]?.uid_taller,
+      usuario_id: user?.uid || '',
+      usuario_nombre: user?.nombre || '',
+      usuario_email: user?.email || '',
+      typeContact: typeContact,
+    };
+
+    console.log('-----------------------------------------------------');
+    console.log('servicePayload', servicePayload);
+    console.log('-----------------------------------------------------');
+
+    // try {
+    //   // Realizar la solicitud al endpoint
+    //   const response = await api.post('/home/contactService', servicePayload);
+
+    //   // Si llegamos aquí, la solicitud fue exitosa
+    //   const responseData = response.data; // Axios ya procesa el JSON automáticamente
+    //   console.log('Servicio guardado exitosamente:', responseData);
+    // } catch (error) {
+    //   // Manejar errores
+    //   if (error.response) {
+    //     // Errores del servidor (respuesta con error, por ejemplo, 400, 500)
+    //     console.error('Error del servidor:', error.response.data);
+    //   } else if (error.request) {
+    //     // La solicitud se realizó pero no hubo respuesta
+    //     console.error('No se recibió respuesta del servidor:', error.request);
+    //   } else {
+    //     // Otro tipo de error
+    //     console.error('Error al configurar la solicitud:', error.message);
+    //   }
+    // }
+  };
 
   return (
     <View style={[styles.view]}>
@@ -46,82 +87,34 @@ const IconContact = data => {
             styles.menuItemContent,
             {shadowColor: appColors.shadowColor},
           ]}>
-          {/* <IconBackground value={<Refresh />} />
-          <Text style={[styles.upTofive, {color: textColorStyle}]}>Zelle</Text>
-          <View style={styles.verticalLine} />
-          <IconBackground value={<Bus />} />
-          <Text style={[styles.deliveryIn, {color: textColorStyle}]}>
-            Delivery in 3 days
-          </Text> */}
-          
           <View style={[styles.gridContainer]}>
-            
-            {/* {Object.entries(data.data || {}).map(([key, value]) => {
-              if (value) {
-                // Configuración de nombres e íconos por clave
-                const config = {
-                  efectivo: {name: 'Efectivo', icon: <Text>💵</Text>},
-                  pagoMovil: {name: 'Pago Móvil', icon: <Text>📱</Text>},
-                  puntoVenta: {name: 'Punto de Venta', icon: <Text>🛒</Text>},
-                  tarjetaCreditoI: {
-                    name: 'Tarjeta Crédito Internacional',
-                    icon: <Text>💳</Text>,
-                  },
-                  tarjetaCreditoN: {
-                    name: 'Tarjeta Crédito Nacional',
-                    icon: <Text>💳</Text>,
-                  },
-                  transferencia: {name: 'Transferencia', icon: <Text>🔄</Text>},
-                  zelle: {name: 'Zelle', icon: <Text>💸</Text>},
-                  zinli: {name: 'Zinli', icon: <Text>📤</Text>},
-                };
+            {data.data[0]?.taller.phone && (
+              <View style={[styles.gridItem]}>
+                <Text
+                  style={[styles.deliveryIn, {color: textColorStyle}]}
+                  onPress={() => {
+                    handleContact('Llamada');
+                    Linking.openURL(`tel:0${data.data[0]?.taller.phone}`);
+                  }}>
+                  📞 Teléfono: {data.data[0]?.taller.phone}
+                </Text>
+              </View>
+            )}
 
-                const item = config[key]; // Obtén el nombre e ícono según la clave
-
-                if (!item) {
-                  return null; // Ignorar claves no configuradas
-                }
-
-                return (
-                  <View key={key} style={[styles.gridItem]}>
-                    <IconBackground
-                      value={item.icon}
-                      onPress={() => console.log(key)}
-                    />
-                    <Text style={[styles.deliveryIn, {color: textColorStyle}]}>
-                      {item.name} {/* Mostrar el nombre personalizado */}
-                    {/* </Text>
-                    
-                  </View>
-                );
-              }
-              return null; // Ignorar métodos de pago deshabilitados */}
-            {/* })}  */}
-            {data?.data?.phone && (
-    <View style={[styles.gridItem]}>
-      <Text style={[styles.deliveryIn, { color: textColorStyle }]}
-      onPress={() => Linking.openURL(`tel:0${data.data.phone}`)}
-      >
-        📞    Teléfono: {data.data.phone}
-      </Text>
-    </View>
-  )}
-
-  {/* Enlace de WhatsApp */}
-  {data?.data?.LinkWhatsapp && (
-    <View style={[styles.gridItem]}>
-      <Text
-        style={[styles.deliveryIn, { color: textColorStyle }]}
-        onPress={() =>
-          Linking.openURL(`https://wa.me/+58${data.data.whatsapp}`)
-        }
-      >
-        🔗 WhatsApp: {data.data.whatsapp}
-      </Text>
-    </View>
-  )}
-
-
+            {data.data[0]?.taller.whatsapp && (
+              <View style={[styles.gridItem]}>
+                <Text
+                  style={[styles.deliveryIn, {color: textColorStyle}]}
+                  onPress={() => {
+                    handleContact('WhatsApp');
+                    Linking.openURL(
+                      `https://wa.me/+58${data.data[0]?.taller.whatsapp}`,
+                    );
+                  }}>
+                  🔗 WhatsApp: {data.data[0]?.taller.whatsapp}
+                </Text>
+              </View>
+            )}
           </View>
         </LinearGradient>
       </LinearGradient>

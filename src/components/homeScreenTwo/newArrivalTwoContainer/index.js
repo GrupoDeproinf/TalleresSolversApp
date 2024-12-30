@@ -36,16 +36,17 @@ const NewArrivalBigContainer = ({
   const color = isDark ? appColors.blackBg : appColors.bgLayout;
   const navigation = useNavigation();
 
-  const goToDetail = item => {
-    console.log(item);
-
-    navigation.navigate('ProductDetailOne', {uid: item.uid_servicio});
-  }; 
+  // const goToDetail = item => {
+  //   console.log(item);
+  //   navigation.navigate('ProductDetailOne', {uid: item.uid_servicio});
+  // };
 
   const renderItem = ({item}) => (
     <TouchableOpacity
-      activeOpacity={0.9}
-      onPress={() => goToDetail(item)}>
+      // activeOpacity={0.9}
+      onPress={() => {
+        navigation.navigate('ProductDetailOne', {uid: item.uid_servicio});
+      }}>
       <LinearGradient
         start={{x: 0.0, y: 0.0}}
         end={{x: 0.0, y: 1.0}}
@@ -63,7 +64,7 @@ const NewArrivalBigContainer = ({
           <View style={[styles.imgContainer, {backgroundColor: color}]}>
             <Image style={styles.img} source={item.img} />
           </View>
-          
+
           <View style={[external.ph_10, external.pt_10]}>
             <Text
               style={[
