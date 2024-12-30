@@ -171,131 +171,131 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
 
         // Version con mapa y direction
 
-        // <Modal
-        //   animationType="slide"
-        //   transparent={false}
-        //   visible={modalVisible}
-        //   onRequestClose={() => {
-        //     setModalVisible(false);
-        //     console.log('Aquiiii');
-        //     returnFunction(location);
-        //   }}>
-        //   <View style={styles.modalContainer}>
-        //     <TouchableOpacity
-        //       style={[
-        //         stylesImage.button,
-        //         {
-        //           borderWidth: 1,
-        //           borderColor: '#2D3261',
-        //           borderStyle: 'dotted',
-        //           borderRadius: 5,
-        //           backgroundColor: '#FFF',
-        //           flexDirection: 'row',
-        //           alignItems: 'center',
-        //           padding: 15,
-        //           marginTop: 0,
-        //         },
-        //       ]}
-        //       onPress={() => {
-        //         setModalVisible(false);
-        //         console.log('Aquiiii');
-        //         returnFunction(location);
-        //       }}>
-        //       <Icons name="map-marker" size={15} color="#2D3261" />
-        //       <Text
-        //         style={[
-        //           stylesImage.buttonText,
-        //           { marginLeft: 10, color: '#2D3261' },
-        //         ]}>
-        //         Cerrar Mapa
-        //       </Text>
-        //     </TouchableOpacity>
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(false);
+            console.log('Aquiiii');
+            returnFunction(location);
+          }}>
+          <View style={styles.modalContainer}>
+            <TouchableOpacity
+              style={[
+                stylesImage.button,
+                {
+                  borderWidth: 1,
+                  borderColor: '#2D3261',
+                  borderStyle: 'dotted',
+                  borderRadius: 5,
+                  backgroundColor: '#FFF',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 15,
+                  marginTop: 0,
+                },
+              ]}
+              onPress={() => {
+                setModalVisible(false);
+                console.log('Aquiiii');
+                returnFunction(location);
+              }}>
+              <Icons name="map-marker" size={15} color="#2D3261" />
+              <Text
+                style={[
+                  stylesImage.buttonText,
+                  { marginLeft: 10, color: '#2D3261' },
+                ]}>
+                Cerrar Mapa
+              </Text>
+            </TouchableOpacity>
 
 
-        //     <MapView
-        //       provider={PROVIDER_GOOGLE}
-        //       style={styles.map}
-        //       region={location}
-        //       customMapStyle={mapStyle}
-        //       showsUserLocation={true}
-        //       onPress={handleMapPress}>
-        //       {location && (
-        //         <Marker coordinate={location} title="Tu ubicación actual" />
-        //       )}
-        //       {secondLocation && (
-        //         <Marker coordinate={secondLocation} title={secondLocation.name_taller} />
-        //       )}
+            <MapView
+              provider={PROVIDER_GOOGLE}
+              style={styles.map}
+              region={location}
+              customMapStyle={mapStyle}
+              showsUserLocation={true}
+              onPress={handleMapPress}>
+              {location && (
+                <Marker coordinate={location} title="Tu ubicación actual" />
+              )}
+              {secondLocation && (
+                <Marker coordinate={secondLocation} title={secondLocation.name_taller} />
+              )}
 
-        //       <MapViewDirections
-        //           origin={location}
-        //           destination={secondLocation}
-        //           apikey={GOOGLE_MAPS_APIKEY}
-        //           strokeWidth={5}
-        //           strokeColor="#2D3261"
-        //           mode='DRIVING'
-        //           language='en'
-        //           onStart={(params) => {
-        //             console.log(`Started routing between "${params.origin}" and "${params.destination}"${(params.waypoints.length ? " using waypoints: " + params.waypoints.join(', ') : "")}`);
-        //           }}
-        //         />
+              <MapViewDirections
+                  origin={location}
+                  destination={secondLocation}
+                  apikey={GOOGLE_MAPS_APIKEY}
+                  strokeWidth={5}
+                  strokeColor="#2D3261"
+                  mode='DRIVING'
+                  language='en'
+                  onStart={(params) => {
+                    console.log(`Started routing between "${params.origin}" and "${params.destination}"${(params.waypoints.length ? " using waypoints: " + params.waypoints.join(', ') : "")}`);
+                  }}
+                />
 
-        //     </MapView>
-        //   </View>
-        // </Modal>
+            </MapView>
+          </View>
+        </Modal>
 
 
         // Version con iframe
-        <Modal
-        animationType="slide"
-        transparent={false}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(false);
-          console.log('Aquiiii');
-          returnFunction(location);
-        }}
-      >
-        <View style={styles.modalContainer}>
-          <TouchableOpacity
-            style={[
-              styles.button,
-              {
-                borderWidth: 1,
-                borderColor: '#2D3261',
-                borderStyle: 'dotted',
-                borderRadius: 5,
-                backgroundColor: '#FFF',
-                flexDirection: 'row',
-                alignItems: 'center',
-                padding: 15,
-                marginTop: 0,
-              },
-            ]}
-            onPress={() => {
-              setModalVisible(false);
-              console.log('Aquiiii');
-              returnFunction(location);
-            }}
-          >
-            <Icons name="map-marker" size={15} color="#2D3261" />
-            <Text
-              style={[
-                styles.buttonText,
-                { marginLeft: 10, color: '#2D3261' },
-              ]}
-            >
-              Cerrar Mapa
-            </Text>
-          </TouchableOpacity>
+      //   <Modal
+      //   animationType="slide"
+      //   transparent={false}
+      //   visible={modalVisible}
+      //   onRequestClose={() => {
+      //     setModalVisible(false);
+      //     console.log('Aquiiii');
+      //     returnFunction(location);
+      //   }}
+      // >
+      //   <View style={styles.modalContainer}>
+      //     <TouchableOpacity
+      //       style={[
+      //         styles.button,
+      //         {
+      //           borderWidth: 1,
+      //           borderColor: '#2D3261',
+      //           borderStyle: 'dotted',
+      //           borderRadius: 5,
+      //           backgroundColor: '#FFF',
+      //           flexDirection: 'row',
+      //           alignItems: 'center',
+      //           padding: 15,
+      //           marginTop: 0,
+      //         },
+      //       ]}
+      //       onPress={() => {
+      //         setModalVisible(false);
+      //         console.log('Aquiiii');
+      //         returnFunction(location);
+      //       }}
+      //     >
+      //       <Icons name="map-marker" size={15} color="#2D3261" />
+      //       <Text
+      //         style={[
+      //           styles.buttonText,
+      //           { marginLeft: 10, color: '#2D3261' },
+      //         ]}
+      //       >
+      //         Cerrar Mapa
+      //       </Text>
+      //     </TouchableOpacity>
 
-          <WebView
-            source={{ uri: `https://www.google.com/maps/dir//${secondLocation.latitude},${secondLocation.longitude}` }}
-            style={{ flex: 1 }}
-            onLoadStart={() => setLoading(true)}
-            onLoadEnd={() => setLoading(false)}
-          />
-        </View>
-      </Modal>
+      //     <WebView
+      //       source={{ uri: `https://www.google.com/maps/dir//${secondLocation.latitude},${secondLocation.longitude}` }}
+      //       style={{ flex: 1 }}
+      //       onLoadStart={() => setLoading(true)}
+      //       onLoadEnd={() => setLoading(false)}
+      //     />
+      //   </View>
+      // </Modal>
 
       ) : null
       }
