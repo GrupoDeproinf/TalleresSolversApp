@@ -1,11 +1,19 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, Text, PermissionsAndroid, Platform, TouchableOpacity, Modal } from 'react-native';
-import MapView, { PROVIDER_GOOGLE, Marker } from 'react-native-maps';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  StyleSheet,
+  Text,
+  PermissionsAndroid,
+  Platform,
+  TouchableOpacity,
+  Modal,
+} from 'react-native';
+import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
-import { commonStyles } from '../../style/commonStyle.css';
+import {commonStyles} from '../../style/commonStyle.css';
 import Icons from 'react-native-vector-icons/FontAwesome'; // Asegúrate de importar el ícono que estás usando
 
-const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
+const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
   const [location, setLocation] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -25,23 +33,25 @@ const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
           buttonNeutral: 'Pregúntame más tarde',
           buttonNegative: 'Cancelar',
           buttonPositive: 'OK',
-        }
+        },
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        setshowbutton(true)
+        setshowbutton(true);
         console.log('Permiso de ubicación concedido');
-        console.log(useThisCoo)
-        console.log(initialRegion)
+        console.log(useThisCoo);
+        console.log(initialRegion);
         if (!useThisCoo) {
           getCurrentLocation();
-        }else {
-          
-          if (initialRegion.latitude != undefined && initialRegion.latitude != '' &&
-            initialRegion.longitude != undefined && initialRegion.longitude != ''
+        } else {
+          if (
+            initialRegion.latitude != undefined &&
+            initialRegion.latitude != '' &&
+            initialRegion.longitude != undefined &&
+            initialRegion.longitude != ''
           ) {
             setLocation({
-              latitude:initialRegion.latitude,
-              longitude:initialRegion.longitude,
+              latitude: initialRegion.latitude,
+              longitude: initialRegion.longitude,
               latitudeDelta: 0.015,
               longitudeDelta: 0.0121,
             });
@@ -51,25 +61,27 @@ const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
         }
       } else {
         console.log('Permiso de ubicación denegado');
-        setshowbutton(false)
+        setshowbutton(false);
       }
     } else {
       if (!useThisCoo) {
         getCurrentLocation();
       } else {
-        if (initialRegion.latitude != undefined && initialRegion.latitude != '' &&
-          initialRegion.longitude != undefined && initialRegion.longitude != ''
+        if (
+          initialRegion.latitude != undefined &&
+          initialRegion.latitude != '' &&
+          initialRegion.longitude != undefined &&
+          initialRegion.longitude != ''
         ) {
           setLocation({
-            latitude:initialRegion.latitude,
-            longitude:initialRegion.longitude,
+            latitude: initialRegion.latitude,
+            longitude: initialRegion.longitude,
             latitudeDelta: 0.015,
             longitudeDelta: 0.0121,
           });
         } else {
           getCurrentLocation();
         }
-
       }
     }
   };
@@ -79,24 +91,24 @@ const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
   }, []);
 
   const getCurrentLocation = () => {
-    console.log("Aqui estoy :>");
+    console.log('Aqui estoy :>');
     Geolocation.getCurrentPosition(info => {
-      const { latitude, longitude } = info.coords;
+      const {latitude, longitude} = info.coords;
       console.log(latitude);
       console.log(longitude);
-        setLocation({
-          latitude,
-          longitude,
-          latitudeDelta: 0.015,
-          longitudeDelta: 0.0121,
-        });
-        console.log("Se agregó :>");
+      setLocation({
+        latitude,
+        longitude,
+        latitudeDelta: 0.015,
+        longitudeDelta: 0.0121,
+      });
+      console.log('Se agregó :>');
     });
   };
 
-  const handleMapPress = (event) => {
+  const handleMapPress = event => {
     if (edit) {
-      const { latitude, longitude } = event.nativeEvent.coordinate;
+      const {latitude, longitude} = event.nativeEvent.coordinate;
       setLocation({
         latitude,
         longitude,
@@ -108,47 +120,44 @@ const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
 
   return (
     <View style={styles.container}>
-
-      {
-        showbutton ? (
-          <TouchableOpacity
+      {showbutton ? (
+        <TouchableOpacity
+          style={[
+            stylesImage.button,
+            {
+              borderWidth: 1,
+              borderColor: '#2D3261',
+              borderStyle: 'dotted',
+              borderRadius: 5,
+              backgroundColor: '#FFF',
+              flexDirection: 'row',
+              alignItems: 'center',
+              padding: 15,
+              marginTop: 10,
+              width: 300,
+            },
+          ]}
+          onPress={() => setModalVisible(true)}>
+          <Icons name="map-marker" size={15} color="#2D3261" />
+          <Text
             style={[
-              stylesImage.button,
-              {
-                borderWidth: 1,
-                borderColor: '#2D3261',
-                borderStyle: 'dotted',
-                borderRadius: 5,
-                backgroundColor: '#FFF',
-                flexDirection: 'row',
-                alignItems: 'center',
-                padding: 10,
-                marginTop: 10,
-                width:200
-              },
-            ]}
-            onPress={() => setModalVisible(true)}
-          >
-            <Icons name="map-marker" size={15} color="#2D3261" />
-            <Text style={[stylesImage.buttonText, { marginLeft: 10, color: '#2D3261' }]}>
-              Ubicación
-            </Text>
-          </TouchableOpacity>
-        ) : null
-      }
-
-
+              stylesImage.buttonText,
+              {marginLeft: 10, color: '#2D3261'},
+            ]}>
+            Ubicación
+          </Text>
+        </TouchableOpacity>
+      ) : null}
 
       <Modal
         animationType="slide"
         transparent={false}
         visible={modalVisible}
         onRequestClose={() => {
-          setModalVisible(false)
-          console.log("Aquiiii")
-          returnFunction(location)
-        }}
-      >
+          setModalVisible(false);
+          console.log('Aquiiii');
+          returnFunction(location);
+        }}>
         <View style={styles.modalContainer}>
           <TouchableOpacity
             style={[
@@ -161,18 +170,21 @@ const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
                 backgroundColor: '#FFF',
                 flexDirection: 'row',
                 alignItems: 'center',
-                padding: 10,
-                marginTop: 10,
+                padding: 15,
+                marginTop: 0,
               },
             ]}
             onPress={() => {
-              setModalVisible(false)
-              console.log("Aquiiii")
-              returnFunction(location)
-            }}
-          >
+              setModalVisible(false);
+              console.log('Aquiiii');
+              returnFunction(location);
+            }}>
             <Icons name="map-marker" size={15} color="#2D3261" />
-            <Text style={[stylesImage.buttonText, { marginLeft: 10, color: '#2D3261' }]}>
+            <Text
+              style={[
+                stylesImage.buttonText,
+                {marginLeft: 10, color: '#2D3261'},
+              ]}>
               Cerrar Mapa
             </Text>
           </TouchableOpacity>
@@ -182,13 +194,9 @@ const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
             region={location || initialRegion}
             customMapStyle={mapStyle}
             showsUserLocation={true}
-            onPress={handleMapPress}
-          >
+            onPress={handleMapPress}>
             {location && (
-              <Marker
-                coordinate={location}
-                title="Tu ubicación actual"
-              />
+              <Marker coordinate={location} title="Tu ubicación actual" />
             )}
           </MapView>
         </View>

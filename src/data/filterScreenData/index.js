@@ -12,6 +12,8 @@ import {
   tablets,
 } from '../../constant';
 
+
+
 export const filterScreenData = [
   {
     id: 0,

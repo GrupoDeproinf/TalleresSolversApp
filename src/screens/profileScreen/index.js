@@ -215,68 +215,131 @@ const ProfileScreen = () => {
         }
 
 
-        {
-          infoUser.typeUser == "Taller" || infoUser.typeUser == "Cliente" ? (
-            profileData.map((item, index) => (
-              <Pressable
-                key={index}
-                activeOpacity={0.9}
-                onPress={() => {
-                  if (item.id === 6) {
-                    removePropertyFromStorage();
-                    handleLogout();
-                  } else {
-                    if (infoUser.typeUser == "Taller") {
-                      if (item.screenName == "EditProfile") {
-                        console.log("aquiii");
-                        navigation.navigate('TallerEditProfileScreen');
-                      } else {
-                        navigation.navigate(item.screenName);
-                      }
-                    } else {
-                      navigation.navigate(item.screenName);
-                    }
-                  }
-                }}>
-                <LinearGradient
-                  start={{ x: 0.0, y: 0.0 }}
-                  end={{ x: 0.0, y: 1.0 }}
-                  colors={colors}
-                  style={styles.container}>
-                  <LinearGradient
-                    start={{ x: 0.0, y: 0.0 }}
-                    end={{ x: 0.0, y: 1.0 }}
-                    colors={linearColorStyle}
-                    style={styles.menuItemContent}>
-                    <View
-                      style={[
-                        external.fd_row,
-                        external.ai_center,
-                        { flexDirection: viewRTLStyle },
-                      ]}>
-                      {item.icon}
-                      <View style={{ width: '86%' }}>
-                        <Text
-                          style={[
-                            styles.titleText,
-                            { color: textColorStyle },
-                            { textAlign: textRTLStyle },
-                          ]}>
-                          {t(item.title)}
-                        </Text>
-                      </View>
-                      <View style={{ transform: [{ scale: imageRTLStyle }] }}>
-                        <RightArrow />
-                      </View>
-                    </View>
-                  </LinearGradient>
-                </LinearGradient>
-              </Pressable>
-            ))
-          ) : null
-        }
+{
+  infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente" ? (
+    profileDataAdmin
+      .filter(item => item.id !== 3 || infoUser.typeUser === "Taller") // Filtrar si el ID es 3 y el usuario no es Taller
+      .map((item, index) => (
+        <Pressable
+          key={index}
+          activeOpacity={0.9}
+          onPress={() => {
+            if (item.id === 6) {
+              removePropertyFromStorage();
+              handleLogout();
+            } else {
+              if (infoUser.typeUser == "Taller") {
+                if (item.screenName == "EditProfile") {
+                  console.log("aquiii");
+                  navigation.navigate('TallerEditProfileScreen');
+                } else {
+                  navigation.navigate(item.screenName);
+                }
+              } else {
+                navigation.navigate(item.screenName);
+              }
+            }
+          }}>
+          <LinearGradient
+            start={{ x: 0.0, y: 0.0 }}
+            end={{ x: 0.0, y: 1.0 }}
+            colors={colors}
+            style={styles.container}>
+            <LinearGradient
+              start={{ x: 0.0, y: 0.0 }}
+              end={{ x: 0.0, y: 1.0 }}
+              colors={linearColorStyle}
+              style={styles.menuItemContent}>
+              <View
+                style={[
+                  external.fd_row,
+                  external.ai_center,
+                  { flexDirection: viewRTLStyle },
+                ]}>
+                {item.icon}
+                <View style={{ width: '86%' }}>
+                  <Text
+                    style={[
+                      styles.titleText,
+                      { color: textColorStyle },
+                      { textAlign: textRTLStyle },
+                    ]}>
+                    {t(item.title)}
+                  </Text>
+                </View>
+                <View style={{ transform: [{ scale: imageRTLStyle }] }}>
+                  <RightArrow />
+                </View>
+              </View>
+            </LinearGradient>
+          </LinearGradient>
+        </Pressable>
+      ))
+  ) : null
+}
 
-
+{
+  infoUser.typeUser == "Taller" || infoUser.typeUser == "Cliente" ? (
+    profileData
+      .filter(item => item.id !== 3 || infoUser.typeUser === "Taller") // Filtrar si el ID es 3 y el usuario no es Taller
+      .map((item, index) => (
+        <Pressable
+          key={index}
+          activeOpacity={0.9}
+          onPress={() => {
+            if (item.id === 6) {
+              removePropertyFromStorage();
+              handleLogout();
+            } else {
+              if (infoUser.typeUser == "Taller") {
+                if (item.screenName == "EditProfile") {
+                  console.log("aquiii");
+                  navigation.navigate('TallerEditProfileScreen');
+                } else {
+                  navigation.navigate(item.screenName);
+                }
+              } else {
+                navigation.navigate(item.screenName);
+              }
+            }
+          }}>
+          <LinearGradient
+            start={{ x: 0.0, y: 0.0 }}
+            end={{ x: 0.0, y: 1.0 }}
+            colors={colors}
+            style={styles.container}>
+            <LinearGradient
+              start={{ x: 0.0, y: 0.0 }}
+              end={{ x: 0.0, y: 1.0 }}
+              colors={linearColorStyle}
+              style={styles.menuItemContent}>
+              <View
+                style={[
+                  external.fd_row,
+                  external.ai_center,
+                  { flexDirection: viewRTLStyle },
+                ]}>
+                {item.icon}
+                <View style={{ width: '86%' }}>
+                  <Text
+                    style={[
+                      styles.titleText,
+                      { color: textColorStyle },
+                      { textAlign: textRTLStyle },
+                    ]}>
+                    {t(item.title)}
+                  </Text>
+                </View>
+                <View style={{ transform: [{ scale: imageRTLStyle }] }}>
+                  <RightArrow />
+                </View>
+              </View>
+            </LinearGradient>
+          </LinearGradient>
+        </Pressable>
+      ))
+  ) : null
+}
       </View>
     </View>
   );

@@ -6,6 +6,7 @@ import {
   ToastAndroid,
   Modal,
   Pressable,
+  StyleSheet,
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import BottomContainer from '../../../commonComponents/bottomContainer';
@@ -43,6 +44,7 @@ import {
 import {Linking} from 'react-native';
 import {TouchableHighlight} from 'react-native-gesture-handler';
 import IconContact from '../../../components/productDetail/productOne/iconContact';
+import MapComponent from '../../map';
 
 const ProductDetailOne = ({navigation}) => {
   const {bgFullStyle, textColorStyle, t, textRTLStyle, iconColorStyle} =
@@ -307,6 +309,11 @@ const ProductDetailOne = ({navigation}) => {
     );
   };
 
+  const GetCoordenadas = () =>{
+
+  }
+
+const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'center', alignItems: 'center', },});
   const dataTest = [{phone: '4241436070'}];
 
   return (
@@ -317,7 +324,7 @@ const ProductDetailOne = ({navigation}) => {
         contentContainerStyle={[external.Pb_80]}
         style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
         <View>
-          <SliderDetails />
+          <SliderDetails data={DataService.service_image}/>
           <View style={[external.mh_20]}>
             <Text
               style={[
@@ -352,6 +359,18 @@ const ProductDetailOne = ({navigation}) => {
 
             <IconProduct data={data[0]?.taller?.metodos_pago} />
             <IconContact data={data[0]?.taller} />
+
+            {
+              
+                          data[0]?.taller.ubicacion?.lat != undefined && data[0]?.taller.ubicacion?.lat != '' &&
+                          data[0]?.taller.ubicacion?.lng != undefined && data[0]?.taller.ubicacion?.lng != ''  ? (
+                            <View style={[stylesMap.container, { marginTop: 5, marginBottom:15 }]}>
+                              
+                              <MapComponent initialRegion={{ latitude: data[0]?.taller.ubicacion?.lat, longitude: data[0]?.taller.ubicacion?.lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={false} 
+                              returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
+                            </View>
+                          ) : null
+                        }
 
             <InfoContainer title={'Garantía'} text={DataService.garantia} />
 

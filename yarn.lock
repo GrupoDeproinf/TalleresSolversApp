@@ -3308,6 +3308,11 @@ d3-interpolate@^1.1.2:
   dependencies:
     d3-color "1"
 
+datejs@^1.0.0-rc3:
+  version "1.0.0-rc3"
+  resolved "https://registry.npmjs.org/datejs/-/datejs-1.0.0-rc3.tgz"
+  integrity sha512-c6kzWmGUKLrdT+8LjUvtAObOgsecqnkpOYOuSDzYdNhdCk3+WALxtBuSMRJDmOfS6JVs/+N2yTGHb0D8oNqB/Q==
+
 dayjs@^1.8.15:
   version "1.11.10"
   resolved "https://registry.npmjs.org/dayjs/-/dayjs-1.11.10.tgz"

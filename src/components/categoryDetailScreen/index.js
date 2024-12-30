@@ -16,7 +16,6 @@ const CategoryDetailScreen = ({data}) => {
         end={{x: 0.0, y: 1.0}}
         colors={linearColorStyle}
         style={styles.linearGradient}>
-        {item.icon}
       </LinearGradient>
     </View>
   );
