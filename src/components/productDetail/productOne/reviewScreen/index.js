@@ -40,8 +40,7 @@ const RatingScreen = () => {
             </Text>
             <TouchableOpacity
               style={[external.fd_row, external.ai_center]}
-              // onPress={() => navigation.navigate('RatingScreen')}
-              >
+              onPress={() => navigation.navigate('RatingScreen')}>
               <Text
                 style={[
                   commonStyles.titleText19,

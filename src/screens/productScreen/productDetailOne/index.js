@@ -371,7 +371,7 @@ const ProductDetailOne = ({navigation}) => {
             {/* <KeyFeatures /> */}
           </View>
         </View>
-        {/* <RatingScreen /> */}
+        <RatingScreen />
 
         {/* {typeUserLogged != 'Taller' ? (
           <Text style={styles.writeYourReview}>{writeYourReview}</Text>
