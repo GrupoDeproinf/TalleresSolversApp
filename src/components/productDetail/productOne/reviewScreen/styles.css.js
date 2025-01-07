@@ -113,7 +113,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: windowHeight(8),
     marginHorizontal: windowHeight(3),
-    width: windowWidth(78),
+    // padding: windowHeight(25),
+    width: windowWidth(128),
     height: windowHeight(48),
   },
   writeYourReview: {

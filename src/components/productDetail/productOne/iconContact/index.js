@@ -17,15 +17,7 @@ const IconContact = data => {
     ? ['#3D3F45', '#45474B', '#2A2C32']
     : [appColors.screenBg, appColors.screenBg];
 
-  useEffect(() => {
-    console.log(
-      '...........................................................................',
-    );
-    console.log('data Metodos: ', data.data[0]);
-    console.log(
-      '...........................................................................',
-    );
-  }, []);
+  
 
   const handleContact = async typeContact => {
     const jsonValue = await AsyncStorage.getItem('@userInfo');

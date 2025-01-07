@@ -13,8 +13,6 @@ const SliderDetails = ({data}) => {
     ? data.map(url => ({service_image: url}))
     : [];
 
-  console.log('Data recibida:', data);
-  console.log('Formatted Data:', formattedData);
 
   const renderItem = ({item, index}) => {
     const isSelected = index === selected;

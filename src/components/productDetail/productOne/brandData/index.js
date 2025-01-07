@@ -10,10 +10,6 @@ import { t } from 'i18next';
 
 const BrandData = ({DataService}) => {
   const {textColorStyle, viewRTLStyle, textRTLStyle, isRTL} = useValues();
-
-  console.log('111111111111111111111111111111111111111111111111111111111111111111111111111');
-  console.log('Data Service', DataService);
-  console.log('111111111111111111111111111111111111111111111111111111111111111111111111111');
   
 
   return (

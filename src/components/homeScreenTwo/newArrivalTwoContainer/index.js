@@ -36,14 +36,9 @@ const NewArrivalBigContainer = ({
   const color = isDark ? appColors.blackBg : appColors.bgLayout;
   const navigation = useNavigation();
 
-  // const goToDetail = item => {
-  //   console.log(item);
-  //   navigation.navigate('ProductDetailOne', {uid: item.uid_servicio});
-  // };
 
   const renderItem = ({item}) => (
     <TouchableOpacity
-      // activeOpacity={0.9}
       onPress={() => {
         navigation.navigate('ProductDetailOne', {uid: item.uid_servicio});
       }}>

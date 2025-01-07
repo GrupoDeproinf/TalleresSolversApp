@@ -9,9 +9,12 @@ import SolidLine from '../../commonComponents/solidLine';
 import {styles} from './styles.css';
 import {useValues} from '../../../App';
 import LinearGradient from 'react-native-linear-gradient';
+import moment from 'moment';
 
-const RatingScreenContainer = () => {
+const RatingScreenContainer = (data) => {
   const {linearColorStyle, linearColorStyleTwo, textColorStyle} = useValues();
+  console.log('Data:', data);
+  console.log('*************************************5632')
   const renderItem = ({item}) => (
     <View>
       <View
@@ -29,17 +32,17 @@ const RatingScreenContainer = () => {
               {fontSize: fontSizes.FONT17},
               {color: textColorStyle},
             ]}>
-            {item.title}
+            {item.usuario.nombre}
           </Text>
           <Text
             style={[
               commonStyles.titleText19,
               {fontSize: fontSizes.FONT17, color: appColors.subtitle},
             ]}>
-            {item.hours}
+            {moment(item.fecha_creacion).format('DD/MM/YYYY')}
           </Text>
           <Text style={[styles.subtitle, {color: textColorStyle}]}>
-            {item.subtitle}
+            {item.comentario}
           </Text>
         </View>
       </View>
@@ -51,7 +54,7 @@ const RatingScreenContainer = () => {
   return (
     <LinearGradient colors={linearColorStyleTwo} style={styles.container}>
       <LinearGradient colors={linearColorStyle} style={styles.containerTwo}>
-        <FlatList data={otherReview} renderItem={renderItem} />
+        <FlatList data={data.data} renderItem={renderItem} />
       </LinearGradient>
     </LinearGradient>
   );

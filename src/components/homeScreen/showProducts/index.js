@@ -110,11 +110,18 @@ export default function ShowProductsContainer({
                   {width: '50%'},
                   {flexDirection: viewRTLStyle},
                 ]}>
-                <StarRatingDisplay
+                  <Text
+              style={[
+                styles.datoSub,
+                {textAlign: textRTLStyle, marginBottom: -10},
+              ]}>
+              {t(item?.taller?.estado || 'Nombre no disponible')}
+            </Text>
+                {/* <StarRatingDisplay
                   rating={4.5}
                   starSize={15} // Reduced star size
                   starStyle={{marginHorizontal: -1}} // Reduced spacing between stars
-                />
+                /> */}
               </View>
               {/* Status icons and Snackbar code remains the same */}
             </View>

@@ -323,36 +323,11 @@ const ProductDetailOne = ({navigation}) => {
             <IconProduct data={data[0]?.taller?.metodos_pago} />
             <IconContact data={data} />
 
-            {data[0]?.taller.ubicacion?.lat != undefined &&
-            data[0]?.taller.ubicacion?.lat != '' &&
-            data[0]?.taller.ubicacion?.lng != undefined &&
-            data[0]?.taller.ubicacion?.lng != '' ? (
-              <View
-                style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
-                <MapComponent
-                  initialRegion={{
-                    latitude: data[0]?.taller.ubicacion?.lat,
-                    longitude: data[0]?.taller.ubicacion?.lng,
-                    latitudeDelta: 0.015,
-                    longitudeDelta: 0.015,
-                  }}
-                  edit={false}
-                  returnFunction={GetCoordenadas}
-                  useThisCoo={true}
-                />
-              </View>
-            ) : null}
-
             <View
               style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
               <TouchableOpacity
                 onPress={() => {
                   setshowRuta(true);
-                  // Linking.openURL(
-                  //   `https://www.google.com/maps/dir//${data[0]?.taller.ubicacion?.lat},${data[0]?.taller.ubicacion?.lng}`,
-                  // );
-
-
                 }}
                 style={[
                   stylesImage.button,
@@ -399,19 +374,14 @@ const ProductDetailOne = ({navigation}) => {
 
             <InfoContainer title={'Garantía'} text={DataService.garantia} />
 
-            {/* <KeyFeatures /> */}
           </View>
         </View>
-        <RatingScreen />
-
-        {/* {typeUserLogged != 'Taller' ? (
-          <Text style={styles.writeYourReview}>{writeYourReview}</Text>
-        ) : null} */}
+        
+        {DataService.id && <RatingScreen data={DataService}/>}
 
         <View style={[external.mh_20, external.mt_20]}>
           <H3HeadingCategory
             value={'Productos Similares'}
-            // seeall={'Ver todos'}
           />
           <NewArrivalBigContainer
             data={dataProductCategory}

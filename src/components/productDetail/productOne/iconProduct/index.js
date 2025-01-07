@@ -13,15 +13,7 @@ const IconProduct = data => {
     ? ['#3D3F45', '#45474B', '#2A2C32']
     : [appColors.screenBg, appColors.screenBg];
 
-  useEffect(() => {
-    console.log(
-      '...........................................................................',
-    );
-    console.log('data Metodos: ', data.data);
-    console.log(
-      '...........................................................................',
-    );
-  }, []);
+  
   return (
     <View style={[styles.view]}>
       <Text style={[styles.textTitle]}>Métodos de Pago</Text>
@@ -41,19 +33,12 @@ const IconProduct = data => {
             styles.menuItemContent,
             {shadowColor: appColors.shadowColor},
           ]}>
-          {/* <IconBackground value={<Refresh />} />
-          <Text style={[styles.upTofive, {color: textColorStyle}]}>Zelle</Text>
-          <View style={styles.verticalLine} />
-          <IconBackground value={<Bus />} />
-          <Text style={[styles.deliveryIn, {color: textColorStyle}]}>
-            Delivery in 3 days
-          </Text> */}
+          
           
           <View style={[styles.gridContainer]}>
             
             {Object.entries(data.data || {}).map(([key, value]) => {
               if (value) {
-                // Configuración de nombres e íconos por clave
                 const config = {
                   efectivo: {name: 'Efectivo', icon: <Text>💵</Text>},
                   pagoMovil: {name: 'Pago Móvil', icon: <Text>📱</Text>},

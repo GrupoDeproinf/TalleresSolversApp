@@ -1,5 +1,5 @@
-import {ScrollView, Text, View} from 'react-native';
-import React from 'react';
+import {Pressable, ScrollView, Text, ToastAndroid, View} from 'react-native';
+import React, {useEffect, useState} from 'react';
 import HeaderContainer from '../../commonComponents/headingContainer';
 import {
   allReview,
@@ -18,8 +18,79 @@ import {DownArrow} from '../../utils/icon';
 import RatingScreenContainer from '../../components/ratingScreenContainer';
 import {useValues} from '../../../App';
 import LinearGradient from 'react-native-linear-gradient';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import { TouchableOpacity } from 'react-native';
+import { Modal } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '../../../axiosInstance';
+import BeautifulModal from './components/modal';
 
 const RatingScreen = () => {
+  const route = useRoute();
+  const navigate = useNavigation();
+    const [modalVisible, setModalVisible] = useState(false);
+
+    const handleCloseModal = () => {
+      setModalVisible(false);
+    };
+
+    const { dataComments, dataAverage, id, dataTotal } = route.params;
+
+    const showToast = text => {
+        ToastAndroid.show(text, ToastAndroid.SHORT);
+    };
+
+    const addComment = async (rating, comment) => {
+      try {
+        // Obtener el usuario desde AsyncStorage
+        const jsonValue = await AsyncStorage.getItem('@userInfo');
+        const user = jsonValue ? JSON.parse(jsonValue) : null;
+    
+        if (!user) {
+          console.error("Error: Usuario no encontrado en AsyncStorage");
+          return;
+        }
+    
+        // Validar que todos los parámetros requeridos están disponibles
+        if (!id || !dataTotal || !dataTotal.taller || !dataTotal.uid_taller) {
+          console.error("Error: Parámetros faltantes en route.params");
+          return;
+        }
+        // Enviar la solicitud a la API
+        const response = await api.post('/home/addCommentToService', {
+          uid_service: id,
+          comentario: comment,
+          puntuacion: rating,
+          nombre_taller: dataTotal.taller,
+          uid_taller: dataTotal.uid_taller,
+          usuario: {
+            uid: user.uid,
+            nombre: user.nombre,
+            email: user.email,
+          },
+        });
+    
+        if (response.status === 201) {
+          console.log("Comentario añadido con éxito:", response.data);
+          setModalVisible(false);
+          showToast('Gracias por tu comentario');
+          navigate.navigate('HomeScreen');
+        } else {
+          console.error("Error en la API. Código de estado:", response.status);
+        }
+      } catch (error) {
+        console.error("Error en addComment:", error);
+      }
+    };
+    
+  
+
+  useEffect(() => {
+    console.log('123456789***************');
+    console.log('Data:', dataComments);
+    console.log('123456789***************');
+    console.log('Data:', dataAverage);
+  }, []);
   const {
     bgFullStyle,
     textColorStyle,
@@ -36,36 +107,22 @@ const RatingScreen = () => {
         contentContainerStyle={[external.Pb_30]}>
         <HeaderContainer value={reviews} />
         <View style={[external.mt_12, external.as_center]}>
-          <Text style={[styles.textContext, {color: textColorStyle}]}>4.0</Text>
+          <Text style={[styles.textContext, {color: textColorStyle}]}>
+            {dataAverage}
+          </Text>
           <CustomRatingBars />
           <Text style={[commonStyles.subtitleText, external.pt_10]}>
-            {basedReviews}
+            Basado en {dataComments?.length} reviews
           </Text>
         </View>
         <LinearGradient
           colors={linearColorStyleTwo}
           style={styles.ratingScreenView}>
-          <LinearGradient
-            colors={linearColorStyle}
-            style={styles.ratingScreenView}>
-            {ratingScreen.map((item, index) => (
-              <View style={styles.mapView}>
-                <Text style={[styles.titleText, {color: textColorStyle}]}>
-                  {item.title}
-                </Text>
-                <View style={[styles.progressBar]}>
-                  <View
-                    style={[styles.progressBarPrimary, {width: item.width}]}
-                  />
-                </View>
-                <Text style={[commonStyles.subtitleText, external.mh_20]}>
-                  {item.range}
-                </Text>
-              </View>
-            ))}
-          </LinearGradient>
+          
         </LinearGradient>
-        <Text style={styles.writeReview}>{writeYourReview}</Text>
+        <TouchableOpacity style={{alignSelf: 'flex-end'}} onPress={() => {setModalVisible(true)}}>
+          <Text style={styles.writeReview}>Dejanos saber que piensas</Text>
+        </TouchableOpacity>
         <View style={styles.viewText}>
           <Text
             style={[
@@ -89,8 +146,15 @@ const RatingScreen = () => {
             </LinearGradient>
           </LinearGradient>
         </View>
-        <RatingScreenContainer />
+        <RatingScreenContainer data={dataComments} />
       </ScrollView>
+
+      <BeautifulModal
+  visible={modalVisible}
+  onClose={handleCloseModal}
+  onSubmit={(rating, comment) => addComment(rating, comment)}
+/>
+
     </View>
   );
 };

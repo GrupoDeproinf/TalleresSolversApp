@@ -1,5 +1,5 @@
 import {Text, TouchableOpacity, View} from 'react-native';
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {fontSizes, windowHeight} from '../../../../themes/appConstant';
 import appColors from '../../../../themes/appColors';
 import {external} from '../../../../style/external.css';
@@ -10,10 +10,51 @@ import {ratingScreen} from '../../../../data/ratingScreen';
 import {useNavigation} from '@react-navigation/native';
 import styles from './styles.css';
 import {useValues} from '../../../../../App';
+import api from '../../../../../axiosInstance';
+import {X, Star} from 'lucide-react-native';
 
-const RatingScreen = () => {
+const RatingScreen = data => {
   const {textColorStyle, t, viewRTLStyle, textRTLStyle} = useValues();
-  const navigation = useNavigation('');
+  const [dataComments, setDataComments] = useState(null);
+  const [dataAverage, setDataAverage] = useState(null);
+  const navigation = useNavigation();
+
+  const calculateAverageScore = comments => {
+    const totalScore = comments.reduce(
+      (sum, comment) => sum + (comment.puntuacion || 0),
+      0,
+    );
+    const averageScore = totalScore / comments.length;
+
+    return averageScore;
+  };
+
+  // Ejemplo de uso en tu función:
+  const getComments = async data => {
+    try {
+      const response = await api.post('/home/getCommentsByService', {
+        uid_service: data.id,
+      });
+
+      if (response.status === 200) {
+        setDataComments(response.data);
+
+        const averageScore = calculateAverageScore(response.data);
+        setDataAverage(averageScore.toFixed(1));
+      } else {
+        console.warn('Respuesta inesperada del servidor:', response.status);
+        setDataComments([]);
+      }
+    } catch (error) {
+      console.error('Error en la solicitud:', error);
+    }
+  };
+
+  useEffect(() => {
+    // console.log('data:', data.data)
+    getComments(data.data);
+  }, []);
+
   return (
     <View>
       <View
@@ -40,14 +81,21 @@ const RatingScreen = () => {
             </Text>
             <TouchableOpacity
               style={[external.fd_row, external.ai_center]}
-              onPress={() => navigation.navigate('RatingScreen')}>
+              onPress={() =>
+                navigation.navigate('RatingScreen', {
+                  dataComments: dataComments,
+                  dataAverage: dataAverage,
+                  id: data.data.id,
+                  dataTotal: data.data,
+                })
+              }>
               <Text
                 style={[
                   commonStyles.titleText19,
                   {fontSize: fontSizes.FONT17},
                   {color: textColorStyle},
                 ]}>
-                {'105 reviews'}
+                {dataComments?.length}
               </Text>
               <RightSmallArrow />
             </TouchableOpacity>
@@ -55,26 +103,13 @@ const RatingScreen = () => {
           <View
             style={[
               external.fd_row,
-              {alignItems: 'flex-start'},
-              {flexDirection: viewRTLStyle},
+              {alignItems: 'center', justifyContent: 'center'},
             ]}>
             <View style={styles.viewContainer}>
-              <Text style={styles.fourPointOne}>4.1</Text>
+              <Text style={[styles.fourPointOne, {alignItems: 'center', justifyContent: 'center'}]}>
+                {dataAverage} <Star size={15} color={'#D3D3D3'} fill={'none'} />
+              </Text>
               <Text style={styles.outOfFive}>de 5</Text>
-            </View>
-            <View>
-              {ratingScreen.map((item, index) => (
-                <View style={styles.ratingScreen}>
-                  <Text style={[styles.titleView, {color: textColorStyle}]}>
-                    {t(item.title)}
-                  </Text>
-                  <View style={[styles.progressBar]}>
-                    <View
-                      style={[styles.progressBarPrimary, {width: item.width}]}
-                    />
-                  </View>
-                </View>
-              ))}
             </View>
           </View>
         </View>
