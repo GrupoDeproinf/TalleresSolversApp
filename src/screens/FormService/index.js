@@ -1048,15 +1048,16 @@ const stylesModal = StyleSheet.create({
     fontWeight: 'bold',
   },
   buttonYes: {
-    backgroundColor: 'green', // Color del botón "Sí"
+    backgroundColor: '#2D3261', // Color del botón "Sí"
     borderRadius: 5,
     padding: 10,
     width: '48%', // Ajustar ancho para espacio entre botones
     alignItems: 'center',
   },
   buttonNo: {
-    backgroundColor: 'red', // Color del botón "No"
+    backgroundColor: '#bdbdbd', // Color del botón "No"
     borderRadius: 5,
+    color: '#2D3261',
     padding: 10,
     width: '48%', // Ajustar ancho para espacio entre botones
     alignItems: 'center',

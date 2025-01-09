@@ -9,7 +9,7 @@ import {
   ToastAndroid,
   Button,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 // import AuthContainer from '../../../commonComponents/authContainer';
 // import {
 //   confirmPasswords,
@@ -28,21 +28,21 @@ import React, { useState, useEffect } from 'react';
 // } from '../../../constant';
 import TextInputs from '../../../commonComponents/textInputs';
 import NavigationButton from '../../../commonComponents/navigationButton';
-import { commonStyles } from '../../../style/commonStyle.css';
-import { external } from '../../../style/external.css';
+import {commonStyles} from '../../../style/commonStyle.css';
+import {external} from '../../../style/external.css';
 import styles from './style.css';
 import appColors from '../../../themes/appColors';
-import { Email } from '../../../assets/icons/email';
-import { Call, Key } from '../../../utils/icon';
-import { useValues } from '../../../../App';
+import {Email} from '../../../assets/icons/email';
+import {Call, Key} from '../../../utils/icon';
+import {useValues} from '../../../../App';
 
 import UserImage from '../../../assets/newImage/user.png';
 import KeyImage from '../../../assets/newImage/key.png';
 
-import { TabView, SceneMap, TabBar } from 'react-native-tab-view';
+import {TabView, SceneMap, TabBar} from 'react-native-tab-view';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Picker } from '@react-native-picker/picker';
+import {Picker} from '@react-native-picker/picker';
 
 import Icons from 'react-native-vector-icons/FontAwesome';
 import Icons2 from 'react-native-vector-icons/FontAwesome5';
@@ -52,14 +52,12 @@ import Icons4 from 'react-native-vector-icons/Entypo';
 import api from '../../../../axiosInstance';
 import CheckBox from 'react-native-check-box';
 
-import { launchImageLibrary } from 'react-native-image-picker';
-import { Buffer } from 'buffer';
+import {launchImageLibrary} from 'react-native-image-picker';
+import {Buffer} from 'buffer';
 
-import MapComponent from '../../map'
+import MapComponent from '../../map';
 
-
-
-const SignUp = ({ navigation }) => {
+const SignUp = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [cedula, setcedula] = useState(0);
   const [Nombre, setNombre] = useState('');
@@ -93,55 +91,55 @@ const SignUp = ({ navigation }) => {
   const [lng, setlng] = useState('');
 
   const [metodosPago, setMetodosPago] = useState([
-    { label: 'Efectivo', value: 'efectivo', checked: false },
-    { label: 'Pago Móvil', value: 'pagoMovil', checked: false },
-    { label: 'Punto de venta', value: 'puntoVenta', checked: false },
-    { label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false },
-    { label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false },
-    { label: 'Transferencia', value: 'transferencia', checked: false },
-    { label: 'Zelle', value: 'zelle', checked: false },
-    { label: 'Zinli', value: 'zinli', checked: false },
+    {label: 'Efectivo', value: 'efectivo', checked: false},
+    {label: 'Pago Móvil', value: 'pagoMovil', checked: false},
+    {label: 'Punto de venta', value: 'puntoVenta', checked: false},
+    {label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false},
+    {label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false},
+    {label: 'Transferencia', value: 'transferencia', checked: false},
+    {label: 'Zelle', value: 'zelle', checked: false},
+    {label: 'Zinli', value: 'zinli', checked: false},
   ]);
 
   const [estadoSelected, setestadoSelected] = useState(''); // Default value 'J'
 
   const [estadosVenezuela, setEstadosVenezuela] = useState([
-    { label: 'Seleccione un estado', value: '' },
-    { label: 'Amazonas', value: 'Amazonas' },
-    { label: 'Anzoátegui', value: 'Anzoátegui' },
-    { label: 'Apure', value: 'Apure' },
-    { label: 'Aragua', value: 'Aragua' },
-    { label: 'Barinas', value: 'Barinas' },
-    { label: 'Bolívar', value: 'Bolívar' },
-    { label: 'Carabobo', value: 'Carabobo' },
-    { label: 'Cojedes', value: 'Cojedes' },
-    { label: 'Delta Amacuro', value: 'Delta Amacuro' },
-    { label: 'Distrito Capital', value: 'Distrito Capital' },
-    { label: 'Falcón', value: 'Falcón' },
-    { label: 'Guárico', value: 'Guárico' },
-    { label: 'Lara', value: 'Lara' },
-    { label: 'Mérida', value: 'Mérida' },
-    { label: 'Miranda', value: 'Miranda' },
-    { label: 'Monagas', value: 'Monagas' },
-    { label: 'Nueva Esparta', value: 'Nueva Esparta' },
-    { label: 'Portuguesa', value: 'Portuguesa' },
-    { label: 'Sucre', value: 'Sucre' },
-    { label: 'Táchira', value: 'Táchira' },
-    { label: 'Trujillo', value: 'Trujillo' },
-    { label: 'Vargas', value: 'Vargas' },
-    { label: 'Yaracuy', value: 'Yaracuy' },
-    { label: 'Zulia', value: 'Zulia' },
+    {label: 'Seleccione un estado', value: ''},
+    {label: 'Amazonas', value: 'Amazonas'},
+    {label: 'Anzoátegui', value: 'Anzoátegui'},
+    {label: 'Apure', value: 'Apure'},
+    {label: 'Aragua', value: 'Aragua'},
+    {label: 'Barinas', value: 'Barinas'},
+    {label: 'Bolívar', value: 'Bolívar'},
+    {label: 'Carabobo', value: 'Carabobo'},
+    {label: 'Cojedes', value: 'Cojedes'},
+    {label: 'Delta Amacuro', value: 'Delta Amacuro'},
+    {label: 'Distrito Capital', value: 'Distrito Capital'},
+    {label: 'Falcón', value: 'Falcón'},
+    {label: 'Guárico', value: 'Guárico'},
+    {label: 'Lara', value: 'Lara'},
+    {label: 'Mérida', value: 'Mérida'},
+    {label: 'Miranda', value: 'Miranda'},
+    {label: 'Monagas', value: 'Monagas'},
+    {label: 'Nueva Esparta', value: 'Nueva Esparta'},
+    {label: 'Portuguesa', value: 'Portuguesa'},
+    {label: 'Sucre', value: 'Sucre'},
+    {label: 'Táchira', value: 'Táchira'},
+    {label: 'Trujillo', value: 'Trujillo'},
+    {label: 'Vargas', value: 'Vargas'},
+    {label: 'Yaracuy', value: 'Yaracuy'},
+    {label: 'Zulia', value: 'Zulia'},
   ]);
 
   const layout = useWindowDimensions();
 
   const [index, setIndex] = React.useState(0);
   const [routes] = React.useState([
-    { key: 'Cliente', title: 'Cliente' },
-    { key: 'Taller', title: 'Taller' },
+    {key: 'Cliente', title: 'Cliente'},
+    {key: 'Taller', title: 'Taller'},
   ]);
 
-  useEffect(() => { }, [isGetOtpDisabled]);
+  useEffect(() => {}, [isGetOtpDisabled]);
 
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -155,15 +153,19 @@ const SignUp = ({ navigation }) => {
   };
 
   const validatePhone = () => {
-    const phoneRegex = /^\d{10}$/;
-    if (!phoneRegex.test(phone)) {
-      setPhoneError('Telefono debe contener 9 caracteres');
+    // Eliminar la máscara para validar solo los números
+    const numericPhone = phone.replace(/[^0-9]/g, ''); // Remueve paréntesis, espacios y guiones
+    const phoneRegex = /^\d{10}$/; // Validar exactamente 10 dígitos
+  
+    if (!phoneRegex.test(numericPhone)) {
+      setPhoneError('Teléfono debe contener exactamente 10 dígitos');
       return false;
     } else {
       setPhoneError('');
       return true;
     }
   };
+  
 
   const validatePassword = () => {
     if (password.length < 6) {
@@ -204,7 +206,8 @@ const SignUp = ({ navigation }) => {
         isConfirmPasswordValid == true &&
         Nombre != '' &&
         cedula != 0 &&
-        cedula != '' && estadoSelected != ''
+        cedula != '' &&
+        estadoSelected != ''
       ) {
         const infoUserCreated = {
           Nombre: Nombre,
@@ -214,7 +217,7 @@ const SignUp = ({ navigation }) => {
           email: email.toLowerCase(),
           password: password.toLowerCase(),
           estado: estadoSelected,
-          base64: base64
+          base64: base64,
         };
 
         console.log(infoUserCreated);
@@ -306,8 +309,8 @@ const SignUp = ({ navigation }) => {
           metodos_pago: newFormatMP,
           estado: estadoSelected,
           base64: base64,
-          lat:lat,
-          lng:lng
+          lat: lat,
+          lng: lng,
         };
 
         console.log(infoUserCreated);
@@ -370,7 +373,7 @@ const SignUp = ({ navigation }) => {
       }
     }
   };
-  const { bgFullStyle, textColorStyle, t, textRTLStyle } = useValues();
+  const {bgFullStyle, textColorStyle, t, textRTLStyle} = useValues();
 
   // const showToast = (type, text1, position, visibilityTime, autoHide) => {
   //   Toast.show({
@@ -409,44 +412,49 @@ const SignUp = ({ navigation }) => {
   const [base64, setBase64] = useState(null);
 
   const selectImage = () => {
-    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
+    launchImageLibrary({mediaType: 'photo', includeBase64: true}, response => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.error) {
         console.log('ImagePicker Error: ', response.error);
       } else {
-        const source = { uri: response.assets[0].uri };
+        const source = {uri: response.assets[0].uri};
         const base64Data = response.assets[0].base64;
-        
+
         // Calcular el tamaño del archivo base64 en bytes
-        const base64Length = base64Data.length * (3 / 4) - (base64Data.slice(-2) === '==' ? 2 : base64Data.slice(-1) === '=' ? 1 : 0);
+        const base64Length =
+          base64Data.length * (3 / 4) -
+          (base64Data.slice(-2) === '=='
+            ? 2
+            : base64Data.slice(-1) === '='
+            ? 1
+            : 0);
         const sizeInKB = base64Length / 1024;
         const sizeInMB = sizeInKB / 1024;
-  
+
         console.log(`Size in KB: ${sizeInKB.toFixed(2)} KB`);
         console.log(`Size in MB: ${sizeInMB.toFixed(2)} MB`);
-  
+
         setImageUri(source.uri);
         setBase64(base64Data);
       }
     });
   };
-  
 
   const clearImage = () => {
     setImageUri(null);
     setBase64(null);
   };
 
-  const GetCoordenadas = (location) => {
-    console.log(location)
-    setlat(location.latitude)
-    setlng(location.longitude)
-  }
+  const GetCoordenadas = location => {
+    console.log(location);
+    setlat(location.latitude);
+    setlng(location.longitude);
+  };
 
   return (
     <View
-      style={[styles.container, { backgroundColor: bgFullStyle, padding: 30 }]}>
+      style={[styles.container, {backgroundColor: bgFullStyle, padding: 30}]}>
       <Text
         style={{
           fontSize: 20,
@@ -456,31 +464,27 @@ const SignUp = ({ navigation }) => {
         }}>
         Regístrate ahora {typeOfView != '' ? '(' + typeOfView + ')' : null}
       </Text>
-      <Text style={{ fontSize: 13, color: 'gray', marginBottom: 10 }}>
+      <Text style={{fontSize: 13, color: 'gray', marginBottom: 10}}>
         Regístrate ya sea como cliente o taller
       </Text>
 
       {typeOfView === 'Cliente' ? (
         // ****************************** FOMRULARIO PARA CLIENTES ***********************************************
 
-        <ScrollView style={{ marginBottom: 15 }}>
-
-
+        <ScrollView style={{marginBottom: 15}}>
           <View>
-
-          <View
+            <View
               style={{
                 flex: 1,
                 justifyContent: 'center',
                 alignItems: 'center',
                 marginTop: 10,
               }}>
-
               {imageUri && (
                 <View style={stylesImage.imageContainer}>
                   <Image
-                    source={{ uri: imageUri }}
-                    style={{ width: 200, height: 200 }}
+                    source={{uri: imageUri}}
+                    style={{width: 200, height: 200}}
                   />
                   <TouchableOpacity
                     style={stylesImage.closeButton}
@@ -502,23 +506,20 @@ const SignUp = ({ navigation }) => {
                     flexDirection: 'row',
                     alignItems: 'center',
                     padding: 10,
-                    marginTop: 10
+                    marginTop: 10,
                   },
                 ]}
-                onPress={selectImage}
-              >
+                onPress={selectImage}>
                 <Icons name="user" size={15} color="#2D3261" />
-                <Text style={[stylesImage.buttonText, { marginLeft: 10, color: '#2D3261' }]}>
+                <Text
+                  style={[
+                    stylesImage.buttonText,
+                    {marginLeft: 10, color: '#2D3261'},
+                  ]}>
                   Foto de perfil
                 </Text>
               </TouchableOpacity>
-
-
-
             </View>
-
-
-
 
             <TextInputs
               title="Nombre y Apellido"
@@ -543,18 +544,18 @@ const SignUp = ({ navigation }) => {
               <Text style={styles.errorStyle}>{NombreError}</Text>
             )}
 
-            <View style={{ marginTop: 5 }}>
+            <View style={{marginTop: 5}}>
               <Text
                 style={[
                   styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
                 ]}>
                 Cedula
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
                 {/* Select para elegir "J-" o "G-" */}
                 <View
                   style={{
@@ -580,7 +581,7 @@ const SignUp = ({ navigation }) => {
                 </View>
 
                 {/* TextInput para el número de RIF */}
-                <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
+                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
                   <TextInputs
                     title=""
                     value={cedula}
@@ -603,7 +604,7 @@ const SignUp = ({ navigation }) => {
                     }}
                     keyboardType="numeric"
                     icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                    style={{ height: 50 }} // Altura para el TextInput
+                    style={{height: 50}} // Altura para el TextInput
                   />
                 </View>
               </View>
@@ -638,25 +639,25 @@ const SignUp = ({ navigation }) => {
               <Text style={styles.errorStyle}>{emailError}</Text>
             )}
 
-<View style={{ marginTop: 5 }}>
+            <View style={{marginTop: 5}}>
               {/* Texto "RIF" arriba de los inputs */}
               <Text
                 style={[
                   styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
                 ]}>
                 Estado
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
                 {/* Icono al lado del Picker */}
                 <Icons4
                   name="location"
                   size={20}
                   color="#9BA6B8"
-                  style={{ marginRight: 5, marginLeft: 10 }}
+                  style={{marginRight: 5, marginLeft: 10}}
                 />
                 <View
                   style={{
@@ -683,18 +684,34 @@ const SignUp = ({ navigation }) => {
               </View>
             </View>
 
-
             <TextInputs
               title="Número Telefónico"
               value={phone}
-              placeHolder="Ejem (4142617966)"
+              placeHolder="Ejem (414) 261-7966"
               keyboardType="numeric"
               onChangeText={text => {
-                // Remove non-numeric characters using regex
-                const numericText = text.replace(/[^0-9]/g, '');
+                // Eliminar caracteres no numéricos
+                const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
+
+                // Aplicar formato de máscara (XXX) XXX-XXXX
+                let formattedText = numericText;
+                if (numericText.length > 3 && numericText.length <= 6) {
+                  formattedText = `(${numericText.slice(
+                    0,
+                    3,
+                  )}) ${numericText.slice(3)}`;
+                } else if (numericText.length > 6) {
+                  formattedText = `(${numericText.slice(
+                    0,
+                    3,
+                  )}) ${numericText.slice(3, 6)}-${numericText.slice(6)}`;
+                }
+
+                // Actualizar el estado con el texto formateado
                 setPhone(numericText);
                 setCallTyping(true);
 
+                // Validaciones
                 if (numericText.trim() === '') {
                   setPhoneError('Número telefónico requerido');
                 } else {
@@ -768,22 +785,20 @@ const SignUp = ({ navigation }) => {
         </ScrollView>
       ) : typeOfView === 'Taller' ? (
         // ****************************** FOMRULARIO PARA TALLERES ***********************************************
-        <ScrollView style={{ marginBottom: 15 }}>
+        <ScrollView style={{marginBottom: 15}}>
           <View>
-
-          <View
+            <View
               style={{
                 flex: 1,
                 justifyContent: 'center',
                 alignItems: 'center',
                 marginTop: 10,
               }}>
-
               {imageUri && (
                 <View style={stylesImage.imageContainer}>
                   <Image
-                    source={{ uri: imageUri }}
-                    style={{ width: 200, height: 200 }}
+                    source={{uri: imageUri}}
+                    style={{width: 200, height: 200}}
                   />
                   <TouchableOpacity
                     style={stylesImage.closeButton}
@@ -805,19 +820,19 @@ const SignUp = ({ navigation }) => {
                     flexDirection: 'row',
                     alignItems: 'center',
                     padding: 10,
-                    marginTop: 10
+                    marginTop: 10,
                   },
                 ]}
-                onPress={selectImage}
-              >
+                onPress={selectImage}>
                 <Icons name="user" size={15} color="#2D3261" />
-                <Text style={[stylesImage.buttonText, { marginLeft: 10, color: '#2D3261' }]}>
+                <Text
+                  style={[
+                    stylesImage.buttonText,
+                    {marginLeft: 10, color: '#2D3261'},
+                  ]}>
                   Foto de perfil
                 </Text>
               </TouchableOpacity>
-
-
-
             </View>
 
             <TextInputs
@@ -843,19 +858,19 @@ const SignUp = ({ navigation }) => {
               <Text style={styles.errorStyle}>{NombreError}</Text>
             )}
 
-            <View style={{ marginTop: 5 }}>
+            <View style={{marginTop: 5}}>
               {/* Texto "RIF" arriba de los inputs */}
               <Text
                 style={[
                   styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
                 ]}>
                 Registro de Información Fiscal (RIF)
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
                 {/* Select para elegir "J-" o "G-" */}
                 <View
                   style={{
@@ -881,7 +896,7 @@ const SignUp = ({ navigation }) => {
                 </View>
 
                 {/* TextInput para el número de RIF */}
-                <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
+                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
                   <TextInputs
                     title=""
                     value={cedula}
@@ -904,7 +919,7 @@ const SignUp = ({ navigation }) => {
                     }}
                     keyboardType="numeric"
                     icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                    style={{ height: 50 }} // Altura para el TextInput
+                    style={{height: 50}} // Altura para el TextInput
                   />
                 </View>
               </View>
@@ -940,25 +955,25 @@ const SignUp = ({ navigation }) => {
               <Text style={styles.errorStyle}>{emailError}</Text>
             )}
 
-            <View style={{ marginTop: 5 }}>
+            <View style={{marginTop: 5}}>
               {/* Texto "RIF" arriba de los inputs */}
               <Text
                 style={[
                   styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
                 ]}>
                 Estado
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
                 {/* Icono al lado del Picker */}
                 <Icons4
                   name="location"
                   size={20}
                   color="#9BA6B8"
-                  style={{ marginRight: 5, marginLeft: 10 }}
+                  style={{marginRight: 5, marginLeft: 10}}
                 />
                 <View
                   style={{
@@ -985,31 +1000,53 @@ const SignUp = ({ navigation }) => {
               </View>
             </View>
 
-
-            <View style={[stylesMap.container, { marginTop: 5, marginBottom:15 }]}>
-              <MapComponent initialRegion={{ latitude: 37.7749, longitude: -122.4194, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={true} 
-              returnFunction = {GetCoordenadas} useThisCoo = {false}/> 
+            <View
+              style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
+              <MapComponent
+                initialRegion={{
+                  latitude: 37.7749,
+                  longitude: -122.4194,
+                  latitudeDelta: 0.015,
+                  longitudeDelta: 0.015,
+                }}
+                edit={true}
+                returnFunction={GetCoordenadas}
+                useThisCoo={false}
+              />
             </View>
-
-          
 
             <TextInputs
               title="Número Telefónico"
               value={phone}
-              placeHolder="Ingrese su número(4142617966)"
+              placeHolder="Ejem (414) 261-7966"
               keyboardType="numeric"
               onChangeText={text => {
-                // Remove non-numeric characters using regex
-                const numericText = text.replace(/[^0-9]/g, '');
-                if (numericText.length <= 10) {
-                  setPhone(numericText);
-                  setCallTyping(true);
+                // Eliminar caracteres no numéricos
+                const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
 
-                  if (numericText.trim() === '') {
-                    setPhoneError('Número telefónico requerido');
-                  } else {
-                    setPhoneError('');
-                  }
+                // Aplicar formato de máscara (XXX) XXX-XXXX
+                let formattedText = numericText;
+                if (numericText.length > 3 && numericText.length <= 6) {
+                  formattedText = `(${numericText.slice(
+                    0,
+                    3,
+                  )}) ${numericText.slice(3)}`;
+                } else if (numericText.length > 6) {
+                  formattedText = `(${numericText.slice(
+                    0,
+                    3,
+                  )}) ${numericText.slice(3, 6)}-${numericText.slice(6)}`;
+                }
+
+                // Actualizar el estado con el texto formateado
+                setPhone(numericText);
+                setCallTyping(true);
+
+                // Validaciones
+                if (numericText.trim() === '') {
+                  setPhoneError('Número telefónico requerido');
+                } else {
+                  setPhoneError('');
                 }
               }}
               onBlur={() => {
@@ -1028,20 +1065,35 @@ const SignUp = ({ navigation }) => {
             <TextInputs
               title="Whatsapp"
               value={whats}
-              placeHolder="Ingrese su número(4142617966)"
+              placeHolder="Ejem (414) 261-7966"
               keyboardType="numeric"
               onChangeText={text => {
-                // Remove non-numeric characters using regex
-                const numericText = text.replace(/[^0-9]/g, '');
-                if (numericText.length <= 10) {
-                  setwhats(numericText);
-                  setCallTyping(true);
+                // Eliminar caracteres no numéricos
+                const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
 
-                  if (numericText.trim() === '') {
-                    setwhatsError('Número telefónico requerido');
-                  } else {
-                    setwhatsError('');
-                  }
+                // Aplicar formato de máscara (XXX) XXX-XXXX
+                let formattedText = numericText;
+                if (numericText.length > 3 && numericText.length <= 6) {
+                  formattedText = `(${numericText.slice(
+                    0,
+                    3,
+                  )}) ${numericText.slice(3)}`;
+                } else if (numericText.length > 6) {
+                  formattedText = `(${numericText.slice(
+                    0,
+                    3,
+                  )}) ${numericText.slice(3, 6)}-${numericText.slice(6)}`;
+                }
+
+                // Actualizar el estado con el texto formateado
+                setwhats(numericText);
+                setCallTyping(true);
+
+                // Validación: Si está vacío, muestra error
+                if (numericText.trim() === '') {
+                  setwhatsError('Número telefónico requerido');
+                } else {
+                  setwhatsError('');
                 }
               }}
               onBlur={() => {
@@ -1055,18 +1107,18 @@ const SignUp = ({ navigation }) => {
               <Text style={styles.errorStyle}>{whatsError}</Text>
             )}
 
-            <View style={{ marginTop: 5 }}>
+            <View style={{marginTop: 5}}>
               {/* Texto "RIF" arriba de los inputs */}
               <Text
                 style={[
                   styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
                 ]}>
                 Metodos de Pago
               </Text>
 
-              <View style={{ padding: 10 }}>
+              <View style={{padding: 10}}>
                 <View
                   style={{
                     flexDirection: 'row',
@@ -1087,7 +1139,7 @@ const SignUp = ({ navigation }) => {
                         onClick={() => toggleCheckBox(index)}
                         checkBoxColor="#2D3261"
                       />
-                      <Text style={{ marginLeft: 10, color: 'black' }}>
+                      <Text style={{marginLeft: 10, color: 'black'}}>
                         {method.label}
                       </Text>
                     </View>
@@ -1143,12 +1195,11 @@ const SignUp = ({ navigation }) => {
               }
             />
           </View>
-
         </ScrollView>
       ) : null}
 
       {typeOfView == '' ? (
-        <View style={{ flex: 1, marginTop: '5%' }}>
+        <View style={{flex: 1, marginTop: '5%'}}>
           <TouchableOpacity
             onPress={() => handleClientePress()}
             style={stylesCard.boxContainer}>
@@ -1157,7 +1208,7 @@ const SignUp = ({ navigation }) => {
               style={[
                 commonStyles.titleText19,
                 external.ph_5,
-                { color: textColorStyle },
+                {color: textColorStyle},
               ]}>
               Cliente
             </Text>
@@ -1171,7 +1222,7 @@ const SignUp = ({ navigation }) => {
               style={[
                 commonStyles.titleText19,
                 external.ph_5,
-                { color: textColorStyle },
+                {color: textColorStyle},
               ]}>
               Taller
             </Text>
@@ -1198,7 +1249,7 @@ const SignUp = ({ navigation }) => {
             style={[
               commonStyles.titleText19,
               external.ph_5,
-              { color: textColorStyle },
+              {color: textColorStyle},
             ]}>
             Ingresar
           </Text>
@@ -1210,8 +1261,9 @@ const SignUp = ({ navigation }) => {
 
 export default SignUp;
 
-const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'center', alignItems: 'center', },});
-
+const stylesMap = StyleSheet.create({
+  container: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+});
 
 const stylesCard = StyleSheet.create({
   containerBox: {
@@ -1227,7 +1279,7 @@ const stylesCard = StyleSheet.create({
     marginBottom: 20, // Espaciado entre las cajas
     elevation: 3, // Sombra para Android
     shadowColor: '#000', // Sombra para iOS
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 4,
   },

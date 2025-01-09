@@ -69,7 +69,7 @@ const ProductContainer = () => {
   const renderItem = ({item}) => (
     <TouchableOpacity
       onPress={() =>
-        navigation.navigate('CategoryDetail', {uid: categories.id})
+        navigation.navigate('CategoryDetail', {uid: item.id})
       }>
       <LinearGradient
         start={{x: 0.0, y: 0.0}}

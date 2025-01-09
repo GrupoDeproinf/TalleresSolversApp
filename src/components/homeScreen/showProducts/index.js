@@ -36,6 +36,8 @@ export default function ShowProductsContainer({
     ? ['#3D3F45', '#45474B', '#2A2C32']
     : [appColors.screenBg, appColors.screenBg];
 
+
+
   const [visibleHint, setVisibleHint] = useState(false);
   const [statusLabel, setstatusLabel] = useState(false);
 
@@ -57,6 +59,11 @@ export default function ShowProductsContainer({
     setVisibleHint(null); // Oculta el Snackbar cuando se presiona para cerrar
   };
 
+  console.log('---------------------------------------------123');
+  console.log('data:', data);
+
+    const color = isDark ? appColors.blackBg : appColors.bgLayout;
+  
   const renderItem = ({item}) => (
     <TouchableOpacity onPress={() => goToDetail(item)} activeOpacity={0.9}>
       <LinearGradient
@@ -77,10 +84,14 @@ export default function ShowProductsContainer({
             {shadowColor: appColors.shadowColor},
             {flexDirection: viewRTLStyle},
           ]}>
-          <View style={styles.imageContainer}>
+          <View style={[styles.imageContainer, {backgroundColor: color}]}>
             <Image
               style={styles.image}
-              source={item.img ? item.img : 'notImageFound'}
+              source={{
+                uri: Array.isArray(item?.service_image)
+                  ? item?.service_image[0]
+                  : item?.service_image,
+              }}
             />
           </View>
           <View style={styles.textContainer}>
@@ -99,7 +110,7 @@ export default function ShowProductsContainer({
                 styles.datoSub,
                 {textAlign: textRTLStyle, marginBottom: -10},
               ]}>
-              {t(item?.taller?.nombre || 'Nombre no disponible')}
+              {t(item?.taller?.nombre || item?.taller || 'Nombre no disponible')}
             </Text>
             <View
               style={[styles.priceContainer, {flexDirection: viewRTLStyle}]}>
@@ -110,20 +121,14 @@ export default function ShowProductsContainer({
                   {width: '50%'},
                   {flexDirection: viewRTLStyle},
                 ]}>
-                  <Text
-              style={[
-                styles.datoSub,
-                {textAlign: textRTLStyle, marginBottom: -10},
-              ]}>
-              {t(item?.taller?.estado || 'Nombre no disponible')}
-            </Text>
-                {/* <StarRatingDisplay
-                  rating={4.5}
-                  starSize={15} // Reduced star size
-                  starStyle={{marginHorizontal: -1}} // Reduced spacing between stars
-                /> */}
+                <Text
+                  style={[
+                    styles.datoSub,
+                    {textAlign: textRTLStyle, marginBottom: -10},
+                  ]}>
+                  {t(item?.taller?.estado || '')}
+                </Text>
               </View>
-              {/* Status icons and Snackbar code remains the same */}
             </View>
           </View>
         </LinearGradient>
@@ -133,18 +138,18 @@ export default function ShowProductsContainer({
 
   return (
     <>
-    <View style={styles.newArrivalContainer}>
-      <View style={{marginTop: marginTop || windowHeight(14)}}>
+      <View style={styles.newArrivalContainer}>
+        <View style={{marginTop: marginTop || windowHeight(14)}}>
         {show && (
-          <H3HeadingCategory value={value} seeall={t('transData.seeAll')} />
+          <H3HeadingCategory value={value} />
         )}
       </View>
-      <FlatList
-        data={data || []}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => item.id || index.toString()}
-      />
-    </View>
+        <FlatList
+          data={data || []}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => item.id || index.toString()}
+        />
+      </View>
     </>
   );
 }

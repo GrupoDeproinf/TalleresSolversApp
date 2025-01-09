@@ -13,7 +13,7 @@ import BottomContainer from '../../../commonComponents/bottomContainer';
 import {commonStyles} from '../../../style/commonStyle.css';
 import {windowWidth} from '../../../themes/appConstant';
 import {external} from '../../../style/external.css';
-import {Plus} from '../../../utils/icon';
+import {BackLeft, Plus} from '../../../utils/icon';
 import {addtoBag, buyNow, writeYourReview} from '../../../constant';
 import styles from './style.css';
 import NewArrivalBigContainer from '../../../components/homeScreenTwo/newArrivalTwoContainer';
@@ -288,6 +288,16 @@ const ProductDetailOne = ({navigation}) => {
         contentContainerStyle={[external.Pb_80]}
         style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
         <View>
+          <View>
+            <TouchableOpacity
+              onPress={() => navigation.goBack('')}
+              style={{position: 'absolute', left: 0}} // Posiciona el botón de retroceso en la esquina izquierda
+            >
+              <View style={[{marginLeft: 20, marginTop: 16}]}>
+                <BackLeft />
+              </View>
+            </TouchableOpacity>
+          </View>
           <SliderDetails data={DataService?.service_image} />
           <View style={[external.mh_20]}>
             <Text
@@ -311,7 +321,6 @@ const ProductDetailOne = ({navigation}) => {
               {data[0]?.taller?.estado}
             </Text>
             <DetailsTextContainer DataService={DataService} />
-
 
             <InfoContainer
               title={'Descripción'}
@@ -353,7 +362,8 @@ const ProductDetailOne = ({navigation}) => {
             {data[0]?.taller.ubicacion?.lat != undefined &&
             data[0]?.taller.ubicacion?.lat != '' &&
             data[0]?.taller.ubicacion?.lng != undefined &&
-            data[0]?.taller.ubicacion?.lng != '' && showRuta == true ? (
+            data[0]?.taller.ubicacion?.lng != '' &&
+            showRuta == true ? (
               <View
                 style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
                 <MapRutaComponent
@@ -362,7 +372,7 @@ const ProductDetailOne = ({navigation}) => {
                     longitude: data[0]?.taller.ubicacion?.lng,
                     latitudeDelta: 0.015,
                     longitudeDelta: 0.015,
-                    name_taller:data[0]?.taller?.nombre
+                    name_taller: data[0]?.taller?.nombre,
                   }}
                   edit={false}
                   returnFunction={closeMapRutas}
@@ -371,18 +381,14 @@ const ProductDetailOne = ({navigation}) => {
               </View>
             ) : null}
 
-
             <InfoContainer title={'Garantía'} text={DataService.garantia} />
-
           </View>
         </View>
-        
-        {DataService.id && <RatingScreen data={DataService}/>}
+
+        {DataService.id && <RatingScreen data={DataService} />}
 
         <View style={[external.mh_20, external.mt_20]}>
-          <H3HeadingCategory
-            value={'Productos Similares'}
-          />
+          <H3HeadingCategory value={'Productos Similares'} />
           <NewArrivalBigContainer
             data={dataProductCategory}
             horizontal={true}

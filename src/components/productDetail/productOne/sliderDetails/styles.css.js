@@ -7,6 +7,7 @@ import {
 
 export const sliderStyles = StyleSheet.create({
   container: {
+    marginTop:60,
     backgroundColor: '#FFFFFF', // Fondo limpio y moderno
     paddingHorizontal: 16,
     paddingTop: 20,

@@ -77,7 +77,7 @@ const RatingScreen = data => {
                 {color: textColorStyle},
                 {textAlign: textRTLStyle},
               ]}>
-              {t('transData.reviews')} :
+              {'Comentarios'} :
             </Text>
             <TouchableOpacity
               style={[external.fd_row, external.ai_center]}

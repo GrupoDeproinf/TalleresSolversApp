@@ -4,11 +4,16 @@ import {external} from '../../../style/external.css';
 import {commonStyles} from '../../../style/commonStyle.css';
 import {fontSizes, windowHeight} from '../../../themes/appConstant';
 import IconBackground from '../../../commonComponents/iconBackGround';
-import {Notification} from '../../../utils/icon';
+import {BackLeft, Notification} from '../../../utils/icon';
 import {useValues} from '../../../../App';
+import { imageRTLStyle } from '../../../style/rtlStyle';
+import { useNavigation } from '@react-navigation/native';
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 const HeaderContainer = () => {
   const {textColorStyle, viewRTLStyle, t} = useValues();
+
+  const navigation = useNavigation();
 
   return (
     <View>
@@ -16,8 +21,16 @@ const HeaderContainer = () => {
         style={[
           external.fd_row,
           external.ai_center,
-          {flexDirection: viewRTLStyle},
+          {flexDirection: viewRTLStyle, alignItems: 'center'},
         ]}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack('')}
+          style={{position: 'absolute'}} // Posiciona el botón de retroceso en la esquina izquierda
+        >
+          <View>
+            <BackLeft style={[{marginTop: -4, paddingTop: 0}]}/>
+          </View>
+        </TouchableOpacity>
         <Text
           style={[
             commonStyles.titleText19,
@@ -26,12 +39,12 @@ const HeaderContainer = () => {
             {
               color: textColorStyle,
               fontSize: fontSizes.FONT21,
-              marginLeft: windowHeight(30),
+              marginTop: windowHeight(15),
             },
           ]}>
-          {t('transData.categories')}
+          {'Categorias'}
         </Text>
-        <IconBackground value={<Notification />} />
+        {/* <IconBackground value={<Notification />} /> */}
       </View>
     </View>
   );

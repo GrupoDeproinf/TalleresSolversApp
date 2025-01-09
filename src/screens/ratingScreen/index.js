@@ -105,14 +105,14 @@ const RatingScreen = () => {
         showsVerticalScrollIndicator={false}
         style={[external.mh_20]}
         contentContainerStyle={[external.Pb_30]}>
-        <HeaderContainer value={reviews} />
+        <HeaderContainer value={'Comentarios'} />
         <View style={[external.mt_12, external.as_center]}>
           <Text style={[styles.textContext, {color: textColorStyle}]}>
             {dataAverage}
           </Text>
           <CustomRatingBars />
           <Text style={[commonStyles.subtitleText, external.pt_10]}>
-            Basado en {dataComments?.length} reviews
+            Basado en {dataComments?.length} comentarios
           </Text>
         </View>
         <LinearGradient
@@ -123,16 +123,16 @@ const RatingScreen = () => {
         <TouchableOpacity style={{alignSelf: 'flex-end'}} onPress={() => {setModalVisible(true)}}>
           <Text style={styles.writeReview}>Dejanos saber que piensas</Text>
         </TouchableOpacity>
-        <View style={styles.viewText}>
-          <Text
+        {/* <View style={styles.viewText}>
+          {/* <Text
             style={[
               commonStyles.titleText19,
               {fontSize: fontSizes.FONT21},
               {color: textColorStyle},
             ]}>
             {otherReviews}
-          </Text>
-          <LinearGradient colors={linearColorStyle} style={styles.allReview}>
+          </Text> */}
+         {/* <LinearGradient colors={linearColorStyle} style={styles.allReview}>
             <LinearGradient colors={linearColorStyle} style={styles.allReview}>
               <Text
                 style={[
@@ -145,7 +145,7 @@ const RatingScreen = () => {
               <DownArrow color={iconColorStyle} />
             </LinearGradient>
           </LinearGradient>
-        </View>
+        </View> */}
         <RatingScreenContainer data={dataComments} />
       </ScrollView>
 

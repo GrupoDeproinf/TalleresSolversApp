@@ -39,7 +39,7 @@ const RatingScreenContainer = (data) => {
               commonStyles.titleText19,
               {fontSize: fontSizes.FONT17, color: appColors.subtitle},
             ]}>
-            {moment(item.fecha_creacion).format('DD/MM/YYYY')}
+            {moment.unix(item.fecha_creacion._seconds).format('DD/MM/YYYY')}
           </Text>
           <Text style={[styles.subtitle, {color: textColorStyle}]}>
             {item.comentario}

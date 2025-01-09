@@ -27,7 +27,7 @@ const SliderDetailsTwo = () => {
         <Text style={(styles.text, {color: textColorStyle})}>{details}</Text>
         <View style={[external.fd_row, external.ai_center]}>
           <View style={[external.mh_5]}>
-            <IconBackground value={<Search color={iconColorStyle} />} />
+            {/* <IconBackground value={<Search color={iconColorStyle} />} /> */}
           </View>
           <IconBackground value={<Heart />} />
         </View>

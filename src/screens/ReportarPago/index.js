@@ -858,6 +858,8 @@ const ReportarPago = ({navigation}) => {
                 date={date}
                 onDateChange={setDate}
                 theme="light"
+                mode='date'
+
                 title="Fecha del Pago"
               />
 
@@ -1083,6 +1085,8 @@ const ReportarPago = ({navigation}) => {
                         date={date}
                         onDateChange={setDate}
                         theme="light"
+                mode='date'
+
                         title="Fecha del Pago"
                         style={{height: 150}} // Ajustar el tamaño
                       />
@@ -1195,15 +1199,27 @@ const ReportarPago = ({navigation}) => {
                   keyboardType="numeric"
                 />
 
-                <TextInputs
-                  title={'Numero telefonico'}
-                  onChangeText={text => {
-                    const numericText = text.replace(/[^0-9]/g, '');
-                    settelefono(numericText);
-                  }}
-                  keyboardType="numeric"
-                  placeHolder={'Ingrese su telefono'}
-                />
+<TextInputs
+  title={'Número telefónico'}
+  onChangeText={text => {
+    // Eliminar caracteres no numéricos
+    const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
+
+    // Aplicar formato de máscara (XXX) XXX-XXXX
+    let formattedText = numericText;
+    if (numericText.length > 3 && numericText.length <= 6) {
+      formattedText = `(${numericText.slice(0, 3)}) ${numericText.slice(3)}`;
+    } else if (numericText.length > 6) {
+      formattedText = `(${numericText.slice(0, 3)}) ${numericText.slice(3, 6)}-${numericText.slice(6)}`;
+    }
+
+    settelefono(numericText);
+  }}
+  keyboardType="numeric"
+  placeHolder={'(XXX) XXX-XXXX'}
+  value={telefono} // Para mantener el valor actualizado con la máscara
+/>
+
 
                 <View style={{marginTop: 5}}>
                   <Text
@@ -1313,6 +1329,7 @@ const ReportarPago = ({navigation}) => {
                       onDateChange={setDate}
                       theme="light"
                       title="Fecha del Pago"
+                      mode="date"
                       style={{height: 65}} // Ajustar el tamaño
                     />
                   </View>
@@ -1398,6 +1415,7 @@ const ReportarPago = ({navigation}) => {
                 date={date}
                 onDateChange={setDate}
                 theme="light"
+                mode='date'
                 title="Fecha del Pago"
               />
 

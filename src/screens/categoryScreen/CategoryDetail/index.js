@@ -12,6 +12,7 @@ import {windowWidth} from '../../../themes/appConstant';
 import {useValues} from '../../../../App';
 import api from '../../../../axiosInstance';
 import NewCategoriesDetail from '../../../components/homeScreenTwo/newCategoriesDetail';
+import { useRoute } from '@react-navigation/native';
 
 const CategoryDetail = ({navigation}) => {
   const {linearColorStyle, isDark, bgFullStyle} = useValues();
@@ -19,13 +20,17 @@ const CategoryDetail = ({navigation}) => {
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [categories, setCategories] = useState('');
 
+  const route = useRoute();
+
+  const {uid} = route.params;
+
   const getDataByCategories = useCallback(async category => {
     try {
       const response = await api.post('/home/getProductsByCategory', {
         uid_categoria: category,
       });
 
-      console.log('Category data response:', response);
+      console.log('Category data response:', response.data);
 
       if (response.status === 200) {
         setDataByCategory(response.data);
@@ -65,13 +70,6 @@ const CategoryDetail = ({navigation}) => {
             category => category.id === id,
           );
 
-          console.log(
-            '=================================================================================',
-          );
-          console.log('filteredCategory', filteredCategory);
-          console.log(
-            '=================================================================================',
-          );
           if (filteredCategory) {
             setCategories(filteredCategory); // Almacenar como un array con un solo elemento
           } else {
@@ -86,13 +84,6 @@ const CategoryDetail = ({navigation}) => {
           );
           setCategories([]);
         }
-        console.log(
-          '=================================================================================',
-        );
-        console.log('categories', categories);
-        console.log(
-          '=================================================================================',
-        );
       } else {
         // Respuesta inesperada, establecer un array vacío
         setCategories([]);
@@ -112,8 +103,12 @@ const CategoryDetail = ({navigation}) => {
   };
 
   useEffect(() => {
-    getDataByCategories('LK7LMNMbXeubGA57vMTv');
-    getCategoryById('LK7LMNMbXeubGA57vMTv');
+    console.log('**************************************34')
+    console.log('CategoryDetail useEffect:', uid);
+    console.log('**************************************34')
+    
+    getDataByCategories(uid);
+    getCategoryById(uid);
   }, []);
 
   return (
@@ -121,17 +116,17 @@ const CategoryDetail = ({navigation}) => {
       style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
       <View style={[external.mh_20]}>
         <FullHeader
-          value={<Notification />}
+          value={''}
           title={categories?.nombre}
           onpressBack={() => navigation.goBack('')}
-          modelPress={() => navigation.navigate('NotificationScreen')}
+          
         />
       </View>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[external.Pb_30]}>
-        <SearchContainer />
-        <SortContainer />
+        {/* <SearchContainer /> */}
+        {/* <SortContainer /> */}
         <NewCategoriesDetail
           data={dataByCategory}
           horizontal={false}

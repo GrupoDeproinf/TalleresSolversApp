@@ -24,7 +24,7 @@ const OfferScreen = () => {
           value={t('transData.offers')}
           show={true}
           icon={<Heart />}
-          iconTwo={<Search color={iconColorStyle} />}
+          // iconTwo={<Search color={iconColorStyle} />}
         />
         <TimerContainer />
         <TrendingOffer />
