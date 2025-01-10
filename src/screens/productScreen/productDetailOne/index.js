@@ -79,12 +79,14 @@ const ProductDetailOne = ({navigation}) => {
 
   const [showRuta, setshowRuta] = useState(false);
 
+  const scrollRef = React.createRef();
+
   useEffect(() => {
     const {uid, typeUser} = route.params;
 
     console.log(uid);
-    getDataFirst(uid, typeUser)
-    
+    getDataFirst(uid, typeUser);
+    scrollRef.current?.scrollTo({ y: 0, animated: true }); // Scroll to top
   }, []);
 
   const getDataFirst = (uid, typeUser) =>{
@@ -339,6 +341,7 @@ const ProductDetailOne = ({navigation}) => {
     <View
       style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[external.Pb_80]}
         style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
@@ -449,7 +452,8 @@ const ProductDetailOne = ({navigation}) => {
             horizontal={true}
             width={windowWidth(205)}
             onNavigate={(uidServ) => {
-              getDataFirst(uidServ)
+              getDataFirst(uidServ);
+              scrollRef.current?.scrollTo({ y: 0, animated: true }); // Scroll to top
             }}
           />
         </View>
