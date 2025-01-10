@@ -42,7 +42,9 @@ const NewCategoriesDetail = ({
     <TouchableOpacity
       // activeOpacity={0.9}
       onPress={() => {
-        navigation.navigate('ProductDetailOne', {uid: item.uid_servicio});
+        navigation.navigate('ProductDetailOne', {
+          uid: item.uid_servicio === '' ? item.id : item.uid_servicio,
+        });
       }}>
       <LinearGradient
         start={{x: 0.0, y: 0.0}}

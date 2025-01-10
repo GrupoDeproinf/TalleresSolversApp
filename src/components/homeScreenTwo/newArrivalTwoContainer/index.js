@@ -36,7 +36,6 @@ const NewArrivalBigContainer = ({
   const color = isDark ? appColors.blackBg : appColors.bgLayout;
   const navigation = useNavigation();
 
-
   const renderItem = ({item}) => (
     <TouchableOpacity
       onPress={() => {
@@ -57,7 +56,14 @@ const NewArrivalBigContainer = ({
           colors={linearColorStyle}
           style={styles.menuItemContent}>
           <View style={[styles.imgContainer, {backgroundColor: color}]}>
-            <Image style={styles.img} source={item.img} />
+            <Image
+              style={styles.img}
+              source={{
+                uri: Array.isArray(item?.service_image)
+                  ? item?.service_image[0]
+                  : item?.service_image,
+              }}
+            />
           </View>
 
           <View style={[external.ph_10, external.pt_10]}>

@@ -7,6 +7,19 @@ import {
 import appColors from '../../../themes/appColors';
 import {commonStyles} from '../../../style/commonStyle.css';
 const styles = StyleSheet.create({
+  imageContainer: {
+    height: windowHeight(70),
+    width: windowWidth(108),
+    backgroundColor: '#F3F5FB',
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  image: {
+    width: windowWidth(76),
+    height: windowHeight(45),
+    resizeMode: 'contain',
+  },
   contianer: {
     borderRadius: 10,
     marginTop: windowHeight(10),

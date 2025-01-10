@@ -12,7 +12,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import {windowHeight} from '../../../themes/appConstant';
 import api from '../../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import moment from 'moment';
 
 const OrderHistory = () => {
@@ -35,7 +35,7 @@ const OrderHistory = () => {
   const [dataService, setDataService] = useState();
   const [dataUser, setDataUser] = useState();
 
-  const navigate = useNavigation()
+  const navigate = useNavigation();
 
   const getDataServices = async () => {
     const jsonValue = await AsyncStorage.getItem('@userInfo');
@@ -44,20 +44,24 @@ const OrderHistory = () => {
     console.log('user', user);
     console.log('-----------------------------------------------------');
     setDataUser(user);
-  
+
     try {
       const response = await api.get('/home/getContactService');
       const result = response.data;
-  
+
       // Filtrar los datos por `uid`
       if (user && user.uid) {
-        const filteredData = result.filter(item => item.usuario.id === user.uid);
+        const filteredData = result.filter(
+          item => item.usuario.id === user.uid,
+        );
         setDataService(filteredData);
         console.log('-----------------------------------------------------');
         console.log('Filtered result', filteredData);
         console.log('-----------------------------------------------------');
       } else {
-        console.warn('UID del usuario no encontrado. Mostrando datos completos.');
+        console.warn(
+          'UID del usuario no encontrado. Mostrando datos completos.',
+        );
         setDataService(result);
       }
     } catch (error) {
@@ -68,11 +72,12 @@ const OrderHistory = () => {
       }
     }
   };
-  
 
   useEffect(() => {
     getDataServices();
   }, []);
+
+  const color = isDark ? appColors.blackBg : appColors.bgLayout;
 
   const renderItem = ({item}) => (
     <LinearGradient
@@ -90,7 +95,16 @@ const OrderHistory = () => {
             styles.grayBoxContainer,
             {backgroundColor: isDark ? appColors.blackBg : appColors.bgLayout},
           ]}>
-          <Image style={styles.img} source={item.img} />
+          <View style={[styles.imageContainer, {backgroundColor: color}]}>
+            <Image
+              style={styles.image}
+              source={{
+                uri: Array.isArray(item?.servicio?.service_image)
+                  ? item?.servicio?.service_image[0]
+                  : item?.servicio?.service_image,
+              }}
+            />
+          </View>
         </View>
         <View style={[external.mh_8]}>
           <View
@@ -108,7 +122,7 @@ const OrderHistory = () => {
               ]}>
               {t(item.nombre_servicio)}
             </Text>
-            
+
             <Text
               style={[
                 commonStyles.H1Banner,
@@ -127,7 +141,6 @@ const OrderHistory = () => {
               external.ai_center,
               {flexDirection: viewRTLStyle},
             ]}>
-              
             <Text
               style={[
                 styles.deliveryContainer,
@@ -142,7 +155,15 @@ const OrderHistory = () => {
                 styles.orderContainer,
                 {borderTopEndRadius: isRTL ? windowHeight(9) : undefined},
               ]}>
-              <Text style={styles.buyAgain} onPress={() => (navigate.navigate('ProductDetailOne', {uid: item.uid_servicio}))}>Ver</Text>
+              <Text
+                style={styles.buyAgain}
+                onPress={() =>
+                  navigate.navigate('ProductDetailOne', {
+                    uid: item.uid_servicio,
+                  })
+                }>
+                Ver
+              </Text>
             </View>
           </View>
         </View>

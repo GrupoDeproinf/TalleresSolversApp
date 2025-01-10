@@ -9,24 +9,24 @@ import {
   Image,
   ToastAndroid,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import HeaderContainer from '../../../commonComponents/headingContainer';
-import { phoneMo, smithaWilliams, smithaWilliamsMail } from '../../../constant';
-import { commonStyles } from '../../../style/commonStyle.css';
-import { external } from '../../../style/external.css';
+import {phoneMo, smithaWilliams, smithaWilliamsMail} from '../../../constant';
+import {commonStyles} from '../../../style/commonStyle.css';
+import {external} from '../../../style/external.css';
 import styles from './style.css';
 import images from '../../../utils/images';
 import TextInputs from '../../../commonComponents/textInputs';
 import appColors from '../../../themes/appColors';
-import { Call, Edit, Profile, Key, BackLeft } from '../../../utils/icon';
-import { Email } from '../../../assets/icons/email';
+import {Call, Edit, Profile, Key, BackLeft} from '../../../utils/icon';
+import {Email} from '../../../assets/icons/email';
 import NavigationButton from '../../../commonComponents/navigationButton';
-import { windowHeight } from '../../../themes/appConstant';
-import { useValues } from '../../../../App';
+import {windowHeight} from '../../../themes/appConstant';
+import {useValues} from '../../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import { RadioButton, Button } from 'react-native-paper';
-import { Picker } from '@react-native-picker/picker';
+import {RadioButton, Button} from 'react-native-paper';
+import {Picker} from '@react-native-picker/picker';
 import api from '../../../../axiosInstance';
 
 import Icons from 'react-native-vector-icons/FontAwesome';
@@ -34,14 +34,14 @@ import Icons2 from 'react-native-vector-icons/FontAwesome5';
 import CheckBox from 'react-native-check-box';
 import Icons4 from 'react-native-vector-icons/Entypo';
 
-import { launchImageLibrary } from 'react-native-image-picker';
-import { Buffer } from 'buffer';
+import {launchImageLibrary} from 'react-native-image-picker';
+import {Buffer} from 'buffer';
 
 import notImageFound from '../../../assets/noimageold.jpeg';
 
-import MapComponent from '../../map'
+import MapComponent from '../../map';
 
-const TallerEditProfileScreen = ({ navigation }) => {
+const TallerEditProfileScreen = ({navigation}) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
   const [emailValue, setEmailValue] = useState(smithaWilliamsMail);
   const [phoneValue, setPhoneValue] = useState(phoneMo);
@@ -123,66 +123,59 @@ const TallerEditProfileScreen = ({ navigation }) => {
   const [whatsError, setwhatsError] = useState('');
 
   const [metodosPago, setMetodosPago] = useState([
-    { label: 'Efectivo', value: 'efectivo', checked: false },
-    { label: 'Pago Móvil', value: 'pagoMovil', checked: false },
-    { label: 'Punto de venta', value: 'puntoVenta', checked: false },
-    { label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false },
-    { label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false },
-    { label: 'Transferencia', value: 'transferencia', checked: false },
-    { label: 'Zelle', value: 'zelle', checked: false },
-    { label: 'Zinli', value: 'zinli', checked: false },
+    {label: 'Efectivo', value: 'efectivo', checked: false},
+    {label: 'Pago Móvil', value: 'pagoMovil', checked: false},
+    {label: 'Punto de venta', value: 'puntoVenta', checked: false},
+    {label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false},
+    {label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false},
+    {label: 'Transferencia', value: 'transferencia', checked: false},
+    {label: 'Zelle', value: 'zelle', checked: false},
+    {label: 'Zinli', value: 'zinli', checked: false},
   ]);
-
 
   const [estadoSelected, setestadoSelected] = useState(''); // Default value 'J'
 
-  const [imagePerfil, setimagePerfil] = useState("");
+  const [imagePerfil, setimagePerfil] = useState('');
   const [base64, setBase64] = useState(null);
-  
-  const [imageFirts, setimageFirts] = useState("");
+
+  const [imageFirts, setimageFirts] = useState('');
 
   const [lat, setlat] = useState('');
   const [lng, setlng] = useState('');
 
   const [dataUserLogged, setdataUserLogged] = useState(null);
 
-
-
   const [estadosVenezuela, setEstadosVenezuela] = useState([
-    { label: 'Seleccione un estado', value: '' },
-    { label: 'Amazonas', value: 'Amazonas' },
-    { label: 'Anzoátegui', value: 'Anzoátegui' },
-    { label: 'Apure', value: 'Apure' },
-    { label: 'Aragua', value: 'Aragua' },
-    { label: 'Barinas', value: 'Barinas' },
-    { label: 'Bolívar', value: 'Bolívar' },
-    { label: 'Carabobo', value: 'Carabobo' },
-    { label: 'Cojedes', value: 'Cojedes' },
-    { label: 'Delta Amacuro', value: 'Delta Amacuro' },
-    { label: 'Distrito Capital', value: 'Distrito Capital' },
-    { label: 'Falcón', value: 'Falcón' },
-    { label: 'Guárico', value: 'Guárico' },
-    { label: 'Lara', value: 'Lara' },
-    { label: 'Mérida', value: 'Mérida' },
-    { label: 'Miranda', value: 'Miranda' },
-    { label: 'Monagas', value: 'Monagas' },
-    { label: 'Nueva Esparta', value: 'Nueva Esparta' },
-    { label: 'Portuguesa', value: 'Portuguesa' },
-    { label: 'Sucre', value: 'Sucre' },
-    { label: 'Táchira', value: 'Táchira' },
-    { label: 'Trujillo', value: 'Trujillo' },
-    { label: 'Vargas', value: 'Vargas' },
-    { label: 'Yaracuy', value: 'Yaracuy' },
-    { label: 'Zulia', value: 'Zulia' }
+    {label: 'Seleccione un estado', value: ''},
+    {label: 'Amazonas', value: 'Amazonas'},
+    {label: 'Anzoátegui', value: 'Anzoátegui'},
+    {label: 'Apure', value: 'Apure'},
+    {label: 'Aragua', value: 'Aragua'},
+    {label: 'Barinas', value: 'Barinas'},
+    {label: 'Bolívar', value: 'Bolívar'},
+    {label: 'Carabobo', value: 'Carabobo'},
+    {label: 'Cojedes', value: 'Cojedes'},
+    {label: 'Delta Amacuro', value: 'Delta Amacuro'},
+    {label: 'Distrito Capital', value: 'Distrito Capital'},
+    {label: 'Falcón', value: 'Falcón'},
+    {label: 'Guárico', value: 'Guárico'},
+    {label: 'Lara', value: 'Lara'},
+    {label: 'Mérida', value: 'Mérida'},
+    {label: 'Miranda', value: 'Miranda'},
+    {label: 'Monagas', value: 'Monagas'},
+    {label: 'Nueva Esparta', value: 'Nueva Esparta'},
+    {label: 'Portuguesa', value: 'Portuguesa'},
+    {label: 'Sucre', value: 'Sucre'},
+    {label: 'Táchira', value: 'Táchira'},
+    {label: 'Trujillo', value: 'Trujillo'},
+    {label: 'Vargas', value: 'Vargas'},
+    {label: 'Yaracuy', value: 'Yaracuy'},
+    {label: 'Zulia', value: 'Zulia'},
   ]);
-
 
   useEffect(() => {
     getData();
   }, []);
-
-
-
 
   const getData = async () => {
     try {
@@ -221,13 +214,13 @@ const TallerEditProfileScreen = ({ navigation }) => {
 
           setimagePerfil(result.userData.image_perfil);
 
-          setimageFirts(result.userData.image_perfil)
+          setimageFirts(result.userData.image_perfil);
 
-          setestadoSelected(result.userData.estado)
+          setestadoSelected(result.userData.estado);
 
-          if (result.userData.ubicacion != undefined){
-            setlat(result.userData.ubicacion.lat)
-            setlng(result.userData.ubicacion.lng)
+          if (result.userData.ubicacion != undefined) {
+            setlat(result.userData.ubicacion.lat);
+            setlng(result.userData.ubicacion.lng);
           }
 
           const updatedMetodosPago = metodosPago.map(method => ({
@@ -242,8 +235,7 @@ const TallerEditProfileScreen = ({ navigation }) => {
           setcedula(typeID[1] || '');
           setSelectedPrefix(`${typeID[0]}-`);
 
-          setdataUserLogged(result.userData)
-
+          setdataUserLogged(result.userData);
         } else {
           console.error('Error en la solicitud:', response.statusText);
         }
@@ -273,8 +265,7 @@ const TallerEditProfileScreen = ({ navigation }) => {
     }
   };
 
-
-  const getImageName = (url) => url.split('/').pop();
+  const getImageName = url => url.split('/').pop();
 
   const validatePhone = () => {
     const phoneRegex = /^\d{10}$/;
@@ -297,7 +288,8 @@ const TallerEditProfileScreen = ({ navigation }) => {
       isEmailValid == true &&
       isPhoneValid == true &&
       Nombre != '' &&
-      cedula != 0 && estadoSelected != ''
+      cedula != 0 &&
+      estadoSelected != ''
     ) {
       const newFormatMP = metodosPago.reduce((acc, method) => {
         acc[method.value] = method.checked;
@@ -309,9 +301,7 @@ const TallerEditProfileScreen = ({ navigation }) => {
         nombre: Nombre == undefined ? '' : Nombre,
         rif: cedula == undefined ? '' : selectedPrefix + '' + cedula,
         phone: phone == undefined ? '' : phone,
-        // typeUser: 'Taller',
         email: email == undefined ? '' : email,
-        // status: 'En espera por aprobación',
         Direccion: Direccion == undefined ? '' : Direccion,
         RegComercial: RegComercial == undefined ? '' : RegComercial,
         Caracteristicas: Caracteristicas == undefined ? '' : Caracteristicas,
@@ -326,36 +316,55 @@ const TallerEditProfileScreen = ({ navigation }) => {
         whatsapp: whats,
         metodos_pago: newFormatMP,
         estado: estadoSelected,
-        base64: base64 == null || base64 == undefined || base64 == ''  ? "" : base64,
-        imageTodelete: imageFirts != ""  && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == ''  ? "" : getImageName(imageFirts) : "",
+        base64:
+          base64 == null || base64 == undefined || base64 == '' ? '' : base64,
+        imageTodelete:
+          imageFirts != '' && imageFirts != undefined
+            ? base64 == null || base64 == undefined || base64 == ''
+              ? ''
+              : getImageName(imageFirts)
+            : '',
         ubicacion: {
-          lat:lat,
-          lng:lng
-        }
+          lat: lat,
+          lng: lng,
+        },
       };
 
       try {
-        // Hacer la solicitud POST utilizando Axios
-        const response = await api.post(
-          '/usuarios/SaveTallerAll',
-          infoUserCreated,
+        // Validar si el número de teléfono ya existe en el servidor
+        const phoneValidationResponse = await api.post(
+          '/usuarios/validatePhone',
+          {phone},
         );
 
+        if (
+          phoneValidationResponse.status === 200 &&
+          phoneValidationResponse.data.valid === true
+        ) {
+          // Hacer la solicitud POST utilizando Axios
+          const response = await api.post(
+            '/usuarios/SaveTallerAll',
+            infoUserCreated,
+          );
 
-        // Verificar la respuesta del servidor
-        if (response.status === 201) {
-          const result = response.data;
+          // Verificar la respuesta del servidor
+          if (response.status === 201) {
+            const result = response.data;
 
-          showToast('Actualizado correctamente');
-          setdisabledInput(false);
-          ChangeView();
+            showToast('Actualizado correctamente');
+            setdisabledInput(false);
+            ChangeView();
+          } else {
+            const errorText = response.data
+              ? response.data.message
+              : 'Error desconocido';
+            console.error('Error al guardar el usuario:', errorText);
+            setGetOtpDisabled(false);
+            showToast(errorText);
+          }
         } else {
-          const errorText = response.data
-            ? response.data.message
-            : 'Error desconocido';
-          console.error('Error al guardar el usuario:', errorText);
-          setGetOtpDisabled(false);
-          showToast(errorText);
+          setdisabledInput(false);
+          showToast('El número de teléfono ya está registrado.');
         }
       } catch (error) {
         setdisabledInput(false);
@@ -376,13 +385,12 @@ const TallerEditProfileScreen = ({ navigation }) => {
     }
   };
 
-
   const selectImage = () => {
-    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
+    launchImageLibrary({mediaType: 'photo', includeBase64: true}, response => {
       if (response.didCancel) {
       } else if (response.error) {
       } else {
-        const source = { uri: response.assets[0].uri };
+        const source = {uri: response.assets[0].uri};
         const base64Data = response.assets[0].base64;
         setimagePerfil(source.uri);
         setBase64(base64Data);
@@ -455,51 +463,50 @@ const TallerEditProfileScreen = ({ navigation }) => {
     }
   };
 
-  const GetCoordenadas = (location) => {
-    setlat(location.latitude)
-    setlng(location.longitude)
-  }
+  const GetCoordenadas = location => {
+    setlat(location.latitude);
+    setlng(location.longitude);
+  };
 
-    return (
+  return (
+    <View
+      style={[
+        commonStyles.commonContainer,
+        external.ph_20,
+        {backgroundColor: bgFullStyle},
+      ]}>
+      {/* <HeaderContainer value="Perfil" /> */}
+
       <View
         style={[
-          commonStyles.commonContainer,
-          external.ph_20,
-          { backgroundColor: bgFullStyle },
+          external.fd_row,
+          external.ai_center,
+          external.pt_15,
+          {justifyContent: 'space-between'},
+          {flexDirection: viewRTLStyle},
         ]}>
-        {/* <HeaderContainer value="Perfil" /> */}
-
-        <View
+        <TouchableOpacity
+          onPress={() => navigation.goBack('')}
+          style={[external.fg_half, {flexDirection: viewRTLStyle}]}>
+          <View style={{transform: [{scale: imageRTLStyle}]}}>
+            <BackLeft />
+          </View>
+        </TouchableOpacity>
+        <Text
           style={[
-            external.fd_row,
-            external.ai_center,
-            external.pt_15,
-            { justifyContent: 'space-between' },
-            { flexDirection: viewRTLStyle },
+            commonStyles.hederH2,
+            external.as_center,
+            {color: textColorStyle},
           ]}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack('')}
-            style={[external.fg_half, { flexDirection: viewRTLStyle }]}>
-            <View style={{ transform: [{ scale: imageRTLStyle }] }}>
-              <BackLeft />
-            </View>
-          </TouchableOpacity>
-          <Text
-            style={[
-              commonStyles.hederH2,
-              external.as_center,
-              { color: textColorStyle },
-            ]}>
-            {/* Perfil */}
-          </Text>
-        </View>
+          {/* Perfil */}
+        </Text>
+      </View>
 
-        {/* imagePerfil */}
+      {/* imagePerfil */}
 
-        <View style={[external.as_center]}>
-
-          {imagePerfil == null || imagePerfil == "" ? (
-            <TouchableOpacity onPress={selectImage}>
+      <View style={[external.as_center]}>
+        {imagePerfil == null || imagePerfil == '' ? (
+          <TouchableOpacity onPress={selectImage}>
             <Image
               resizeMode="contain"
               style={styles.imgStyle}
@@ -508,425 +515,430 @@ const TallerEditProfileScreen = ({ navigation }) => {
             <View
               style={[
                 styles.editIconStyle,
-                { backgroundColor: '#F3F5FB' },
-                { borderRadius: 100 },
-                { position: 'absolute', top: 0, right: 20, margin: 0 },
-              ]}
-            >
+                {backgroundColor: '#F3F5FB'},
+                {borderRadius: 100},
+                {position: 'absolute', top: 0, right: 20, margin: 0},
+              ]}>
               <Edit />
             </View>
           </TouchableOpacity>
-          
-          ) : (
-            <TouchableOpacity onPress={selectImage}>
-              <ImageBackground
-                resizeMode="contain"
-                style={[styles.imgStyle, { height: 150, width: 150 }]} // Ajusta los valores según tus necesidades
-                source={{ uri: imagePerfil }} // Cambia esto a tu enlace de imagen
-              >
-                <View
-                  style={[
-                    styles.editIconStyle,
-                    {
-                      backgroundColor: '#F3F5FB',
-                      borderRadius: 100,
-                      position: 'absolute', // Posicionar absolutamente
-                      top: 0, // Ajustar al fondo
-                      right: 20, // Ajustar a la derecha
-                      margin: 0 // Agregar margen si es necesario
-                    },
-                  ]}
-                >
-                  <Edit />
-                </View>
-              </ImageBackground>
-            </TouchableOpacity>
+        ) : (
+          <TouchableOpacity onPress={selectImage}>
+            <ImageBackground
+              resizeMode="contain"
+              style={[styles.imgStyle, {height: 150, width: 150}]} // Ajusta los valores según tus necesidades
+              source={{uri: imagePerfil}} // Cambia esto a tu enlace de imagen
+            >
+              <View
+                style={[
+                  styles.editIconStyle,
+                  {
+                    backgroundColor: '#F3F5FB',
+                    borderRadius: 100,
+                    position: 'absolute', // Posicionar absolutamente
+                    top: 0, // Ajustar al fondo
+                    right: 20, // Ajustar a la derecha
+                    margin: 0, // Agregar margen si es necesario
+                  },
+                ]}>
+                <Edit />
+              </View>
+            </ImageBackground>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      <ScrollView style={{marginBottom: 15}}>
+        <View>
+          <TextInputs
+            title="Nombre y Apellido"
+            placeHolder="Ingrese su nombre y apellido"
+            value={Nombre}
+            onChangeText={text => {
+              setNombre(text);
+              setNombreTyping(true);
+              if (text.trim() === '') {
+                setNombreError('Nombre es requerido');
+              } else {
+                setNombreError('');
+              }
+            }}
+            onBlur={() => {
+              setNombreTyping(false);
+            }}
+            icon={<Icons name="user" size={20} color="#9BA6B8" />}
+          />
+          {NombreError !== '' && (
+            <Text style={styles.errorStyle}>{NombreError}</Text>
           )}
 
+          <View style={{marginTop: 5}}>
+            <Text
+              style={[
+                styles.headingContainer,
+                {color: textColorStyle},
+                {textAlign: textRTLStyle},
+              ]}>
+              Registro de Información Fiscal (RIF)
+            </Text>
 
-
-
-
-        </View>
-
-        <ScrollView style={{ marginBottom: 15 }}>
-          <View>
-            <TextInputs
-              title="Nombre y Apellido"
-              placeHolder="Ingrese su nombre y apellido"
-              value={Nombre}
-              onChangeText={text => {
-                setNombre(text);
-                setNombreTyping(true);
-                if (text.trim() === '') {
-                  setNombreError('Nombre es requerido');
-                } else {
-                  setNombreError('');
-                }
-              }}
-              onBlur={() => {
-                setNombreTyping(false);
-              }}
-              icon={<Icons name="user" size={20} color="#9BA6B8" />}
-            />
-            {NombreError !== '' && (
-              <Text style={styles.errorStyle}>{NombreError}</Text>
-            )}
-
-            <View style={{ marginTop: 5 }}>
-              <Text
-                style={[
-                  styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
-                ]}>
-                Registro de Información Fiscal (RIF)
-              </Text>
-
-              {/* Contenedor para el Picker y el TextInput */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {/* Select para elegir "J-" o "G-" */}
-                <View
+            {/* Contenedor para el Picker y el TextInput */}
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              {/* Select para elegir "J-" o "G-" */}
+              <View
+                style={{
+                  overflow: 'hidden',
+                  height: 50, // Asegurar que ambos tengan el mismo height
+                  marginRight: 5, // Espaciado entre el Picker y el TextInput
+                }}>
+                <Picker
+                  selectedValue={selectedPrefix}
+                  onValueChange={itemValue => setSelectedPrefix(itemValue)}
                   style={{
-                    overflow: 'hidden',
-                    height: 50, // Asegurar que ambos tengan el mismo height
-                    marginRight: 5, // Espaciado entre el Picker y el TextInput
+                    width: 100,
+                    height: 0, // Altura para el Picker
+                    color: 'black',
                   }}>
-                  <Picker
-                    selectedValue={selectedPrefix}
-                    onValueChange={itemValue => setSelectedPrefix(itemValue)}
-                    style={{
-                      width: 100,
-                      height: 0, // Altura para el Picker
-                      color: 'black',
-                    }}>
-                    <Picker.Item label="C-" value="C-" />
-                    <Picker.Item label="E-" value="E-" />
-                    <Picker.Item label="G-" value="G-" />
-                    <Picker.Item label="J-" value="J-" />
-                    <Picker.Item label="P-" value="P-" />
-                    <Picker.Item label="V-" value="V-" />
-                  </Picker>
-                </View>
-
-                {/* TextInput para el número de RIF */}
-                <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
-                  <TextInputs
-                    title=""
-                    value={cedula}
-                    placeHolder="Ingrese el número de RIF"
-                    onChangeText={text => {
-                      const numericText = text
-                        .replace(/[^0-9]/g, '')
-                        .slice(0, 10); // Limitar a 10 caracteres
-                      if (numericText.length <= 10) {
-                        setcedula(numericText);
-                        setcedulaTyping(true);
-                        if (numericText.trim() === '') {
-                          setcedulaError('RIF es requerido');
-                        } else {
-                          setcedulaError('');
-                        }
-                      }
-                    }}
-                    onBlur={() => {
-                      setcedulaTyping(false);
-                    }}
-                    keyboardType="numeric"
-                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                    style={{ height: 50 }} // Altura para el TextInput
-                  />
-                </View>
+                  <Picker.Item label="C-" value="C-" />
+                  <Picker.Item label="E-" value="E-" />
+                  <Picker.Item label="G-" value="G-" />
+                  <Picker.Item label="J-" value="J-" />
+                  <Picker.Item label="P-" value="P-" />
+                  <Picker.Item label="V-" value="V-" />
+                </Picker>
               </View>
 
-              {cedulaError !== '' && (
-                <Text style={styles.errorStyle}>{cedulaError}</Text>
-              )}
+              {/* TextInput para el número de RIF */}
+              <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
+                <TextInputs
+                  title=""
+                  value={cedula}
+                  placeHolder="Ingrese el número de RIF"
+                  onChangeText={text => {
+                    const numericText = text
+                      .replace(/[^0-9]/g, '')
+                      .slice(0, 10); // Limitar a 10 caracteres
+                    if (numericText.length <= 10) {
+                      setcedula(numericText);
+                      setcedulaTyping(true);
+                      if (numericText.trim() === '') {
+                        setcedulaError('RIF es requerido');
+                      } else {
+                        setcedulaError('');
+                      }
+                    }
+                  }}
+                  onBlur={() => {
+                    setcedulaTyping(false);
+                  }}
+                  keyboardType="numeric"
+                  icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
+                  style={{height: 50}} // Altura para el TextInput
+                />
+              </View>
             </View>
 
             {cedulaError !== '' && (
               <Text style={styles.errorStyle}>{cedulaError}</Text>
             )}
-
-            <TextInputs
-              title="Dirección del Taller"
-              placeHolder="Ingrese su direccion"
-              value={Direccion}
-              onChangeText={text => {
-                setDireccion(text);
-                setDireccionTyping(true);
-                if (text.trim() === '') {
-                  setDireccionError('Direccion es requerido');
-                } else {
-                  setDireccionError('');
-                }
-              }}
-              onBlur={() => {
-                setDireccionTyping(false);
-              }}
-              icon={<Icons name="map-marker" size={20} color="#9BA6B8" />}
-            />
-            {DireccionError !== '' && (
-              <Text style={styles.errorStyle}>{DireccionError}</Text>
-            )}
-
-            <TextInputs
-              title="Registro Comercial"
-              value={RegComercial}
-              placeHolder="Ingrese su Registro Comercial"
-              onChangeText={text => {
-                // Eliminar cualquier caracter que no sea un número
-                const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
-                if (numericText.length <= 10) {
-                  setRegComercial(numericText);
-                  setRegComercialTyping(true);
-                  if (numericText.trim() === '') {
-                    setRegComercialError('Registro comercial es requerido');
-                  } else {
-                    setRegComercialError('');
-                  }
-                }
-              }}
-              onBlur={() => {
-                setRegComercialTyping(false);
-              }}
-              keyboardType="numeric" // Establece el teclado numérico
-              icon={<Icons name="id-card" size={20} color="#9BA6B8" />}
-            />
-
-            {RegComercialError !== '' && (
-              <Text style={styles.errorStyle}>{RegComercialError}</Text>
-            )}
-
-            <View style={{ marginTop: 5 }}>
-              {/* Texto "RIF" arriba de los inputs */}
-              <Text
-                style={[
-                  styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
-                ]}>
-                Estado
-              </Text>
-
-              {/* Contenedor para el Picker y el TextInput */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {/* Icono al lado del Picker */}
-                <Icons4 name="location" size={20} color="#9BA6B8" style={{ marginRight: 5, marginLeft: 10 }} />
-                <View
-                  style={{
-                    overflow: 'hidden',
-                    height: 50, // Asegurar que ambos tengan el mismo height
-                  }}>
-                  <Picker
-                    selectedValue={estadoSelected}
-                    onValueChange={itemValue => setestadoSelected(itemValue)}
-                    style={{
-                      width: 400,
-                      height: 50, // Ajustar la altura para el Picker
-                      color: 'black',
-                    }}
-                  >
-                    {estadosVenezuela.map((estado) => (
-                      <Picker.Item key={estado.value} label={estado.label} value={estado.value} />
-                    ))}
-                  </Picker>
-                </View>
-              </View>
-            </View>
-
-
-              {
-                dataUserLogged != undefined ? (
-                  <View style={[stylesMap.container, { marginTop: 5, marginBottom:15 }]}>
-                    <MapComponent initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={true} 
-                    returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
-                  </View>
-                ) : null
-              }
-
-
-
-            <TextInputs
-              title="Número Telefónico"
-              value={phone}
-              placeholder="Ingrese su número"
-              keyboardType="numeric"
-              onChangeText={text => {
-                // Remove non-numeric characters using regex
-                const numericText = text.replace(/[^0-9]/g, '');
-                if (numericText.length <= 10) {
-                  setPhone(numericText);
-                  setCallTyping(true);
-
-                  if (numericText.trim() === '') {
-                    setPhoneError('Número telefónico requerido');
-                  } else {
-                    setPhoneError('');
-                  }
-                }
-              }}
-              onBlur={() => {
-                validatePhone();
-                setCallTyping(false);
-              }}
-              icon={<Icons name="phone" size={20} color="#9BA6B8" />}
-            />
-
-            {phoneError !== '' && (
-              <Text style={styles.errorStyle}>{phoneError}</Text>
-            )}
-
-            <TextInputs
-              title="Whatsapp"
-              value={whats}
-              placeHolder="Ingrese su número(4142617966)"
-              keyboardType="numeric"
-              onChangeText={text => {
-                // Remove non-numeric characters using regex
-                const numericText = text.replace(/[^0-9]/g, '');
-                if (numericText.length <= 10) {
-                  setwhats(numericText);
-                  setCallTyping(true);
-
-                  if (numericText.trim() === '') {
-                    setwhatsError('Número telefónico requerido');
-                  } else {
-                    setwhatsError('');
-                  }
-                }
-              }}
-              onBlur={() => {
-                validatewhats();
-                setCallTyping(false);
-              }}
-              icon={<Icons name="whatsapp" size={20} color="#9BA6B8" />}
-            />
-
-            {whatsError !== '' && (
-              <Text style={styles.errorStyle}>{whatsError}</Text>
-            )}
-
-            <View style={{ marginTop: 5 }}>
-              {/* Texto "RIF" arriba de los inputs */}
-              <Text
-                style={[
-                  styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
-                ]}>
-                Metodos de Pago
-              </Text>
-
-              <View style={{ padding: 10 }}>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    flexWrap: 'wrap',
-                    justifyContent: 'space-between',
-                  }}>
-                  {metodosPago.map((method, index) => (
-                    <View
-                      key={method.value}
-                      style={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        marginVertical: 5,
-                        width: '45%', // Ajusta el ancho para hacer columnas
-                      }}>
-                      <CheckBox
-                        isChecked={method.checked}
-                        onClick={() => toggleCheckBox(index)}
-                        checkBoxColor="#2D3261"
-                      />
-                      <Text style={{ marginLeft: 10, color: 'black' }}>
-                        {method.label}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </View>
-            </View>
-
-            <TextInputs
-              title="Email"
-              value={email}
-              editable={false}
-              placeHolder="Ingrese su email"
-              onChangeText={text => {
-                setEmail(text);
-                setEmailTyping(true);
-                if (text.trim() === '') {
-                  setEmailError('Email es requerido');
-                } else {
-                  setEmailError('');
-                }
-              }}
-              onBlur={() => {
-                validateEmail();
-                setEmailTyping(false);
-              }}
-              icon={
-                <Email color={isEmailTyping ? '#051E47' : appColors.subtitle} />
-              }
-            />
-            {emailError !== '' && (
-              <Text style={styles.errorStyle}>{emailError}</Text>
-            )}
           </View>
 
-          <Text style={{ marginBottom: 10, color: 'black', marginTop: 15 }}>
-            ¿Es un Agente Autorizado?
-          </Text>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginBottom: 15,
-            }}>
-            <RadioButton
-              value="si"
-              status={checked === 'si' ? 'checked' : 'unchecked'}
-              onPress={() => setChecked('si')}
-            />
-            <Text style={{ color: 'black' }}>Sí</Text>
-
-            <RadioButton
-              value="no"
-              status={checked === 'no' ? 'checked' : 'unchecked'}
-              onPress={() => setChecked('no')}
-            />
-            <Text style={{ color: 'black' }}>No</Text>
-          </View>
+          {cedulaError !== '' && (
+            <Text style={styles.errorStyle}>{cedulaError}</Text>
+          )}
 
           <TextInputs
-            title="Caracteristicas del taller"
-            value={Caracteristicas}
-            placeHolder="Característica del taller (tipo de piso, si posee fosa, rampla, entre otras condiciones, gatos elevadores)"
-            multiline={true}
-            numberOfLines={4}
-            height={150}
+            title="Dirección del Taller"
+            placeHolder="Ingrese su direccion"
+            value={Direccion}
             onChangeText={text => {
-              setCaracteristicas(text);
-              setCaracteristicasTyping(true);
+              setDireccion(text);
+              setDireccionTyping(true);
               if (text.trim() === '') {
-                setCaracteristicasError('Caracteristicas es requerido');
+                setDireccionError('Direccion es requerido');
               } else {
-                setCaracteristicasError('');
+                setDireccionError('');
               }
             }}
             onBlur={() => {
-              validateCaracteristicas();
-              setCaracteristicasTyping(false);
+              setDireccionTyping(false);
             }}
-            icon={<Icons name="wrench" size={20} color="#9BA6B8" />}
+            icon={<Icons name="map-marker" size={20} color="#9BA6B8" />}
           />
-          {CaracteristicasError !== '' && (
-            <Text style={styles.errorStyle}>{CaracteristicasError}</Text>
+          {DireccionError !== '' && (
+            <Text style={styles.errorStyle}>{DireccionError}</Text>
           )}
 
-          {/* <TextInputs
+          <TextInputs
+            title="Registro Comercial"
+            value={RegComercial}
+            placeHolder="Ingrese su Registro Comercial"
+            onChangeText={text => {
+              // Eliminar cualquier caracter que no sea un número
+              const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
+              if (numericText.length <= 10) {
+                setRegComercial(numericText);
+                setRegComercialTyping(true);
+                if (numericText.trim() === '') {
+                  setRegComercialError('Registro comercial es requerido');
+                } else {
+                  setRegComercialError('');
+                }
+              }
+            }}
+            onBlur={() => {
+              setRegComercialTyping(false);
+            }}
+            keyboardType="numeric" // Establece el teclado numérico
+            icon={<Icons name="id-card" size={20} color="#9BA6B8" />}
+          />
+
+          {RegComercialError !== '' && (
+            <Text style={styles.errorStyle}>{RegComercialError}</Text>
+          )}
+
+          <View style={{marginTop: 5}}>
+            {/* Texto "RIF" arriba de los inputs */}
+            <Text
+              style={[
+                styles.headingContainer,
+                {color: textColorStyle},
+                {textAlign: textRTLStyle},
+              ]}>
+              Estado
+            </Text>
+
+            {/* Contenedor para el Picker y el TextInput */}
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              {/* Icono al lado del Picker */}
+              <Icons4
+                name="location"
+                size={20}
+                color="#9BA6B8"
+                style={{marginRight: 5, marginLeft: 10}}
+              />
+              <View
+                style={{
+                  overflow: 'hidden',
+                  height: 50, // Asegurar que ambos tengan el mismo height
+                }}>
+                <Picker
+                  selectedValue={estadoSelected}
+                  onValueChange={itemValue => setestadoSelected(itemValue)}
+                  style={{
+                    width: 400,
+                    height: 50, // Ajustar la altura para el Picker
+                    color: 'black',
+                  }}>
+                  {estadosVenezuela.map(estado => (
+                    <Picker.Item
+                      key={estado.value}
+                      label={estado.label}
+                      value={estado.value}
+                    />
+                  ))}
+                </Picker>
+              </View>
+            </View>
+          </View>
+
+          {dataUserLogged != undefined ? (
+            <View
+              style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
+              <MapComponent
+                initialRegion={{
+                  latitude: lat,
+                  longitude: lng,
+                  latitudeDelta: 0.015,
+                  longitudeDelta: 0.015,
+                }}
+                edit={true}
+                returnFunction={GetCoordenadas}
+                useThisCoo={true}
+              />
+            </View>
+          ) : null}
+
+          <TextInputs
+            title="Número Telefónico"
+            value={phone}
+            placeholder="Ingrese su número"
+            keyboardType="numeric"
+            onChangeText={text => {
+              // Remove non-numeric characters using regex
+              const numericText = text.replace(/[^0-9]/g, '');
+              if (numericText.length <= 10) {
+                setPhone(numericText);
+                setCallTyping(true);
+
+                if (numericText.trim() === '') {
+                  setPhoneError('Número telefónico requerido');
+                } else {
+                  setPhoneError('');
+                }
+              }
+            }}
+            onBlur={() => {
+              validatePhone();
+              setCallTyping(false);
+            }}
+            icon={<Icons name="phone" size={20} color="#9BA6B8" />}
+          />
+
+          {phoneError !== '' && (
+            <Text style={styles.errorStyle}>{phoneError}</Text>
+          )}
+
+          <TextInputs
+            title="Whatsapp"
+            value={whats}
+            placeHolder="Ingrese su número(4142617966)"
+            keyboardType="numeric"
+            onChangeText={text => {
+              // Remove non-numeric characters using regex
+              const numericText = text.replace(/[^0-9]/g, '');
+              if (numericText.length <= 10) {
+                setwhats(numericText);
+                setCallTyping(true);
+
+                if (numericText.trim() === '') {
+                  setwhatsError('Número telefónico requerido');
+                } else {
+                  setwhatsError('');
+                }
+              }
+            }}
+            onBlur={() => {
+              validatewhats();
+              setCallTyping(false);
+            }}
+            icon={<Icons name="whatsapp" size={20} color="#9BA6B8" />}
+          />
+
+          {whatsError !== '' && (
+            <Text style={styles.errorStyle}>{whatsError}</Text>
+          )}
+
+          <View style={{marginTop: 5}}>
+            {/* Texto "RIF" arriba de los inputs */}
+            <Text
+              style={[
+                styles.headingContainer,
+                {color: textColorStyle},
+                {textAlign: textRTLStyle},
+              ]}>
+              Metodos de Pago
+            </Text>
+
+            <View style={{padding: 10}}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  justifyContent: 'space-between',
+                }}>
+                {metodosPago.map((method, index) => (
+                  <View
+                    key={method.value}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginVertical: 5,
+                      width: '45%', // Ajusta el ancho para hacer columnas
+                    }}>
+                    <CheckBox
+                      isChecked={method.checked}
+                      onClick={() => toggleCheckBox(index)}
+                      checkBoxColor="#2D3261"
+                    />
+                    <Text style={{marginLeft: 10, color: 'black'}}>
+                      {method.label}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+
+          <TextInputs
+            title="Email"
+            value={email}
+            editable={false}
+            placeHolder="Ingrese su email"
+            onChangeText={text => {
+              setEmail(text);
+              setEmailTyping(true);
+              if (text.trim() === '') {
+                setEmailError('Email es requerido');
+              } else {
+                setEmailError('');
+              }
+            }}
+            onBlur={() => {
+              validateEmail();
+              setEmailTyping(false);
+            }}
+            icon={
+              <Email color={isEmailTyping ? '#051E47' : appColors.subtitle} />
+            }
+          />
+          {emailError !== '' && (
+            <Text style={styles.errorStyle}>{emailError}</Text>
+          )}
+        </View>
+
+        <Text style={{marginBottom: 10, color: 'black', marginTop: 15}}>
+          ¿Es un Agente Autorizado?
+        </Text>
+
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginBottom: 15,
+          }}>
+          <RadioButton
+            value="si"
+            status={checked === 'si' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('si')}
+          />
+          <Text style={{color: 'black'}}>Sí</Text>
+
+          <RadioButton
+            value="no"
+            status={checked === 'no' ? 'checked' : 'unchecked'}
+            onPress={() => setChecked('no')}
+          />
+          <Text style={{color: 'black'}}>No</Text>
+        </View>
+
+        <TextInputs
+          title="Caracteristicas del taller"
+          value={Caracteristicas}
+          placeHolder="Característica del taller (tipo de piso, si posee fosa, rampla, entre otras condiciones, gatos elevadores)"
+          multiline={true}
+          numberOfLines={4}
+          height={150}
+          onChangeText={text => {
+            setCaracteristicas(text);
+            setCaracteristicasTyping(true);
+            if (text.trim() === '') {
+              setCaracteristicasError('Caracteristicas es requerido');
+            } else {
+              setCaracteristicasError('');
+            }
+          }}
+          onBlur={() => {
+            validateCaracteristicas();
+            setCaracteristicasTyping(false);
+          }}
+          icon={<Icons name="wrench" size={20} color="#9BA6B8" />}
+        />
+        {CaracteristicasError !== '' && (
+          <Text style={styles.errorStyle}>{CaracteristicasError}</Text>
+        )}
+
+        {/* <TextInputs
             title="Tarifa de Pago de acuerdo al tipo de Servicio Prestado***"
             placeHolder="Tarifa"
             value={Tarifa}
@@ -950,95 +962,95 @@ const TallerEditProfileScreen = ({ navigation }) => {
             <Text style={styles.errorStyle}>{TarifaError}</Text>
           )} */}
 
-          <TextInputs
-            title="Tiempo de experiencia en el área."
-            placeHolder="Tiempo de experiencia"
-            value={Experiencia}
-            onChangeText={text => {
-              setExperiencia(text);
-              setExperienciaTyping(true);
-              if (text.trim() === '') {
-                setExperienciaError('Experiencia es requerida');
-              } else {
-                setExperienciaError('');
-              }
-            }}
-            onBlur={() => {
-              setExperienciaTyping(false);
-            }}
-            icon={<Icons name="star" size={20} color="#9BA6B8" />}
-          />
-          {ExperienciaError !== '' && (
-            <Text style={styles.errorStyle}>{ExperienciaError}</Text>
-          )}
+        <TextInputs
+          title="Tiempo de experiencia en el área."
+          placeHolder="Tiempo de experiencia"
+          value={Experiencia}
+          onChangeText={text => {
+            setExperiencia(text);
+            setExperienciaTyping(true);
+            if (text.trim() === '') {
+              setExperienciaError('Experiencia es requerida');
+            } else {
+              setExperienciaError('');
+            }
+          }}
+          onBlur={() => {
+            setExperienciaTyping(false);
+          }}
+          icon={<Icons name="star" size={20} color="#9BA6B8" />}
+        />
+        {ExperienciaError !== '' && (
+          <Text style={styles.errorStyle}>{ExperienciaError}</Text>
+        )}
 
-          <TextInputs
-            title="Link de Facebook"
-            placeHolder="https://www.facebook.com/"
-            value={LinkFacebook}
-            onChangeText={text => {
-              setLinkFacebook(text);
-              // setLinkFacebookTyping(true);
-              // if (text.trim() === '') {
-              //   setLinkFacebookError('LinkFacebook es requerida');
-              // } else {
-              //   setLinkFacebookError('');
-              // }
-            }}
-            onBlur={() => {
-              // setLinkFacebookTyping(false);
-            }}
-            icon={<Icons name="facebook-square" size={20} color="#9BA6B8" />}
-          />
-          {LinkFacebookError !== '' && (
-            <Text style={styles.errorStyle}>{LinkFacebookError}</Text>
-          )}
+        <TextInputs
+          title="Link de Facebook"
+          placeHolder="https://www.facebook.com/"
+          value={LinkFacebook}
+          onChangeText={text => {
+            setLinkFacebook(text);
+            // setLinkFacebookTyping(true);
+            // if (text.trim() === '') {
+            //   setLinkFacebookError('LinkFacebook es requerida');
+            // } else {
+            //   setLinkFacebookError('');
+            // }
+          }}
+          onBlur={() => {
+            // setLinkFacebookTyping(false);
+          }}
+          icon={<Icons name="facebook-square" size={20} color="#9BA6B8" />}
+        />
+        {LinkFacebookError !== '' && (
+          <Text style={styles.errorStyle}>{LinkFacebookError}</Text>
+        )}
 
-          <TextInputs
-            title="Link de Instagram"
-            placeHolder="https://www.instagram.com/"
-            value={LinkInstagram}
-            onChangeText={text => {
-              setLinkInstagram(text);
-              // setLinkInstagramTyping(true);
-              // if (text.trim() === '') {
-              //   setLinkInstagramError('LinkInstagram es requerida');
-              // } else {
-              //   setLinkInstagramError('');
-              // }
-            }}
-            onBlur={() => {
-              // setLinkInstagramTyping(false);
-            }}
-            icon={<Icons name="instagram" size={20} color="#9BA6B8" />}
-          />
-          {LinkInstagramError !== '' && (
-            <Text style={styles.errorStyle}>{LinkInstagramError}</Text>
-          )}
+        <TextInputs
+          title="Link de Instagram"
+          placeHolder="https://www.instagram.com/"
+          value={LinkInstagram}
+          onChangeText={text => {
+            setLinkInstagram(text);
+            // setLinkInstagramTyping(true);
+            // if (text.trim() === '') {
+            //   setLinkInstagramError('LinkInstagram es requerida');
+            // } else {
+            //   setLinkInstagramError('');
+            // }
+          }}
+          onBlur={() => {
+            // setLinkInstagramTyping(false);
+          }}
+          icon={<Icons name="instagram" size={20} color="#9BA6B8" />}
+        />
+        {LinkInstagramError !== '' && (
+          <Text style={styles.errorStyle}>{LinkInstagramError}</Text>
+        )}
 
-          <TextInputs
-            title="Link de TikTok"
-            placeHolder="https://www.instagram.com/"
-            value={LinkTiktok}
-            onChangeText={text => {
-              setLinkTiktok(text);
-              // setLinkTiktokTyping(true);
-              // if (text.trim() === '') {
-              //   setLinkTiktokError('LinkTiktok es requerida');
-              // } else {
-              //   setLinkTiktokError('');
-              // }
-            }}
-            onBlur={() => {
-              // setLinkTiktokTyping(false);
-            }}
-            icon={<Icons2 name="tiktok" size={20} color="#9BA6B8" />}
-          />
-          {LinkTiktokError !== '' && (
-            <Text style={styles.errorStyle}>{LinkTiktokError}</Text>
-          )}
+        <TextInputs
+          title="Link de TikTok"
+          placeHolder="https://www.instagram.com/"
+          value={LinkTiktok}
+          onChangeText={text => {
+            setLinkTiktok(text);
+            // setLinkTiktokTyping(true);
+            // if (text.trim() === '') {
+            //   setLinkTiktokError('LinkTiktok es requerida');
+            // } else {
+            //   setLinkTiktokError('');
+            // }
+          }}
+          onBlur={() => {
+            // setLinkTiktokTyping(false);
+          }}
+          icon={<Icons2 name="tiktok" size={20} color="#9BA6B8" />}
+        />
+        {LinkTiktokError !== '' && (
+          <Text style={styles.errorStyle}>{LinkTiktokError}</Text>
+        )}
 
-          {/* <TextInputs
+        {/* <TextInputs
             title="Garantía del Servicio***"
             placeHolder="Ingrese su garantia"
             value={Garantia}
@@ -1062,54 +1074,52 @@ const TallerEditProfileScreen = ({ navigation }) => {
             <Text style={styles.errorStyle}>{GarantiaError}</Text>
           )} */}
 
-          <TextInputs
-            title="Seguro del taller"
-            placeHolder="Ingrese su seguro"
-            value={seguro}
-            height={150}
-            onChangeText={text => {
-              setseguro(text);
-              setseguroTyping(true);
-              if (text.trim() === '') {
-                setseguroError('seguro es requerida');
-              } else {
-                setseguroError('');
-              }
-            }}
-            onBlur={() => {
-              setseguroTyping(false);
-            }}
-            icon={<Icons name="heart" size={20} color="#9BA6B8" />}
+        <TextInputs
+          title="Seguro del taller"
+          placeHolder="Ingrese su seguro"
+          value={seguro}
+          height={150}
+          onChangeText={text => {
+            setseguro(text);
+            setseguroTyping(true);
+            if (text.trim() === '') {
+              setseguroError('seguro es requerida');
+            } else {
+              setseguroError('');
+            }
+          }}
+          onBlur={() => {
+            setseguroTyping(false);
+          }}
+          icon={<Icons name="heart" size={20} color="#9BA6B8" />}
+        />
+        {seguroError !== '' && (
+          <Text style={styles.errorStyle}>{seguroError}</Text>
+        )}
+      </ScrollView>
+
+      <View>
+        <View
+          style={{
+            backgroundColor: buttonColor,
+            borderRadius: windowHeight(20),
+            marginBottom: 15,
+          }}>
+          <NavigationButton
+            title="Guardar Cambios"
+            onPress={() => onHandleChange()}
+            disabled={disabledInput}
+            backgroundColor={disabledInput ? '#848688' : '#2D3261'}
+            color={disabledInput ? '#051E47' : appColors.screenBg}
           />
-          {seguroError !== '' && (
-            <Text style={styles.errorStyle}>{seguroError}</Text>
-          )}
-
-        </ScrollView>
-
-        <View>
-          <View
-            style={{
-              backgroundColor: buttonColor,
-              borderRadius: windowHeight(20),
-              marginBottom: 15,
-            }}>
-            <NavigationButton
-              title="Guardar Cambios"
-              onPress={() => onHandleChange()}
-              disabled={disabledInput}
-              backgroundColor={disabledInput ? '#848688' : '#2D3261'}
-              color={disabledInput ? '#051E47' : appColors.screenBg}
-            />
-          </View>
         </View>
       </View>
-    );
-
-  
+    </View>
+  );
 };
 
-
-const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'center', alignItems: 'center', },});
+const stylesMap = StyleSheet.create({
+  container: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+});
 
 export default TallerEditProfileScreen;
