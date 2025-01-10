@@ -1,4 +1,10 @@
-import {Text, TouchableOpacity, View, ToastAndroid } from 'react-native';
+import {
+  Text,
+  TouchableOpacity,
+  View,
+  ToastAndroid,
+  StyleSheet,
+} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import AuthContainer from '../../../commonComponents/authContainer';
 import {apple, facebook} from '../../../constant';
@@ -16,7 +22,8 @@ import CheckBox from '../../../commonComponents/checkBox';
 import {fontSizes} from '../../../themes/appConstant';
 import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../../../../axiosInstance'; 
+import api from '../../../../axiosInstance';
+import DeviceInfo from 'react-native-device-info';
 
 const SignIn = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -31,9 +38,9 @@ const SignIn = ({navigation}) => {
   const [showPass, setshowPass] = useState(true);
 
   useEffect(() => {
-    setSignInDisabled(false)
-    setEmail('')
-    setPassword('')
+    setSignInDisabled(false);
+    setEmail('');
+    setPassword('');
   }, []);
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -62,10 +69,9 @@ const SignIn = ({navigation}) => {
     setSignInDisabled(true);
 
     if (isEmailValid && isPasswordValid) {
-
-      console.log(email)
-      console.log(password)
-      console.log(JSON.stringify({email:email}))
+      console.log(email);
+      console.log(password);
+      console.log(JSON.stringify({email: email}));
 
       try {
         // Hacer la solicitud POST utilizando Axios
@@ -73,14 +79,14 @@ const SignIn = ({navigation}) => {
           email: email.toLowerCase(),
           password: password.toLowerCase(),
         });
-    
+
         // Verificar la respuesta del servidor
         const result = response.data; // Los datos vienen directamente de response.data
-        console.log("Este es el usuario nuevo ", result); // Aquí puedes manejar la respuesta
-    
+        console.log('Este es el usuario nuevo ', result); // Aquí puedes manejar la respuesta
+
         if (
-          result.message === "Usuario autenticado exitosamente" || 
-          result.message === "Usuario autenticado exitosamente como Admin"
+          result.message === 'Usuario autenticado exitosamente' ||
+          result.message === 'Usuario autenticado exitosamente como Admin'
         ) {
           try {
             const jsonValue = JSON.stringify(result.userData);
@@ -89,22 +95,26 @@ const SignIn = ({navigation}) => {
           } catch (e) {
             console.log(e);
           }
-    
+
           setSignInDisabled(true);
-          setEmail("");
-          setPassword("");
+          setEmail('');
+          setPassword('');
           setSignInDisabled(false);
           navigation.navigate('LoaderScreen');
         } else {
           setSignInDisabled(false);
-          showToast('No se ha encontrado el usuario, por favor validar formulario');
+          showToast(
+            'No se ha encontrado el usuario, por favor validar formulario',
+          );
         }
       } catch (error) {
         if (error.response) {
           // La solicitud se hizo y el servidor respondió con un código de estado
           console.error('Error en la solicitud:', error.response.statusText);
           setSignInDisabled(false);
-          showToast('Error al encontrar al usuario, por favor validar formulario');
+          showToast(
+            'Error al encontrar al usuario, por favor validar formulario',
+          );
         } else {
           // La solicitud fue hecha pero no se recibió respuesta
           console.error('Error en la solicitud:', error);
@@ -121,23 +131,30 @@ const SignIn = ({navigation}) => {
     ToastAndroid.show(text, ToastAndroid.SHORT);
   };
 
+  const appVersion = DeviceInfo.getVersion(); // Versión como "1.0.0"
+  const buildNumber = DeviceInfo.getBuildNumber();
+
   const {bgFullStyle, textColorStyle, t, iconColorStyle} = useValues();
   const valData = () => {
     setCheckedData(!checkedData);
   };
   const {linearColorStyleTwo, linearColorStyle} = useValues();
 
+  const changePassValue = () => {
+    setshowPass(!showPass);
+  };
 
-const changePassValue = () => {
-  setshowPass(!showPass)
-}
+  const stylesVersion = StyleSheet.create({
+    text: {fontSize: 12, color: '#333'},
+  });
 
   return (
-    <View style={[styles.container, {backgroundColor: bgFullStyle, padding: 40}]}>
+    <View
+      style={[styles.container, {backgroundColor: bgFullStyle, padding: 40}]}>
       <AuthContainer
         title="Bienvenido a Solvers"
         subtitle="Garantiza que tu vehículo funcione de manera eficiente y segura"
-        AlignItemTitle = {"center"}
+        AlignItemTitle={'center'}
         value={
           <View>
             <TextInputs
@@ -170,9 +187,9 @@ const changePassValue = () => {
               title="Contraseña"
               value={password}
               placeHolder="Ingrese su contraseña"
-              secureTextEntry={showPass} 
-              showPass = {true}
-              changePassValue = {changePassValue}
+              secureTextEntry={showPass}
+              showPass={true}
+              changePassValue={changePassValue}
               onChangeText={text => {
                 setPassword(text);
                 setPwdTyping(true);
@@ -230,9 +247,7 @@ const changePassValue = () => {
       />
 
       <View style={styles.singUpView}>
-        <Text style={[commonStyles.subtitleText]}>
-          ¿No posee una cuenta?
-        </Text>
+        <Text style={[commonStyles.subtitleText]}>¿No posee una cuenta?</Text>
         <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
           <Text
             style={[
@@ -243,6 +258,11 @@ const changePassValue = () => {
             Registro
           </Text>
         </TouchableOpacity>
+      </View>
+      <View style={styles.singUpView}>
+        <Text style={[commonStyles.subtitleText]}>
+          Versión de la App: {appVersion}
+        </Text>
       </View>
 
       {/* <LinearBoderText />
