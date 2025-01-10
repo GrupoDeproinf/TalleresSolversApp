@@ -19,6 +19,7 @@ const NewArrivalBigContainer = ({
   numColumns,
   valueTwo,
   show,
+  onNavigate, // Add this prop to receive the navigation callback
 }) => {
   const {
     bgFullStyle,
@@ -39,7 +40,7 @@ const NewArrivalBigContainer = ({
   const renderItem = ({item}) => (
     <TouchableOpacity
       onPress={() => {
-        navigation.navigate('ProductDetailOne', {uid: item.uid_servicio});
+        onNavigate(item.uid_servicio); // Use the callback function for navigation
       }}>
       <LinearGradient
         start={{x: 0.0, y: 0.0}}

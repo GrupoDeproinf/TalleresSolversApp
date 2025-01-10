@@ -83,12 +83,16 @@ const ProductDetailOne = ({navigation}) => {
     const {uid, typeUser} = route.params;
 
     console.log(uid);
+    getDataFirst(uid, typeUser)
+    
+  }, []);
 
+  const getDataFirst = (uid, typeUser) =>{
     getService(uid);
     getData(uid);
     setuidService(uid);
     settypeUserLogged(typeUser);
-  }, []);
+  }
 
   const getService = async uid => {
     const jsonValue = await AsyncStorage.getItem('@userInfo');
@@ -444,6 +448,9 @@ const ProductDetailOne = ({navigation}) => {
             data={dataProductCategory}
             horizontal={true}
             width={windowWidth(205)}
+            onNavigate={(uidServ) => {
+              getDataFirst(uidServ)
+            }}
           />
         </View>
       </ScrollView>
