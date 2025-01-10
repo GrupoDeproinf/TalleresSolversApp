@@ -8,18 +8,18 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import BottomContainer from '../../../commonComponents/bottomContainer';
-import {commonStyles} from '../../../style/commonStyle.css';
-import {windowWidth} from '../../../themes/appConstant';
-import {external} from '../../../style/external.css';
-import {BackLeft, Plus} from '../../../utils/icon';
-import {addtoBag, buyNow, writeYourReview} from '../../../constant';
+import { commonStyles } from '../../../style/commonStyle.css';
+import { windowWidth } from '../../../themes/appConstant';
+import { external } from '../../../style/external.css';
+import { BackLeft, Plus } from '../../../utils/icon';
+import { addtoBag, buyNow, writeYourReview } from '../../../constant';
 import styles from './style.css';
 import NewArrivalBigContainer from '../../../components/homeScreenTwo/newArrivalTwoContainer';
-import {newArrivalBigData} from '../../../data/homeScreenTwo/newArrivalData';
+import { newArrivalBigData } from '../../../data/homeScreenTwo/newArrivalData';
 import H3HeadingCategory from '../../../commonComponents/headingCategory/H3HeadingCategory';
-import {Cart} from '../../../assets/icons/cart';
+import { Cart } from '../../../assets/icons/cart';
 import DetailsTextContainer from '../../../components/productDetail/productOne/detailsText';
 import DescriptionText from '../../../components/productDetail/productOne/descriptionText';
 import InfoContainer from '../../../components/productDetail/productOne/infoContainer';
@@ -27,28 +27,28 @@ import BrandData from '../../../components/productDetail/productOne/brandData';
 import IconProduct from '../../../components/productDetail/productOne/iconProduct';
 import KeyFeatures from '../../../components/productDetail/productOne/keyFeatures';
 import RatingScreen from '../../../components/productDetail/productOne/reviewScreen';
-import {useValues} from '../../../../App';
+import { useValues } from '../../../../App';
 import SliderDetails from '../../../components/productDetail/productOne/sliderDetails';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import api from '../../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {SafeAreaProvider, SafeAreaView} from 'react-native-safe-area-context';
-import {FlatList} from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { FlatList } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
-import {Alert} from 'react-native';
+import { Alert } from 'react-native';
 import {
   ClipboardDocumentIcon,
   ClipboardIcon,
   PhoneIcon,
 } from 'react-native-heroicons/outline'; // Importar íconos
-import {Linking} from 'react-native';
-import {TouchableHighlight} from 'react-native-gesture-handler';
+import { Linking } from 'react-native';
+import { TouchableHighlight } from 'react-native-gesture-handler';
 import IconContact from '../../../components/productDetail/productOne/iconContact';
 import MapComponent from '../../map';
 import MapRutaComponent from '../../mapRuta';
 
-const ProductDetailOne = ({navigation}) => {
-  const {bgFullStyle, textColorStyle, t, textRTLStyle, iconColorStyle} =
+const ProductDetailOne = ({ navigation }) => {
+  const { bgFullStyle, textColorStyle, t, textRTLStyle, iconColorStyle } =
     useValues();
 
   const route = useRoute();
@@ -79,15 +79,17 @@ const ProductDetailOne = ({navigation}) => {
 
   const [showRuta, setshowRuta] = useState(false);
 
+  const scrollRef = React.createRef();
+
   useEffect(() => {
-    const {uid, typeUser} = route.params;
+    const { uid, typeUser } = route.params;
 
     console.log(uid);
-    getDataFirst(uid, typeUser)
-    
+    getDataFirst(uid, typeUser);
+    scrollRef.current?.scrollTo({ y: 0, animated: true }); // Scroll to top
   }, []);
 
-  const getDataFirst = (uid, typeUser) =>{
+  const getDataFirst = (uid, typeUser) => {
     getService(uid);
     getData(uid);
     setuidService(uid);
@@ -149,10 +151,10 @@ const ProductDetailOne = ({navigation}) => {
           // Si se proporciona un ID, filtramos los datos localmente
           const filteredData = id
             ? allServices.filter(
-                service =>
-                  service.uid_servicio === id ||
-                  (service.uid_servicio === '' && service.id === id),
-              )
+              service =>
+                service.uid_servicio === id ||
+                (service.uid_servicio === '' && service.id === id),
+            )
             : allServices;
 
           console.log('filtered', filteredData);
@@ -290,7 +292,7 @@ const ProductDetailOne = ({navigation}) => {
     setModalVisible(false);
   };
 
-  const renderItemModal = ({item}) => {
+  const renderItemModal = ({ item }) => {
     // Función para abrir enlaces
     const openLink = url => {
       Linking.openURL(url).catch(err =>
@@ -324,31 +326,32 @@ const ProductDetailOne = ({navigation}) => {
     );
   };
 
-  const GetCoordenadas = () => {};
+  const GetCoordenadas = () => { };
 
   const closeMapRutas = () => {
     setshowRuta(false);
   };
 
   const stylesMap = StyleSheet.create({
-    container: {justifyContent: 'center', alignItems: 'center'},
+    container: { justifyContent: 'center', alignItems: 'center' },
   });
-  const dataTest = [{phone: '4241436070'}];
+  const dataTest = [{ phone: '4241436070' }];
 
   return (
     <View
-      style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
+      style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle }]}>
       <ScrollView
+        ref={scrollRef}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[external.Pb_80]}
-        style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
+        style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle }]}>
         <View>
           <View>
             <TouchableOpacity
               onPress={() => navigation.goBack('')}
-              style={{position: 'absolute', left: 0}} // Posiciona el botón de retroceso en la esquina izquierda
+              style={{ position: 'absolute', left: 0 }} // Posiciona el botón de retroceso en la esquina izquierda
             >
-              <View style={[{marginLeft: 20, marginTop: 16}]}>
+              <View style={[{ marginLeft: 20, marginTop: 16 }]}>
                 <BackLeft />
               </View>
             </TouchableOpacity>
@@ -359,8 +362,8 @@ const ProductDetailOne = ({navigation}) => {
               style={[
                 commonStyles.titleText19,
                 external.mt_8,
-                {color: textColorStyle},
-                {textAlign: textRTLStyle},
+                { color: textColorStyle },
+                { textAlign: textRTLStyle },
               ]}>
               {/* {t('transData.Beatssolo3')}  */}
               {DataService.nombre
@@ -368,11 +371,11 @@ const ProductDetailOne = ({navigation}) => {
                 : DataService?.nombre_servicio}
             </Text>
             <Text
-              style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
+              style={[commonStyles.subtitleText, { textAlign: textRTLStyle }]}>
               {data[0]?.taller?.nombre}
             </Text>
             <Text
-              style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
+              style={[commonStyles.subtitleText, { textAlign: textRTLStyle }]}>
               {data[0]?.taller?.estado}
             </Text>
             <DetailsTextContainer DataService={DataService} />
@@ -387,40 +390,50 @@ const ProductDetailOne = ({navigation}) => {
             <IconProduct data={data[0]?.taller?.metodos_pago} />
             <IconContact data={data} />
 
-            <View
-              style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
-              <TouchableOpacity
-                onPress={() => {
-                  setshowRuta(true);
-                }}
-                style={[
-                  stylesImage.button,
-                  {
-                    borderWidth: 1,
-                    borderColor: '#2D3261',
-                    borderStyle: 'dotted',
-                    borderRadius: 5,
-                    backgroundColor: '#FFF',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    padding: 15,
-                    marginTop: 0,
-                    width: windowWidth(350),
-                  },
-                ]}>
-                <Text style={{color: '#2D3261', fontWeight: '700'}}>
-                  Ver en Google Maps
-                </Text>
-              </TouchableOpacity>
-            </View>
+            {data[0]?.taller.ubicacion?.lat != undefined &&
+              data[0]?.taller.ubicacion?.lat != '' &&
+              data[0]?.taller.ubicacion?.lng != undefined &&
+              data[0]?.taller.ubicacion?.lng != ''
+
+              ? (
+                <View
+                  style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setshowRuta(true);
+                    }}
+                    style={[
+                      stylesImage.button,
+                      {
+                        borderWidth: 1,
+                        borderColor: '#2D3261',
+                        borderStyle: 'dotted',
+                        borderRadius: 5,
+                        backgroundColor: '#FFF',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        padding: 15,
+                        marginTop: 0,
+                        width: windowWidth(350),
+                      },
+                    ]}>
+                    <Text style={{ color: '#2D3261', fontWeight: '700' }}>
+                      Ver en Google Maps
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+              ) : null
+            }
+
 
             {data[0]?.taller.ubicacion?.lat != undefined &&
-            data[0]?.taller.ubicacion?.lat != '' &&
-            data[0]?.taller.ubicacion?.lng != undefined &&
-            data[0]?.taller.ubicacion?.lng != '' &&
-            showRuta == true ? (
+              data[0]?.taller.ubicacion?.lat != '' &&
+              data[0]?.taller.ubicacion?.lng != undefined &&
+              data[0]?.taller.ubicacion?.lng != '' &&
+              showRuta == true ? (
               <View
-                style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
+                style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
                 <MapRutaComponent
                   initialRegion={{
                     latitude: data[0]?.taller.ubicacion?.lat,
@@ -449,7 +462,8 @@ const ProductDetailOne = ({navigation}) => {
             horizontal={true}
             width={windowWidth(205)}
             onNavigate={(uidServ) => {
-              getDataFirst(uidServ)
+              getDataFirst(uidServ);
+              scrollRef.current?.scrollTo({ y: 0, animated: true }); // Scroll to top
             }}
           />
         </View>
@@ -465,7 +479,7 @@ const ProductDetailOne = ({navigation}) => {
                 <View
                   style={[external.mh_15, external.fd_row, external.ai_center]}>
                   {/* <Plus color={iconColorStyle} /> */}
-                  <Text style={[styles.addToBeg, {color: textColorStyle}]}>
+                  <Text style={[styles.addToBeg, { color: textColorStyle }]}>
                     Volver
                   </Text>
                 </View>
@@ -517,7 +531,7 @@ const ProductDetailOne = ({navigation}) => {
             <FlatList
               data={dataTest}
               keyExtractor={item => item.id}
-              renderItem={({item}) => (
+              renderItem={({ item }) => (
                 <View style={styles.listItem}>
                   {/* WhatsApp */}
                   <TouchableOpacity
