@@ -332,14 +332,21 @@ const TallerEditProfileScreen = ({navigation}) => {
 
       try {
         // Validar si el número de teléfono ya existe en el servidor
-        const phoneValidationResponse = await api.post(
-          '/usuarios/validatePhone',
-          {phone},
-        );
+        const phoneValidationResponse = await api.post('/home/validatePhone', {
+          phone,
+          uid: uidUserConnected,
+        });
+
+        const emailValidationResponse = await api.post('/home/validateEmail', {
+          email,
+          uid: uidUserConnected,
+        });
 
         if (
           phoneValidationResponse.status === 200 &&
-          phoneValidationResponse.data.valid === true
+          phoneValidationResponse.data.valid === true &&
+          emailValidationResponse.status === 200 &&
+          emailValidationResponse.data.valid === true
         ) {
           // Hacer la solicitud POST utilizando Axios
           const response = await api.post(
@@ -364,7 +371,7 @@ const TallerEditProfileScreen = ({navigation}) => {
           }
         } else {
           setdisabledInput(false);
-          showToast('El número de teléfono ya está registrado.');
+          showToast('El número de teléfono o el correo electrónico ya está registrado.');
         }
       } catch (error) {
         setdisabledInput(false);

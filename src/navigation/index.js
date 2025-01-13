@@ -53,9 +53,22 @@ import TallerEditProfileScreen from '../screens/profileScreen/editProfileTaller'
 
 const Stack = createNativeStackNavigator();
 const MyStack = () => {
+  // const [initialScreen, setInitialScreen] = useState();
+  
+  // const validator = () => {
+  //   AsyncStorage.getItem('token').then((value) => {
+  //     if (value !== null) {
+  //       navigation.navigate('HomeScreenTwo');
+  //     }
+  //   });
+  // }
+
+  // useEffect(() => {
+  //   validator()
+  // }, [])
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Navigator initialRouteName='LoaderScreen' screenOptions={{headerShown: false}}>
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="SignUp" component={SignUp} />
         <Stack.Screen name="ForgetPassword" component={ForgetPassword} />

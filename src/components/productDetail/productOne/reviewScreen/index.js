@@ -30,14 +30,22 @@ const RatingScreen = data => {
   };
 
   // Ejemplo de uso en tu función:
+
+  if (!data.data.uid_servicio) {
+    data.data.uid_servicio = data.data.id;
+  }
+  
   const getComments = async data => {
+    
     try {
+      
       const response = await api.post('/home/getCommentsByService', {
-        uid_service: data.id,
+        uid_service: data.id ?? data.uid_servicio,
       });
 
       if (response.status === 200) {
         setDataComments(response.data);
+        console.log('Respuesta del servidor:', response.data);
 
         const averageScore = calculateAverageScore(response.data);
         setDataAverage(averageScore.toFixed(1));
@@ -51,7 +59,11 @@ const RatingScreen = data => {
   };
 
   useEffect(() => {
-    // console.log('data:', data.data)
+    // Asegurarte de que uid_servicio tenga el valor de id si está vacío
+   
+
+    console.log('data actualizada:', data.data);
+    console.log('---------------------------------------123');
     getComments(data.data);
   }, []);
 
@@ -106,7 +118,11 @@ const RatingScreen = data => {
               {alignItems: 'center', justifyContent: 'center'},
             ]}>
             <View style={styles.viewContainer}>
-              <Text style={[styles.fourPointOne, {alignItems: 'center', justifyContent: 'center'}]}>
+              <Text
+                style={[
+                  styles.fourPointOne,
+                  {alignItems: 'center', justifyContent: 'center'},
+                ]}>
                 {dataAverage} <Star size={15} color={'#D3D3D3'} fill={'none'} />
               </Text>
               <Text style={styles.outOfFive}>de 5</Text>

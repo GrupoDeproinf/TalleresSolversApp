@@ -50,14 +50,15 @@ const RatingScreen = () => {
           console.error("Error: Usuario no encontrado en AsyncStorage");
           return;
         }
-    
-        // Validar que todos los parámetros requeridos están disponibles
-        if (!id || !dataTotal || !dataTotal.taller || !dataTotal.uid_taller) {
-          console.error("Error: Parámetros faltantes en route.params");
-          return;
-        }
-        // Enviar la solicitud a la API
-        const response = await api.post('/home/addCommentToService', {
+
+        console.log('id:', id);
+        console.log('comment:', comment);
+        console.log('rating:', rating);
+        console.log('uid_taller:', dataTotal.uid_taller);
+        console.log('taller:', dataTotal.taller);
+        console.log('user:', user);
+        
+        const data = {
           uid_service: id,
           comentario: comment,
           puntuacion: rating,
@@ -68,6 +69,18 @@ const RatingScreen = () => {
             nombre: user.nombre,
             email: user.email,
           },
+        }
+
+        console.log('data:', data);
+    
+        // Validar que todos los parámetros requeridos están disponibles
+        // if (!id || !dataTotal || !dataTotal.taller || !dataTotal.uid_taller) {
+        //   console.error("Error: Parámetros faltantes en route.params");
+        //   return;
+        // }
+        // // Enviar la solicitud a la API
+        const response = await api.post('/home/addCommentToService', {
+          data
         });
     
         if (response.status === 201) {
@@ -87,9 +100,8 @@ const RatingScreen = () => {
 
   useEffect(() => {
     console.log('123456789***************');
-    console.log('Data:', dataComments);
-    console.log('123456789***************');
-    console.log('Data:', dataAverage);
+    console.log('Data:', id);
+    
   }, []);
   const {
     bgFullStyle,

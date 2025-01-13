@@ -44,7 +44,7 @@ export default function ShowProductsContainer({
   const goToDetail = item => {
     console.log(item);
 
-    navigation.navigate('ProductDetailOne', {uid: item.uid_servicio});
+    navigation.navigate('ProductDetailOne', { uid: item.uid_servicio || item.id });
   };
 
   const onLongPressHandler = (itemId, status) => {
@@ -59,8 +59,8 @@ export default function ShowProductsContainer({
     setVisibleHint(null); // Oculta el Snackbar cuando se presiona para cerrar
   };
 
-  console.log('---------------------------------------------123');
-  console.log('data:', data);
+  // console.log('---------------------------------------------123');
+  // console.log('data:', data);
 
     const color = isDark ? appColors.blackBg : appColors.bgLayout;
   

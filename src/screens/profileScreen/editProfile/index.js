@@ -286,189 +286,211 @@ const EditProfile = ({ navigation }) => {
   };
 
   const onHandleChange = async () => {
-
-    console.log("Aquiiii")
-    console.log(typeUser)
-
+    console.log("Aquiiii");
+    console.log(typeUser);
+  
     setGetOtpDisabled(true);
-
+  
     if (typeUser == "Cliente") {
-
       const isPhoneValid = validatePhone();
-
-      if (
-        isPhoneValid == true &&
-        Nombre != '' &&
-        cedula != 0 &&
-        cedula != ''
-      ) {
-        const infoUserCreated = {
-          Nombre: Nombre,
-          cedula: selectedPrefix + "" + cedula,
-          phone: phone,
-          typeUser: 'Cliente',
-          email: email,
-          uid: uidprofile,
-          estado: estadoSelected,
-          base64: base64 == null || base64 == undefined || base64 == ''  ? "" : base64,
-          imageTodelete: imageFirts != ""  && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == ''  ? "" : getImageName(imageFirts) : "" 
-        };
-
-        console.log(infoUserCreated)
+  
+      if (isPhoneValid == true && Nombre != '' && cedula != 0 && cedula != '') {
         try {
-          // Hacer la solicitud POST utilizando Axios
-          const response = await api.post('/usuarios/UpdateClient', infoUserCreated);
-
-          // Verificar la respuesta del servidor
-          console.log(response);
-
-          if (response.status === 200) {
-            const result = response.data;
-            console.log(result); // Aquí puedes manejar la respuesta
-
+          // Validar si el número de teléfono ya existe en el servidor
+          const phoneValidationResponse = await api.post('/home/validatePhone', {
+            phone,
+            uid: uidprofile,
+          });
+  
+          const emailValidationResponse = await api.post('/home/validateEmail', {
+            email,
+            uid: uidprofile,
+          });
+  
+          if (
+            phoneValidationResponse.status === 200 &&
+            phoneValidationResponse.data.valid === true &&
+            emailValidationResponse.status === 200 &&
+            emailValidationResponse.data.valid === true
+          ) {
+            const infoUserCreated = {
+              Nombre: Nombre,
+              cedula: selectedPrefix + "" + cedula,
+              phone: phone,
+              typeUser: 'Cliente',
+              email: email,
+              uid: uidprofile,
+              estado: estadoSelected,
+              base64: base64 == null || base64 == undefined || base64 == '' ? "" : base64,
+              imageTodelete: imageFirts != "" && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == '' ? "" : getImageName(imageFirts) : ""
+            };
+  
+            console.log(infoUserCreated);
+  
             try {
-              const jsonValue = JSON.stringify(infoUserCreated);
-              console.log(jsonValue);
-              await AsyncStorage.setItem('@userInfo', jsonValue);
-            } catch (e) {
-              console.error('Error al guardar en AsyncStorage:', e);
+              // Hacer la solicitud POST utilizando Axios
+              const response = await api.post('/usuarios/UpdateClient', infoUserCreated);
+  
+              // Verificar la respuesta del servidor
+              console.log(response);
+  
+              if (response.status === 200) {
+                const result = response.data;
+                console.log(result);
+  
+                try {
+                  const jsonValue = JSON.stringify(infoUserCreated);
+                  console.log(jsonValue);
+                  await AsyncStorage.setItem('@userInfo', jsonValue);
+                } catch (e) {
+                  console.error('Error al guardar en AsyncStorage:', e);
+                }
+  
+                setNombre('');
+                setcedula(0);
+                setEmail('');
+                setPhone(0);
+                setSelectedPrefix('J-');
+  
+                showToast('Usuario actualizado exitosamente');
+                setGetOtpDisabled(false);
+                navigation.goBack('');
+              } else {
+                const errorText = response.data;
+                console.error('Error al guardar el usuario:', errorText.message || errorText);
+                setGetOtpDisabled(false);
+                showToast(errorText.message || 'Error inesperado en la actualización');
+              }
+            } catch (error) {
+              if (error.response) {
+                console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
+                setGetOtpDisabled(false);
+                showToast(error.response.data.message || 'Error inesperado en la actualización');
+              } else {
+                console.error('Error en la solicitud:', error.message);
+                setGetOtpDisabled(false);
+              }
             }
-
-            setNombre('');
-            setcedula(0);
-            setEmail('');
-            setPhone(0);
-            setSelectedPrefix('J-');
-
-            showToast('Usuario actualizado exitosamente');
-            setGetOtpDisabled(false);
-            navigation.goBack('');
           } else {
-            // Manejar errores de respuesta no exitosa
-            const errorText = response.data;
-            console.error('Error al guardar el usuario:', errorText.message || errorText);
             setGetOtpDisabled(false);
-            showToast(errorText.message || 'Error inesperado en la actualización');
-          }
-        } catch (error) {
-          if (error.response) {
-            console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
-            setGetOtpDisabled(false);
-            showToast(error.response.data.message || 'Error inesperado en la actualización');
-          } else {
-            console.error('Error en la solicitud:', error.message);
-            setGetOtpDisabled(false);
-          }
-        }
-
-      } else {
-        setGetOtpDisabled(false);
-        showToast('Error al crear al usuario, por favor validar formulario');
-      }
-
-
-    } else if (typeUser == "Taller") {
-
-      if (
-        Nombre != '' &&
-        cedula != 0
-      ) {
-        const infoUserCreated = {
-          uid: uidprofile,
-          nombre: Nombre == undefined ? '' : Nombre,
-          rif: cedula == undefined ? '' : selectedPrefix + '' + cedula,
-          phone: phone == undefined ? '' : phone,
-          typeUser: 'Taller',
-          email: email == undefined ? '' : email,
-          Direccion: Direccion == undefined ? '' : Direccion,
-          RegComercial: RegComercial == undefined ? '' : RegComercial,
-          Caracteristicas: Caracteristicas == undefined ? '' : Caracteristicas,
-          Tarifa: Tarifa == undefined ? '' : Tarifa,
-          Experiencia: Experiencia == undefined ? '' : Experiencia,
-          LinkFacebook: LinkFacebook == undefined ? '' : LinkFacebook,
-          LinkInstagram: LinkInstagram == undefined ? '' : LinkInstagram,
-          LinkTiktok: LinkTiktok == undefined ? '' : LinkTiktok,
-          Garantia: Garantia == undefined ? '' : Garantia,
-          seguro: seguro == undefined ? '' : seguro,
-          agenteAutorizado: checked == undefined ? false : checked
-        };
-
-        console.log(infoUserCreated);
-        console.log('Aquiiii1234');
-
-        try {
-          // Hacer la solicitud POST utilizando Axios
-          const response = await api.post('/usuarios/UpdateTaller', infoUserCreated);
-
-          // Verificar la respuesta del servidor
-          if (response.status === 200) {
-            const result = response.data;
-            console.log(result); // Aquí puedes manejar la respuesta
-
-            try {
-              const jsonValue = JSON.stringify(infoUserCreated);
-              console.log(jsonValue);
-              await AsyncStorage.setItem('@userInfo', jsonValue);
-            } catch (e) {
-              console.error('Error al guardar en AsyncStorage:', e);
-            }
-
-            showToast('Taller actualizado exitosamente');
-            setGetOtpDisabled(false);
-            navigation.goBack('');
-          } else {
-            // Manejar errores de respuesta no exitosa
-            const errorText = response.data;
-            console.error('Error al guardar el taller:', errorText.message || errorText);
-            setGetOtpDisabled(false);
-            showToast(errorText.message || 'Error inesperado en la actualización');
+            showToast('El número de teléfono o el correo electrónico ya está registrado.');
           }
         } catch (error) {
           setGetOtpDisabled(false);
           if (error.response) {
-            console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
-            showToast(error.response.data.message || 'Error inesperado en la actualización');
+            console.error(
+              'Error en la solicitud:',
+              error.response.data.message || error.response.statusText
+            );
+            showToast(error.response.data.message || 'Error en la solicitud');
           } else {
             console.error('Error en la solicitud:', error.message);
+            showToast('Error en la solicitud');
           }
         }
-
+      } else {
+        setGetOtpDisabled(false);
+        showToast('Error al crear al usuario, por favor validar formulario');
       }
-      else {
+    } else if (typeUser == "Taller") {
+      if (Nombre != '' && cedula != 0) {
+        try {
+          // Validar si el número de teléfono ya existe en el servidor
+          const phoneValidationResponse = await api.post('/home/validatePhone', {
+            phone,
+            uid: uidprofile,
+          });
+  
+          const emailValidationResponse = await api.post('/home/validateEmail', {
+            email,
+            uid: uidprofile,
+          });
+  
+          if (
+            phoneValidationResponse.status === 200 &&
+            phoneValidationResponse.data.valid === true &&
+            emailValidationResponse.status === 200 &&
+            emailValidationResponse.data.valid === true
+          ) {
+            const infoUserCreated = {
+              uid: uidprofile,
+              nombre: Nombre == undefined ? '' : Nombre,
+              rif: cedula == undefined ? '' : selectedPrefix + '' + cedula,
+              phone: phone == undefined ? '' : phone,
+              typeUser: 'Taller',
+              email: email == undefined ? '' : email,
+              Direccion: Direccion == undefined ? '' : Direccion,
+              RegComercial: RegComercial == undefined ? '' : RegComercial,
+              Caracteristicas: Caracteristicas == undefined ? '' : Caracteristicas,
+              Tarifa: Tarifa == undefined ? '' : Tarifa,
+              Experiencia: Experiencia == undefined ? '' : Experiencia,
+              LinkFacebook: LinkFacebook == undefined ? '' : LinkFacebook,
+              LinkInstagram: LinkInstagram == undefined ? '' : LinkInstagram,
+              LinkTiktok: LinkTiktok == undefined ? '' : LinkTiktok,
+              Garantia: Garantia == undefined ? '' : Garantia,
+              seguro: seguro == undefined ? '' : seguro,
+              agenteAutorizado: checked == undefined ? false : checked
+            };
+  
+            console.log(infoUserCreated);
+            console.log('Aquiiii1234');
+  
+            try {
+              // Hacer la solicitud POST utilizando Axios
+              const response = await api.post('/usuarios/UpdateTaller', infoUserCreated);
+  
+              if (response.status === 200) {
+                const result = response.data;
+                console.log(result);
+  
+                try {
+                  const jsonValue = JSON.stringify(infoUserCreated);
+                  console.log(jsonValue);
+                  await AsyncStorage.setItem('@userInfo', jsonValue);
+                } catch (e) {
+                  console.error('Error al guardar en AsyncStorage:', e);
+                }
+  
+                showToast('Taller actualizado exitosamente');
+                setGetOtpDisabled(false);
+                navigation.goBack('');
+              } else {
+                const errorText = response.data;
+                console.error('Error al guardar el taller:', errorText.message || errorText);
+                setGetOtpDisabled(false);
+                showToast(errorText.message || 'Error inesperado en la actualización');
+              }
+            } catch (error) {
+              setGetOtpDisabled(false);
+              if (error.response) {
+                console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
+                showToast(error.response.data.message || 'Error inesperado en la actualización');
+              } else {
+                console.error('Error en la solicitud:', error.message);
+              }
+            }
+          } else {
+            setGetOtpDisabled(false);
+            showToast('El número de teléfono o el correo electrónico ya está registrado.');
+          }
+        } catch (error) {
+          setGetOtpDisabled(false);
+          if (error.response) {
+            console.error(
+              'Error en la solicitud:',
+              error.response.data.message || error.response.statusText
+            );
+            showToast(error.response.data.message || 'Error en la solicitud');
+          } else {
+            console.error('Error en la solicitud:', error.message);
+            showToast('Error en la solicitud');
+          }
+        }
+      } else {
         setGetOtpDisabled(false);
         showToast('Error al actualizar el usuario, por favor validar formulario');
       }
     }
-
-
-    // if (
-    //   isEmailValid == true &&
-    //   isPhoneValid == true &&
-    //   Nombre != '' &&
-    //   cedula != 0
-    // ) {
-    //   const infoUserCreated = {
-    //     uid: '12345',
-    //     nombre: Nombre,
-    //     cedula: cedula,
-    //     phone: phone,
-    //     typeUser: 'Cliente',
-    //     email: email,
-    //   };
-    //   try {
-    //     const jsonValue = JSON.stringify(infoUserCreated);
-    //     console.log(jsonValue);
-    //     await AsyncStorage.setItem('@userInfo', jsonValue);
-    //   } catch (e) {
-    //     console.log(e);
-    //   }
-
-    //   showToast('Actualizado correctamente');
-    //   navigation2.goBack('');
-    // } else {
-    //   showToast('Error al actualizar el usuario, por favor validar formulario');
-    // }
-
   };
 
 

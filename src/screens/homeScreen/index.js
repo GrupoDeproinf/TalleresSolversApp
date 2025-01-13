@@ -26,7 +26,7 @@ const HomeScreen = () => {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-      console.log('User info:', user);
+      // console.log('User info:', user);
 
       const response = await api.get('/home/getServices');
 
@@ -49,7 +49,7 @@ const HomeScreen = () => {
         uid_categoria: category,
       });
 
-      console.log('Category data response:', response);
+      // console.log('Category data response:', response);
 
       if (response.status === 200) {
         setDataByCategory(response.data);

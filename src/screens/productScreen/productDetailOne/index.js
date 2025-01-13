@@ -113,6 +113,10 @@ const ProductDetailOne = ({ navigation }) => {
         uid_servicio: result.id,
       };
 
+      console.log('resultDataresultDataresultDataresultDataresultDataresultDataresultData');
+      console.log('resultData', resultData);
+      console.log('resultDataresultDataresultDataresultDataresultDataresultDataresultData');
+
       if (result.message === 'Servicio encontrado') {
         setDataService(resultData.service);
         getAdditionalServices(
@@ -157,7 +161,7 @@ const ProductDetailOne = ({ navigation }) => {
             )
             : allServices;
 
-          console.log('filtered', filteredData);
+          // console.log('filtered', filteredData);
 
           // Actualizar el estado con los datos filtrados
           setData(filteredData);
@@ -232,98 +236,56 @@ const ProductDetailOne = ({ navigation }) => {
     }
   };
 
-  // const handleContact = async typeContact => {
-  //   const jsonValue = await AsyncStorage.getItem('@userInfo');
-  //   const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+  const handleContact = async typeContact => {
+    const jsonValue = await AsyncStorage.getItem('@userInfo');
+    const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-  //   const servicePayload = {
-  //     id: DataService.uid_servicio,
-  //     nombre_servicio: DataService.nombre_servicio,
-  //     precio: DataService.precio,
-  //     taller: data.taller.nombre,
-  //     uid_servicio: DataService.uid_servicio,
-  //     uid_taller: DataService.uid_taller,
-  //     usuario_id: user?.uid || '',
-  //     usuario_nombre: user?.nombre || '',
-  //     usuario_email: user?.email || '',
-  //     typeContact: typeContact,
-  //   };
+    const servicePayload = {
+      id: DataService.uid_servicio || DataService.id,
+      nombre_servicio: data[0].nombre_servicio || '',
+      precio: DataService?.precio || '',
+      taller: data[0]?.taller?.nombre || '',
+      uid_servicio: DataService.id || '',
+      uid_taller: DataService?.uid_taller || '',
+      usuario_id: user?.uid || '',
+      usuario_nombre: user?.nombre || '',
+      usuario_email: user?.email || '',
+      typeContact: typeContact,
+    };
 
-  //   console.log('-----------------------------------------------------');
-  //   console.log('servicePayload', servicePayload);
-  //   console.log('-----------------------------------------------------');
+    console.log('-----------------------------------------------------');
+    console.log('servicePayload', servicePayload);
+    console.log('-----------------------------------------------------');
 
-  //   try {
-  //     // Realizar la solicitud al endpoint
-  //     const response = await api.post('/home/contactService', servicePayload);
+    try {
+      // Realizar la solicitud al endpoint
+      const response = await api.post('/home/contactService', servicePayload);
 
-  //     // Si llegamos aquí, la solicitud fue exitosa
-  //     const responseData = response.data; // Axios ya procesa el JSON automáticamente
-  //     console.log('Servicio guardado exitosamente:', responseData);
-  //   } catch (error) {
-  //     // Manejar errores
-  //     if (error.response) {
-  //       // Errores del servidor (respuesta con error, por ejemplo, 400, 500)
-  //       console.error('Error del servidor:', error.response.data);
-  //     } else if (error.request) {
-  //       // La solicitud se realizó pero no hubo respuesta
-  //       console.error('No se recibió respuesta del servidor:', error.request);
-  //     } else {
-  //       // Otro tipo de error
-  //       console.error('Error al configurar la solicitud:', error.message);
-  //     }
-  //   }
-  // };
+      // Si llegamos aquí, la solicitud fue exitosa
+      const responseData = response.data; // Axios ya procesa el JSON automáticamente
+      console.log('Servicio guardado exitosamente:', responseData);
+    } catch (error) {
+      // Manejar errores
+      if (error.response) {
+        // Errores del servidor (respuesta con error, por ejemplo, 400, 500)
+        console.error('Error del servidor:', error.response.data);
+      } else if (error.request) {
+        // La solicitud se realizó pero no hubo respuesta
+        console.error('No se recibió respuesta del servidor:', error.request);
+      } else {
+        // Otro tipo de error
+        console.error('Error al configurar la solicitud:', error.message);
+      }
+    }
+  };
 
   const showToast = text => {
     ToastAndroid.show(text, ToastAndroid.SHORT);
   };
 
-  const copyToClipboard = phone => {
-    Clipboard.setString(phone);
-    Alert.alert(
-      'Copiado',
-      `El número ${phone} ha sido copiado al portapapeles.`,
-    );
-  };
-
   // Función para cerrar el modal
   const handleCloseModal = () => {
     setModalVisible(false);
-  };
-
-  const renderItemModal = ({ item }) => {
-    // Función para abrir enlaces
-    const openLink = url => {
-      Linking.openURL(url).catch(err =>
-        Alert.alert('Error', 'No se pudo abrir el enlace.'),
-      );
-    };
-
-    return (
-      <View style={styles.listItem}>
-        {/* WhatsApp */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => openLink(`https://wa.me/${item.ws}`)}>
-          <Text style={styles.text}>Abrir en WhatsApp</Text>
-        </TouchableOpacity>
-
-        {/* Llamada */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => openLink(`tel:${item.phone}`)}>
-          <Text style={styles.text}>Llamar</Text>
-        </TouchableOpacity>
-
-        {/* Mensaje de Texto */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={() => openLink(`sms:${item.phone}`)}>
-          <Text style={styles.text}>Enviar SMS</Text>
-        </TouchableOpacity>
-      </View>
-    );
   };
 
   const GetCoordenadas = () => { };
@@ -453,7 +415,8 @@ const ProductDetailOne = ({ navigation }) => {
           </View>
         </View>
 
-        {DataService.id && <RatingScreen data={DataService} />}
+        {(DataService?.id || DataService?.uid_servicio) && <RatingScreen data={DataService} />}
+
 
         <View style={[external.mh_20, external.mt_20]}>
           <H3HeadingCategory value={'Productos Similares'} />
@@ -521,52 +484,7 @@ const ProductDetailOne = ({ navigation }) => {
           }
         />
       </View>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={handleCloseModal}>
-        <View style={styles.centeredView}>
-          <View style={styles.modalView}>
-            <FlatList
-              data={dataTest}
-              keyExtractor={item => item.id}
-              renderItem={({ item }) => (
-                <View style={styles.listItem}>
-                  {/* WhatsApp */}
-                  <TouchableOpacity
-                    style={styles.button}
-                    onPress={() =>
-                      Linking.openURL(`https://wa.me/+58${item.phone}`)
-                    }>
-                    <Text style={styles.text}>Abrir en WhatsApp</Text>
-                  </TouchableOpacity>
-
-                  {/* Llamada */}
-                  <TouchableOpacity
-                    style={styles.button}
-                    onPress={() => Linking.openURL(`tel:0${item.phone}`)}>
-                    <Text style={styles.text}>Llamar</Text>
-                  </TouchableOpacity>
-
-                  {/* SMS */}
-                  <TouchableOpacity
-                    style={styles.button}
-                    onPress={() => Linking.openURL(`sms:0${item.phone}`)}>
-                    <Text style={styles.text}>Enviar SMS</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-            />
-
-            <Pressable
-              style={[styles.button, styles.buttonClose]}
-              onPress={handleCloseModal}>
-              <Text style={styles.textStyle}>Cerrar Modal</Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
+      
     </View>
   );
 };
