@@ -19,8 +19,8 @@ import RatingScreenContainer from '../../components/ratingScreenContainer';
 import {useValues} from '../../../App';
 import LinearGradient from 'react-native-linear-gradient';
 import {useNavigation, useRoute} from '@react-navigation/native';
-import { TouchableOpacity } from 'react-native';
-import { Modal } from 'react-native-paper';
+import {TouchableOpacity} from 'react-native';
+import {Modal} from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../../axiosInstance';
 import BeautifulModal from './components/modal';
@@ -28,80 +28,76 @@ import BeautifulModal from './components/modal';
 const RatingScreen = () => {
   const route = useRoute();
   const navigate = useNavigation();
-    const [modalVisible, setModalVisible] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
 
-    const handleCloseModal = () => {
-      setModalVisible(false);
-    };
+  const handleCloseModal = () => {
+    setModalVisible(false);
+  };
 
-    const { dataComments, dataAverage, id, dataTotal } = route.params;
+  const {dataComments, dataAverage, id, dataTotal} = route.params;
 
-    const showToast = text => {
-        ToastAndroid.show(text, ToastAndroid.SHORT);
-    };
+  const showToast = text => {
+    ToastAndroid.show(text, ToastAndroid.SHORT);
+  };
 
-    const addComment = async (rating, comment) => {
-      try {
-        // Obtener el usuario desde AsyncStorage
-        const jsonValue = await AsyncStorage.getItem('@userInfo');
-        const user = jsonValue ? JSON.parse(jsonValue) : null;
-    
-        if (!user) {
-          console.error("Error: Usuario no encontrado en AsyncStorage");
-          return;
-        }
+  const addComment = async (rating, comment) => {
+    try {
+      // Obtener el usuario desde AsyncStorage
+      const jsonValue = await AsyncStorage.getItem('@userInfo');
+      const user = jsonValue ? JSON.parse(jsonValue) : null;
 
-        console.log('id:', id);
-        console.log('comment:', comment);
-        console.log('rating:', rating);
-        console.log('uid_taller:', dataTotal.uid_taller);
-        console.log('taller:', dataTotal.taller);
-        console.log('user:', user);
-        
-        const data = {
-          uid_service: id,
-          comentario: comment,
-          puntuacion: rating,
-          nombre_taller: dataTotal.taller,
-          uid_taller: dataTotal.uid_taller,
-          usuario: {
-            uid: user.uid,
-            nombre: user.nombre,
-            email: user.email,
-          },
-        }
-
-        console.log('data:', data);
-    
-        // Validar que todos los parámetros requeridos están disponibles
-        // if (!id || !dataTotal || !dataTotal.taller || !dataTotal.uid_taller) {
-        //   console.error("Error: Parámetros faltantes en route.params");
-        //   return;
-        // }
-        // // Enviar la solicitud a la API
-        const response = await api.post('/home/addCommentToService', {
-          data
-        });
-    
-        if (response.status === 201) {
-          console.log("Comentario añadido con éxito:", response.data);
-          setModalVisible(false);
-          showToast('Gracias por tu comentario');
-          navigate.navigate('HomeScreen');
-        } else {
-          console.error("Error en la API. Código de estado:", response.status);
-        }
-      } catch (error) {
-        console.error("Error en addComment:", error);
+      if (!user) {
+        console.error('Error: Usuario no encontrado en AsyncStorage');
+        return;
       }
-    };
-    
-  
+
+      console.log('id:', id);
+      console.log('comment:', comment);
+      console.log('rating:', rating);
+      console.log('uid_taller:', dataTotal.uid_taller);
+      console.log('taller:', dataTotal.taller);
+      console.log('user:', user);
+
+      // const dataComment = {
+      //   uid_service: id,
+      //   comentario: comment,
+      //   puntuacion: rating,
+      //   nombre_taller: dataTotal.taller,
+      //   uid_taller: dataTotal.uid_taller,
+      //   usuario: {
+      //     uid: user.uid,
+      //     nombre: user.nombre,
+      //     email: user.email,
+      //   },
+      // }
+
+      // console.log('data:', dataComment);
+
+      const response = await api.post('/home/addCommentToService', {
+        uid_service: id,
+        comentario: comment,
+        puntuacion: rating,
+        nombre_taller: dataTotal.taller,
+        uid_taller: dataTotal.uid_taller,
+        usuario: {uid: user.uid, nombre: user.nombre, email: user.email},
+      });
+
+      if (response.status === 201) {
+        console.log('Comentario añadido con éxito:', response.data);
+        setModalVisible(false);
+        showToast('Gracias por tu comentario');
+        navigate.navigate('HomeScreen');
+      } else {
+        console.error('Error en la API. Código de estado:', response.status);
+      }
+    } catch (error) {
+      console.error('Error en addComment:', error);
+    }
+  };
 
   useEffect(() => {
     console.log('123456789***************');
     console.log('Data:', id);
-    
   }, []);
   const {
     bgFullStyle,
@@ -129,10 +125,12 @@ const RatingScreen = () => {
         </View>
         <LinearGradient
           colors={linearColorStyleTwo}
-          style={styles.ratingScreenView}>
-          
-        </LinearGradient>
-        <TouchableOpacity style={{alignSelf: 'flex-end'}} onPress={() => {setModalVisible(true)}}>
+          style={styles.ratingScreenView}></LinearGradient>
+        <TouchableOpacity
+          style={{alignSelf: 'flex-end'}}
+          onPress={() => {
+            setModalVisible(true);
+          }}>
           <Text style={styles.writeReview}>Dejanos saber que piensas</Text>
         </TouchableOpacity>
         {/* <View style={styles.viewText}>
@@ -144,7 +142,7 @@ const RatingScreen = () => {
             ]}>
             {otherReviews}
           </Text> */}
-         {/* <LinearGradient colors={linearColorStyle} style={styles.allReview}>
+        {/* <LinearGradient colors={linearColorStyle} style={styles.allReview}>
             <LinearGradient colors={linearColorStyle} style={styles.allReview}>
               <Text
                 style={[
@@ -162,11 +160,10 @@ const RatingScreen = () => {
       </ScrollView>
 
       <BeautifulModal
-  visible={modalVisible}
-  onClose={handleCloseModal}
-  onSubmit={(rating, comment) => addComment(rating, comment)}
-/>
-
+        visible={modalVisible}
+        onClose={handleCloseModal}
+        onSubmit={(rating, comment) => addComment(rating, comment)}
+      />
     </View>
   );
 };

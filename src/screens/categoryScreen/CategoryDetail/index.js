@@ -125,7 +125,7 @@ const CategoryDetail = ({navigation}) => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[external.Pb_30]}>
-        {/* <SearchContainer /> */}
+        <SearchContainer />
         {/* <SortContainer /> */}
         <NewCategoriesDetail
           data={dataByCategory}

@@ -220,10 +220,11 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
               showsUserLocation={true}
               onPress={handleMapPress}>
               {location && (
-                <Marker coordinate={location} title="Tu ubicación actual" />
+                <Marker coordinate={location} pinColor='navy' title="Tu ubicación actual">
+              </Marker>
               )}
               {secondLocation && (
-                <Marker coordinate={secondLocation} title={secondLocation.name_taller} />
+                <Marker coordinate={secondLocation} title={secondLocation.name_taller} icon={require('../../assets/SolversMarker-150px.png')}/>
               )}
 
               <MapViewDirections
@@ -305,6 +306,14 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
 };
 
 const styles = StyleSheet.create({
+  marker: {
+    width: 30,
+    height: 30,
+    backgroundColor: '#2D3261', // Color personalizado
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: 'white',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',

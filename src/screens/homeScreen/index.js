@@ -99,7 +99,7 @@ const HomeScreen = () => {
       style={[styles.container, {backgroundColor: bgFullStyle}]}
       showsVerticalScrollIndicator={false}>
       <HeaderContainer onPress={() => navigation.openDrawer()} />
-      {/* <SearchContainer show={true} /> */}
+      <SearchContainer show={true} />
       <BannerContainer />
 
       <ProductSwiper returnValues={returnValues} />

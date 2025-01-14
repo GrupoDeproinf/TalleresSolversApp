@@ -15,7 +15,7 @@ const CategoryScreen = () => {
       <View style={[external.pt_10, external.ph_20]}>
         <HeaderContainer />
       </View>
-      {/* <SearchContainer /> */}
+      <SearchContainer />
       <ProductContainer />
     </View>
   );
