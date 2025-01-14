@@ -1,3 +1,4 @@
+import { Linking } from 'react-native';
 import {
   Cards,
   Key,
@@ -14,12 +15,6 @@ export const profileData = [
     icon: <Profile />,
     screenName: 'EditProfile',
   },
-  // {
-  //   id: 1,
-  //   title: 'transData.manageDeliveryAddress',
-  //   icon: <Location />,
-  //   screenName: 'AddressScreen',
-  // },
   {
     id: 2,
     title: 'Mis Intereses',
@@ -33,24 +28,17 @@ export const profileData = [
     icon: <OrderHistory />,
     screenName: 'Planes',
   },
-  // {
-  //   id: 3,
-  //   title: 'transData.setting',
-  //   icon: <Setting />,
-  //   screenName: 'Settings',
-  // },
-  // {
-  //   id: 4,
-  //   title: 'transData.managePaymentMethod',
-  //   icon: <Cards />,
-  //   screenName: 'PaymentScreen',
-  // },
   {
     id: 5,
     title: 'Cambiar clave',
     icon: <Key width={24} height={24} />,
-    // screenName: 'ChangePasswordScreen',
     screenName: 'ForgetPassword',
+  },
+  {
+    id: 7,
+    title: 'Soporte',
+    icon: <Location />,
+    screenName: 'whatsapp://send?text=%C2%A1Hola%21%20Necesito%20ayuda&phone=+584241318415',
   },
   {
     id: 6,
@@ -58,6 +46,7 @@ export const profileData = [
     icon: <LogOut />,
     screenName: '',
   },
+  
 ];
 
 export const profileDataAdmin = [

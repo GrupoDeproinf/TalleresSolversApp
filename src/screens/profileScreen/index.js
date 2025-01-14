@@ -1,4 +1,4 @@
-import { Image, Pressable, Text, View, ImageBackground } from 'react-native';
+import { Image, Pressable, Text, View, ImageBackground, Linking } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { external } from '../../style/external.css';
 import { commonStyles } from '../../style/commonStyle.css';
@@ -302,6 +302,10 @@ const ProfileScreen = () => {
                 navigation.navigate(item.screenName);
               }
             }
+
+            if (item.id === 7) {
+              Linking.openURL(item.screenName);
+            }
           }}>
           <LinearGradient
             start={{ x: 0.0, y: 0.0 }}
@@ -340,6 +344,7 @@ const ProfileScreen = () => {
       ))
   ) : null
 }
+
       </View>
     </View>
   );
