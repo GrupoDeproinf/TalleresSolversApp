@@ -1,20 +1,25 @@
-import {FlatList, Image, Text, TouchableOpacity, View} from 'react-native';
+import {FlatList, Image, Text, TouchableOpacity, View, TextInput} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import {external} from '../../../style/external.css';
-import {categoryData} from '../../../data/categoryData';
 import styles from './style.css';
 import {useNavigation} from '@react-navigation/native';
 import {useValues} from '../../../../App';
 import LinearGradient from 'react-native-linear-gradient';
 import appColors from '../../../themes/appColors';
 import api from '../../../../axiosInstance';
+import {Search} from '../../../assets/icons/search';
+import {commonStyles} from '../../../style/commonStyle.css';
+
+
 const ProductContainer = () => {
-  const {isDark, textColorStyle, linearColorStyle, t} = useValues();
+  const {isDark, textColorStyle, linearColorStyle, t, linearColorStyleTwo, textRTLStyle, viewRTLStyle} = useValues();
   const colors = isDark
     ? ['#3D3F45', '#45474B', '#2A2C32']
     : [appColors.screenBg, appColors.screenBg];
   const navigation = useNavigation('');
-  const [categories, setCategories] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [filteredCategories, setFilteredCategories] = useState([]);
+  const [searchText, setSearchText] = useState('');
 
   const getCategories = async () => {
     try {
@@ -39,19 +44,23 @@ const ProductContainer = () => {
 
         if (result) {
           setCategories(result.categories);
+          setFilteredCategories(result.categories);
         } else {
           console.warn(
             'La respuesta no contiene un array válido de categorías.',
           );
           setCategories([]);
+          setFilteredCategories([]);
         }
       } else {
         // Respuesta inesperada, establecer un array vacío
         setCategories([]);
+        setFilteredCategories([]);
       }
     } catch (error) {
       // Manejar errores en la solicitud
       setCategories([]);
+      setFilteredCategories([]);
       if (error.response) {
         console.error(
           'Error en la solicitud:',
@@ -66,6 +75,15 @@ const ProductContainer = () => {
   useEffect(() => {
     getCategories();
   }, []);
+
+  const handleSearchChange = (text) => {
+    setSearchText(text);
+    const filtered = categories.filter(category =>
+      category.nombre.toLowerCase().includes(text.toLowerCase())
+    );
+    setFilteredCategories(filtered);
+  };
+
   const renderItem = ({item}) => (
     <TouchableOpacity
       onPress={() =>
@@ -98,11 +116,27 @@ const ProductContainer = () => {
       </Text>
     </TouchableOpacity>
   );
+
+  // #848688' : '#2D3261
   return (
     <View>
+      <View style={{flexDirection: 'row', alignItems: 'center', margin: 10, padding: 8, borderWidth: 1, borderColor: '#2D3261', borderRadius: 10}}>
+        <Search />
+        <TextInput
+          placeholder="Filtrar por categoria"
+          placeholderTextColor={appColors.subtitle}
+          style={[
+            external.ph_5,
+            commonStyles.subtitleText,
+            {textAlign: textRTLStyle, flex: 1}
+          ]}
+          onChangeText={handleSearchChange}
+          value={searchText}
+        />
+      </View>
       <FlatList
         numColumns={4}
-        data={categories}
+        data={filteredCategories}
         renderItem={renderItem}
         contentContainerStyle={[external.mt_10, external.mh_20]}
       />

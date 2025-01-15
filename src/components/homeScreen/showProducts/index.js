@@ -130,6 +130,26 @@ export default function ShowProductsContainer({
                 </Text>
               </View>
             </View>
+
+            <View
+              style={[styles.priceContainer, {flexDirection: viewRTLStyle}]}>
+              <View
+                style={[
+                  external.fd_row,
+                  external.ai_center,
+                  {width: '100%'},
+                  {flexDirection: viewRTLStyle},
+                ]}>
+                <Text
+                  style={[
+                    styles.datoSub,
+                    {textAlign: textRTLStyle, marginBottom: -10},
+                  ]}>
+                  {t(item?.categoria || '')}
+                </Text>
+              </View>
+            </View>
+
           </View>
         </LinearGradient>
       </LinearGradient>

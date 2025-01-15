@@ -8,10 +8,10 @@ import styles from './style';
 import {useValues} from '../../../../App';
 import api from '../../../../axiosInstance';
 
-const ProductSwiper = ({returnValues}) => {
+const ProductSwiper = ({returnValues, categories}) => {
   const [selectedItem, setSelectedItem] = useState(0);
   const {isRTL, t} = useValues();
-  const [categories, setCategories] = useState('');
+  // const [categories, setCategories] = useState('');
 
   const getCategories = async () => {
     try {
@@ -49,8 +49,8 @@ const ProductSwiper = ({returnValues}) => {
   };
 
   useEffect(() => {
-    getCategories();
-  }, []);
+    // getCategories();
+  }, [categories]);
 
   const renderItem = ({item}) => (
     <TouchableOpacity
@@ -60,7 +60,7 @@ const ProductSwiper = ({returnValues}) => {
       ]}
       onPress={() => {
         setSelectedItem(item.id);
-        returnValues(item.id); // Ahora sí funcionará correctamente
+        returnValues(item.id);
       }}>
       <Text
         style={[

@@ -23,49 +23,49 @@ const LoaderScreen = ({navigation}) => {
         console.log("Userrrr", user)
 
         if(user){
-          navigation.replace('DrawerScreen');
+          // navigation.replace('DrawerScreen');
 
-        // if (user.typeUser == "Admin"){
-        //   goToProfile(user.typeUser, '')
-        // } else if (user.typeUser == "Certificador"){
-        //   goToProfile(user.typeUser, '')
-        // } 
-        // else {
-        //   try {
-        //     // Hacer la solicitud POST utilizando Axios
-        //     const response = await api.post('/usuarios/getUserByUid', {
-        //       uid: user.uid,
-        //     });
+        if (user.typeUser == "Admin"){
+          goToProfile(user.typeUser, '')
+        } else if (user.typeUser == "Certificador"){
+          goToProfile(user.typeUser, '')
+        } 
+        else {
+          try {
+            // Hacer la solicitud POST utilizando Axios
+            const response = await api.post('/usuarios/getUserByUid', {
+              uid: user.uid,
+            });
           
-        //     // Verificar la respuesta del servidor
-        //     const result = response.data;
-        //     console.log("Este es el usuario encontrado", result);
+            // Verificar la respuesta del servidor
+            const result = response.data;
+            console.log("Este es el usuario encontrado", result);
           
-        //     if (result.message === "Usuario encontrado") {
-        //       try {
-        //         const jsonValue = JSON.stringify(result.userData);
-        //         console.log(jsonValue);
-        //         await AsyncStorage.setItem('@userInfo', jsonValue);
+            if (result.message === "Usuario encontrado") {
+              try {
+                const jsonValue = JSON.stringify(result.userData);
+                console.log(jsonValue);
+                await AsyncStorage.setItem('@userInfo', jsonValue);
           
-        //         goToProfile(result.userData.typeUser, result.userData.status);
-        //       } catch (e) {
-        //         console.error(e);
-        //         navigation.navigate('LoaderScreen');
-        //       }
-        //     } else {
-        //       navigation.replace('Login');
-        //     }
-        //   } catch (error) {
-        //     // Manejo de errores
-        //     if (error.response) {
-        //       console.error('Error en la solicitud:', error.response.statusText);
-        //     } else {
-        //       console.error('Error en la solicitud:', error.message);
-        //     }
-        //     navigation.replace('Login');
-        //   }
+                goToProfile(result.userData.typeUser, result.userData.status);
+              } catch (e) {
+                console.error(e);
+                navigation.navigate('LoaderScreen');
+              }
+            } else {
+              navigation.replace('Login');
+            }
+          } catch (error) {
+            // Manejo de errores
+            if (error.response) {
+              console.error('Error en la solicitud:', error.response.statusText);
+            } else {
+              console.error('Error en la solicitud:', error.message);
+            }
+            navigation.replace('Login');
+          }
           
-        // }
+        }
       }else{
         navigation.replace('Login');
       }

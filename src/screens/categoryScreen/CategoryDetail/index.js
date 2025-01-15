@@ -1,9 +1,8 @@
-import {ScrollView, View} from 'react-native';
+import {ScrollView, View, TextInput} from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import FullHeader from '../../../commonComponents/fullHeader';
 import {external} from '../../../style/external.css';
 import {Notification} from '../../../utils/icon';
-import SearchContainer from '../../../components/homeScreen/searchContainer';
 import NewArrivalBigContainer from '../../../components/homeScreenTwo/newArrivalTwoContainer';
 import {categoryDetailData} from '../../../data/homeScreenTwo/newArrivalData';
 import SortContainer from '../../../components/categoryContainer/sortContainer';
@@ -13,12 +12,16 @@ import {useValues} from '../../../../App';
 import api from '../../../../axiosInstance';
 import NewCategoriesDetail from '../../../components/homeScreenTwo/newCategoriesDetail';
 import { useRoute } from '@react-navigation/native';
+import {Filter} from '../../../utils/icon';
+import appColors from '../../../themes/appColors';
+import {Search} from '../../../assets/icons/search';
 
 const CategoryDetail = ({navigation}) => {
-  const {linearColorStyle, isDark, bgFullStyle} = useValues();
+  const {linearColorStyle, isDark, bgFullStyle, textRTLStyle} = useValues();
   const [dataByCategory, setDataByCategory] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState(null);
   const [categories, setCategories] = useState('');
+  const [searchText, setSearchText] = useState('');
 
   const route = useRoute();
 
@@ -111,6 +114,18 @@ const CategoryDetail = ({navigation}) => {
     getCategoryById(uid);
   }, []);
 
+  const handleSearchChange = (text) => {
+    setSearchText(text);
+    if (text === '') {
+      getDataByCategories(uid);
+    } else {
+      const filtered = dataByCategory.filter(data_category =>
+        data_category.nombre_servicio.toLowerCase().includes(text.toLowerCase())
+      );
+      setDataByCategory(filtered);
+    }
+  };
+
   return (
     <View
       style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
@@ -125,8 +140,22 @@ const CategoryDetail = ({navigation}) => {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[external.Pb_30]}>
-        <SearchContainer />
-        {/* <SortContainer /> */}
+
+        <View style={{flexDirection: 'row', alignItems: 'center', margin: 10, padding: 8, borderWidth: 1, borderColor: '#2D3261', borderRadius: 10}}>
+          <Search />
+          <TextInput
+            placeholder="Filtrar por servicio"
+            placeholderTextColor={appColors.subtitle}
+            style={[
+              external.ph_5,
+              commonStyles.subtitleText,
+              {textAlign: textRTLStyle, flex: 1}
+            ]}
+            onChangeText={handleSearchChange}
+            value={searchText}
+          />
+        </View>
+        
         <NewCategoriesDetail
           data={dataByCategory}
           horizontal={false}

@@ -73,7 +73,8 @@ const CustomDrawerNavigator = () => {
           <Drawer.Screen name="MyTabsAdmin" component={MyTabsAdmin} />
         )}
 
-        <Drawer.Screen name="HomeScreenTwo" component={HomeScreenTwo} />
+        {/* <Drawer.Screen name="HomeScreenTwo" component={HomeScreenTwo} /> */}
+
       </Drawer.Navigator>
     );
   }
