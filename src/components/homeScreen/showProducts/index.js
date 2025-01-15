@@ -160,9 +160,9 @@ export default function ShowProductsContainer({
     <>
       <View style={styles.newArrivalContainer}>
         <View style={{marginTop: marginTop || windowHeight(14)}}>
-        {show && (
+        {data.length > 0 ? (
           <H3HeadingCategory value={value} />
-        )}
+        ): null}
       </View>
         <FlatList
           data={data || []}

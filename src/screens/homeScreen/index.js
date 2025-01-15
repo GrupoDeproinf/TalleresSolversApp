@@ -224,7 +224,7 @@ const HomeScreen = () => {
 
       <ProductSwiper returnValues={returnValues} categories={categories.length == 0 ? [] : categories}/>
 
-      {selectedCategory && dataByCategory && dataByCategory.length === 0 && (
+      {displayData.length === 0 && (
         <View style={{padding: 20, alignItems: 'center'}}>
           <Text style={{fontSize: 16, color: '#666'}}>
             No se encontraron servicios para la categoría seleccionada.
