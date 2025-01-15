@@ -12,11 +12,12 @@ import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import {commonStyles} from '../../style/commonStyle.css';
 import Icons from 'react-native-vector-icons/FontAwesome'; // Asegúrate de importar el ícono que estás usando
+import DeviceInfo from 'react-native-device-info';
 
 const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
   const [location, setLocation] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
-
+  const [gpsModalVisible, setGpsModalVisible] = useState(false);
   const [showbutton, setshowbutton] = useState(true);
 
   const mapStyle = [
@@ -39,7 +40,7 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
         setshowbutton(true);
         console.log('Permiso de ubicación concedido');
         console.log(useThisCoo);
-        console.log(initialRegion);
+        // console.log(initialRegion);
         if (!useThisCoo) {
           getCurrentLocation();
         } else {
@@ -61,7 +62,7 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
         }
       } else {
         console.log('Permiso de ubicación denegado');
-        setshowbutton(false);
+        // setGpsModalVisible(true);
       }
     } else {
       if (!useThisCoo) {
@@ -92,18 +93,27 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
 
   const getCurrentLocation = () => {
     console.log('Aqui estoy :>');
-    Geolocation.getCurrentPosition(info => {
-      const {latitude, longitude} = info.coords;
-      console.log(latitude);
-      console.log(longitude);
-      setLocation({
-        latitude,
-        longitude,
-        latitudeDelta: 0.015,
-        longitudeDelta: 0.0121,
-      });
-      console.log('Se agregó :>');
-    });
+    Geolocation.getCurrentPosition(
+      info => {
+        const {latitude, longitude} = info.coords;
+
+        console.log("Aquiii, estoy")
+        console.log(latitude);
+        console.log(longitude);
+        setLocation({
+          latitude,
+          longitude,
+          latitudeDelta: 0.015,
+          longitudeDelta: 0.0121,
+        });
+        console.log('Se agregó :>');
+      },
+      error => {
+        console.log('Error al obtener la ubicación:', error);
+        // setGpsModalVisible(true);
+      },
+      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+    );
   };
 
   const handleMapPress = event => {
@@ -115,6 +125,18 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
         latitudeDelta: 0.015,
         longitudeDelta: 0.0121,
       });
+    }
+  };
+
+  const handlePress = async () => {
+    console.log('Esto es un test');
+    // const isLocationEnabled = await DeviceInfo.isLocationEnabled();
+    // console.log(isLocationEnabled)
+    console.log('Esto es null', location);
+    if (location == undefined) {
+      setGpsModalVisible(true);
+    } else {
+      setModalVisible(true);
     }
   };
 
@@ -137,7 +159,7 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
               width: 300,
             },
           ]}
-          onPress={() => setModalVisible(true)}>
+          onPress={handlePress}>
           <Icons name="map-marker" size={15} color="#2D3261" />
           <Text
             style={[
@@ -201,6 +223,30 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
           </MapView>
         </View>
       </Modal>
+
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={gpsModalVisible}
+        onRequestClose={()=>setGpsModalVisible()}>
+        <View style={stylesModal.container}>
+          <View style={stylesModal.modalView}>
+            <Text style={stylesModal.modalText}>
+              Usted debe habilitar la ubicacion del dispositivo
+            </Text>
+            <View style={stylesModal.buttonContainer}>
+              <TouchableOpacity
+                style={stylesModal.buttonYes}
+                onPress={() => getCurrentLocation()}>
+                <Text style={stylesModal.buttonText}>Habilitar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={stylesModal.buttonNo} onPress={() => setGpsModalVisible(false)}>
+                <Text style={stylesModal.buttonText}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -248,6 +294,59 @@ const stylesImage = StyleSheet.create({
   },
   closeButtonText: {
     color: 'white',
+    fontWeight: 'bold',
+  },
+});
+
+const stylesModal = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#333',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonYes: {
+    backgroundColor: 'green', // Color del botón "Sí"
+    borderRadius: 5,
+    padding: 10,
+    width: '48%', // Ajustar ancho para espacio entre botones
+    alignItems: 'center',
+  },
+  buttonNo: {
+    backgroundColor: 'red', // Color del botón "No"
+    borderRadius: 5,
+    padding: 10,
+    width: '48%', // Ajustar ancho para espacio entre botones
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white', // Color del texto del botón
     fontWeight: 'bold',
   },
 });
