@@ -85,6 +85,7 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
           name_taller: initialRegion.name_taller
         });
       }
+      
       getCurrentLocation();
     }
   };
@@ -114,6 +115,15 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
     });
   };
 
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      getCurrentLocation();
+    }, 5000); // 5000ms = 5 segundos
+
+    // Limpiar el intervalo cuando el componente se desmonte
+    return () => clearInterval(intervalId);
+  }, []);
+
   const handleMapPress = event => {
     if (edit) {
       const { latitude, longitude } = event.nativeEvent.coordinate;
@@ -138,38 +148,9 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
 
   return (
     <View style={styles.container}>
-      {/* {showbutton ? (
-        <TouchableOpacity
-          style={[
-            stylesImage.button,
-            {
-              borderWidth: 1,
-              borderColor: '#2D3261',
-              borderStyle: 'dotted',
-              borderRadius: 5,
-              backgroundColor: '#FFF',
-              flexDirection: 'row',
-              alignItems: 'center',
-              padding: 15,
-              marginTop: 10,
-              width: 300,
-            },
-          ]}
-          onPress={() => setModalVisible(true)}>
-          <Icons name="map-marker" size={15} color="#2D3261" />
-          <Text
-            style={[
-              stylesImage.buttonText,
-              {marginLeft: 10, color: '#2D3261'},
-            ]}>
-            Ubicación
-          </Text>
-        </TouchableOpacity>
-      ) : null} */}
 
       {location != undefined && secondLocation != undefined ? (
 
-        // Version con mapa y direction
 
         <Modal
           animationType="slide"
@@ -243,60 +224,6 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
             </MapView>
           </View>
         </Modal>
-
-
-        // Version con iframe
-      //   <Modal
-      //   animationType="slide"
-      //   transparent={false}
-      //   visible={modalVisible}
-      //   onRequestClose={() => {
-      //     setModalVisible(false);
-      //     console.log('Aquiiii');
-      //     returnFunction(location);
-      //   }}
-      // >
-      //   <View style={styles.modalContainer}>
-      //     <TouchableOpacity
-      //       style={[
-      //         styles.button,
-      //         {
-      //           borderWidth: 1,
-      //           borderColor: '#2D3261',
-      //           borderStyle: 'dotted',
-      //           borderRadius: 5,
-      //           backgroundColor: '#FFF',
-      //           flexDirection: 'row',
-      //           alignItems: 'center',
-      //           padding: 15,
-      //           marginTop: 0,
-      //         },
-      //       ]}
-      //       onPress={() => {
-      //         setModalVisible(false);
-      //         console.log('Aquiiii');
-      //         returnFunction(location);
-      //       }}
-      //     >
-      //       <Icons name="map-marker" size={15} color="#2D3261" />
-      //       <Text
-      //         style={[
-      //           styles.buttonText,
-      //           { marginLeft: 10, color: '#2D3261' },
-      //         ]}
-      //       >
-      //         Cerrar Mapa
-      //       </Text>
-      //     </TouchableOpacity>
-
-      //     <WebView
-      //       source={{ uri: `https://www.google.com/maps/dir//${secondLocation.latitude},${secondLocation.longitude}` }}
-      //       style={{ flex: 1 }}
-      //       onLoadStart={() => setLoading(true)}
-      //       onLoadEnd={() => setLoading(false)}
-      //     />
-      //   </View>
-      // </Modal>
 
       ) : null
       }
