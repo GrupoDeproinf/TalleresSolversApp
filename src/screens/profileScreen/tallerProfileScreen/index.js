@@ -1137,7 +1137,7 @@ const TallerProfileScreen = ({ navigation }) => {
           <View
             style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
             <Image
-              source={require('../../../assets/solverslogo.jpg')} // Asegúrate de que la ruta sea correcta
+              source={require('../../../assets/solverslogo.png')} // Asegúrate de que la ruta sea correcta
               style={{ width: 100, height: 100, marginBottom: 20 }} // Aumentar el tamaño de la imagen y agregar marginBottom
               resizeMode="contain" // Esto asegura que la imagen mantenga sus proporciones
             />

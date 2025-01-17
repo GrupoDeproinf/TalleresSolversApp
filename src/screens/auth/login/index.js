@@ -261,7 +261,7 @@ const SignIn = ({navigation}) => {
       </View>
       <View style={styles.singUpView}>
         <Text style={[commonStyles.subtitleText]}>
-          Versión de la App: 2.0.3
+          Versión de la App: {DeviceInfo.getVersion()}
         </Text>
       </View>
 

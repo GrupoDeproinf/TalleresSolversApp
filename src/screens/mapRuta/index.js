@@ -22,6 +22,7 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
   const [location, setLocation] = useState(null);
   const [secondLocation, setSecondLocation] = useState(null);
   const [modalVisible, setModalVisible] = useState(true);
+  const [gpsModalVisible, setGpsModalVisible] = useState(false);
 
   const [showbutton, setshowbutton] = useState(true);
 
@@ -149,6 +150,25 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
   return (
     <View style={styles.container}>
 
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={gpsModalVisible}
+        onRequestClose={() => setGpsModalVisible(false)}>
+        <View style={stylesModal.container}>
+          <View style={stylesModal.modalView}>
+            <Text style={stylesModal.modalText}>
+              Usted debe habilitar la ubicacion del dispositivo
+            </Text>
+            <View style={stylesModal.buttonContainer}>
+              <TouchableOpacity style={stylesModal.buttonNo} onPress={() => setGpsModalVisible(false)}>
+                <Text style={stylesModal.buttonText}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
       {location != undefined && secondLocation != undefined ? (
 
 
@@ -201,11 +221,11 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
               showsUserLocation={true}
               onPress={handleMapPress}>
               {location && (
-                <Marker coordinate={location} pinColor='navy' title="Tu ubicación actual">
+                <Marker coordinate={location} icon={require('../../assets/solversMarker70px.png')}  title="Tu ubicación actual">
               </Marker>
               )}
               {secondLocation && (
-                <Marker coordinate={secondLocation} title={secondLocation.name_taller} icon={require('../../assets/SolversMarker-150px.png')}/>
+                <Marker coordinate={secondLocation} title={secondLocation.name_taller} pinColor='navy'/>
               )}
 
               <MapViewDirections
@@ -284,6 +304,49 @@ const stylesImage = StyleSheet.create({
   closeButtonText: {
     color: 'white',
     fontWeight: 'bold',
+  },
+});
+
+const stylesModal = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 35,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  buttonNo: {
+    backgroundColor: '#2196F3',
+    borderRadius: 20,
+    padding: 10,
+    elevation: 2,
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
 });
 

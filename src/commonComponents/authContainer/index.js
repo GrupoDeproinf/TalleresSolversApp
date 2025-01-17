@@ -35,7 +35,7 @@ const AuthContainer = ({subtitle, title, value, onPress, showBack, AlignItemTitl
         )}
 
         <Image
-          source={require('../../assets/solverslogo.jpg')} // Asegúrate de que la ruta sea correcta
+          source={require('../../assets/solverslogo.png')} // Asegúrate de que la ruta sea correcta
           style={{width: 70, height: 70}} // Ajusta el tamaño de la imagen aquí
           resizeMode="contain" // Esto asegura que la imagen mantenga sus proporciones
         />

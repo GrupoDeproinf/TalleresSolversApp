@@ -141,7 +141,7 @@ const ReportarPago = ({navigation}) => {
     setDate(new Date());
     setmonto(0);
 
-    clearImage()
+    clearImage();
 
     setAddItem(false);
   };
@@ -197,7 +197,6 @@ const ReportarPago = ({navigation}) => {
   };
 
   const ReportarPagoData = () => {
-
     if (metodoSelected == 'Zelle') {
       if (
         emailZelle == '' ||
@@ -210,8 +209,6 @@ const ReportarPago = ({navigation}) => {
           'No puede dejar campos vacíos y el monto no puede ser igual a 0',
         );
       } else {
-
-
         const dataFinal = {
           uid: userLogged.uid,
           nombre_taller: userLogged.nombre,
@@ -227,7 +224,7 @@ const ReportarPago = ({navigation}) => {
           cant_services: dataPlan.cantidad_servicios,
           date: date,
           montoPago: monto,
-          base64:base64 == null || base64 == '' ? '' : base64
+          base64: base64 == null || base64 == '' ? '' : base64,
         };
 
         SendInfo(dataFinal);
@@ -263,7 +260,7 @@ const ReportarPago = ({navigation}) => {
           SelectedBancoDestino: SelectedBancoDestino,
           date: date,
           montoPago: monto,
-          base64:base64 == null || base64 == '' ? '' : base64
+          base64: base64 == null || base64 == '' ? '' : base64,
         };
         SendInfo(dataFinal);
       }
@@ -300,7 +297,7 @@ const ReportarPago = ({navigation}) => {
           SelectedBancoDestino: SelectedBancoDestino,
           date: date,
           montoPago: monto,
-          base64:base64 == null || base64 == '' ? '' : base64
+          base64: base64 == null || base64 == '' ? '' : base64,
         };
 
         SendInfo(dataFinal);
@@ -692,7 +689,7 @@ const ReportarPago = ({navigation}) => {
                 } else {
                   // setModalVisible(true);
                   setAddItem(true);
-                  clearImage()
+                  clearImage();
                 }
               }}
               style={[external.fd_row, external.ai_center, external.pt_4]}>
@@ -763,21 +760,21 @@ const ReportarPago = ({navigation}) => {
         <View style={styles.container}>
           {metodoSelected === 'Zelle' ? (
             <ScrollView style={{marginBottom: 15}}>
-            <View>
-              <View
-                style={[
-                  external.fd_row,
-                  external.ai_center,
-                  external.js_space,
-                ]}>
-                <Text
-                  style={[commonStyles.titleText19, {color: textColorStyle}]}>
-                  Reportar Pago (Precio: ${PrecioPago})
-                </Text>
-              </View>
-              <SolidLine />
+              <View>
+                <View
+                  style={[
+                    external.fd_row,
+                    external.ai_center,
+                    external.js_space,
+                  ]}>
+                  <Text
+                    style={[commonStyles.titleText19, {color: textColorStyle}]}>
+                    Reportar Pago (Precio: ${PrecioPago})
+                  </Text>
+                </View>
+                <SolidLine />
 
-              <View
+                <View
                   style={{
                     flex: 1,
                     justifyContent: 'center',
@@ -825,73 +822,69 @@ const ReportarPago = ({navigation}) => {
                   </TouchableOpacity>
                 </View>
 
+                <TextInputs
+                  title={'Email'}
+                  placeHolder={'Ingrese email'}
+                  onChangeText={text => setEmailZelle(text)}
+                />
+                <TextInputs
+                  title={'Monto'}
+                  onChangeText={text => {
+                    const numericText = text.replace(/[^0-9]/g, '');
+                    setmonto(numericText);
+                  }}
+                  keyboardType="numeric"
+                  placeHolder={'Ingrese el monto'}
+                />
 
-              
+                <Text
+                  style={[
+                    styles.headingContainer,
+                    {color: textColorStyle},
+                    {textAlign: textRTLStyle},
+                    {marginTop: 10}, // Agregar marginTop de 10
+                  ]}>
+                  Fecha del Pago
+                </Text>
 
-              <TextInputs
-                title={'Email'}
-                placeHolder={'Ingrese email'}
-                onChangeText={text => setEmailZelle(text)}
-              />
-              <TextInputs
-                title={'Monto'}
-                onChangeText={text => {
-                  const numericText = text.replace(/[^0-9]/g, '');
-                  setmonto(numericText);
-                }}
-                keyboardType="numeric"
-                placeHolder={'Ingrese el monto'}
-              />
+                <DatePicker
+                  maximumDate={new Date()}
+                  date={date}
+                  onDateChange={setDate}
+                  theme="light"
+                  mode="date"
+                  title="Fecha del Pago"
+                />
 
-              <Text
-                style={[
-                  styles.headingContainer,
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
-                  {marginTop: 10}, // Agregar marginTop de 10
-                ]}>
-                Fecha del Pago
-              </Text>
+                <View style={{marginTop: 10}}>
+                  <View
+                    style={{
+                      backgroundColor: buttonColor,
+                      borderRadius: windowHeight(20),
+                      marginBottom: 15, // Margen entre los botones
+                    }}>
+                    <NavigationButton
+                      title="Reportar Pago"
+                      onPress={() => ReportarPagoData()}
+                      backgroundColor={'#2D3261'}
+                      color={'white'}
+                    />
+                  </View>
 
-              <DatePicker
-                maximumDate={new Date()}
-                date={date}
-                onDateChange={setDate}
-                theme="light"
-                mode='date'
-
-                title="Fecha del Pago"
-              />
-
-              <View style={{marginTop: 10}}>
-                <View
-                  style={{
-                    backgroundColor: buttonColor,
-                    borderRadius: windowHeight(20),
-                    marginBottom: 15, // Margen entre los botones
-                  }}>
-                  <NavigationButton
-                    title="Reportar Pago"
-                    onPress={() => ReportarPagoData()}
-                    backgroundColor={'#2D3261'}
-                    color={'white'}
-                  />
-                </View>
-
-                <View
-                  style={{
-                    backgroundColor: buttonColor,
-                    borderRadius: windowHeight(20),
-                  }}>
-                  <NavigationButton
-                    title="Cancelar"
-                    onPress={() => closeSecondModel()}
-                    backgroundColor={'#848688'}
-                    color={'white'}
-                  />
+                  <View
+                    style={{
+                      backgroundColor: buttonColor,
+                      borderRadius: windowHeight(20),
+                    }}>
+                    <NavigationButton
+                      title="Cancelar"
+                      onPress={() => closeSecondModel()}
+                      backgroundColor={'#848688'}
+                      color={'white'}
+                    />
+                  </View>
                 </View>
               </View>
-            </View>
             </ScrollView>
           ) : metodoSelected === 'Transferencia' ? (
             <ScrollView style={{marginBottom: 15}}>
@@ -1085,8 +1078,7 @@ const ReportarPago = ({navigation}) => {
                         date={date}
                         onDateChange={setDate}
                         theme="light"
-                mode='date'
-
+                        mode="date"
                         title="Fecha del Pago"
                         style={{height: 150}} // Ajustar el tamaño
                       />
@@ -1199,27 +1191,34 @@ const ReportarPago = ({navigation}) => {
                   keyboardType="numeric"
                 />
 
-<TextInputs
-  title={'Número telefónico'}
-  onChangeText={text => {
-    // Eliminar caracteres no numéricos
-    const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
+                <TextInputs
+                  title={'Número telefónico'}
+                  onChangeText={text => {
+                    // Aplicar formato de máscara (XXX) XXX-XXXX
+                    const numericText = text
+                      .replace(/[^0-9]/g, '')
+                      .slice(0, 10);
 
-    // Aplicar formato de máscara (XXX) XXX-XXXX
-    let formattedText = numericText;
-    if (numericText.length > 3 && numericText.length <= 6) {
-      formattedText = `(${numericText.slice(0, 3)}) ${numericText.slice(3)}`;
-    } else if (numericText.length > 6) {
-      formattedText = `(${numericText.slice(0, 3)}) ${numericText.slice(3, 6)}-${numericText.slice(6)}`;
-    }
+                    // Aplicar formato de máscara (XXX) XXX-XXXX
+                    let formattedText = numericText;
+                    if (numericText.length > 3 && numericText.length <= 6) {
+                      formattedText = `(${numericText.slice(
+                        0,
+                        3,
+                      )}) ${numericText.slice(3)}`;
+                    } else if (numericText.length > 6) {
+                      formattedText = `(${numericText.slice(
+                        0,
+                        3,
+                      )}) ${numericText.slice(3, 6)}-${numericText.slice(6)}`;
+                    }
 
-    settelefono(numericText);
-  }}
-  keyboardType="numeric"
-  placeHolder={'(XXX) XXX-XXXX'}
-  value={telefono} // Para mantener el valor actualizado con la máscara
-/>
-
+                    settelefono(numericText);
+                  }}
+                  keyboardType="numeric"
+                  placeHolder={'(XXX) XXX-XXXX'}
+                  value={telefono} // Para mantener el valor actualizado con la máscara
+                />
 
                 <View style={{marginTop: 5}}>
                   <Text
@@ -1383,11 +1382,30 @@ const ReportarPago = ({navigation}) => {
               <TextInputs
                 title={'Numero telefonico'}
                 onChangeText={text => {
-                  const numericText = text.replace(/[^0-9]/g, '');
-                  settelefono(numericText);
+                  // Aplicar formato de máscara (XXX) XXX-XXXX
+                  const numericText = text
+                  .replace(/[^0-9]/g, '')
+                  .slice(0, 10);
+
+                // Aplicar formato de máscara (XXX) XXX-XXXX
+                let formattedText = numericText;
+                if (numericText.length > 3 && numericText.length <= 6) {
+                  formattedText = `(${numericText.slice(
+                    0,
+                    3,
+                  )}) ${numericText.slice(3)}`;
+                } else if (numericText.length > 6) {
+                  formattedText = `(${numericText.slice(
+                    0,
+                    3,
+                  )}) ${numericText.slice(3, 6)}-${numericText.slice(6)}`;
+                }
+
+                settelefono(numericText);
                 }}
                 keyboardType="numeric"
                 placeHolder={'Ingrese un numero de contacto'}
+                maxLength={10}
               />
 
               <TextInputs
@@ -1415,7 +1433,7 @@ const ReportarPago = ({navigation}) => {
                 date={date}
                 onDateChange={setDate}
                 theme="light"
-                mode='date'
+                mode="date"
                 title="Fecha del Pago"
               />
 

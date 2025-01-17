@@ -51,13 +51,16 @@ const HomeScreen = () => {
       setData(filteredData);
 
       // ahora es filtrada
-      const filteredDataFiltered = dataByCategoryOriginal.filter(item => 
-        normalizeString(item?.nombre_servicio || '').includes(normalizedText) ||
-        normalizeString(item?.categoria || '').includes(normalizedText) ||
-        normalizeString(item?.taller?.nombre || '').includes(normalizedText) ||
-        normalizeString(item?.taller?.estado || '').includes(normalizedText)
-      );
-      setDataByCategory(filteredDataFiltered);
+
+      if(dataByCategoryOriginal != undefined && dataByCategoryOriginal != ''){ 
+        const filteredDataFiltered = dataByCategoryOriginal.filter(item => 
+          normalizeString(item?.nombre_servicio || '').includes(normalizedText) ||
+          normalizeString(item?.categoria || '').includes(normalizedText) ||
+          normalizeString(item?.taller?.nombre || '').includes(normalizedText) ||
+          normalizeString(item?.taller?.estado || '').includes(normalizedText)
+        );
+        setDataByCategory(filteredDataFiltered);
+      }
 
 
       updateCategories(filteredData);
