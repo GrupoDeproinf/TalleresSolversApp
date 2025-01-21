@@ -23,6 +23,7 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
   const [secondLocation, setSecondLocation] = useState(null);
   const [modalVisible, setModalVisible] = useState(true);
   const [gpsModalVisible, setGpsModalVisible] = useState(false);
+  const [routeCoordinates, setRouteCoordinates] = useState([]);
 
   const [showbutton, setshowbutton] = useState(true);
 
@@ -116,6 +117,33 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
     });
   };
 
+  const getDistance = (coords1, coords2) => {
+    const toRadians = (degrees) => (degrees * Math.PI) / 180;
+    const R = 6371; // Radio de la Tierra en kilómetros
+    const dLat = toRadians(coords2[0] - coords1[0]);
+    const dLon = toRadians(coords2[1] - coords1[1]);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRadians(coords1[0])) *
+        Math.cos(toRadians(coords2[0])) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c * 1000; // Retorna la distancia en metros
+  };
+
+  const handleRouteUpdate = () => {
+    if (location && secondLocation) {
+      const currentCoords = { latitude: location.latitude, longitude: location.longitude };
+      const destinationCoords = { latitude: secondLocation.latitude, longitude: secondLocation.longitude };
+  
+      // Actualizamos las coordenadas de la ruta correctamente
+      setRouteCoordinates([currentCoords, destinationCoords]);
+    }
+  };
+
+
+
   useEffect(() => {
     const intervalId = setInterval(() => {
       getCurrentLocation();
@@ -124,6 +152,10 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
     // Limpiar el intervalo cuando el componente se desmonte
     return () => clearInterval(intervalId);
   }, []);
+
+  useEffect(() => {
+    handleRouteUpdate()
+  }, [location]);
 
   const handleMapPress = event => {
     if (edit) {
@@ -221,16 +253,25 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
               showsUserLocation={true}
               onPress={handleMapPress}>
               {location && (
-                <Marker coordinate={location} icon={require('../../assets/solversMarker70px.png')}  title="Tu ubicación actual">
+                <Marker coordinate={location} pinColor='navy' title="Tu ubicación actual">
               </Marker>
               )}
               {secondLocation && (
-                <Marker coordinate={secondLocation} title={secondLocation.name_taller} pinColor='navy'/>
+                <Marker coordinate={secondLocation} title={secondLocation.name_taller} icon={require('../../assets/solversMarker70px.png')} />
               )}
 
+              {/* Dibuja la ruta entre las ubicaciones */}
+          {/* {routeCoordinates.length > 0 && (
+            <Polyline
+              coordinates={routeCoordinates}
+              strokeWidth={5}
+              strokeColor="#2D3261"
+            />
+          )} */}
+
               <MapViewDirections
-                  origin={location}
-                  destination={secondLocation}
+                  origin={routeCoordinates[0]}
+                  destination={routeCoordinates[1]}
                   apikey={GOOGLE_MAPS_APIKEY}
                   strokeWidth={5}
                   strokeColor="#2D3261"

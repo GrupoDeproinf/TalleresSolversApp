@@ -206,7 +206,7 @@ const HomeScreen = () => {
       contentContainerStyle={[external.Pb_80]}
       style={[styles.container, {backgroundColor: bgFullStyle}]}
       showsVerticalScrollIndicator={false}>
-      <HeaderContainer onPress={() => navigation.openDrawer()} />
+      <HeaderContainer  />
 
       <View style={{flexDirection: 'row', alignItems: 'center', margin: 10, padding: 8, borderWidth: 1, borderColor: '#2D3261', borderRadius: 10}}>
         <Search />
