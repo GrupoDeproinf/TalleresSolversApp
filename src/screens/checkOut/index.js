@@ -234,7 +234,7 @@ const CheckoutScreen = ({navigation}) => {
                 <NavigationButton
                   backgroundColor={appColors.screenBg}
                   title="Continue Shopping"
-                  onPress={() => navigation.navigate('DrawerScreen')}
+                  // onPress={() => navigation.navigate('DrawerScreen')}
                   color={textColorStyle}
                   borderWidth={0.3}
                 />

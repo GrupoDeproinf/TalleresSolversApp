@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     marginBottom: windowHeight(20),
   },
   singUpView: {
-    flexDirection: 'row',
+    // flexDirection: 'row',
     justifyContent: 'center',
     marginTop: windowHeight(10),
     alignItems: 'center',
@@ -66,6 +66,10 @@ const styles = StyleSheet.create({
     shadowColor: appColors.shadowColor,
     paddingVertical: windowHeight(12),
   },
+  textTech: {
+    ...commonStyles.subtitleText,
+    fontSize: fontSizes.FONT12,
+  }
 });
 
 export default styles;
