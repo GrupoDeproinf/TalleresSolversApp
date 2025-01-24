@@ -252,6 +252,26 @@ const TallerProfileScreen = ({ navigation }) => {
           console.error('Error en la solicitud:', error.message);
         }
       }
+
+      try {
+        // Realizar la solicitud GET utilizando Axios
+        const responseUsers = await api.get('/usuarios/GetUsers', {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+  
+        // Verificar que la respuesta del servidor sea exitosa
+        if (responseUsers.status === 200) {
+          const result2 = responseUsers.data;
+          // Filtrar solo los usuarios con typeUser "Certificador"
+          const certificadores = result2.filter(user => user.typeUser === "Certificador");
+          console.log(certificadores);
+        }
+      } catch (error) {
+        console.log(error);
+      } 
+
     } catch (e) {
       // error reading value
     }
@@ -336,10 +356,44 @@ const TallerProfileScreen = ({ navigation }) => {
           infoUserCreated,
         );
 
-
         // Verificar la respuesta del servidor
         if (response.status === 201) {
           const result = response.data;
+
+          try {
+            // Realizar la solicitud GET utilizando Axios
+            const responseUsers = await api.get('/usuarios/GetUsers', {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+            });
+      
+            // Verificar que la respuesta del servidor sea exitosa
+            if (responseUsers.status === 200) {
+              const result2 = responseUsers.data;
+              // Filtrar solo los usuarios con typeUser "Certificador"
+              const certificadores = result2.filter(user => user.typeUser === "Certificador");
+
+              // Enviar notificaciones a los certificadores que tienen token
+              for (const certificador of certificadores) {
+                if (certificador.token) {
+                  console.log("Se debe enviar la notificacion")
+                  try {
+                    await api.post('/usuarios/sendNotification', {
+                      token: certificador.token,
+                      title: 'Notificación de Registro de Nuevo Taller',
+                      body: "¡Hola! El taller " + Nombre + " ha sido registrado con éxito. Te invitamos a certificarlo y verificar si cumple con los requerimientos. ¡Gracias por tu colaboración!",
+                      secretCode: "New Taller Created",
+                    });
+                  } catch (error) {
+                    console.log(error);
+                  }
+                }
+              }
+            }
+          } catch (error) {
+            console.log(error);
+          }
 
           try {
             const jsonValue = JSON.stringify(infoUserCreated);

@@ -79,6 +79,8 @@ const ProductDetailOne = ({navigation}) => {
 
   const [showRuta, setshowRuta] = useState(false);
 
+  const [dataTaller, setdataTaller] = useState(null);
+
   const scrollRef = React.createRef();
 
   useEffect(() => {
@@ -123,6 +125,21 @@ const ProductDetailOne = ({navigation}) => {
 
       if (result.message === 'Servicio encontrado') {
         setDataService(resultData.service);
+        console.log("este es el servicio")
+        console.log(resultData.service)
+
+        try {
+          const responseTaller = await api.post('/usuarios/getUserByUid', {
+            uid: resultData.service.uid_taller
+          });
+          console.log("abajo esta el result123444")
+          console.log(responseTaller.data.userData)
+          setdataTaller(responseTaller.data.userData)
+        } catch (error) {
+
+        }
+
+
         getAdditionalServices(
           resultData?.service?.uid_categoria,
           resultData?.service?.uid_servicio
@@ -474,11 +491,27 @@ const ProductDetailOne = ({navigation}) => {
               </TouchableOpacity>
             ) : (
               <TouchableOpacity
-                onPress={() => {
-                  handleContact('WhatsApp');
-                  Linking.openURL(
-                    `https://wa.me/+58${data[0]?.taller.phone}`,
-                  );
+                onPress={async () => {
+
+                  // DataService.nombre
+
+                  try {
+                    await api.post('/usuarios/sendNotification', {
+                      token: dataTaller.token,
+                      title: 'Contacto de Usuario',
+                      body: "Hola, un usuario está interesado en contactarte para el servicio de " + DataService?.nombre_servicio +".",
+                      secretCode: "Usuario contacta a taller",
+                    });
+
+                    handleContact('WhatsApp');
+                    Linking.openURL(
+                      `https://wa.me/+58${data[0]?.taller.phone}`,
+                    );
+                  } catch (error) {
+                    console.log(error);
+                  }
+
+
                 }}
                 style={[external.fd_row, external.ai_center, external.pt_4]}>
                 <Cart />

@@ -56,6 +56,7 @@ import {launchImageLibrary} from 'react-native-image-picker';
 import {Buffer} from 'buffer';
 
 import MapComponent from '../../map';
+import messaging from '@react-native-firebase/messaging';
 
 const SignUp = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -191,251 +192,260 @@ const SignUp = ({navigation}) => {
     console.log(typeOfView);
     console.log('Aquiiiiiiiiiiiiiii');
 
-    setGetOtpDisabled(true);
-
-    if (typeOfView == 'Cliente') {
-      const isEmailValid = validateEmail();
-      const isPhoneValid = validatePhone();
-      const isPasswordValid = validatePassword();
-      const isConfirmPasswordValid = validateConfirmPassword();
-
-      if (
-        isEmailValid == true &&
-        isPhoneValid == true &&
-        isPasswordValid == true &&
-        isConfirmPasswordValid == true &&
-        Nombre != '' &&
-        cedula != 0 &&
-        cedula != '' &&
-        estadoSelected != ''
-      ) {
-        try {
-          const phoneValidationResponse = await api.post('/home/validatePhone', {
-            phone,
-          });
-
-          const emailValidationResponse = await api.post('/home/validateEmail', {
-            email,
-          });
-
-          if (
-            phoneValidationResponse.status === 200 &&
-            phoneValidationResponse.data.valid === true &&
-            emailValidationResponse.status === 200 &&
-            emailValidationResponse.data.valid === true
-          ) {
-            const infoUserCreated = {
-              Nombre: Nombre,
-              cedula: selectedPrefix + '' + cedula,
-              phone: phone,
-              typeUser: 'Cliente',
-              email: email.toLowerCase(),
-              password: password.toLowerCase(),
-              estado: estadoSelected,
-              base64: base64,
-            };
-
-            console.log(infoUserCreated);
-
-            try {
-              // Hacer la solicitud POST utilizando Axios
-              const response = await api.post(
-                '/usuarios/SaveClient',
-                infoUserCreated,
-              );
-
-              // Verificar la respuesta del servidor
-              console.log(response); // Mostrar la respuesta completa
-
-              const result = response.data; // Los datos vienen directamente de response.data
-              console.log(result); // Aquí puedes manejar la respuesta
-
+    try {
+      const token = await messaging().getToken();
+      console.log("FCM Token123:", token);
+      // setGetOtpDisabled(true);
+  
+      if (typeOfView == 'Cliente') {
+        const isEmailValid = validateEmail();
+        const isPhoneValid = validatePhone();
+        const isPasswordValid = validatePassword();
+        const isConfirmPasswordValid = validateConfirmPassword();
+  
+        if (
+          isEmailValid == true &&
+          isPhoneValid == true &&
+          isPasswordValid == true &&
+          isConfirmPasswordValid == true &&
+          Nombre != '' &&
+          cedula != 0 &&
+          cedula != '' &&
+          estadoSelected != ''
+        ) {
+          try {
+            const phoneValidationResponse = await api.post('/home/validatePhone', {
+              phone,
+            });
+  
+            const emailValidationResponse = await api.post('/home/validateEmail', {
+              email,
+            });
+  
+            if (
+              phoneValidationResponse.status === 200 &&
+              phoneValidationResponse.data.valid === true &&
+              emailValidationResponse.status === 200 &&
+              emailValidationResponse.data.valid === true
+            ) {
+              const infoUserCreated = {
+                Nombre: Nombre,
+                cedula: selectedPrefix + '' + cedula,
+                phone: phone,
+                typeUser: 'Cliente',
+                email: email.toLowerCase(),
+                password: password.toLowerCase(),
+                estado: estadoSelected,
+                base64: base64,
+                token:token
+              };
+  
+              console.log(infoUserCreated);
+  
               try {
-                const jsonValue = JSON.stringify(infoUserCreated);
-                console.log(jsonValue);
-                await AsyncStorage.setItem('@userInfo', jsonValue);
-              } catch (e) {
-                console.log(e);
-              }
-
-              // Limpiar los campos del formulario
-              setNombre('');
-              setcedula(0);
-              setEmail('');
-              setPhone(0);
-              setPassword('');
-              setConfirmPassword('');
-              settypeOfView('');
-              setSelectedPrefix('J-');
-
-              showToast('Usuario creado exitosamente');
-              setGetOtpDisabled(false);
-              navigation.navigate('Login');
-            } catch (error) {
-              if (error.response) {
-                // La solicitud se hizo y el servidor respondió con un código de estado
-                console.error(
-                  'Error al guardar el usuario:',
-                  error.response.data.message,
+                // Hacer la solicitud POST utilizando Axios
+                const response = await api.post(
+                  '/usuarios/SaveClient',
+                  infoUserCreated,
                 );
+  
+                // Verificar la respuesta del servidor
+                console.log(response); // Mostrar la respuesta completa
+  
+                const result = response.data; // Los datos vienen directamente de response.data
+                console.log(result); // Aquí puedes manejar la respuesta
+  
+                try {
+                  const jsonValue = JSON.stringify(infoUserCreated);
+                  console.log(jsonValue);
+                  await AsyncStorage.setItem('@userInfo', jsonValue);
+                } catch (e) {
+                  console.log(e);
+                }
+  
+                // Limpiar los campos del formulario
+                setNombre('');
+                setcedula(0);
+                setEmail('');
+                setPhone(0);
+                setPassword('');
+                setConfirmPassword('');
+                settypeOfView('');
+                setSelectedPrefix('J-');
+  
+                showToast('Usuario creado exitosamente');
                 setGetOtpDisabled(false);
-                showToast(error.response.data.message); // Mostrar el mensaje de error del servidor
-              } else {
-                // La solicitud fue hecha pero no se recibió respuesta
-                console.error('Error en la solicitud:', error);
-                setGetOtpDisabled(false);
+                navigation.navigate('Login');
+              } catch (error) {
+                if (error.response) {
+                  // La solicitud se hizo y el servidor respondió con un código de estado
+                  console.error(
+                    'Error al guardar el usuario:',
+                    error.response.data.message,
+                  );
+                  setGetOtpDisabled(false);
+                  showToast(error.response.data.message); // Mostrar el mensaje de error del servidor
+                } else {
+                  // La solicitud fue hecha pero no se recibió respuesta
+                  console.error('Error en la solicitud:', error);
+                  setGetOtpDisabled(false);
+                }
               }
+            } else {
+              setGetOtpDisabled(false);
+              showToast('El número de teléfono o el correo electrónico ya está registrado.');
             }
-          } else {
+          } catch (error) {
             setGetOtpDisabled(false);
-            showToast('El número de teléfono o el correo electrónico ya está registrado.');
+            if (error.response) {
+              console.error(
+                'Error en la solicitud:',
+                error.response.data.message || error.response.statusText,
+              );
+              showToast(error.response.data.message || 'Error en la solicitud');
+            } else {
+              console.error('Error en la solicitud:', error.message);
+              showToast('Error en la solicitud');
+            }
           }
-        } catch (error) {
+        } else {
           setGetOtpDisabled(false);
-          if (error.response) {
-            console.error(
-              'Error en la solicitud:',
-              error.response.data.message || error.response.statusText,
-            );
-            showToast(error.response.data.message || 'Error en la solicitud');
-          } else {
-            console.error('Error en la solicitud:', error.message);
-            showToast('Error en la solicitud');
-          }
+          showToast('Error al crear al usuario, por favor validar formulario');
         }
       } else {
-        setGetOtpDisabled(false);
-        showToast('Error al crear al usuario, por favor validar formulario');
-      }
-    } else {
-      const isEmailValid = validateEmail();
-      const isPhoneValid = validatePhone();
-      const isPasswordValid = validatePassword();
-      const isConfirmPasswordValid = validateConfirmPassword();
-
-      if (
-        isEmailValid == true &&
-        isPhoneValid == true &&
-        isPasswordValid == true &&
-        isConfirmPasswordValid == true &&
-        Nombre != '' &&
-        cedula != 0 &&
-        cedula != '' &&
-        whats != '' &&
-        whats != 0 &&
-        estadoSelected != ''
-      ) {
-        try {
-          const phoneValidationResponse = await api.post('/home/validatePhone', {
-            phone,
-          });
-
-          const emailValidationResponse = await api.post('/home/validateEmail', {
-            email,
-          });
-
-          if (
-            phoneValidationResponse.status === 200 &&
-            phoneValidationResponse.data.valid === true &&
-            emailValidationResponse.status === 200 &&
-            emailValidationResponse.data.valid === true
-          ) {
-            const newFormatMP = metodosPago.reduce((acc, method) => {
-              acc[method.value] = method.checked;
-              return acc;
-            }, {});
-
-            const infoUserCreated = {
-              Nombre: Nombre,
-              rif: selectedPrefix + '' + cedula,
-              phone: phone,
-              typeUser: 'Taller',
-              email: email.toLowerCase(),
-              password: password.toLowerCase(),
-              whats: whats,
-              metodos_pago: newFormatMP,
-              estado: estadoSelected,
-              base64: base64,
-              lat: lat,
-              lng: lng,
-            };
-
-            console.log(infoUserCreated);
-            console.log('Aquiiiiiiiiiiiii123');
-
-            try {
-              // Hacer la solicitud POST utilizando Axios
-              const response = await api.post(
-                '/usuarios/SaveTaller',
-                infoUserCreated,
-              );
-
-              // Verificar la respuesta del servidor
-              console.log(response); // Mostrar la respuesta completa
-
-              const result = response.data; // Los datos vienen directamente de response.data
-              console.log(result); // Aquí puedes manejar la respuesta
-
+        const isEmailValid = validateEmail();
+        const isPhoneValid = validatePhone();
+        const isPasswordValid = validatePassword();
+        const isConfirmPasswordValid = validateConfirmPassword();
+  
+        if (
+          isEmailValid == true &&
+          isPhoneValid == true &&
+          isPasswordValid == true &&
+          isConfirmPasswordValid == true &&
+          Nombre != '' &&
+          cedula != 0 &&
+          cedula != '' &&
+          whats != '' &&
+          whats != 0 &&
+          estadoSelected != ''
+        ) {
+          try {
+            const phoneValidationResponse = await api.post('/home/validatePhone', {
+              phone,
+            });
+  
+            const emailValidationResponse = await api.post('/home/validateEmail', {
+              email,
+            });
+  
+            if (
+              phoneValidationResponse.status === 200 &&
+              phoneValidationResponse.data.valid === true &&
+              emailValidationResponse.status === 200 &&
+              emailValidationResponse.data.valid === true
+            ) {
+              const newFormatMP = metodosPago.reduce((acc, method) => {
+                acc[method.value] = method.checked;
+                return acc;
+              }, {});
+  
+              const infoUserCreated = {
+                Nombre: Nombre,
+                rif: selectedPrefix + '' + cedula,
+                phone: phone,
+                typeUser: 'Taller',
+                email: email.toLowerCase(),
+                password: password.toLowerCase(),
+                whats: whats,
+                metodos_pago: newFormatMP,
+                estado: estadoSelected,
+                base64: base64,
+                lat: lat,
+                lng: lng,
+                token:token
+              };
+  
+              console.log(infoUserCreated);
+              console.log('Aquiiiiiiiiiiiii123');
+  
               try {
-                const jsonValue = JSON.stringify(infoUserCreated);
-                console.log(jsonValue);
-                await AsyncStorage.setItem('@userInfo', jsonValue);
-              } catch (e) {
-                console.log(e);
-              }
-
-              // Limpiar los campos del formulario
-              setNombre('');
-              setcedula(0);
-              setEmail('');
-              setPhone(0);
-              setPassword('');
-              setConfirmPassword('');
-              settypeOfView('');
-              setSelectedPrefix('J-');
-
-              showToast('Usuario creado exitosamente');
-              setGetOtpDisabled(false);
-              navigation.navigate('Login');
-            } catch (error) {
-              if (error.response) {
-                // La solicitud se hizo y el servidor respondió con un código de estado
-                const errorMessage =
-                  error.response.data.message || 'Error al crear el usuario.';
-                console.error('Error al guardar el usuario:', errorMessage);
-                setGetOtpDisabled(false);
-                showToast(errorMessage); // Mostrar el mensaje de error del servidor
-              } else {
-                // La solicitud fue hecha pero no se recibió respuesta
-                console.error('Error en la solicitud:', error);
-                setGetOtpDisabled(false);
-                showToast(
-                  'Error al crear al usuario, por favor validar formulario',
+                // Hacer la solicitud POST utilizando Axios
+                const response = await api.post(
+                  '/usuarios/SaveTaller',
+                  infoUserCreated,
                 );
+  
+                // Verificar la respuesta del servidor
+                console.log(response); // Mostrar la respuesta completa
+  
+                const result = response.data; // Los datos vienen directamente de response.data
+                console.log(result); // Aquí puedes manejar la respuesta
+  
+                try {
+                  const jsonValue = JSON.stringify(infoUserCreated);
+                  console.log(jsonValue);
+                  await AsyncStorage.setItem('@userInfo', jsonValue);
+                } catch (e) {
+                  console.log(e);
+                }
+  
+                // Limpiar los campos del formulario
+                setNombre('');
+                setcedula(0);
+                setEmail('');
+                setPhone(0);
+                setPassword('');
+                setConfirmPassword('');
+                settypeOfView('');
+                setSelectedPrefix('J-');
+  
+                showToast('Usuario creado exitosamente');
+                setGetOtpDisabled(false);
+                navigation.navigate('Login');
+              } catch (error) {
+                if (error.response) {
+                  // La solicitud se hizo y el servidor respondió con un código de estado
+                  const errorMessage =
+                    error.response.data.message || 'Error al crear el usuario.';
+                  console.error('Error al guardar el usuario:', errorMessage);
+                  setGetOtpDisabled(false);
+                  showToast(errorMessage); // Mostrar el mensaje de error del servidor
+                } else {
+                  // La solicitud fue hecha pero no se recibió respuesta
+                  console.error('Error en la solicitud:', error);
+                  setGetOtpDisabled(false);
+                  showToast(
+                    'Error al crear al usuario, por favor validar formulario',
+                  );
+                }
               }
+            } else {
+              setGetOtpDisabled(false);
+              showToast('El número de teléfono o el correo electrónico ya está registrado.');
             }
-          } else {
+          } catch (error) {
             setGetOtpDisabled(false);
-            showToast('El número de teléfono o el correo electrónico ya está registrado.');
+            if (error.response) {
+              console.error(
+                'Error en la solicitud:',
+                error.response.data.message || error.response.statusText,
+              );
+              showToast(error.response.data.message || 'Error en la solicitud');
+            } else {
+              console.error('Error en la solicitud:', error.message);
+              showToast('Error en la solicitud');
+            }
           }
-        } catch (error) {
+        } else {
+          showToast('Error al crear al usuario, por favor validar formulario');
           setGetOtpDisabled(false);
-          if (error.response) {
-            console.error(
-              'Error en la solicitud:',
-              error.response.data.message || error.response.statusText,
-            );
-            showToast(error.response.data.message || 'Error en la solicitud');
-          } else {
-            console.error('Error en la solicitud:', error.message);
-            showToast('Error en la solicitud');
-          }
         }
-      } else {
-        showToast('Error al crear al usuario, por favor validar formulario');
-        setGetOtpDisabled(false);
       }
+    } catch (error) {
+      console.error("Error getting FCM token:", error);
     }
+
   };
 
 

@@ -25,6 +25,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../../../axiosInstance';
 import DeviceInfo from 'react-native-device-info';
 
+import messaging from '@react-native-firebase/messaging';
+import firebase from '@react-native-firebase/app';
+
+// Initialize Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyB7JeVA4YZBzTblEOnZ-drNT-vwv085fgM",
+  authDomain: "talleres-solvers-app.firebaseapp.com",
+  projectId: "talleres-solvers-app",
+  storageBucket: "talleres-solvers-app.firebasestorage.app",
+  messagingSenderId: "144076824848",
+  appId: "1:144076824848:web:cdaf60b28136561b338595",
+  measurementId: "G-DXQ986SLJR"
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
 const SignIn = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,6 +60,11 @@ const SignIn = ({navigation}) => {
     setEmail('');
     setPassword('');
   }, []);
+  
+  useEffect(() => {
+  }, []);
+
+  
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -64,6 +87,8 @@ const SignIn = ({navigation}) => {
   };
 
   const onHandleChange = async () => {
+    console.log("Aquiiiii")
+
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
     setSignInDisabled(true);
@@ -89,6 +114,28 @@ const SignIn = ({navigation}) => {
           result.message === 'Usuario autenticado exitosamente como Admin'
         ) {
           try {
+            if(result.userData.typeUser == "Certificador"){
+              if(result?.userData?.token == undefined || result?.userData?.token == ''){
+
+                try {
+                  const token = await messaging().getToken();
+                  console.log("FCM token certificador:", token);
+                  try{
+                    const response2 = await api.post('/usuarios/UpdateUsuariosAll', {
+                      uid: result?.userData?.uid,
+                      token: token,
+                    });
+
+                    console.log('Este es el usuario nuevo ', response2); 
+                  }  catch (error) {
+                    console.error("Error en actualizar el usuario:", error);
+                  }
+
+                } catch (error) {
+                  console.error("Error getting FCM token:", error);
+                }
+              }
+            }
             const jsonValue = JSON.stringify(result.userData);
             console.log(jsonValue);
             await AsyncStorage.setItem('@userInfo', jsonValue);
