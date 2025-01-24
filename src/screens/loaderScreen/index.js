@@ -23,7 +23,7 @@ const LoaderScreen = ({navigation}) => {
         console.log("Userrrr", user)
 
         if(user){
-          navigation.replace('DrawerScreen');
+          // navigation.replace('DrawerScreen');
 
         if (user.typeUser == "Admin"){
           goToProfile(user.typeUser, '')

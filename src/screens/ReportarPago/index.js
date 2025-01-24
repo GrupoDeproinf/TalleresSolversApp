@@ -736,12 +736,12 @@ const ReportarPago = ({navigation}) => {
               }
             </Text>
             <View style={[external.mt_20]}>
-              {/* <NavigationButton
+              <NavigationButton
                 backgroundColor={'#2D3261'}
                 title="Ir al inicio"
                 onPress={() => navigation.navigate('DrawerScreen')}
                 color={appColors.screenBg}
-              /> */}
+              />
               {/* <View style={[external.mt_15]}>
                 <NavigationButton
                   backgroundColor={appColors.screenBg}
