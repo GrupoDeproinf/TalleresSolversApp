@@ -1,4 +1,4 @@
-import {FlatList, Image, Text, View} from 'react-native';
+import {FlatList, Image, Text, TouchableOpacity, View} from 'react-native';
 import React, {useEffect, useState} from 'react';
 import HeaderContainer from '../../../commonComponents/headingContainer';
 import {commonStyles} from '../../../style/commonStyle.css';
@@ -49,15 +49,33 @@ const OrderHistory = () => {
       const response = await api.get('/home/getContactService');
       const result = response.data;
 
+      console.log('-----------------------------------------------------');
+      console.log('Result', result);
+      console.log('-----------------------------------------------------');
+
+      console.log('-----------------------------------------------------');
+      console.log('User UID', user.uid);
+      console.log('-----------------------------------------------------');
+
       // Filtrar los datos por `uid`
       if (user && user.uid) {
-        const filteredData = result.filter(
-          item => item.usuario.id === user.uid,
-        );
-        setDataService(filteredData);
-        console.log('-----------------------------------------------------');
-        console.log('Filtered result', filteredData);
-        console.log('-----------------------------------------------------');
+        if (user.typeUser === 'Cliente') {
+          const filteredData = result.filter(
+            item => item.usuario.id === user.uid,
+          );
+          setDataService(filteredData);
+          console.log('-----------------------------------------------------');
+          console.log('Filtered result', filteredData);
+          console.log('-----------------------------------------------------');
+        } else {
+          const filteredData = result.filter(
+            item => item.uid_taller === user.uid,
+          );
+          setDataService(filteredData);
+          console.log('-----------------------------------------------------');
+          console.log('Filtered result', filteredData[0].servicio.service_image);
+          console.log('-----------------------------------------------------');
+        }
       } else {
         console.warn(
           'UID del usuario no encontrado. Mostrando datos completos.',
@@ -73,6 +91,12 @@ const OrderHistory = () => {
     }
   };
 
+  const goToDetail = item => {
+    console.log(item.servicio.uid_servicio);
+
+    navigate.navigate('ProductDetailOne', { uid: item.servicio.uid_servicio || item.servicio.id });
+  };
+
   useEffect(() => {
     getDataServices();
   }, []);
@@ -80,7 +104,9 @@ const OrderHistory = () => {
   const color = isDark ? appColors.blackBg : appColors.bgLayout;
 
   const renderItem = ({item}) => (
-    <LinearGradient
+    <TouchableOpacity
+    onPress={() => goToDetail(item)} activeOpacity={0.9}>
+      <LinearGradient
       start={{x: 0.0, y: 0.0}}
       end={{x: 1.0, y: 1.0}}
       colors={colors}
@@ -106,69 +132,106 @@ const OrderHistory = () => {
             />
           </View>
         </View>
-        <View style={[external.mh_8]}>
-          <View
-            style={[
-              external.fd_row,
-              external.ai_center,
-              {flexDirection: viewRTLStyle},
-            ]}>
-            <Text
-              numberOfLines={2}
-              style={[
-                styles.titleContainer,
-                {color: textColorStyle},
-                {textAlign: textRTLStyle},
-              ]}>
-              {t(item.nombre_servicio)}
-            </Text>
-
-            <Text
-              style={[
-                commonStyles.H1Banner,
-                {color: textColorStyle, fontFamily: appFonts.semiBold},
-              ]}>
-              {currSymbol}
-              {(currPrice * item.precio).toFixed(2)}
-            </Text>
-          </View>
-          {/* <Text style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
-            {t('transData.colorBlue')}
-          </Text> */}
-          <View
-            style={[
-              external.fd_row,
-              external.ai_center,
-              {flexDirection: viewRTLStyle},
-            ]}>
-            <Text
-              style={[
-                styles.deliveryContainer,
-                {color: textColorStyle},
-                {textAlign: textRTLStyle},
-              ]}>
-              {/* {t('transData.deliverd')} */}
-              Fecha: {moment(item.date).format('DD/MM/YYYY')}
-            </Text>
+        {dataUser.typeUser === 'Cliente' ? (
+          <View style={[external.mh_8]}>
             <View
               style={[
-                styles.orderContainer,
-                {borderTopEndRadius: isRTL ? windowHeight(9) : undefined},
+                external.fd_row,
+                external.ai_center,
+                {flexDirection: viewRTLStyle},
               ]}>
               <Text
-                style={styles.buyAgain}
-                onPress={() =>
-                  navigate.navigate('ProductDetailOne', {
-                    uid: item.uid_servicio,
-                  })
-                }>
-                Ver
+                numberOfLines={2}
+                style={[
+                  styles.titleContainer,
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
+                ]}>
+                {t(item.nombre_servicio)}
+              </Text>
+
+              <Text
+                style={[
+                  commonStyles.H1Banner,
+                  {color: textColorStyle, fontFamily: appFonts.semiBold},
+                ]}>
+                {currSymbol}
+                {(currPrice * item.precio).toFixed(2)}
               </Text>
             </View>
+            {/* <Text style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
+            {t('transData.colorBlue')}
+          </Text> */}
+            <View
+              style={[
+                external.fd_row,
+                external.ai_center,
+                {flexDirection: viewRTLStyle},
+              ]}>
+              <Text
+                style={[
+                  styles.deliveryContainer,
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
+                ]}>
+                {/* {t('transData.deliverd')} */}
+                Fecha: {moment(item.date).format('DD/MM/YYYY')}
+              </Text>
+              <View
+                style={[
+                  styles.orderContainer,
+                  {borderTopEndRadius: isRTL ? windowHeight(9) : undefined},
+                ]}>
+                
+              </View>
+            </View>
           </View>
-        </View>
+        ) : (
+          <View style={[external.mh_8]}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginTop: 5,
+              }}>
+              <View>
+                <Text
+                  style={[
+                    {
+                      fontSize: 13,
+                      fontWeight: 'bold',
+                      marginBottom: 5,
+                      color: 'black',
+                    },
+                  ]}>
+                  {item.usuario.nombre}
+                </Text>
+                <Text style={{
+                      fontWeight: '400',
+                      fontSize: 10,
+                      lineHeight: windowHeight(18),
+                      color: '#9BA6B8',
+                      fontFamily: 'Poppins-Regular',
+                    }}>
+                      Servicio: {item.nombre_servicio}
+                    </Text>
+                    <Text style={{
+                      fontWeight: '400',
+                      fontSize: 10,
+                      lineHeight: windowHeight(18),
+                      color: '#9BA6B8',
+                      fontFamily: 'Poppins-Regular',
+                    }}>
+                      Fecha de contacto: {moment.unix(item.fecha_creacion._seconds).format('DD/MM/YYYY')}
+                    </Text>
+              </View>
+            </View>
+          </View>
+        )}
       </LinearGradient>
     </LinearGradient>
+    </TouchableOpacity>
   );
   return (
     <View

@@ -310,7 +310,11 @@ const SignIn = ({navigation}) => {
         <Text style={[commonStyles.subtitleText]}>
           Versión de la App: {DeviceInfo.getVersion()}
         </Text>
+        <Text style={[styles.textTech]}>
+          Desarrollado por: Techsve Group
+        </Text>
       </View>
+      
 
       {/* <LinearBoderText />
       <View style={[external.fd_row, external.ai_center, external.mb_40]}>
