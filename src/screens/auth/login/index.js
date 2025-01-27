@@ -4,6 +4,7 @@ import {
   View,
   ToastAndroid,
   StyleSheet,
+  Platform, PermissionsAndroid
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import AuthContainer from '../../../commonComponents/authContainer';
@@ -62,8 +63,36 @@ const SignIn = ({navigation}) => {
   }, []);
   
   useEffect(() => {
+
+    checkAndRequestNotificationPermission()
+
   }, []);
 
+
+
+  const checkAndRequestNotificationPermission = async () => {
+    console.log(Platform.Version)
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      {
+        title: 'Permiso de notificaciones',
+        message: 'Esta aplicación necesita acceso para enviarte notificaciones',
+        buttonNeutral: 'Pregúntame más tarde',
+        buttonNegative: 'Cancelar',
+        buttonPositive: 'OK',
+      },
+    );
+    console.log(granted);
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('Permiso de notificaciones concedido');
+    } else {
+      console.log('Permiso de notificaciones denegado');
+    }
+  } else {
+    console.log("No se requiere permiso de notificaciones en esta versión de Android");
+  }
+};
   
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

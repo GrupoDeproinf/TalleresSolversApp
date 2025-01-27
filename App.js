@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { SafeAreaView, LogBox } from 'react-native';
+import { SafeAreaView, LogBox, Platform, PermissionsAndroid } from 'react-native';
 import MyStack from './src/navigation';
 import { external } from './src/style/external.css';
 import {
@@ -26,6 +26,7 @@ import DropdownAlert, {
   DropdownAlertData,
   DropdownAlertType,
 } from 'react-native-dropdownalert';
+// import * as Notifications from 'expo-notifications';
 
 LogBox.ignoreLogs(['Your specific warning here']);
 
@@ -58,7 +59,9 @@ const App = () => {
     }
 
     // Solicitar permisos de notificaciones push
-    requestUserPermission();
+    setTimeout(() => {
+      requestUserPermission();
+    }, 2000);
 
     // Escuchar notificaciones entrantes
     listenToNotifications();
@@ -102,20 +105,8 @@ const App = () => {
   };
 
   const requestUserPermission = async () => {
-    try {
-      const authStatus = await messaging().requestPermission();
-      const enabled =
-        authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
-        authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-  
-      if (enabled) {
-        console.log('Authorization status1234:', authStatus);
-      } else {
-        console.log('Permission denied55');
-      }
-    } catch (error) {
-      console.error('Error requesting permission68:', error);
-    }
+
+    
   };
 
   let alert = (_data: DropdownAlertData) => new Promise<DropdownAlertData>(res => res);
