@@ -46,20 +46,19 @@ const CustomDrawerNavigator = () => {
     return (
       <Drawer.Navigator
         // eslint-disable-next-line react/no-unstable-nested-components
-        // drawerContent={props => <DrawerContent {...props} />}
+        drawerContent={props => <DrawerContent {...props} />}
         screenOptions={{
-          // drawerStyle: {
-          //   width: windowWidth(290),
-          //   borderTopRightRadius: 20,
-          //   borderBottomEndRadius: isRTL ? 0 : windowWidth(30),
-          //   borderBottomLeftRadius: isRTL ? windowHeight(18) : 0,
-          //   borderTopEndRadius: windowHeight(14),
-          //   borderTopStartRadius: windowHeight(14),
-          //   overflow: 'hidden',
-          // },
+          drawerStyle: {
+            width: windowWidth(290),
+            borderTopRightRadius: 20,
+            borderBottomEndRadius: isRTL ? 0 : windowWidth(30),
+            borderBottomLeftRadius: isRTL ? windowHeight(18) : 0,
+            borderTopEndRadius: windowHeight(14),
+            borderTopStartRadius: windowHeight(14),
+            overflow: 'hidden',
+          },
           headerShown: false,
-          swipeEnabled: false,
-          // drawerPosition: isRTL ? 'right' : 'left',
+          drawerPosition: isRTL ? 'right' : 'left',
         }}
       >
         {user.typeUser === 'Taller' && (

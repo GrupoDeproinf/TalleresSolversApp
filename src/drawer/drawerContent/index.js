@@ -86,47 +86,46 @@ const DrawerContent = () => {
   };
 
   return (
-    <></>
-    // <View>
-    //   <LinearGradient
-    //     start={{x: 0.0, y: 0.0}}
-    //     end={{x: 0.0, y: 1.0}}
-    //     colors={colors}
-    //     style={styles.containerStyle}>
-    //     <Image style={styles.logoPng} source={images.logo} />
-    //   </LinearGradient>
-    //   <LinearGradient
-    //     start={{x: 0.0, y: 0.0}}
-    //     end={{x: 0.0, y: 1.0}}
-    //     colors={linearColorStyle}
-    //     style={{backgroundColor: appColors.lightScreenBg, height: '100%'}}>
-    //     <SectionList
-    //       sections={DATA}
-    //       keyExtractor={(item, index) => item + index}
-    //       renderItem={({item}) => (
-    //         <TouchableOpacity
-    //           onPress={() => handleItemPress(item)}
-    //           style={styles.item}>
-    //           <Text style={[styles.title]}>{item}</Text>
-    //         </TouchableOpacity>
-    //       )}
-    //       renderSectionHeader={({section: {title, icon}}) => (
-    //         <View
-    //           style={[
-    //             external.fd_row,
-    //             external.ai_center,
-    //             external.mh_20,
-    //             external.mt_20,
-    //           ]}>
-    //           {icon}
-    //           <Text style={[styles.header, {color: textColorStyle}]}>
-    //             {title}
-    //           </Text>
-    //         </View>
-    //       )}
-    //     />
-    //   </LinearGradient>
-    // </View>
+    <View>
+      <LinearGradient
+        start={{x: 0.0, y: 0.0}}
+        end={{x: 0.0, y: 1.0}}
+        colors={colors}
+        style={styles.containerStyle}>
+        <Image style={styles.logoPng} source={images.logo} />
+      </LinearGradient>
+      <LinearGradient
+        start={{x: 0.0, y: 0.0}}
+        end={{x: 0.0, y: 1.0}}
+        colors={linearColorStyle}
+        style={{backgroundColor: appColors.lightScreenBg, height: '100%'}}>
+        <SectionList
+          sections={DATA}
+          keyExtractor={(item, index) => item + index}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              onPress={() => handleItemPress(item)}
+              style={styles.item}>
+              <Text style={[styles.title]}>{item}</Text>
+            </TouchableOpacity>
+          )}
+          renderSectionHeader={({section: {title, icon}}) => (
+            <View
+              style={[
+                external.fd_row,
+                external.ai_center,
+                external.mh_20,
+                external.mt_20,
+              ]}>
+              {icon}
+              <Text style={[styles.header, {color: textColorStyle}]}>
+                {title}
+              </Text>
+            </View>
+          )}
+        />
+      </LinearGradient>
+    </View>
   );
 };
 const styles = StyleSheet.create({

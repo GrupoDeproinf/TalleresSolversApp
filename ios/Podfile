@@ -45,6 +45,10 @@ target 'mido' do
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
+  # Add Firebase dependencies
+  pod 'Firebase/Core'
+  pod 'Firebase/Messaging'
+
   target 'midoTests' do
     inherit! :complete
     # Pods for testing

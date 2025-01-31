@@ -37,7 +37,7 @@ import NavigationButton from '../../commonComponents/navigationButton';
 import api from '../../../axiosInstance';
 
 import notImageFound from '../../assets/noimageold.jpeg';
-import MapComponent from '../map'
+import MapComponent from '../map';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const FormTaller = () => {
@@ -157,6 +157,7 @@ const FormTaller = () => {
 
   const [isEstado, setisEstado] = useState(false);
   const [imagePerfil, setimagePerfil] = useState('');
+  const [dataTaller, setdataTaller] = useState(null);
 
   const [estadoSelected, setestadoSelected] = useState(''); // Default value 'J'
 
@@ -190,6 +191,8 @@ const FormTaller = () => {
         setNameTaller(result.userData.nombre);
         setChecked(result.userData.agenteAutorizado);
 
+        setdataTaller(result.userData);
+
         // Manejar y asignar los valores con validación de undefined
         setNombre(result.userData.nombre || '');
         setcedula(result.userData.rif || '');
@@ -211,10 +214,13 @@ const FormTaller = () => {
 
         setwhats(result.userData.whatsapp);
 
-        console.log("aquiiiiiiiiiiiiiiiiiiiiiiiii1234", result.userData.ubicacion)
-        if (result.userData.ubicacion != undefined){
-          setlat(result.userData.ubicacion.lat)
-          setlng(result.userData.ubicacion.lng)
+        console.log(
+          'aquiiiiiiiiiiiiiiiiiiiiiiiii1234',
+          result.userData.ubicacion,
+        );
+        if (result.userData.ubicacion != undefined) {
+          setlat(result.userData.ubicacion.lat);
+          setlng(result.userData.ubicacion.lng);
         }
 
         const updatedMetodosPago = metodosPago.map(method => ({
@@ -228,9 +234,9 @@ const FormTaller = () => {
       }
     } catch (error) {
       if (error.response) {
-        console.error('Error en la solicitud:', error.response.statusText);
+        console.error('Error en la solicitufdgdgd:', error.response.statusText);
       } else {
-        console.error('Error en la solicitud:', error.message);
+        console.error('Error en la solicituddfgdfgf:', error.message);
       }
     }
   };
@@ -258,103 +264,130 @@ const FormTaller = () => {
   const onConfirm = async () => {
     console.log(tipoAccion);
     console.log(uidTaller);
-try{
-    const jsonValue = await AsyncStorage.getItem('@userInfo');
-    const userLogged = jsonValue != null ? JSON.parse(jsonValue) : null;
+    console.log(dataTaller);
 
-    console.log(userLogged.nombre)
-    console.log(userLogged.uid)
-  
-    if (tipoAccion == 'Aprobar') {
-      console.log('Aprobar');
-  
-  
-      try {
-        // Hacer la solicitud POST utilizando Axios
-        const response = await api.post('/usuarios/actualizarStatusUsuario', {
-          uid: uidTaller,
-          nuevoStatus: 'Aprobado',
-          certificador_nombre: userLogged.nombre,
-          certificador_key: userLogged.uid,
-        });
-  
-        // Verificar la respuesta del servidor
-        const result = response.data;
-  
-        if (
-          result.message ===
-          'El estado del usuario ha sido actualizado exitosamente'
-        ) {
-          showToast('Se ha aprobado el taller exitosamente');
-          setModalVisible(false);
-          navigation.goBack();
-        } else {
+    try {
+      const jsonValue = await AsyncStorage.getItem('@userInfo');
+      const userLogged = jsonValue != null ? JSON.parse(jsonValue) : null;
+
+      console.log("Este es el userrr ", userLogged.nombre);
+      console.log("este es el idd", userLogged.uid);
+      console.log(uidTaller)
+      console.log("dataTaller.token5151561", dataTaller.token)
+
+      if (tipoAccion == 'Aprobar') {
+        console.log('Aprobar');
+
+        try {
+          // Hacer la solicitud POST utilizando Axios
+          const response = await api.post('/usuarios/actualizarStatusUsuario', {
+            uid: uidTaller,
+            nuevoStatus: 'Aprobado',
+            certificador_nombre: userLogged.nombre,
+            certificador_key: userLogged.uid,
+          });
+
+          // Verificar la respuesta del servidor
+          const result = response.data;
+
+          if (
+            result.message ===
+            'El estado del usuario ha sido actualizado exitosamente'
+          ) {
+            showToast('Se ha aprobado el taller exitosamente');
+            setModalVisible(false);
+            try {
+              const response = await api.post('/usuarios/sendNotification', {
+                token: dataTaller.token,
+                title: 'Notificación de Aprobación de Taller',
+                body: '¡Felicitaciones! Su taller ha sido aprobado con éxito. Gracias por ser una parte valiosa de nuestra comunidad.',
+                secretCode: 'Aprovado Taller',
+              });
+            } catch (error) {
+              console.log(error);
+            }
+            navigation.goBack();
+          } else {
+            showToast('Ha ocurrido un error');
+            setModalVisible(false);
+            navigation.goBack();
+          }
+        } catch (error) {
+          // Manejo de errores
+          if (error.response) {
+            console.error('Error en la solicituddf12323133626:', error.response.statusText);
+          } else {
+            console.error('Error en la solicitudesto es test:', error.message);
+          }
           showToast('Ha ocurrido un error');
           setModalVisible(false);
           navigation.goBack();
         }
-      } catch (error) {
-        // Manejo de errores
-        if (error.response) {
-          console.error('Error en la solicitud:', error.response.statusText);
-        } else {
-          console.error('Error en la solicitud:', error.message);
-        }
-        showToast('Ha ocurrido un error');
-        setModalVisible(false);
-        navigation.goBack();
-      }
-    } else {
-      try {
-        // Hacer la solicitud POST utilizando Axios
-        const response = await api.post('/usuarios/actualizarStatusUsuario', {
-          uid: uidTaller,
-          nuevoStatus: 'Rechazado',
-          certificador_nombre: userLogged.nombre,
-          certificado_key: userLogged.uid,
-        });
-  
-        // Verificar la respuesta del servidor
-        const result = response.data;
-  
-        if (
-          result.message ===
-          'El estado del usuario ha sido actualizado exitosamente'
-        ) {
-          showToast('Se ha rechazado el taller');
-          setModalVisible(false);
-          navigation.goBack();
-        } else {
+      } else {
+        try {
+          // Hacer la solicitud POST utilizando Axios
+          console.log("Entra aquiiiii12323")
+          console.log(uidTaller)
+          console.log(userLogged.nombre)
+          console.log(userLogged.uid)
+
+          const response = await api.post('/usuarios/actualizarStatusUsuario', {
+            uid: uidTaller,
+            nuevoStatus: 'Rechazado',
+            certificador_nombre: userLogged.nombre,
+            certificador_key: userLogged.uid,
+          });
+
+          // Verificar la respuesta del servidor
+          const result = response.data;
+          console.log(response.data)
+          if (
+            result.message ===
+            'El estado del usuario ha sido actualizado exitosamente'
+          ) {
+            showToast('Se ha rechazado el taller');
+            setModalVisible(false);
+
+            try {
+              const response = await api.post('/usuarios/sendNotification', {
+                token: dataTaller.token,
+                title: 'Notificación de Rechazo de Taller',
+                body: 'Lamentamos informarle que su taller no ha sido aprobado. Por favor, revise los requisitos y vuelva a intentarlo. Gracias por su comprensión.',
+                secretCode: 'Rechazo Taller',
+              });
+            } catch (error) {
+              console.log(error);
+            }
+
+            navigation.goBack();
+          } else {
+            showToast('Ha ocurrido un error');
+            setModalVisible(false);
+            navigation.goBack();
+          }
+        } catch (error) {
+          // Manejo de errores
+          if (error.response) {
+            console.error('Error en la solicitud234234:', error.response.statusText);
+          } else {
+            console.error('Error en la solicitud111:', error.message);
+          }
           showToast('Ha ocurrido un error');
           setModalVisible(false);
           navigation.goBack();
         }
-      } catch (error) {
-        // Manejo de errores
-        if (error.response) {
-          console.error('Error en la solicitud:', error.response.statusText);
-        } else {
-          console.error('Error en la solicitud:', error.message);
-        }
-        showToast('Ha ocurrido un error');
-        setModalVisible(false);
-        navigation.goBack();
       }
+    } catch (e) {
+      // error reading value
+      console.log(e);
     }
-  } catch (e) {
-    // error reading value
-    console.log(e)
-  }
-
   };
 
   const showToast = text => {
     ToastAndroid.show(text, ToastAndroid.SHORT);
   };
 
-  const GetCoordenadas = () =>{
-
-  }
+  const GetCoordenadas = () => {};
 
   return (
     <View
@@ -395,21 +428,24 @@ try{
       </View>
 
       {imagePerfil == '' ? (
-
-        <View style={[stylesImage.imageContainer, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Image
-          source={notImageFound}
-          style={{ width: 100, height: 100 }}
-        />
+        <View
+          style={[
+            stylesImage.imageContainer,
+            {justifyContent: 'center', alignItems: 'center'},
+          ]}>
+          <Image source={notImageFound} style={{width: 100, height: 100}} />
         </View>
       ) : (
-        <View style={[stylesImage.imageContainer, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Image
-          source={{ uri: imagePerfil }}
-          style={{ width: 100, height: 100 }}
-        />
-      </View>
-
+        <View
+          style={[
+            stylesImage.imageContainer,
+            {justifyContent: 'center', alignItems: 'center'},
+          ]}>
+          <Image
+            source={{uri: imagePerfil}}
+            style={{width: 100, height: 100}}
+          />
+        </View>
       )}
 
       <ScrollView style={{marginBottom: 15}}>
@@ -586,15 +622,22 @@ try{
             />
           </View>
 
-          {
-              lat != undefined && lat != '' &&
-              lng != undefined && lng != ''  ? (
-                <View style={[stylesMap.container, { marginTop: 5, marginBottom:15 }]}>
-                  <MapComponent initialRegion={{ latitude: lat, longitude: lng, latitudeDelta: 0.015, longitudeDelta: 0.015 }} edit={false} 
-                  returnFunction = {GetCoordenadas} useThisCoo = {true} /> 
-                </View>
-              ) : null
-            }
+          {lat != undefined && lat != '' && lng != undefined && lng != '' ? (
+            <View
+              style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
+              <MapComponent
+                initialRegion={{
+                  latitude: lat,
+                  longitude: lng,
+                  latitudeDelta: 0.015,
+                  longitudeDelta: 0.015,
+                }}
+                edit={false}
+                returnFunction={GetCoordenadas}
+                useThisCoo={true}
+              />
+            </View>
+          ) : null}
 
           {/* Número Telefónico */}
           <View
@@ -986,7 +1029,6 @@ try{
               <Text style={styles.errorStyle}>{seguroError}</Text>
             )}
           </View>
-
         </View>
       </ScrollView>
 
@@ -1046,7 +1088,9 @@ try{
   );
 };
 
-const stylesMap = StyleSheet.create({ container: { flex: 1, justifyContent: 'center', alignItems: 'center', },});
+const stylesMap = StyleSheet.create({
+  container: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+});
 
 const stylesImage = StyleSheet.create({
   button: {

@@ -4,6 +4,7 @@ import {
   View,
   ToastAndroid,
   StyleSheet,
+  Platform, PermissionsAndroid
 } from 'react-native';
 import React, {useEffect, useState} from 'react';
 import AuthContainer from '../../../commonComponents/authContainer';
@@ -25,6 +26,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../../../axiosInstance';
 import DeviceInfo from 'react-native-device-info';
 
+import messaging from '@react-native-firebase/messaging';
+import firebase from '@react-native-firebase/app';
+
+// Initialize Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyB7JeVA4YZBzTblEOnZ-drNT-vwv085fgM",
+  authDomain: "talleres-solvers-app.firebaseapp.com",
+  projectId: "talleres-solvers-app",
+  storageBucket: "talleres-solvers-app.firebasestorage.app",
+  messagingSenderId: "144076824848",
+  appId: "1:144076824848:web:cdaf60b28136561b338595",
+  measurementId: "G-DXQ986SLJR"
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
 const SignIn = ({navigation}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -42,6 +61,39 @@ const SignIn = ({navigation}) => {
     setEmail('');
     setPassword('');
   }, []);
+  
+  useEffect(() => {
+
+    checkAndRequestNotificationPermission()
+
+  }, []);
+
+
+
+  const checkAndRequestNotificationPermission = async () => {
+    console.log(Platform.Version)
+  if (Platform.OS === 'android' && Platform.Version >= 33) {
+    const granted = await PermissionsAndroid.request(
+      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS,
+      {
+        title: 'Permiso de notificaciones',
+        message: 'Esta aplicación necesita acceso para enviarte notificaciones',
+        buttonNeutral: 'Pregúntame más tarde',
+        buttonNegative: 'Cancelar',
+        buttonPositive: 'OK',
+      },
+    );
+    console.log(granted);
+    if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+      console.log('Permiso de notificaciones concedido');
+    } else {
+      console.log('Permiso de notificaciones denegado');
+    }
+  } else {
+    console.log("No se requiere permiso de notificaciones en esta versión de Android");
+  }
+};
+  
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -64,6 +116,8 @@ const SignIn = ({navigation}) => {
   };
 
   const onHandleChange = async () => {
+    console.log("Aquiiiii")
+
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
     setSignInDisabled(true);
@@ -89,6 +143,28 @@ const SignIn = ({navigation}) => {
           result.message === 'Usuario autenticado exitosamente como Admin'
         ) {
           try {
+            if(result.userData.typeUser == "Certificador"){
+              if(result?.userData?.token == undefined || result?.userData?.token == ''){
+
+                try {
+                  const token = await messaging().getToken();
+                  console.log("FCM token certificador:", token);
+                  try{
+                    const response2 = await api.post('/usuarios/UpdateUsuariosAll', {
+                      uid: result?.userData?.uid,
+                      token: token,
+                    });
+
+                    console.log('Este es el usuario nuevo ', response2); 
+                  }  catch (error) {
+                    console.error("Error en actualizar el usuario:", error);
+                  }
+
+                } catch (error) {
+                  console.error("Error getting FCM token:", error);
+                }
+              }
+            }
             const jsonValue = JSON.stringify(result.userData);
             console.log(jsonValue);
             await AsyncStorage.setItem('@userInfo', jsonValue);
@@ -263,11 +339,7 @@ const SignIn = ({navigation}) => {
         <Text style={[commonStyles.subtitleText]}>
           Versión de la App: {DeviceInfo.getVersion()}
         </Text>
-        <Text style={[styles.textTech]}>
-          Desarrollado por: Techsve Group
-        </Text>
       </View>
-      
 
       {/* <LinearBoderText />
       <View style={[external.fd_row, external.ai_center, external.mb_40]}>
