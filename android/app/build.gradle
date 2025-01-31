@@ -73,9 +73,9 @@ android {
 
     compileSdkVersion rootProject.ext.compileSdkVersion
 
-    namespace "com.pixelstrap.mido"
+    namespace "com.solvers.app"
     defaultConfig {
-        applicationId "com.pixelstrap.mido"
+        applicationId "com.solvers.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 2
@@ -88,6 +88,16 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        release {
+            storeFile file('solversapp.keystore')
+            storePassword '1EXE8vx1'
+            keyAlias 'solvers'
+            keyPassword '1EXE8vx1'
+        }
+    }
+    packagingOptions {
+        exclude 'drawable-xxxhdpi/node_modules_reactnavigation_drawer_src_views_assets_toggledrawericon.png'
+        exclude 'drawable-xxxhdpi/node_modules_reactnavigation_elements_src_assets_backicon.png'
     }
     buildTypes {
         debug {
@@ -96,7 +106,7 @@ android {
         release {
             // Caution! In production, you need to generate your own keystore file.
             // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
@@ -114,6 +124,7 @@ dependencies {
     implementation 'com.google.android.gms:play-services-maps:17.0.0'
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}")
+    debugImplementation("com.facebook.react:react-native-flipper:0.93.0")
     debugImplementation("com.facebook.flipper:flipper-network-plugin:${FLIPPER_VERSION}") {
         exclude group:'com.squareup.okhttp3', module:'okhttp'
     }
