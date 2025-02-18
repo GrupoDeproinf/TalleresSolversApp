@@ -7,9 +7,28 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:144076824848:android:11522f46cdf636f7338595",
+        "mobilesdk_app_id": "1:144076824848:android:ed5215087f4402d7338595",
         "android_client_info": {
-          "package_name": "com.pixelstrap.mido"
+          "package_name": "com.solvers"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBNYvivrHI24eDdS-jH0vrNS83cBQRDORY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:144076824848:android:2bba712aee22d533338595",
+        "android_client_info": {
+          "package_name": "com.solvers.app"
         }
       },
       "oauth_client": [],

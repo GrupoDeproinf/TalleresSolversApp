@@ -18,15 +18,6 @@ const BannerContainer = () => {
         resizeMode="cover"
         style={styles.imgStyle}
         source={images.homeBannerOne}>
-        <View style={styles.viewContainer}>
-          <Apple colors={appColors.screenBg} width={windowHeight(20)} />
-          <Text style={[commonStyles.H1Banner, external.mh_5, external.mt_3]}>
-            {watch}
-          </Text>
-        </View>
-        <Text style={styles.activeText}> {t('transData.activeStyle')}</Text>
-        <Text style={styles.seriesText}>{t('transData.series')}</Text>
-        <Text style={styles.fullScreenText}>{t('transData.fullScreen')}</Text>
       </ImageBackground>
     </View>
   );
