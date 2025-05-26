@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://desarrollo-test.com/api', // Cambia esto a la URL base de tu API
+  baseURL: 'https://desarrollo-test.com/api', // Cambia esto a la URL base de tu API
 });
 
 // Variable para almacenar la función setLoading
