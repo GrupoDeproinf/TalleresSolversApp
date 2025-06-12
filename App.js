@@ -26,6 +26,7 @@ import DropdownAlert, {
   DropdownAlertData,
   DropdownAlertType,
 } from 'react-native-dropdownalert';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // import * as Notifications from 'expo-notifications';
 
 LogBox.ignoreLogs(['Your specific warning here']);
@@ -182,6 +183,7 @@ const App = () => {
   }
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <CommonContext.Provider value={contextValues}>
       <SafeAreaView style={[external.fx_1]}>
         <MyStack />
@@ -197,6 +199,7 @@ const App = () => {
       />
 
     </CommonContext.Provider>
+    </GestureHandlerRootView>
   );
 };
 

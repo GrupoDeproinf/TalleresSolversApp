@@ -144,6 +144,7 @@ const TallerEditProfileScreen = ({navigation}) => {
   const [lng, setlng] = useState('');
 
   const [dataUserLogged, setdataUserLogged] = useState(null);
+  const [isMounted, setIsMounted] = useState(true)
 
   const [estadosVenezuela, setEstadosVenezuela] = useState([
     {label: 'Seleccione un estado', value: ''},
@@ -473,6 +474,8 @@ const TallerEditProfileScreen = ({navigation}) => {
   const GetCoordenadas = location => {
     setlat(location.latitude);
     setlng(location.longitude);
+    setIsMounted(false); // Desmonta el componente
+    setTimeout(() => setIsMounted(true), 100);
   };
 
   return (
@@ -752,17 +755,19 @@ const TallerEditProfileScreen = ({navigation}) => {
           {dataUserLogged != undefined ? (
             <View
               style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
-              <MapComponent
-                initialRegion={{
-                  latitude: lat,
-                  longitude: lng,
-                  latitudeDelta: 0.015,
-                  longitudeDelta: 0.015,
-                }}
-                edit={true}
-                returnFunction={GetCoordenadas}
-                useThisCoo={true}
-              />
+              {isMounted && (
+               <MapComponent
+               initialRegion={{
+                 latitude: lat,
+                 longitude: lng,
+                 latitudeDelta: 0.015,
+                 longitudeDelta: 0.015,
+               }}
+               edit={true}
+               returnFunction={GetCoordenadas}
+               useThisCoo={true}
+             /> 
+              )}
             </View>
           ) : null}
 
