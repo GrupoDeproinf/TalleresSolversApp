@@ -27,7 +27,7 @@ const IconContact = data => {
       id: data.data[0]?.uid_servicio,
       nombre_servicio: data.data[0]?.nombre_servicio,
       precio: data.data[0]?.precio,
-      taller: data.data[0]?.taller.nombre,
+      taller: data.data[0]?.taller?.nombre,
       uid_servicio: data.data[0]?.uid_servicio,
       uid_taller: data.data[0]?.uid_taller,
       usuario_id: user?.uid || '',
@@ -82,30 +82,30 @@ const IconContact = data => {
             {shadowColor: appColors.shadowColor},
           ]}>
           <View style={[styles.gridContainer]}>
-            {data.data[0]?.taller.phone && (
+            {data.data[0]?.taller?.phone && (
               <View style={[styles.gridItem]}>
                 <Text
                   style={[styles.deliveryIn, {color: textColorStyle}]}
                   onPress={() => {
                     handleContact('Llamada');
-                    Linking.openURL(`tel:0${data.data[0]?.taller.phone}`);
+                    Linking.openURL(`tel:0${data.data[0]?.taller?.phone}`);
                   }}>
-                  📞 Teléfono: {data.data[0]?.taller.phone}
+                  📞 Teléfono: {data.data[0]?.taller?.phone}
                 </Text>
               </View>
             )}
 
-            {data.data[0]?.taller.whatsapp && (
+            {data.data[0]?.taller?.whatsapp && (
               <View style={[styles.gridItem]}>
                 <Text
                   style={[styles.deliveryIn, {color: textColorStyle}]}
                   onPress={() => {
                     handleContact('WhatsApp');
                     Linking.openURL(
-                      `https://wa.me/+58${data.data[0]?.taller.whatsapp}`,
+                      `https://wa.me/+58${data.data[0]?.taller?.whatsapp}`,
                     );
                   }}>
-                  🔗 WhatsApp: {data.data[0]?.taller.whatsapp}
+                  🔗 WhatsApp: {data.data[0]?.taller?.whatsapp}
                 </Text>
               </View>
             )}
