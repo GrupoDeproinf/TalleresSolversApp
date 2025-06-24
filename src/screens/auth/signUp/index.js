@@ -58,6 +58,7 @@ import {Buffer} from 'buffer';
 
 import MapComponent from '../../map';
 import messaging from '@react-native-firebase/messaging';
+import {Dropdown} from 'react-native-element-dropdown';
 
 const SignUp = ({navigation}) => {
   const [email, setEmail] = useState('');
@@ -545,6 +546,15 @@ const SignUp = ({navigation}) => {
     setTimeout(() => setIsMounted(true), 100);
   };
 
+  const prefixOptions = [
+    { label: 'C-', value: 'C-' },
+    { label: 'E-', value: 'E-' },
+    { label: 'G-', value: 'G-' },
+    { label: 'J-', value: 'J-' },
+    { label: 'P-', value: 'P-' },
+    { label: 'V-', value: 'V-' },
+  ];
+
   return (
     <View
       style={[styles.container, {backgroundColor: bgFullStyle, padding: 30}]}>
@@ -653,35 +663,44 @@ const SignUp = ({navigation}) => {
                   ]}>
                   Cedula
                 </Text>
-
-                {/* Contenedor para el Picker y el TextInput */}
                 <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  {/* Select para elegir "J-" o "G-" */}
                   <View
                     style={{
-                      overflow: 'hidden',
-                      height: 50, // Asegurar que ambos tengan el mismo height
-                      marginRight: 5, // Espaciado entre el Picker y el TextInput
-                    }}>
-                    <Picker
-                      selectedValue={selectedPrefix}
-                      onValueChange={itemValue => setSelectedPrefix(itemValue)}
-                      style={{
-                        width: 100,
-                        height: 0, // Altura para el Picker
-                        color: 'black',
-                      }}>
-                      <Picker.Item label="C-" value="C-" />
-                      <Picker.Item label="E-" value="E-" />
-                      <Picker.Item label="G-" value="G-" />
-                      <Picker.Item label="J-" value="J-" />
-                      <Picker.Item label="P-" value="P-" />
-                      <Picker.Item label="V-" value="V-" />
-                    </Picker>
+                      width: 80,
+                      backgroundColor: '#fff',
+                      borderRadius: 10,
+                      borderWidth: 1,
+                      marginTop: 5,
+                      borderColor: '#ddd',
+                      elevation: 3,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 4,
+                      marginRight: 5,
+                      height: 50,
+                      justifyContent: 'center',
+                      paddingHorizontal: 0,
+                    }}
+                  >
+                    <Dropdown
+                      style={{height: 50, backgroundColor: 'transparent', width: '100%', paddingLeft: 15}}
+                      data={prefixOptions}
+                      labelField="label"
+                      valueField="value"
+                      value={selectedPrefix}
+                      onChange={item => setSelectedPrefix(item.value)}
+                      placeholder="Pref."
+                      maxHeight={250}
+                      itemTextStyle={{ color: 'black' }}
+                      selectedTextStyle={{ color: 'black' }}
+                      containerStyle={{ borderRadius: 10, width: 80 }}
+                      dropdownPosition="auto"
+                      showsVerticalScrollIndicator={false}
+                      autoScroll={false}
+                    />
                   </View>
-
-                  {/* TextInput para el número de RIF */}
-                  <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
+                  <View style={{flex: 1, marginTop: -22, marginLeft: 0}}>
                     <TextInputs
                       title=""
                       value={cedula}
@@ -689,7 +708,6 @@ const SignUp = ({navigation}) => {
                       onChangeText={text => {
                         const numericText = text.replace(/[^0-9]/g, '');
                         if (numericText.length <= 10) {
-                          // Limitar a 10 caracteres
                           setcedula(numericText);
                           setcedulaTyping(true);
                           if (numericText.trim() === '') {
@@ -706,11 +724,10 @@ const SignUp = ({navigation}) => {
                       icon={
                         <Icons name="id-card-o" size={20} color="#9BA6B8" />
                       }
-                      style={{height: 50}} // Altura para el TextInput
+                      style={{height: 50}}
                     />
                   </View>
                 </View>
-
                 {cedulaError !== '' && (
                   <Text style={styles.errorStyle}>{cedulaError}</Text>
                 )}
@@ -756,34 +773,38 @@ const SignUp = ({navigation}) => {
 
                 {/* Contenedor para el Picker y el TextInput */}
                 <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                  {/* Icono al lado del Picker */}
                   <Icons4
                     name="location"
                     size={20}
                     color="#9BA6B8"
-                    style={{marginRight: 5, marginLeft: 10}}
+                    style={{marginRight: 10, marginLeft: 10}}
                   />
-                  <View
-                    style={{
-                      overflow: 'hidden',
-                      height: 50, // Asegurar que ambos tengan el mismo height
-                    }}>
-                    <Picker
-                      selectedValue={estadoSelected}
-                      onValueChange={itemValue => setestadoSelected(itemValue)}
+                  <View style={{flex: 1}}>
+                    <Dropdown
                       style={{
-                        width: 400,
-                        height: 50, // Ajustar la altura para el Picker
-                        color: 'black',
-                      }}>
-                      {estadosVenezuela.map(estado => (
-                        <Picker.Item
-                          key={estado.value}
-                          label={estado.label}
-                          value={estado.value}
-                        />
-                      ))}
-                    </Picker>
+                        height: 50,
+                        backgroundColor: '#fff',
+                        borderColor: '#ddd',
+                        borderWidth: 1,
+                        borderRadius: 10,
+                        paddingLeft: 15,
+                        paddingRight: 10,
+                        justifyContent: 'center',
+                      }}
+                      data={estadosVenezuela}
+                      labelField="label"
+                      valueField="value"
+                      value={estadoSelected}
+                      onChange={item => setestadoSelected(item.value)}
+                      placeholder="Seleccione un estado"
+                      maxHeight={250}
+                      itemTextStyle={{ color: 'black' }}
+                      selectedTextStyle={{ color: 'black' }}
+                      containerStyle={{ borderRadius: 10 }}
+                      dropdownPosition="auto"
+                      showsVerticalScrollIndicator={false}
+                      autoScroll={false}
+                    />
                   </View>
                 </View>
               </View>
@@ -979,25 +1000,38 @@ const SignUp = ({navigation}) => {
                 {/* Select para elegir "J-" o "G-" */}
                 <View
                   style={{
-                    overflow: 'hidden',
-                    height: 50, // Asegurar que ambos tengan el mismo height
-                    marginRight: 5, // Espaciado entre el Picker y el TextInput
-                  }}>
-                  <Picker
-                    selectedValue={selectedPrefix}
-                    onValueChange={itemValue => setSelectedPrefix(itemValue)}
-                    style={{
-                      width: 100,
-                      height: 0, // Altura para el Picker
-                      color: 'black',
-                    }}>
-                    <Picker.Item label="C-" value="C-" />
-                    <Picker.Item label="E-" value="E-" />
-                    <Picker.Item label="G-" value="G-" />
-                    <Picker.Item label="J-" value="J-" />
-                    <Picker.Item label="P-" value="P-" />
-                    <Picker.Item label="V-" value="V-" />
-                  </Picker>
+                    width: 80, // Más angosto
+                    marginTop: 10,
+                    backgroundColor: '#fff',
+                    borderRadius: 10,
+                    borderWidth: 1,
+                    borderColor: '#ddd',
+                    elevation: 3,
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 4,
+                    marginRight: 55,
+                    height: 50,
+                    justifyContent: 'center',
+                    paddingHorizontal: 0,
+                  }}
+                >
+                  <Dropdown
+                    style={{height: 50, backgroundColor: 'transparent', width: '100%', paddingLeft: 15}}
+                    data={prefixOptions}
+                    labelField="label"
+                    valueField="value"
+                    value={selectedPrefix}
+                    onChange={item => setSelectedPrefix(item.value)}
+                    placeholder="Pref."
+                    maxHeight={250}
+                    itemTextStyle={{ color: 'black' }}
+                    selectedTextStyle={{ color: 'black' }}
+                    containerStyle={{ borderRadius: 10, width: 80 }}
+                    dropdownPosition="auto"
+                    showsVerticalScrollIndicator={false}
+                    autoScroll={false}
+                  />
                 </View>
 
                 {/* TextInput para el número de RIF */}
@@ -1073,34 +1107,38 @@ const SignUp = ({navigation}) => {
 
               {/* Contenedor para el Picker y el TextInput */}
               <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                {/* Icono al lado del Picker */}
                 <Icons4
                   name="location"
                   size={20}
                   color="#9BA6B8"
-                  style={{marginRight: 5, marginLeft: 10}}
+                  style={{marginRight: 10, marginLeft: 10}}
                 />
-                <View
-                  style={{
-                    overflow: 'hidden',
-                    height: 50, // Asegurar que ambos tengan el mismo height
-                  }}>
-                  <Picker
-                    selectedValue={estadoSelected}
-                    onValueChange={itemValue => setestadoSelected(itemValue)}
+                <View style={{flex: 1}}>
+                  <Dropdown
                     style={{
-                      width: 400,
-                      height: 50, // Ajustar la altura para el Picker
-                      color: 'black',
-                    }}>
-                    {estadosVenezuela.map(estado => (
-                      <Picker.Item
-                        key={estado.value}
-                        label={estado.label}
-                        value={estado.value}
-                      />
-                    ))}
-                  </Picker>
+                      height: 50,
+                      backgroundColor: '#fff',
+                      borderColor: '#ddd',
+                      borderWidth: 1,
+                      borderRadius: 10,
+                      paddingLeft: 15,
+                      paddingRight: 10,
+                      justifyContent: 'center',
+                    }}
+                    data={estadosVenezuela}
+                    labelField="label"
+                    valueField="value"
+                    value={estadoSelected}
+                    onChange={item => setestadoSelected(item.value)}
+                    placeholder="Seleccione un estado"
+                    maxHeight={250}
+                    itemTextStyle={{ color: 'black' }}
+                    selectedTextStyle={{ color: 'black' }}
+                    containerStyle={{ borderRadius: 10 }}
+                    dropdownPosition="auto"
+                    showsVerticalScrollIndicator={false}
+                    autoScroll={false}
+                  />
                 </View>
               </View>
             </View>
