@@ -92,7 +92,7 @@ const SignUp = ({navigation}) => {
 
   const [lat, setlat] = useState('');
   const [lng, setlng] = useState('');
-  const [isMounted, setIsMounted] = useState(true)
+  const [isMounted, setIsMounted] = useState(true);
 
   const [metodosPago, setMetodosPago] = useState([
     {label: 'Efectivo', value: 'efectivo', checked: false},
@@ -547,13 +547,16 @@ const SignUp = ({navigation}) => {
   };
 
   const prefixOptions = [
-    { label: 'C-', value: 'C-' },
-    { label: 'E-', value: 'E-' },
-    { label: 'G-', value: 'G-' },
-    { label: 'J-', value: 'J-' },
-    { label: 'P-', value: 'P-' },
-    { label: 'V-', value: 'V-' },
+    {label: 'C-', value: 'C-'},
+    {label: 'E-', value: 'E-'},
+    {label: 'G-', value: 'G-'},
+    {label: 'J-', value: 'J-'},
+    {label: 'P-', value: 'P-'},
+    {label: 'V-', value: 'V-'},
   ];
+
+  const [showPassword, setShowPassword] = useState(false); // Para mostrar/ocultar contraseña
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Para mostrar/ocultar confirmación
 
   return (
     <View
@@ -674,17 +677,21 @@ const SignUp = ({navigation}) => {
                       borderColor: '#ddd',
                       elevation: 3,
                       shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
+                      shadowOffset: {width: 0, height: 2},
                       shadowOpacity: 0.1,
                       shadowRadius: 4,
                       marginRight: 5,
                       height: 50,
                       justifyContent: 'center',
                       paddingHorizontal: 0,
-                    }}
-                  >
+                    }}>
                     <Dropdown
-                      style={{height: 50, backgroundColor: 'transparent', width: '100%', paddingLeft: 15}}
+                      style={{
+                        height: 50,
+                        backgroundColor: 'transparent',
+                        width: '100%',
+                        paddingLeft: 15,
+                      }}
                       data={prefixOptions}
                       labelField="label"
                       valueField="value"
@@ -692,9 +699,9 @@ const SignUp = ({navigation}) => {
                       onChange={item => setSelectedPrefix(item.value)}
                       placeholder="Pref."
                       maxHeight={250}
-                      itemTextStyle={{ color: 'black' }}
-                      selectedTextStyle={{ color: 'black' }}
-                      containerStyle={{ borderRadius: 10, width: 80 }}
+                      itemTextStyle={{color: 'black'}}
+                      selectedTextStyle={{color: 'black'}}
+                      containerStyle={{borderRadius: 10, width: 80}}
                       dropdownPosition="auto"
                       showsVerticalScrollIndicator={false}
                       autoScroll={false}
@@ -798,9 +805,9 @@ const SignUp = ({navigation}) => {
                       onChange={item => setestadoSelected(item.value)}
                       placeholder="Seleccione un estado"
                       maxHeight={250}
-                      itemTextStyle={{ color: 'black' }}
-                      selectedTextStyle={{ color: 'black' }}
-                      containerStyle={{ borderRadius: 10 }}
+                      itemTextStyle={{color: 'black'}}
+                      selectedTextStyle={{color: 'black'}}
+                      containerStyle={{borderRadius: 10}}
                       dropdownPosition="auto"
                       showsVerticalScrollIndicator={false}
                       autoScroll={false}
@@ -860,11 +867,10 @@ const SignUp = ({navigation}) => {
                 title="Contraseña"
                 value={password}
                 placeHolder="Ingrese su contraseña"
-                secureTextEntry={true} // Make it a password field
+                secureTextEntry={!showPassword} // Cambia según el estado
                 onChangeText={text => {
                   setPassword(text);
                   setPwdTyping(true);
-
                   if (text.length < 6) {
                     setPasswordError('Contraseña debe tener mínimo 6 dígitos');
                   } else {
@@ -878,13 +884,15 @@ const SignUp = ({navigation}) => {
                 icon={
                   <Key color={isPwdTyping ? '#051E47' : appColors.subtitle} />
                 }
+                showPass={true}
+                changePassValue={() => setShowPassword(!showPassword)}
               />
 
               <TextInputs
                 title="Confirmar Contraseña"
                 value={confirmPassword}
                 placeHolder="Ingrese otra vez la contraseña"
-                secureTextEntry={true}
+                secureTextEntry={!showConfirmPassword} // Cambia según el estado
                 onChangeText={text => {
                   setConfirmPassword(text);
                   setConfPwdTyping(true);
@@ -900,6 +908,10 @@ const SignUp = ({navigation}) => {
                 }}
                 icon={
                   <Key color={isConfTyping ? '#051E47' : appColors.subtitle} />
+                }
+                showPass={true}
+                changePassValue={() =>
+                  setShowConfirmPassword(!showConfirmPassword)
                 }
               />
 
@@ -1007,17 +1019,21 @@ const SignUp = ({navigation}) => {
                     borderWidth: 1,
                     borderColor: '#ddd',
                     elevation: 3,
-                    shadowOffset: { width: 0, height: 2 },
+                    shadowOffset: {width: 0, height: 2},
                     shadowOpacity: 0.1,
                     shadowRadius: 4,
                     marginRight: 55,
                     height: 50,
                     justifyContent: 'center',
                     paddingHorizontal: 0,
-                  }}
-                >
+                  }}>
                   <Dropdown
-                    style={{height: 50, backgroundColor: 'transparent', width: '100%', paddingLeft: 15}}
+                    style={{
+                      height: 50,
+                      backgroundColor: 'transparent',
+                      width: '100%',
+                      paddingLeft: 15,
+                    }}
                     data={prefixOptions}
                     labelField="label"
                     valueField="value"
@@ -1025,9 +1041,9 @@ const SignUp = ({navigation}) => {
                     onChange={item => setSelectedPrefix(item.value)}
                     placeholder="Pref."
                     maxHeight={250}
-                    itemTextStyle={{ color: 'black' }}
-                    selectedTextStyle={{ color: 'black' }}
-                    containerStyle={{ borderRadius: 10, width: 80 }}
+                    itemTextStyle={{color: 'black'}}
+                    selectedTextStyle={{color: 'black'}}
+                    containerStyle={{borderRadius: 10, width: 80}}
                     dropdownPosition="auto"
                     showsVerticalScrollIndicator={false}
                     autoScroll={false}
@@ -1132,9 +1148,9 @@ const SignUp = ({navigation}) => {
                     onChange={item => setestadoSelected(item.value)}
                     placeholder="Seleccione un estado"
                     maxHeight={250}
-                    itemTextStyle={{ color: 'black' }}
-                    selectedTextStyle={{ color: 'black' }}
-                    containerStyle={{ borderRadius: 10 }}
+                    itemTextStyle={{color: 'black'}}
+                    selectedTextStyle={{color: 'black'}}
+                    containerStyle={{borderRadius: 10}}
                     dropdownPosition="auto"
                     showsVerticalScrollIndicator={false}
                     autoScroll={false}
@@ -1147,18 +1163,16 @@ const SignUp = ({navigation}) => {
               style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
               {isMounted && (
                 <MapComponent
-                initialRegion={{
-                  latitude: 37.7749,
-                  longitude: -122.4194,
-                  latitudeDelta: 0.015,
-                  longitudeDelta: 0.015,
-                }}
-                edit={true}
-                returnFunction={GetCoordenadas}
-                useThisCoo={false}
-              />
-              
-                
+                  initialRegion={{
+                    latitude: 37.7749,
+                    longitude: -122.4194,
+                    latitudeDelta: 0.015,
+                    longitudeDelta: 0.015,
+                  }}
+                  edit={true}
+                  returnFunction={GetCoordenadas}
+                  useThisCoo={false}
+                />
               )}
             </View>
 
@@ -1299,7 +1313,7 @@ const SignUp = ({navigation}) => {
               title="Contraseña"
               value={password}
               placeHolder="Ingrese su contraseña"
-              secureTextEntry={true} // Make it a password field
+              secureTextEntry={!showPassword} // Make it a password field
               onChangeText={text => {
                 setPassword(text);
                 setPwdTyping(true);
@@ -1317,13 +1331,15 @@ const SignUp = ({navigation}) => {
               icon={
                 <Key color={isPwdTyping ? '#051E47' : appColors.subtitle} />
               }
+              showPass={true}
+              changePassValue={() => setShowPassword(!showPassword)}
             />
 
             <TextInputs
               title="Confirmar Contraseña"
               value={confirmPassword}
               placeHolder="Ingrese otra vez la contraseña"
-              secureTextEntry={true}
+              secureTextEntry={!showConfirmPassword} // Make it a password field
               onChangeText={text => {
                 setConfirmPassword(text);
                 setConfPwdTyping(true);
@@ -1339,6 +1355,10 @@ const SignUp = ({navigation}) => {
               }}
               icon={
                 <Key color={isConfTyping ? '#051E47' : appColors.subtitle} />
+              }
+              showPass={true}
+              changePassValue={() =>
+                setShowConfirmPassword(!showConfirmPassword)
               }
             />
           </View>
