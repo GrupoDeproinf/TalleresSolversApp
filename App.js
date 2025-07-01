@@ -18,7 +18,7 @@ import {
   linearColorStyleTwo,
 } from './src/style/darkStyle';
 import { useTranslation } from 'react-i18next';
-import Spinner from 'react-native-loading-spinner-overlay';
+import CustomLoader from './src/commonComponents/customLoader';
 import api, { setLoadingFunction } from './axiosInstance'; // Asegúrate de que la ruta sea correcta
 import { firebase } from '@react-native-firebase/app';
 import messaging from '@react-native-firebase/messaging';
@@ -187,7 +187,7 @@ const App = () => {
     <CommonContext.Provider value={contextValues}>
       <SafeAreaView style={[external.fx_1]}>
         <MyStack />
-        <Spinner visible={loading} textContent={'Cargando...'} textStyle={{ color: '#FFF' }} />
+        <CustomLoader visible={loading} />
       </SafeAreaView>
 
       <DropdownAlert
