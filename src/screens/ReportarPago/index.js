@@ -111,7 +111,7 @@ const ReportarPago = ({navigation}) => {
     {value: '0174', label: 'BANPLUS'},
     {value: '0108', label: 'BBVA PROVINCIAL'},
     {value: '0157', label: 'DELSUR BANCO UNIVERSAL'},
-    {value: '0169', label: 'MI BANCO'},
+    {value: '0169', label: 'R4 - MI BANCO'},
     {value: '0178', label: 'N58 BANCO DIGITAL BANCO MICROFINANCIERO S A'},
   ];
 
