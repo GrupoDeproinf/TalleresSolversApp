@@ -79,8 +79,8 @@ android {
         applicationId "com.solvers.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 3
-        versionName "1.1.1"
+        versionCode 10
+        versionName "1.1.8"
     }
     signingConfigs {
         debug {

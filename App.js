@@ -18,7 +18,7 @@ import {
   linearColorStyleTwo,
 } from './src/style/darkStyle';
 import { useTranslation } from 'react-i18next';
-import Spinner from 'react-native-loading-spinner-overlay';
+import CustomLoader from './src/commonComponents/customLoader';
 import api, { setLoadingFunction } from './axiosInstance'; // Asegúrate de que la ruta sea correcta
 import { firebase } from '@react-native-firebase/app';
 import messaging from '@react-native-firebase/messaging';
@@ -26,6 +26,7 @@ import DropdownAlert, {
   DropdownAlertData,
   DropdownAlertType,
 } from 'react-native-dropdownalert';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 // import * as Notifications from 'expo-notifications';
 
 LogBox.ignoreLogs(['Your specific warning here']);
@@ -182,10 +183,11 @@ const App = () => {
   }
 
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <CommonContext.Provider value={contextValues}>
       <SafeAreaView style={[external.fx_1]}>
         <MyStack />
-        <Spinner visible={loading} textContent={'Cargando...'} textStyle={{ color: '#FFF' }} />
+        <CustomLoader visible={loading} />
       </SafeAreaView>
 
       <DropdownAlert
@@ -197,6 +199,7 @@ const App = () => {
       />
 
     </CommonContext.Provider>
+    </GestureHandlerRootView>
   );
 };
 

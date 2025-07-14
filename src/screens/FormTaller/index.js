@@ -143,6 +143,7 @@ const FormTaller = () => {
 
   const [lat, setlat] = useState('');
   const [lng, setlng] = useState('');
+  const [isMounted, setIsMounted] = useState(true);
 
   const [metodosPago, setMetodosPago] = useState([
     {label: 'Efectivo', value: 'efectivo', checked: false},
@@ -625,7 +626,8 @@ const FormTaller = () => {
           {lat != undefined && lat != '' && lng != undefined && lng != '' ? (
             <View
               style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
-              <MapComponent
+              {isMounted && (
+                <MapComponent
                 initialRegion={{
                   latitude: lat,
                   longitude: lng,
@@ -636,6 +638,7 @@ const FormTaller = () => {
                 returnFunction={GetCoordenadas}
                 useThisCoo={true}
               />
+              )}
             </View>
           ) : null}
 

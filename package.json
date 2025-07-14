@@ -37,6 +37,7 @@
     "react-native-date-picker": "^5.0.7",
     "react-native-device-info": "^14.0.2",
     "react-native-dropdownalert": "^5.1.0",
+    "react-native-element-dropdown": "^2.12.4",
     "react-native-elements": "^3.4.3",
     "react-native-flip-card": "^3.5.7",
     "react-native-gesture-handler": "^2.14.1",

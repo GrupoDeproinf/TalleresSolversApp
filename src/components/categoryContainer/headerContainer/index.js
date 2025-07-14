@@ -23,14 +23,14 @@ const HeaderContainer = () => {
           external.ai_center,
           {flexDirection: viewRTLStyle, alignItems: 'center'},
         ]}>
-        <TouchableOpacity
+        {/* <TouchableOpacity
           onPress={() => navigation.goBack('')}
           style={{position: 'absolute'}} // Posiciona el botón de retroceso en la esquina izquierda
         >
           <View>
             <BackLeft style={[{marginTop: -4, paddingTop: 0}]}/>
           </View>
-        </TouchableOpacity>
+        </TouchableOpacity> */}
         <Text
           style={[
             commonStyles.titleText19,

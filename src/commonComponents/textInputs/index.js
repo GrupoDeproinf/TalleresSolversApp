@@ -128,7 +128,11 @@ const TextInputs = ({
                 onPress={changePassValue}
                 style={{marginRight: 10}}>
                 <View>
-                  <Icons name="eye" size={23} color="#2D3261" />
+                  <Icons
+                    name={secureTextEntry ? 'eye' : 'eye-with-line'}
+                    size={23}
+                    color="#2D3261"
+                  />
                 </View>
               </TouchableOpacity>
             ) : null}
