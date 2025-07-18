@@ -48,6 +48,8 @@ import ServiciosContainer from '../screens/Servicios'
 import PlanesContainer from '../screens/PlanesTaller';
 
 import TallerEditProfileScreen from '../screens/profileScreen/editProfileTaller';
+import PerimeterMapScreen from '../screens/perimeter-map';
+import TallerDetail from '../screens/tallerDetail';
 
 
 
@@ -81,6 +83,8 @@ const MyStack = () => {
         <Stack.Screen name="CategoryDetail" component={CategoryDetail} />
         <Stack.Screen name="LoaderScreen" component={LoaderScreen} />
         <Stack.Screen name="DrawerScreen" component={DrawerScreen} />
+        <Stack.Screen name="PerimeterMapScreen" component={PerimeterMapScreen} />
+        <Stack.Screen name="TallerDetail" component={TallerDetail} />
         
         <Stack.Screen
           name="NotificationScreen"

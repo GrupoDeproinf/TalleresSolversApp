@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'https://apisolvers.solversapp.com/api', // Cambia esto por tu URL base
+  baseURL: 'http://localhost:3000/api', // Cambia esto por tu URL base
 });
 
 export default api;
