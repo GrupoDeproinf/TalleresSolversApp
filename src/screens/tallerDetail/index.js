@@ -32,6 +32,10 @@ import {
   CreditCard,
   Wallet,
   Banknote,
+  Share2,
+  Instagram,
+  Facebook,
+  Youtube,
 } from "lucide-react-native"
 import api from "../../../axiosInstance"
 
@@ -45,7 +49,13 @@ const TallerDetail = () => {
   const [taller, setTaller] = useState(tallerData || {})
   const [loading, setLoading] = useState(false)
   const [showPaymentMethods, setShowPaymentMethods] = useState(false)
+  const [showTallerInfo, setShowTallerInfo] = useState(false)
+  const [showExperience, setShowExperience] = useState(false)
+  const [showTarifas, setShowTarifas] = useState(false)
   const [paymentMethodsAnimation] = useState(new Animated.Value(0))
+  const [tallerInfoAnimation] = useState(new Animated.Value(0))
+  const [experienceAnimation] = useState(new Animated.Value(0))
+  const [tarifasAnimation] = useState(new Animated.Value(0))
 
   // Métodos de pago disponibles (puedes ajustar según los datos reales del taller)
   const paymentMethods = [
@@ -70,10 +80,34 @@ const TallerDetail = () => {
     }).start()
   }, [showPaymentMethods])
 
+  useEffect(() => {
+    Animated.timing(tallerInfoAnimation, {
+      toValue: showTallerInfo ? 1 : 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start()
+  }, [showTallerInfo])
+
+  useEffect(() => {
+    Animated.timing(experienceAnimation, {
+      toValue: showExperience ? 1 : 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start()
+  }, [showExperience])
+
+  useEffect(() => {
+    Animated.timing(tarifasAnimation, {
+      toValue: showTarifas ? 1 : 0,
+      duration: 300,
+      useNativeDriver: false,
+    }).start()
+  }, [showTarifas])
+
   const fetchTallerData = async () => {
     setLoading(true)
     try {
-      const response = await api.post("/usuarios/getUserByUid", {
+      const response = await api.post("/usuarios/getUser+ByUid", {
         uid: tallerId,
       })
 
@@ -124,6 +158,26 @@ const TallerDetail = () => {
 
   const togglePaymentMethods = () => {
     setShowPaymentMethods(!showPaymentMethods)
+  }
+
+  const toggleTallerInfo = () => {
+    setShowTallerInfo(!showTallerInfo)
+  }
+
+  const toggleExperience = () => {
+    setShowExperience(!showExperience)
+  }
+
+  const toggleTarifas = () => {
+    setShowTarifas(!showTarifas)
+  }
+
+  const handleSocialMedia = (platform, url) => {
+    if (url) {
+      Linking.openURL(url)
+    } else {
+      Alert.alert(`${platform} no disponible`, `Este taller no tiene ${platform} registrado.`)
+    }
   }
 
   const getPaymentIcon = (iconName) => {
@@ -273,38 +327,166 @@ const TallerDetail = () => {
         <View style={styles.infoSection}>
           <Text style={styles.sectionTitle}>INFORMACIÓN</Text>
 
-          <TouchableOpacity style={styles.infoItem}>
+          <TouchableOpacity style={styles.infoItem} onPress={toggleTallerInfo}>
             <View style={styles.infoItemLeft}>
               <View style={styles.infoIcon}>
                 <Wrench size={18} color="#6B7280" />
               </View>
               <Text style={styles.infoText}>Información del Taller</Text>
             </View>
-            <ChevronRight size={18} color="#9CA3AF" />
+            {showTallerInfo ? <ChevronDown size={18} color="#9CA3AF" /> : <ChevronRight size={18} color="#9CA3AF" />}
           </TouchableOpacity>
 
+          {/* Taller Info Dropdown */}
+          <Animated.View
+            style={[
+              styles.infoDropdown,
+              {
+                maxHeight: tallerInfoAnimation.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 300],
+                }),
+                opacity: tallerInfoAnimation,
+              },
+            ]}
+          >
+            <View style={styles.infoContent}>
+              {taller.nombre && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Nombre:</Text>
+                  <Text style={styles.infoValue}>{taller.nombre}</Text>
+                </View>
+              )}
+              {taller.rif && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>RIF:</Text>
+                  <Text style={styles.infoValue}>{taller.rif}</Text>
+                </View>
+              )}
+              {taller.email && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Email:</Text>
+                  <Text style={styles.infoValue}>{taller.email}</Text>
+                </View>
+              )}
+              {taller.phone && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Teléfono:</Text>
+                  <Text style={styles.infoValue}>{taller.phone}</Text>
+                </View>
+              )}
+              {taller.Direccion && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Dirección:</Text>
+                  <Text style={styles.infoValue}>{taller.Direccion}</Text>
+                </View>
+              )}
+              {taller.estado && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Estado:</Text>
+                  <Text style={styles.infoValue}>{taller.estado}</Text>
+                </View>
+              )}
+              {taller.RegComercial && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Registro Comercial:</Text>
+                  <Text style={styles.infoValue}>{taller.RegComercial}</Text>
+                </View>
+              )}
+              {taller.Caracteristicas && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Características:</Text>
+                  <Text style={styles.infoValue}>{taller.Caracteristicas}</Text>
+                </View>
+              )}
+              {taller.Garantia && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Garantía:</Text>
+                  <Text style={styles.infoValue}>{taller.Garantia}</Text>
+                </View>
+              )}
+              {taller.seguro && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Seguro:</Text>
+                  <Text style={styles.infoValue}>{taller.seguro}</Text>
+                </View>
+              )}
+              {!taller.nombre && !taller.rif && !taller.email && !taller.phone && !taller.Direccion && !taller.estado && !taller.RegComercial && !taller.Caracteristicas && !taller.Garantia && !taller.seguro && (
+                <View style={styles.emptyInfo}>
+                  <Text style={styles.emptyInfoText}>No hay información adicional disponible</Text>
+                </View>
+              )}
+            </View>
+          </Animated.View>
+
           {taller.Experiencia && (
-            <TouchableOpacity style={styles.infoItem}>
+            <TouchableOpacity style={styles.infoItem} onPress={toggleExperience}>
               <View style={styles.infoItemLeft}>
                 <View style={styles.infoIcon}>
                   <Clock size={18} color="#6B7280" />
                 </View>
                 <Text style={styles.infoText}>Experiencia</Text>
               </View>
-              <ChevronRight size={18} color="#9CA3AF" />
+              {showExperience ? <ChevronDown size={18} color="#9CA3AF" /> : <ChevronRight size={18} color="#9CA3AF" />}
             </TouchableOpacity>
           )}
 
+          {/* Experience Dropdown */}
+          {taller.Experiencia && (
+            <Animated.View
+              style={[
+                styles.infoDropdown,
+                {
+                  maxHeight: experienceAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 100],
+                  }),
+                  opacity: experienceAnimation,
+                },
+              ]}
+            >
+              <View style={styles.infoContent}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Experiencia:</Text>
+                  <Text style={styles.infoValue}>{taller.Experiencia}</Text>
+                </View>
+              </View>
+            </Animated.View>
+          )}
+
           {taller.Tarifa && (
-            <TouchableOpacity style={styles.infoItem}>
+            <TouchableOpacity style={styles.infoItem} onPress={toggleTarifas}>
               <View style={styles.infoItemLeft}>
                 <View style={styles.infoIcon}>
                   <DollarSign size={18} color="#6B7280" />
                 </View>
                 <Text style={styles.infoText}>Tarifas</Text>
               </View>
-              <ChevronRight size={18} color="#9CA3AF" />
+              {showTarifas ? <ChevronDown size={18} color="#9CA3AF" /> : <ChevronRight size={18} color="#9CA3AF" />}
             </TouchableOpacity>
+          )}
+
+          {/* Tarifas Dropdown */}
+          {taller.Tarifa && (
+            <Animated.View
+              style={[
+                styles.infoDropdown,
+                {
+                  maxHeight: tarifasAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, 100],
+                  }),
+                  opacity: tarifasAnimation,
+                },
+              ]}
+            >
+              <View style={styles.infoContent}>
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Tarifas:</Text>
+                  <Text style={styles.infoValue}>{taller.Tarifa}</Text>
+                </View>
+              </View>
+            </Animated.View>
           )}
 
           <TouchableOpacity style={styles.infoItem} onPress={togglePaymentMethods}>
@@ -342,6 +524,44 @@ const TallerDetail = () => {
               </View>
             ))}
           </Animated.View>
+
+          {/* Redes Sociales */}
+          {(taller.LinkFacebook || taller.LinkInstagram || taller.LinkTiktok) && (
+            <View style={styles.socialSection}>
+              <Text style={styles.sectionTitle}>REDES SOCIALES</Text>
+              <View style={styles.socialButtons}>
+                {taller.LinkFacebook && (
+                  <TouchableOpacity 
+                    style={[styles.socialButton, { backgroundColor: '#1877F2' }]}
+                    onPress={() => handleSocialMedia('Facebook', taller.LinkFacebook)}
+                  >
+                    <Facebook size={20} color="#FFFFFF" />
+                    <Text style={styles.socialButtonText}>Facebook</Text>
+                  </TouchableOpacity>
+                )}
+                
+                {taller.LinkInstagram && (
+                  <TouchableOpacity 
+                    style={[styles.socialButton, { backgroundColor: '#E4405F' }]}
+                    onPress={() => handleSocialMedia('Instagram', taller.LinkInstagram)}
+                  >
+                    <Instagram size={20} color="#FFFFFF" />
+                    <Text style={styles.socialButtonText}>Instagram</Text>
+                  </TouchableOpacity>
+                )}
+                
+                {taller.LinkTiktok && (
+                  <TouchableOpacity 
+                    style={[styles.socialButton, { backgroundColor: '#000000' }]}
+                    onPress={() => handleSocialMedia('TikTok', taller.LinkTiktok)}
+                  >
+                    <Youtube size={20} color="#FFFFFF" />
+                    <Text style={styles.socialButtonText}>TikTok</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          )}
         </View>
       </ScrollView>
     </View>
@@ -641,6 +861,74 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
+  },
+  infoDropdown: {
+    overflow: "hidden",
+    backgroundColor: "#F8FAFC",
+    marginHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  infoContent: {
+    padding: 16,
+  },
+  infoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "600",
+    flex: 1,
+  },
+  infoValue: {
+    fontSize: 14,
+    color: "#1F2937",
+    fontWeight: "500",
+    flex: 2,
+    textAlign: "right",
+  },
+  socialSection: {
+    marginTop: 24,
+  },
+  socialButtons: {
+    flexDirection: "row",
+    justifyContent: "space-around",
+    flexWrap: "wrap",
+    gap: 12,
+    paddingHorizontal: 8,
+  },
+  socialButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    minWidth: Math.min(120, width * 0.25),
+    justifyContent: "center",
+    gap: 8,
+    flex: 1,
+    maxWidth: 150,
+  },
+  socialButtonText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  emptyInfo: {
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  emptyInfoText: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    fontStyle: "italic",
   },
 })
 
