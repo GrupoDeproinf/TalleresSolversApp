@@ -26,6 +26,9 @@ import {windowHeight, windowWidth} from '../themes/appConstant';
 import Icons from 'react-native-vector-icons/FontAwesome';
 import Icons3 from 'react-native-vector-icons/FontAwesome5';
 import Icons2 from 'react-native-vector-icons/Entypo';
+import perimeterMap from '../screens/perimeter-map';
+import { MapPin } from 'lucide-react-native';
+import PerimeterMapScreen from '../screens/perimeter-map';
 
 const Tab = createBottomTabNavigator();
 
@@ -187,6 +190,7 @@ const MyTabs = () => {
           activeTabBarIcon: () => <ProfileTab />,
         }}
       />
+      
     </Tab.Navigator>
   );
 };
@@ -262,6 +266,26 @@ const MyTabsCliente = () => {
           tabBarLabel: 'Profile',
           tabBarIcon: () => <ProfileLight />,
           activeTabBarIcon: () => <ProfileTab />,
+        }}
+      />
+
+      <Tab.Screen
+        name="PerimeterMapScreen"
+        component={PerimeterMapScreen}
+        options={{
+          tabBarLabel: 'Mapa',
+          tabBarIcon: () => <MapPin style={{
+            width: windowHeight(5),
+            height: windowHeight(5),
+            color: '#9BA6B8',
+            fontSize: windowHeight(80),
+          }}/>,
+          activeTabBarIcon: () => <MapPin style={{
+            width: windowHeight(5),
+            height: windowHeight(5),
+            color: '#2D3261',
+            fontSize: windowHeight(80),
+          }}/>,
         }}
       />
     </Tab.Navigator>
