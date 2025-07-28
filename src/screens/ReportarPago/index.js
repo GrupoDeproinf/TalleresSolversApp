@@ -713,10 +713,7 @@ const ReportarPago = ({navigation}) => {
             <TouchableOpacity style={[external.as_end]} onPress={closeModal}>
               <Cross />
             </TouchableOpacity>
-            <Image
-              style={styles.imgStyle}
-              source={isDark ? images.Successfull : images.successfull}
-            />
+            
             <Text
               style={[
                 commonStyles.hederH2,
