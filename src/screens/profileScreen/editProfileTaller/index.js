@@ -170,7 +170,7 @@ const TallerEditProfileScreen = ({navigation}) => {
     {label: 'Sucre', value: 'Sucre'},
     {label: 'Táchira', value: 'Táchira'},
     {label: 'Trujillo', value: 'Trujillo'},
-    {label: 'Vargas', value: 'Vargas'},
+    {label: 'La Guaira', value: 'La Guaira'},
     {label: 'Yaracuy', value: 'Yaracuy'},
     {label: 'Zulia', value: 'Zulia'},
   ]);
