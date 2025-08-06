@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { Dimensions, View, TouchableOpacity, StyleSheet, PermissionsAndroid, Platform, Alert, ActivityIndicator } from 'react-native';
+import { Dimensions, View, TouchableOpacity, StyleSheet, PermissionsAndroid, Platform, Alert, ActivityIndicator, Modal } from 'react-native';
 import { Text } from 'react-native-elements';
 import { ScrollView } from 'react-native-gesture-handler';
-import { MapPin, Navigation, Clock } from 'lucide-react-native';
+import { MapPin, Navigation, Clock, Map, SlidersHorizontal } from 'lucide-react-native';
 import NearlyTallerItem from './components/nearlyTaller';
 import api from '../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Geolocation from '@react-native-community/geolocation';
 import { useNavigation } from '@react-navigation/native';
+import MapComponent from '../mapMultimarker';
+import MapTalleres from '../mapMultimarker'; // Importar el componente de mapa
 
 const RadioSelector = ({ options, selectedValue, onSelect, style }) => (
   <View style={[styles.radioContainer, style]}>
@@ -46,6 +48,9 @@ const PerimeterMapScreen = () => {
   const [location, setLocation] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [isLoadingTalleres, setIsLoadingTalleres] = useState(false);
+  const [showMapModal, setShowMapModal] = useState(false);
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [showMap, setshowMap] = useState(false);
 
   // Función para manejar el clic en un taller
   const handleTallerPress = (taller) => {
@@ -56,6 +61,77 @@ const PerimeterMapScreen = () => {
       tallerData: taller
     });
   };
+
+  // Función para manejar el botón del mapa
+  const handleMapButtonPress = () => {
+    console.log('🗺️ Abriendo mapa con talleres...');
+    setShowMapModal(true);
+  };
+
+  // Función para cerrar el modal del mapa
+  const handleCloseMapModal = () => {
+    setShowMapModal(false);
+  };
+
+  // Función para abrir el modal de filtros
+  const handleOpenFilterModal = () => {
+    setShowFilterModal(true);
+  };
+
+  // Función para cerrar el modal de filtros
+  const handleCloseFilterModal = () => {
+    setShowFilterModal(false);
+  };
+
+  // Función para redirigir al detalle del taller
+  const redirectToTaller = (taller) => {
+    setshowMap(false);
+    if (taller != null) {
+      console.log('🏢 Taller:', taller);
+      navigation.navigate('TallerDetail', {
+        tallerId: taller.id || taller.uid,
+        tallerData: taller
+      });
+
+    }
+  }
+  // Preparar las coordenadas de los talleres para el mapa
+  const getTalleresCoordinates = () => {
+    return talleres
+      .filter(taller => taller.ubicacion.latitud && taller.ubicacion.longitud)
+      .map(taller => ({
+        latitude: parseFloat(taller.ubicacion.latitud),
+        longitude: parseFloat(taller.ubicacion.longitud), 
+        title: taller.nombre || 'Taller',
+        description: taller.direccion || ''
+      }));
+  };
+
+  // Componente del botón flotante de filtros
+  const FloatingFilterButton = () => (
+    <TouchableOpacity
+      style={{
+        position: "absolute",
+        bottom: 30,
+        right: 20,
+        backgroundColor: "#162556",
+        width: 56,
+        height: 56,
+        borderRadius: 28,
+        justifyContent: "center",
+        alignItems: "center",
+        elevation: 8,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 6,
+      }}
+      activeOpacity={0.8}
+      onPress={handleOpenFilterModal}
+    >
+      <SlidersHorizontal size={24} color="#E4E4E7" />
+    </TouchableOpacity>
+  );
 
   useEffect(() => {
     getUserData();
@@ -258,17 +334,40 @@ const PerimeterMapScreen = () => {
   return (
     <>
       <View style={{ flex: 1, backgroundColor: '#2D3261', padding: 20 }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#eeeeee' }}>
-          Talleres cercanos
-        </Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#eeeeee', flex: 1 }}>
+            Talleres cercanos
+          </Text>
+          <TouchableOpacity 
+            style={{
+              backgroundColor: '#ffca00',
+              paddingHorizontal: 16,
+              paddingVertical: 8,
+              borderRadius: 20,
+              elevation: 2,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 3,
+              flexDirection: 'row',
+              alignItems: 'center',
+            }}
+            activeOpacity={0.8}
+            onPress={() => setshowMap(true)}
+          >
+            <Map size={16} color="#162556" style={{ marginRight: 6 }} />
+            <Text style={{ 
+              color: '#162556', 
+              fontSize: 14, 
+              fontWeight: '600' 
+            }}>
+              Ver mapa
+            </Text>
+          </TouchableOpacity>
+        </View>
         <Text style={{ fontSize: 14, color: '#e8eaf6', marginBottom: 20 }}>
           Aquí se mostrarán los talleres cercanos a tu ubicación.
         </Text>
-        
-        
-        
-        
-        
       </View>
 
       <View
@@ -389,8 +488,197 @@ const PerimeterMapScreen = () => {
               </Text>
             </View>
           )}
-        </ScrollView>
-      </View>
+                 </ScrollView>
+
+         {/* Mapa condicional */}
+         {showMap == true ? (
+           <View
+             style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
+             {talleres.length > 0 ? (
+               <MapTalleres
+                 talleres={talleres}
+                 // edit={false}
+                 returnFunction={redirectToTaller}
+                 // useThisCoo={true}
+               />
+             ) : null}
+           </View>
+         ) : null}
+       </View>
+
+       {/* Botón flotante de filtros */}
+      <FloatingFilterButton />
+
+      {/* Modal del mapa con talleres */}
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={showMapModal}
+        onRequestClose={handleCloseMapModal}
+      >
+        <View style={{ flex: 1 }}>
+          <View style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: 20,
+            paddingTop: 50,
+            backgroundColor: '#2D3261',
+          }}>
+            <Text style={{
+              color: '#ffffff',
+              fontSize: 18,
+              fontWeight: 'bold',
+            }}>
+              Mapa de Talleres
+            </Text>
+            <TouchableOpacity
+              onPress={handleCloseMapModal}
+              style={{
+                padding: 8,
+                borderRadius: 20,
+                backgroundColor: 'rgba(255,255,255,0.2)',
+              }}
+            >
+              <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: 'bold' }}>
+                ✕
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          <MapComponent
+            initialRegion={location || {
+              latitude: 19.4326,
+              longitude: -99.1332,
+              latitudeDelta: 0.015,
+              longitudeDelta: 0.0121,
+            }}
+            edit={false}
+            returnFunction={handleCloseMapModal}
+            useThisCoo={true}
+            coordinatesList={getTalleresCoordinates()}
+          />
+        </View>
+      </Modal>
+
+      {/* Modal del selector de filtros */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={showFilterModal}
+        onRequestClose={handleCloseFilterModal}
+      >
+        <View style={{
+          flex: 1,
+          backgroundColor: 'rgba(0,0,0,0.5)',
+          justifyContent: 'flex-end',
+        }}>
+          <View style={{
+            backgroundColor: '#fff',
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            padding: 20,
+            minHeight: 300,
+          }}>
+            <View style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 20,
+            }}>
+              <Text style={{
+                fontSize: 18,
+                fontWeight: 'bold',
+                color: '#2D3261',
+              }}>
+                Filtros
+              </Text>
+              <TouchableOpacity
+                onPress={handleCloseFilterModal}
+                style={{
+                  padding: 8,
+                  borderRadius: 20,
+                  backgroundColor: '#f0f0f0',
+                }}
+              >
+                <Text style={{ color: '#2D3261', fontSize: 16, fontWeight: 'bold' }}>
+                  ✕
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Contenido del selector de filtros */}
+            <View style={{ flex: 1 }}>
+              <Text style={{
+                fontSize: 16,
+                fontWeight: '600',
+                color: '#2D3261',
+                marginBottom: 15,
+              }}>
+                Opciones de filtro
+              </Text>
+              
+              {/* Aquí puedes agregar más opciones de filtro */}
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#f8f9fa',
+                  padding: 15,
+                  borderRadius: 10,
+                  marginBottom: 10,
+                  borderWidth: 1,
+                  borderColor: '#e9ecef',
+                }}
+                onPress={() => {
+                  console.log('Filtro 1 seleccionado');
+                  handleCloseFilterModal();
+                }}
+              >
+                <Text style={{ color: '#2D3261', fontSize: 14 }}>
+                  Filtro por distancia
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#f8f9fa',
+                  padding: 15,
+                  borderRadius: 10,
+                  marginBottom: 10,
+                  borderWidth: 1,
+                  borderColor: '#e9ecef',
+                }}
+                onPress={() => {
+                  console.log('Filtro 2 seleccionado');
+                  handleCloseFilterModal();
+                }}
+              >
+                <Text style={{ color: '#2D3261', fontSize: 14 }}>
+                  Filtro por servicios
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={{
+                  backgroundColor: '#f8f9fa',
+                  padding: 15,
+                  borderRadius: 10,
+                  marginBottom: 10,
+                  borderWidth: 1,
+                  borderColor: '#e9ecef',
+                }}
+                onPress={() => {
+                  console.log('Filtro 3 seleccionado');
+                  handleCloseFilterModal();
+                }}
+              >
+                <Text style={{ color: '#2D3261', fontSize: 14 }}>
+                  Filtro por horario
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </>
   );
 };
@@ -439,9 +727,20 @@ const styles = StyleSheet.create({
     color: '#162556',
     marginLeft: 6,
   },
-  radioTextSelected: {
-    color: '#162556',
-  },
-});
+     radioTextSelected: {
+     color: '#162556',
+   },
+ });
 
-export default PerimeterMapScreen;
+ // Estilos para el mapa
+ const stylesMap = StyleSheet.create({
+   container: {
+     flex: 1,
+     width: '100%',
+     height: 300, // Altura fija para el mapa
+     borderRadius: 10,
+     overflow: 'hidden',
+   },
+ });
+
+ export default PerimeterMapScreen;
