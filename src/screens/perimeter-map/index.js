@@ -10,6 +10,7 @@ import Geolocation from '@react-native-community/geolocation';
 import { useNavigation } from '@react-navigation/native';
 import MapComponent from '../mapMultimarker';
 import MapTalleres from '../mapMultimarker'; // Importar el componente de mapa
+import MapRutaComponent from '../mapRuta'; // Importar el componente de ruta
 
 const RadioSelector = ({ options, selectedValue, onSelect, style }) => (
   <View style={[styles.radioContainer, style]}>
@@ -51,6 +52,11 @@ const PerimeterMapScreen = () => {
   const [showMapModal, setShowMapModal] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showMap, setshowMap] = useState(false);
+  const [showRouteModal, setShowRouteModal] = useState(false);
+  const [selectedTallerForRoute, setSelectedTallerForRoute] = useState(null);
+  const [categories, setCategories] = useState([]);
+  const [filteredCategories, setFilteredCategories] = useState([]);
+  const [selectedCategories, setSelectedCategories] = useState([]);
 
   // Función para manejar el clic en un taller
   const handleTallerPress = (taller) => {
@@ -83,6 +89,61 @@ const PerimeterMapScreen = () => {
     setShowFilterModal(false);
   };
 
+  // Función para manejar la selección de categorías
+  const handleCategoryToggle = (categoryId) => {
+    setSelectedCategories(prev => {
+      if (prev.includes(categoryId)) {
+        return prev.filter(id => id !== categoryId);
+      } else {
+        return [...prev, categoryId];
+      }
+    });
+  };
+
+  // Función para aplicar filtros
+  const handleApplyFilters = () => {
+    console.log('Filtros aplicados:', selectedCategories);
+    handleCloseFilterModal();
+  };
+
+  // Función para filtrar talleres por categorías seleccionadas
+  const getFilteredTalleres = () => {
+    if (selectedCategories.length === 0) {
+      // Si no hay categorías seleccionadas, mostrar todos los talleres
+      return talleres;
+    }
+
+    return talleres.filter(taller => {
+      // Verificar si el taller tiene categorías
+      if (!taller.categorias || taller.categorias.length === 0) {
+        return false; // Si no tiene categorías, no mostrarlo
+      }
+
+      // Verificar si alguna de las categorías del taller coincide con las seleccionadas
+      return taller.categorias.some(categoria => 
+        selectedCategories.includes(categoria.uid_categoria)
+      );
+    });
+  };
+
+  // Función para limpiar filtros
+  const handleClearFilters = () => {
+    setSelectedCategories([]);
+  };
+
+  // Función para manejar el botón de ruta
+  const handleRoutePress = (taller) => {
+    console.log('🗺️ Abriendo ruta hacia:', taller.nombre);
+    setSelectedTallerForRoute(taller);
+    setShowRouteModal(true);
+  };
+
+  // Función para cerrar el modal de ruta
+  const handleCloseRouteModal = () => {
+    setShowRouteModal(false);
+    setSelectedTallerForRoute(null);
+  };
+
   // Función para redirigir al detalle del taller
   const redirectToTaller = (taller) => {
     setshowMap(false);
@@ -95,9 +156,42 @@ const PerimeterMapScreen = () => {
 
     }
   }
+
+  const getCategories = async () => {
+    try {
+      const response = await api.get('/usuarios/getActiveCategories', {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status === 200) {
+        const result = response.data;
+        if (result) {
+          setCategories(result.categories);
+          setFilteredCategories(result.categories);
+        } else {
+          console.warn('La respuesta no contiene un array válido de categorías.');
+          setCategories([]);
+          setFilteredCategories([]);
+        }
+      } else {
+        setCategories([]);
+        setFilteredCategories([]);
+      }
+    } catch (error) {
+      setCategories([]);
+      setFilteredCategories([]);
+      if (error.response) {
+        console.error('Error en la solicitud:', error.response.data?.message || error.response.statusText);
+      } else {
+        console.error('Error en la solicitud:', error.message);
+      }
+    }
+  };
   // Preparar las coordenadas de los talleres para el mapa
   const getTalleresCoordinates = () => {
-    return talleres
+    return getFilteredTalleres()
       .filter(taller => taller.ubicacion.latitud && taller.ubicacion.longitud)
       .map(taller => ({
         latitude: parseFloat(taller.ubicacion.latitud),
@@ -109,33 +203,60 @@ const PerimeterMapScreen = () => {
 
   // Componente del botón flotante de filtros
   const FloatingFilterButton = () => (
-    <TouchableOpacity
-      style={{
-        position: "absolute",
-        bottom: 30,
-        right: 20,
-        backgroundColor: "#162556",
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        justifyContent: "center",
-        alignItems: "center",
-        elevation: 8,
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 6,
-      }}
-      activeOpacity={0.8}
-      onPress={handleOpenFilterModal}
-    >
-      <SlidersHorizontal size={24} color="#E4E4E7" />
-    </TouchableOpacity>
+    <View style={{ position: "relative" }}>
+      <TouchableOpacity
+        style={{
+          position: "absolute",
+          bottom: 30,
+          right: 20,
+          backgroundColor: selectedCategories.length > 0 ? "#ffca00" : "#162556",
+          width: 56,
+          height: 56,
+          borderRadius: 28,
+          justifyContent: "center",
+          alignItems: "center",
+          elevation: 8,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 6,
+        }}
+        activeOpacity={0.8}
+        onPress={handleOpenFilterModal}
+      >
+        <SlidersHorizontal size={24} color={selectedCategories.length > 0 ? "#162556" : "#E4E4E7"} />
+      </TouchableOpacity>
+      
+      {/* Indicador de filtros activos */}
+      {selectedCategories.length > 0 && (
+        <View style={{
+          position: "absolute",
+          bottom: 70,
+          right: 20,
+          backgroundColor: "#ff4444",
+          width: 20,
+          height: 20,
+          borderRadius: 10,
+          justifyContent: "center",
+          alignItems: "center",
+          elevation: 4,
+        }}>
+          <Text style={{
+            color: "#ffffff",
+            fontSize: 10,
+            fontWeight: "bold",
+          }}>
+            {selectedCategories.length}
+          </Text>
+        </View>
+      )}
+    </View>
   );
 
   useEffect(() => {
     getUserData();
     requestLocationPermission();
+    getCategories();
   }, []);
 
   const radiusOptions = [
@@ -287,7 +408,7 @@ const PerimeterMapScreen = () => {
         console.log('🏢 Estado:', userInfo.estado);
         console.log('📏 Radio:', searchRadius);
 
-        const response = await api.post('/distance/nearby', {
+        const response = await api.post('/distance/getNearbyWithCategories', {
           estado: userInfo?.estado,
           lat: location?.latitude,
           lng: location?.longitude,
@@ -367,6 +488,11 @@ const PerimeterMapScreen = () => {
         </View>
         <Text style={{ fontSize: 14, color: '#e8eaf6', marginBottom: 20 }}>
           Aquí se mostrarán los talleres cercanos a tu ubicación.
+          {selectedCategories.length > 0 && (
+            <Text style={{ color: '#ffca00', fontWeight: 'bold' }}>
+              {' '}Filtrados por {selectedCategories.length} categoría{selectedCategories.length > 1 ? 's' : ''}
+            </Text>
+          )}
         </Text>
       </View>
 
@@ -375,7 +501,7 @@ const PerimeterMapScreen = () => {
           position: 'absolute',
           bottom: 0,
           width: screenWidth,
-          height: screenHeight * 0.8,
+          height: screenHeight * 0.77,
           backgroundColor: '#fff',
           borderTopLeftRadius: 60,
           borderTopRightRadius: 60,
@@ -391,19 +517,20 @@ const PerimeterMapScreen = () => {
             onSelect={setSearchRadius}
             style={styles.bottomSelector}
           />
-          {location && talleres.length > 0 && (
-            <Text style={{ 
-              color: '#2D3261', 
-              fontSize: 14, 
-              marginTop: 10,
-              textAlign: 'center',
-              fontWeight: '500'
-            }}>
-              {talleres.filter(taller => {
-                return taller.distancia !== undefined && taller.distancia !== null && taller.distancia <= searchRadius;
-              }).length} talleres encontrados en {searchRadius}km
-            </Text>
-          )}
+                     {location && talleres.length > 0 && (
+             <Text style={{ 
+               color: '#2D3261', 
+               fontSize: 14, 
+               marginTop: 10,
+               textAlign: 'center',
+               fontWeight: '500'
+             }}>
+               {getFilteredTalleres().filter(taller => {
+                 return taller.distancia !== undefined && taller.distancia !== null && taller.distancia <= searchRadius;
+               }).length} talleres encontrados en {searchRadius}km
+               {selectedCategories.length > 0 && ` (filtrados por ${selectedCategories.length} categoría${selectedCategories.length > 1 ? 's' : ''})`}
+             </Text>
+           )}
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
@@ -419,9 +546,9 @@ const PerimeterMapScreen = () => {
                 Buscando talleres cercanos...
               </Text>
             </View>
-          ) : talleres.length > 0 ? (
-            talleres
-              .map(taller => {
+                     ) : getFilteredTalleres().length > 0 ? (
+             getFilteredTalleres()
+               .map(taller => {
                 // Usar la distancia que viene de la API
                 console.log('🏢 Taller:', taller);
                 let distanciaMostrada = 'Distancia no disponible';
@@ -453,31 +580,38 @@ const PerimeterMapScreen = () => {
                 return 0;
               })
               .map(taller => (
-                <NearlyTallerItem
-                  key={taller.id || taller.uid}
-                  item={{
-                    nombre: taller.nombre,
-                    direccion: taller.Direccion || 'Dirección no disponible',
-                    distancia: taller.distanciaMostrada,
-                    estado: taller.estado,
-                    metodosPago: taller.metodos_pago,
-                  }}
-                  onPress={() => handleTallerPress(taller)}
-                  navigation={navigation}
-                />
+                                 <NearlyTallerItem
+                   key={taller.id || taller.uid}
+                   item={{
+                     nombre: taller.nombre,
+                     direccion: taller.Direccion || 'Dirección no disponible',
+                     distancia: taller.distanciaMostrada,
+                     estado: taller.estado,
+                     metodosPago: taller.metodos_pago,
+                   }}
+                   onPress={() => handleTallerPress(taller)}
+                   onRoutePress={() => handleRoutePress(taller)}
+                   navigation={navigation}
+                 />
               ))
-          ) : location && userInfo?.estado ? (
-            <View style={{ 
-              alignItems: 'center', 
-              padding: 20 
-            }}>
-              <Text style={{ color: '#94A3B8', fontSize: 16, textAlign: 'center' }}>
-                No se encontraron talleres en un radio de {searchRadius}km
-              </Text>
-              <Text style={{ color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 10 }}>
-                Intenta aumentar el radio de búsqueda
-              </Text>
-            </View>
+                     ) : location && userInfo?.estado ? (
+             <View style={{ 
+               alignItems: 'center', 
+               padding: 20 
+             }}>
+               <Text style={{ color: '#94A3B8', fontSize: 16, textAlign: 'center' }}>
+                 {selectedCategories.length > 0 
+                   ? `No se encontraron talleres con las categorías seleccionadas en un radio de ${searchRadius}km`
+                   : `No se encontraron talleres en un radio de ${searchRadius}km`
+                 }
+               </Text>
+               <Text style={{ color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 10 }}>
+                 {selectedCategories.length > 0 
+                   ? 'Intenta cambiar las categorías o aumentar el radio de búsqueda'
+                   : 'Intenta aumentar el radio de búsqueda'
+                 }
+               </Text>
+             </View>
           ) : (
             <View style={{ 
               alignItems: 'center', 
@@ -490,20 +624,20 @@ const PerimeterMapScreen = () => {
           )}
                  </ScrollView>
 
-         {/* Mapa condicional */}
-         {showMap == true ? (
-           <View
-             style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
-             {talleres.length > 0 ? (
-               <MapTalleres
-                 talleres={talleres}
-                 // edit={false}
-                 returnFunction={redirectToTaller}
-                 // useThisCoo={true}
-               />
-             ) : null}
-           </View>
-         ) : null}
+                   {/* Mapa condicional */}
+          {showMap == true ? (
+            <View
+              style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
+              {getFilteredTalleres().length > 0 ? (
+                <MapTalleres
+                  talleres={getFilteredTalleres()}
+                  // edit={false}
+                  returnFunction={redirectToTaller}
+                  // useThisCoo={true}
+                />
+              ) : null}
+            </View>
+          ) : null}
        </View>
 
        {/* Botón flotante de filtros */}
@@ -573,13 +707,14 @@ const PerimeterMapScreen = () => {
           backgroundColor: 'rgba(0,0,0,0.5)',
           justifyContent: 'flex-end',
         }}>
-          <View style={{
-            backgroundColor: '#fff',
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            padding: 20,
-            minHeight: 300,
-          }}>
+                     <View style={{
+             backgroundColor: '#fff',
+             borderTopLeftRadius: 20,
+             borderTopRightRadius: 20,
+             padding: 20,
+             minHeight: 500,
+             maxHeight: '80%',
+           }}>
             <View style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
@@ -615,73 +750,137 @@ const PerimeterMapScreen = () => {
                 color: '#2D3261',
                 marginBottom: 15,
               }}>
-                Opciones de filtro
+                Filtrar por categorías
               </Text>
               
-              {/* Aquí puedes agregar más opciones de filtro */}
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#f8f9fa',
-                  padding: 15,
-                  borderRadius: 10,
-                  marginBottom: 10,
-                  borderWidth: 1,
-                  borderColor: '#e9ecef',
-                }}
-                onPress={() => {
-                  console.log('Filtro 1 seleccionado');
-                  handleCloseFilterModal();
-                }}
-              >
-                <Text style={{ color: '#2D3261', fontSize: 14 }}>
-                  Filtro por distancia
-                </Text>
-              </TouchableOpacity>
+                             {/* Lista de categorías */}
+               <ScrollView style={{ maxHeight: 350 }}>
+                {categories.length > 0 ? (
+                  categories.map((category) => (
+                    <TouchableOpacity
+                      key={category.id}
+                      style={{
+                        backgroundColor: selectedCategories.includes(category.id) ? '#ffca00' : '#f8f9fa',
+                        padding: 15,
+                        borderRadius: 10,
+                        marginBottom: 10,
+                        borderWidth: 1,
+                        borderColor: selectedCategories.includes(category.id) ? '#ffca00' : '#e9ecef',
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                      onPress={() => handleCategoryToggle(category.id)}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={{ 
+                        color: selectedCategories.includes(category.id) ? '#162556' : '#2D3261', 
+                        fontSize: 14,
+                        fontWeight: selectedCategories.includes(category.id) ? '600' : '400'
+                      }}>
+                        {category.nombre || category.name || 'Categoría sin nombre'}
+                      </Text>
+                      {selectedCategories.includes(category.id) && (
+                        <Text style={{ color: '#162556', fontSize: 16, fontWeight: 'bold' }}>
+                          ✓
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  ))
+                ) : (
+                  <View style={{ 
+                    alignItems: 'center', 
+                    padding: 20 
+                  }}>
+                    <ActivityIndicator size="small" color="#2D3261" />
+                    <Text style={{ 
+                      color: '#94A3B8', 
+                      fontSize: 14, 
+                      textAlign: 'center',
+                      marginTop: 10 
+                    }}>
+                      Cargando categorías...
+                    </Text>
+                  </View>
+                )}
+              </ScrollView>
 
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#f8f9fa',
-                  padding: 15,
-                  borderRadius: 10,
-                  marginBottom: 10,
-                  borderWidth: 1,
-                  borderColor: '#e9ecef',
-                }}
-                onPress={() => {
-                  console.log('Filtro 2 seleccionado');
-                  handleCloseFilterModal();
-                }}
-              >
-                <Text style={{ color: '#2D3261', fontSize: 14 }}>
-                  Filtro por servicios
-                </Text>
-              </TouchableOpacity>
+              {/* Botones de acción */}
+              <View style={{ 
+                flexDirection: 'row', 
+                justifyContent: 'space-between',
+                marginTop: 20,
+                paddingTop: 15,
+                borderTopWidth: 1,
+                borderTopColor: '#e9ecef'
+              }}>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#f8f9fa',
+                    paddingVertical: 12,
+                    paddingHorizontal: 20,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: '#e9ecef',
+                    flex: 1,
+                    marginRight: 10,
+                  }}
+                  onPress={handleClearFilters}
+                >
+                  <Text style={{ 
+                    color: '#2D3261', 
+                    fontSize: 14,
+                    textAlign: 'center',
+                    fontWeight: '500'
+                  }}>
+                    Limpiar
+                  </Text>
+                </TouchableOpacity>
 
-              <TouchableOpacity
-                style={{
-                  backgroundColor: '#f8f9fa',
-                  padding: 15,
-                  borderRadius: 10,
-                  marginBottom: 10,
-                  borderWidth: 1,
-                  borderColor: '#e9ecef',
-                }}
-                onPress={() => {
-                  console.log('Filtro 3 seleccionado');
-                  handleCloseFilterModal();
-                }}
-              >
-                <Text style={{ color: '#2D3261', fontSize: 14 }}>
-                  Filtro por horario
-                </Text>
-              </TouchableOpacity>
+                <TouchableOpacity
+                  style={{
+                    backgroundColor: '#162556',
+                    paddingVertical: 12,
+                    paddingHorizontal: 20,
+                    borderRadius: 8,
+                    flex: 1,
+                    marginLeft: 10,
+                  }}
+                  onPress={handleApplyFilters}
+                >
+                  <Text style={{ 
+                    color: '#ffffff', 
+                    fontSize: 14,
+                    textAlign: 'center',
+                    fontWeight: '600'
+                  }}>
+                    Aplicar ({selectedCategories.length})
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      </Modal>
-    </>
-  );
-};
+                 </View>
+       </Modal>
+
+       {/* Modal del componente de ruta */}
+       {showRouteModal && selectedTallerForRoute && (
+         <MapRutaComponent
+           initialRegion={{
+             latitude: parseFloat(selectedTallerForRoute.ubicacion?.latitud || selectedTallerForRoute.ubicacion?.lat || 0),
+             longitude: parseFloat(selectedTallerForRoute.ubicacion?.longitud || selectedTallerForRoute.ubicacion?.lng || 0),
+             latitudeDelta: 0.015,
+             longitudeDelta: 0.0121,
+             name_taller: selectedTallerForRoute.nombre
+           }}
+           edit={false}
+           returnFunction={handleCloseRouteModal}
+           useThisCoo={true}
+         />
+       )}
+     </>
+   );
+ };
 
 const styles = StyleSheet.create({
   bottomSelectorContainer: {

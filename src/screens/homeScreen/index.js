@@ -32,8 +32,16 @@ const HomeScreen = () => {
   const [originalCategory, setoriginalCategory] = useState([]);
 
   const normalizeString = (str) => {
-    return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  };
+    if (!str || typeof str !== 'string') return '';
+    return str
+      .toLowerCase()
+      .replace(/[áàäâ]/g, 'a')
+      .replace(/[éèëê]/g, 'e')
+      .replace(/[íìïî]/g, 'i')
+      .replace(/[óòöô]/g, 'o')
+      .replace(/[úùüû]/g, 'u')
+      .replace(/ñ/g, 'n');
+  };  
 
   const handleSearchChange = (text) => {
     const normalizedText = normalizeString(text);

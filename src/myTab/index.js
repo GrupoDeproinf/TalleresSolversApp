@@ -259,17 +259,7 @@ const MyTabsCliente = () => {
         }}
       /> */}
 
-      <Tab.Screen
-        name="ProfileScreen"
-        component={ProfileScreen}
-        options={{
-          tabBarLabel: 'Profile',
-          tabBarIcon: () => <ProfileLight />,
-          activeTabBarIcon: () => <ProfileTab />,
-        }}
-      />
-
-      <Tab.Screen
+<Tab.Screen
         name="PerimeterMapScreen"
         component={PerimeterMapScreen}
         options={{
@@ -288,6 +278,18 @@ const MyTabsCliente = () => {
           }}/>,
         }}
       />
+
+      <Tab.Screen
+        name="ProfileScreen"
+        component={ProfileScreen}
+        options={{
+          tabBarLabel: 'Profile',
+          tabBarIcon: () => <ProfileLight />,
+          activeTabBarIcon: () => <ProfileTab />,
+        }}
+      />
+
+      
     </Tab.Navigator>
   );
 };

@@ -1,11 +1,17 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { ChevronRight, MapPin, Navigation, Wrench, CreditCard, DollarSign } from 'lucide-react-native';
+import { ChevronRight, MapPin, Navigation, Wrench, CreditCard, DollarSign, Route } from 'lucide-react-native';
 
-const NearlyTallerItem = ({ key, item, onPress, navigation }) => {
+const NearlyTallerItem = ({ key, item, onPress, navigation, onRoutePress }) => {
   const handlePress = () => {
     if (onPress) {
       onPress(item);
+    }
+  };
+
+  const handleRoutePress = () => {
+    if (onRoutePress) {
+      onRoutePress(item);
     }
   };
 
@@ -57,9 +63,14 @@ const NearlyTallerItem = ({ key, item, onPress, navigation }) => {
           </View>
           
           <View style={styles.rightContent}>
-            <View style={styles.arrowContainer}>
-              <ChevronRight size={16} color="#162556" />
-            </View>
+            <TouchableOpacity 
+              style={styles.routeButton}
+              onPress={handleRoutePress}
+              activeOpacity={0.7}
+            >
+              <MapPin size={16} color="#162556" />
+            </TouchableOpacity>
+            
           </View>
         </View>
       </View>
@@ -185,6 +196,25 @@ const styles = StyleSheet.create({
   },
   rightContent: {
     marginLeft: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  routeButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#ffca00',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#ffca00',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
   },
   arrowContainer: {
     width: 28,

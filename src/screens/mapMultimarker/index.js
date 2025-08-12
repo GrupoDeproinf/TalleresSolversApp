@@ -10,21 +10,16 @@ import {
   Alert,
   ScrollView
 } from 'react-native';
-// import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
 import { commonStyles } from '../../style/commonStyle.css';
-import Icons from 'react-native-vector-icons/FontAwesome'; // Asegúrate de importar el ícono que estás usando
-
+import Icons from 'react-native-vector-icons/FontAwesome';
 import MapView, { Marker, Callout } from 'react-native-maps';
 
 const MapTalleres = ({ talleres = [], initialRegion = null, edit = false, returnFunction = null, useThisCoo = false }) => {
-
-
   const [location, setLocation] = useState(null);
   const [modalVisible, setModalVisible] = useState(true);
   const [tallerInfoModal, setTallerInfoModal] = useState(false);
   const [selectedTaller, setSelectedTaller] = useState(null);
-
   const [showbutton, setshowbutton] = useState(true);
   const [gpsModalVisible, setGpsModalVisible] = useState(false);
 
@@ -162,7 +157,6 @@ const MapTalleres = ({ talleres = [], initialRegion = null, edit = false, return
         getCurrentLocation();
       }
     }
-
   }, [initialRegion]);
 
   useEffect(() => {
@@ -229,13 +223,11 @@ const MapTalleres = ({ talleres = [], initialRegion = null, edit = false, return
           default: return key;
         }
       });
-
     return metodosActivos.length > 0 ? metodosActivos.join(', ') : 'No especificado';
   };
 
   return (
     <View style={styles.container}>
-
       <Modal
         animationType="slide"
         transparent={false}
@@ -246,20 +238,15 @@ const MapTalleres = ({ talleres = [], initialRegion = null, edit = false, return
           // if (returnFunction) returnFunction(location);
         }}>
         <View style={styles.modalContainer}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, marginTop: 50, justifyContent: 'center' }}>
-
-            {/* Leyenda amigable */}
-            <Text
-              style={{
-                color: '#2D3261',
-                fontSize: 16,
-                fontWeight: 'bold',
-                textAlign: 'center', // Centra el texto horizontalmente
-              }}
-            >
-              <Icons name="wrench" size={18} color="#2D3261" style={{ marginRight: 0 }} /> {""}
-              Talleres disponibles en tu zona
-            </Text>
+          <View style={styles.headerContainer}>
+            <View style={styles.headerContent}>
+              <View style={styles.iconContainer}>
+                <Icons name="wrench" size={24} color="#FFFFFF" />
+              </View>
+              <Text style={styles.headerTitle}>
+                Talleres disponibles en tu zona
+              </Text>
+            </View>
           </View>
 
           <MapView
@@ -268,7 +255,6 @@ const MapTalleres = ({ talleres = [], initialRegion = null, edit = false, return
             customMapStyle={mapStyle}
             showsUserLocation={true}
             onPress={handleMapPress}>
-
             {/* Marker de ubicación del usuario si está disponible */}
             {location && (
               <Marker
@@ -277,7 +263,6 @@ const MapTalleres = ({ talleres = [], initialRegion = null, edit = false, return
                 pinColor="blue"
               />
             )}
-
             {/* Markers de talleres */}
             {talleres && talleres.map((taller, index) => (
               <Marker
@@ -296,82 +281,52 @@ const MapTalleres = ({ talleres = [], initialRegion = null, edit = false, return
                     <View style={styles.calloutHeaderCompact}>
                       <Text style={styles.tallerNameCompact}>{taller.nombre}</Text>
                     </View>
-
                     <View style={styles.tallerInfoContentCompact}>
                       <View style={styles.infoRowCompact}>
-                        <Icons name="phone" size={14} color="#2D3261" />
+                        <View style={styles.iconWrapper}>
+                          <Icons name="phone" size={14} color="#4A90E2" />
+                        </View>
                         <Text style={styles.infoLabelCompact}>Tel:</Text>
                         <Text style={styles.infoTextCompact}>{taller.phone}</Text>
                       </View>
-
                       {taller.whatsapp && (
                         <View style={styles.infoRowCompact}>
-                          <Icons name="whatsapp" size={14} color="#25D366" />
+                          <View style={styles.iconWrapper}>
+                            <Icons name="whatsapp" size={14} color="#25D366" />
+                          </View>
                           <Text style={styles.infoLabelCompact}>WhatsApp:</Text>
                           <Text style={styles.infoTextCompact}>{taller.whatsapp}</Text>
                         </View>
                       )}
-
                       <View style={styles.infoRowCompact}>
-                        <Icons name="envelope" size={14} color="#2D3261" />
+                        <View style={styles.iconWrapper}>
+                          <Icons name="envelope" size={14} color="#4A90E2" />
+                        </View>
                         <Text style={styles.infoLabelCompact}>Email:</Text>
                         <Text style={styles.infoTextCompact}>{taller.email}</Text>
                       </View>
                     </View>
-
-                    {/* <View style={styles.actionButtonsCenter}>
-                      <TouchableOpacity
-                        style={styles.profileButton}
-                        onPress={() => {
-                          console.log('🏢 estas aqui');
-                          setModalVisible(false);
-                          if (returnFunction) returnFunction(taller);
-                        }}
-                      >
-                        <Icons name="user" size={16} color="#FFF" />
-                        <Text style={styles.profileButtonText}>Ir a perfil</Text>
-                      </TouchableOpacity>
-                    </View> */}
                   </View>
                 </Callout>
               </Marker>
             ))}
           </MapView>
 
-          <View style={{ justifyContent: 'center', alignItems: 'center', marginTop: 0, paddingHorizontal: 5 }}>
+          <View style={styles.footerContainer}>
             <TouchableOpacity
-              style={[
-                stylesImage.button,
-                {
-                  borderWidth: 1,
-                  borderColor: '#2D3261',
-                  borderStyle: 'dotted',
-                  borderRadius: 5,
-                  backgroundColor: '#FFF',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  padding: 15,
-                  marginBottom: 10,
-                  width: '100%', // Ancho completo
-                },
-              ]}
+              style={styles.closeMapButton}
               onPress={() => {
                 setModalVisible(false);
                 if (returnFunction) returnFunction(null);
                 console.log('Aquiiii');
               }}
             >
-              <Text
-                style={[
-                  stylesImage.buttonText,
-                  { marginLeft: 0, color: '#2D3261', fontSize: 14 },
-                ]}
-              >
+              <Icons name="times" size={18} color="#FFFFFF" style={styles.closeIcon} />
+              <Text style={styles.closeMapButtonText}>
                 Cerrar Mapa
               </Text>
             </TouchableOpacity>
           </View>
-
         </View>
       </Modal>
 
@@ -391,82 +346,89 @@ const MapTalleres = ({ talleres = [], initialRegion = null, edit = false, return
                     <TouchableOpacity
                       style={styles.closeButton}
                       onPress={() => setTallerInfoModal(false)}>
-                      <Icons name="times" size={20} color="#2D3261" />
+                      <Icons name="times" size={20} color="#666" />
                     </TouchableOpacity>
                   </View>
-
                   <View style={styles.tallerInfoContent}>
                     <View style={styles.infoRow}>
-                      <Icons name="map-marker" size={16} color="#2D3261" />
+                      <View style={styles.infoIconContainer}>
+                        <Icons name="map-marker" size={16} color="#4A90E2" />
+                      </View>
                       <Text style={styles.infoLabel}>Dirección:</Text>
                       <Text style={styles.infoText}>{selectedTaller.Direccion}, {selectedTaller.estado}</Text>
                     </View>
-
                     <View style={styles.infoRow}>
-                      <Icons name="phone" size={16} color="#2D3261" />
+                      <View style={styles.infoIconContainer}>
+                        <Icons name="phone" size={16} color="#4A90E2" />
+                      </View>
                       <Text style={styles.infoLabel}>Teléfono:</Text>
                       <Text style={styles.infoText}>{selectedTaller.phone}</Text>
                     </View>
-
                     {selectedTaller.whatsapp && (
                       <View style={styles.infoRow}>
-                        <Icons name="whatsapp" size={16} color="#25D366" />
+                        <View style={styles.infoIconContainer}>
+                          <Icons name="whatsapp" size={16} color="#25D366" />
+                        </View>
                         <Text style={styles.infoLabel}>WhatsApp:</Text>
                         <Text style={styles.infoText}>{selectedTaller.whatsapp}</Text>
                       </View>
                     )}
-
                     <View style={styles.infoRow}>
-                      <Icons name="envelope" size={16} color="#2D3261" />
+                      <View style={styles.infoIconContainer}>
+                        <Icons name="envelope" size={16} color="#4A90E2" />
+                      </View>
                       <Text style={styles.infoLabel}>Email:</Text>
                       <Text style={styles.infoText}>{selectedTaller.email}</Text>
                     </View>
-
                     {selectedTaller.rif && (
                       <View style={styles.infoRow}>
-                        <Icons name="id-card" size={16} color="#2D3261" />
+                        <View style={styles.infoIconContainer}>
+                          <Icons name="id-card" size={16} color="#4A90E2" />
+                        </View>
                         <Text style={styles.infoLabel}>RIF:</Text>
                         <Text style={styles.infoText}>{selectedTaller.rif}</Text>
                       </View>
                     )}
-
                     <View style={styles.infoRow}>
-                      <Icons name="credit-card" size={16} color="#2D3261" />
+                      <View style={styles.infoIconContainer}>
+                        <Icons name="credit-card" size={16} color="#4A90E2" />
+                      </View>
                       <Text style={styles.infoLabel}>Métodos de Pago:</Text>
                       <Text style={styles.infoText}>{formatMetodosPago(selectedTaller.metodos_pago)}</Text>
                     </View>
-
                     {selectedTaller.subscripcion_actual && (
                       <View style={styles.infoRow}>
-                        <Icons name="star" size={16} color="#FFD700" />
+                        <View style={styles.infoIconContainer}>
+                          <Icons name="star" size={16} color="#FFD700" />
+                        </View>
                         <Text style={styles.infoLabel}>Suscripción:</Text>
                         <Text style={styles.infoText}>{selectedTaller.subscripcion_actual.nombre}</Text>
                       </View>
                     )}
-
                     {selectedTaller.distancia && (
                       <View style={styles.infoRow}>
-                        <Icons name="road" size={16} color="#2D3261" />
+                        <View style={styles.infoIconContainer}>
+                          <Icons name="road" size={16} color="#4A90E2" />
+                        </View>
                         <Text style={styles.infoLabel}>Distancia:</Text>
                         <Text style={styles.infoText}>{selectedTaller.distancia.toFixed(2)} km</Text>
                       </View>
                     )}
-
                     <View style={styles.infoRow}>
-                      <Icons name="check-circle" size={16} color="#28a745" />
+                      <View style={styles.infoIconContainer}>
+                        <Icons name="check-circle" size={16} color="#28a745" />
+                      </View>
                       <Text style={styles.infoLabel}>Estado:</Text>
                       <Text style={[styles.infoText, { color: selectedTaller.status === 'Aprobado' ? '#28a745' : '#dc3545' }]}>
                         {selectedTaller.status}
                       </Text>
                     </View>
                   </View>
-
                   <View style={styles.actionButtons}>
                     <TouchableOpacity style={styles.contactButton}>
                       <Icons name="phone" size={16} color="#FFF" />
                       <Text style={styles.contactButtonText}>Llamar</Text>
                     </TouchableOpacity>
-
                     {selectedTaller.whatsapp && (
                       <TouchableOpacity style={styles.whatsappButton}>
                         <Icons name="whatsapp" size={16} color="#FFF" />
@@ -488,18 +450,23 @@ const MapTalleres = ({ talleres = [], initialRegion = null, edit = false, return
         onRequestClose={() => setGpsModalVisible(false)}>
         <View style={stylesModal.container}>
           <View style={stylesModal.modalView}>
+            <View style={stylesModal.iconContainer}>
+              <Icons name="location-arrow" size={48} color="#FF6B6B" />
+            </View>
+            <Text style={stylesModal.modalTitle}>
+              Ubicación Requerida
+            </Text>
             <Text style={stylesModal.modalText}>
-              Usted debe habilitar la ubicacion del dispositivo
+              Para mostrar los talleres cercanos, necesitamos acceso a tu ubicación. Por favor, habilita el GPS en tu dispositivo.
             </Text>
             <View style={stylesModal.buttonContainer}>
               <TouchableOpacity style={stylesModal.buttonNo} onPress={() => setGpsModalVisible(false)}>
-                <Text style={stylesModal.buttonText}>Cerrar</Text>
+                <Text style={stylesModal.buttonText}>Entendido</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
-
     </View>
   );
 };
@@ -507,25 +474,17 @@ const MapTalleres = ({ talleres = [], initialRegion = null, edit = false, return
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#F8F9FA',
   },
   modalContainer: {
     flex: 1,
+    backgroundColor: '#F8F9FA',
   },
-  map: {
-    height: '77%',
-    width: '100%',
-  },
-  calloutContainer: {
-    width: 200,
-    padding: 10,
-  },
-  calloutContainerLarge: {
-    width: 280,
-    padding: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
+  headerContainer: {
+    backgroundColor: '#2D3261',
+    paddingTop: 50,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -533,178 +492,253 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 3,
-    elevation: 3,
+    elevation: 5,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 25,
+    padding: 12,
+    marginRight: 15,
+  },
+  headerTitle: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    flex: 1,
+  },
+  map: {
+    flex: 1,
+  },
+  footerContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingVertical: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#E9ECEF',
+  },
+  closeMapButton: {
+    backgroundColor: '#2D3261',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    shadowColor: '#2D3261',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 8,
+  },
+  closeIcon: {
+    marginRight: 10,
+  },
+  closeMapButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  calloutContainerLarge: {
+    width: 300,
+    padding: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
     borderWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: '#E9ECEF',
   },
   calloutHeaderCompact: {
-    marginBottom: 8,
-    paddingBottom: 6,
+    marginBottom: 12,
+    paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#E9ECEF',
   },
   tallerNameCompact: {
-    fontWeight: 'bold',
+    fontWeight: '700',
     fontSize: 16,
     color: '#2D3261',
     textAlign: 'center',
   },
   tallerInfoContentCompact: {
-    marginBottom: 10,
+    marginBottom: 8,
   },
   infoRowCompact: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
+    paddingVertical: 2,
+  },
+  iconWrapper: {
+    width: 24,
+    alignItems: 'center',
+    marginRight: 8,
   },
   infoLabelCompact: {
     fontWeight: '600',
-    color: '#2D3261',
-    marginLeft: 6,
-    marginRight: 6,
-    fontSize: 12,
-    minWidth: 60,
+    color: '#495057',
+    marginRight: 8,
+    fontSize: 13,
+    minWidth: 70,
   },
   infoTextCompact: {
     flex: 1,
-    color: '#555',
-    fontSize: 12,
-  },
-  actionButtonsCenter: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileButton: {
-    backgroundColor: '#2D3261',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 6,
-    minWidth: 120,
-  },
-  profileButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
-    marginLeft: 6,
+    color: '#6C757D',
     fontSize: 13,
-  },
-  calloutTitle: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: '#2D3261',
-    marginBottom: 5,
-  },
-  calloutDescription: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 2,
-  },
-  calloutLink: {
-    fontSize: 12,
-    color: '#007AFF',
-    marginTop: 5,
-    fontStyle: 'italic',
+    lineHeight: 18,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   tallerInfoContainer: {
-    backgroundColor: 'white',
+    backgroundColor: '#FFFFFF',
     margin: 20,
-    borderRadius: 10,
-    padding: 20,
-    maxHeight: '80%',
+    borderRadius: 20,
+    padding: 24,
+    maxHeight: '85%',
     width: '90%',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 15,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E0E0E0',
-    paddingBottom: 10,
+    marginBottom: 24,
+    borderBottomWidth: 2,
+    borderBottomColor: '#E9ECEF',
+    paddingBottom: 16,
   },
   tallerName: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#2D3261',
     flex: 1,
   },
   closeButton: {
-    padding: 5,
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#F8F9FA',
   },
   tallerInfoContent: {
-    marginBottom: 20,
+    marginBottom: 24,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 15,
-    paddingHorizontal: 5,
+    marginBottom: 16,
+    paddingVertical: 4,
+  },
+  infoIconContainer: {
+    width: 32,
+    alignItems: 'center',
+    marginRight: 12,
+    paddingTop: 2,
   },
   infoLabel: {
-    fontWeight: 'bold',
-    color: '#2D3261',
-    marginLeft: 10,
-    marginRight: 10,
-    minWidth: 80,
+    fontWeight: '600',
+    color: '#495057',
+    marginRight: 12,
+    minWidth: 90,
+    fontSize: 14,
   },
   infoText: {
     flex: 1,
-    color: '#333',
+    color: '#6C757D',
     fontSize: 14,
+    lineHeight: 20,
   },
   actionButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 10,
+    justifyContent: 'space-between',
+    marginTop: 16,
+    gap: 12,
   },
   contactButton: {
     backgroundColor: '#2D3261',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    flex: 0.45,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flex: 1,
+    shadowColor: '#2D3261',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
   },
   contactButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontWeight: '600',
     marginLeft: 8,
+    fontSize: 14,
   },
   whatsappButton: {
     backgroundColor: '#25D366',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 12,
-    borderRadius: 8,
-    flex: 0.45,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    flex: 1,
+    shadowColor: '#25D366',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
   },
   whatsappButtonText: {
-    color: '#FFF',
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontWeight: '600',
     marginLeft: 8,
+    fontSize: 14,
   },
 });
 
 const stylesImage = StyleSheet.create({
   button: {
-    padding: 10,
-    borderRadius: 5,
+    padding: 12,
+    borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 14,
   },
   imageContainer: {
     position: 'relative',
@@ -712,18 +746,19 @@ const stylesImage = StyleSheet.create({
   },
   closeButton: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.7)',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
 
@@ -732,52 +767,68 @@ const stylesModal = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.6)',
   },
   modalView: {
     margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 32,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 2,
+      height: 10,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowRadius: 20,
+    elevation: 15,
+    minWidth: '85%',
   },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+  iconContainer: {
+    backgroundColor: '#FFF5F5',
+    borderRadius: 40,
+    padding: 20,
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#2D3261',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
-    color: '#333',
     fontSize: 16,
-    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#6C757D',
+    lineHeight: 24,
+    marginBottom: 24,
   },
-  buttonYes: {
-    backgroundColor: '#2D3261', // Color del botón "Sí"
-    borderRadius: 5,
-    padding: 10,
-    width: '48%', // Ajustar ancho para espacio entre botones
+  buttonContainer: {
+    width: '100%',
     alignItems: 'center',
   },
   buttonNo: {
-    backgroundColor: '#FFA500', // Warning color
-    color: '#2D3261', // Color del botón "No"
-    borderRadius: 5,
-    padding: 10,
-    width: '48%', // Ajustar ancho para espacio entre botones
+    backgroundColor: '#2D3261',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    minWidth: '60%',
     alignItems: 'center',
+    shadowColor: '#2D3261',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 6,
   },
   buttonText: {
-    color: 'white', // Color del texto del botón
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
 
