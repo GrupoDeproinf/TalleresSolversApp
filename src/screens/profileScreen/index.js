@@ -154,7 +154,7 @@ const ProfileScreen = () => {
       </View>
       <View style={[external.mt_10]}>
         {
-          infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente" ? (
+          infoUser && (infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente") ? (
             profileDataAdmin.map((item, index) => (
               <Pressable
                 key={index}
@@ -216,7 +216,7 @@ const ProfileScreen = () => {
 
 
 {
-  infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente" ? (
+  infoUser && (infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente") ? (
     profileDataAdmin
       .filter(item => item.id !== 3 || infoUser.typeUser === "Taller") // Filtrar si el ID es 3 y el usuario no es Taller
       .map((item, index) => (
@@ -279,7 +279,7 @@ const ProfileScreen = () => {
 }
 
 {
-  infoUser.typeUser == "Taller" || infoUser.typeUser == "Cliente" ? (
+  infoUser && (infoUser.typeUser == "Taller" || infoUser.typeUser == "Cliente") ? (
     profileData
       .filter(item => item.id !== 3 || infoUser.typeUser === "Taller") // Filtrar si el ID es 3 y el usuario no es Taller
       .map((item, index) => (

@@ -132,8 +132,8 @@ const SignIn = ({navigation}) => {
       try {
         // Hacer la solicitud POST utilizando Axios
         const response = await api.post('/usuarios/authenticateUser', {
-          email: email.toLowerCase(),
-          password: password.toLowerCase(),
+          email: email.toLowerCase().trim(),
+          password: password.trim(),
         });
 
         // Verificar la respuesta del servidor
@@ -257,6 +257,10 @@ const SignIn = ({navigation}) => {
               <TextInputs
                 title="Email"
                 value={email}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                autoCorrect={false}
                 placeHolder="Ingrese su Email"
                 onChangeText={text => {
                   setEmail(text);
@@ -289,6 +293,9 @@ const SignIn = ({navigation}) => {
                 value={password}
                 placeHolder="Ingrese su contraseña"
                 secureTextEntry={showPass}
+                autoCorrect={false}
+                autoCapitalize="none"
+                autoComplete="password"
                 showPass={true}
                 changePassValue={changePassValue}
                 onChangeText={text => {

@@ -32,6 +32,7 @@ const TextInputs = ({
   textAlignVertical,
   showPass,
   changePassValue,
+  ...props
 }) => {
   const [error, setError] = useState('');
 
@@ -118,6 +119,7 @@ const TextInputs = ({
                   }
                 }}
                 onBlur={handleValidation}
+                {...props}
               />
 
               {show && <Pressable style={[external.mh_10]}>{value}</Pressable>}

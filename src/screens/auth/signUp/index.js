@@ -241,8 +241,8 @@ const SignUp = ({navigation}) => {
                 cedula: selectedPrefix + '' + cedula,
                 phone: phone,
                 typeUser: 'Cliente',
-                email: email.toLowerCase(),
-                password: password.toLowerCase(),
+                email: email.toLowerCase().trim(),
+                password: password.trim(),
                 estado: estadoSelected,
                 base64: base64,
                 token: token,
@@ -372,7 +372,7 @@ const SignUp = ({navigation}) => {
                 phone: phone,
                 typeUser: 'Taller',
                 email: email.toLowerCase(),
-                password: password.toLowerCase(),
+                password: password.trim(),
                 whats: whats,
                 metodos_pago: newFormatMP,
                 estado: estadoSelected,
@@ -744,6 +744,10 @@ const SignUp = ({navigation}) => {
                 title="Email"
                 value={email}
                 placeHolder="Ingrese su email"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoComplete="email"
+                autoCorrect={false}
                 onChangeText={text => {
                   setEmail(text);
                   setEmailTyping(true);
@@ -866,6 +870,9 @@ const SignUp = ({navigation}) => {
               <TextInputs
                 title="Contraseña"
                 value={password}
+                autoCorrect={false}
+                autoCapitalize="none"
+                autoComplete="password"
                 placeHolder="Ingrese su contraseña"
                 secureTextEntry={!showPassword} // Cambia según el estado
                 onChangeText={text => {
@@ -1089,6 +1096,10 @@ const SignUp = ({navigation}) => {
               title="Email"
               value={email}
               placeHolder="Ingrese su email"
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect={false}
               onChangeText={text => {
                 setEmail(text);
                 setEmailTyping(true);
@@ -1312,6 +1323,9 @@ const SignUp = ({navigation}) => {
             <TextInputs
               title="Contraseña"
               value={password}
+              autoCorrect={false}
+              autoCapitalize="none"
+              autoComplete="password"
               placeHolder="Ingrese su contraseña"
               secureTextEntry={!showPassword} // Make it a password field
               onChangeText={text => {
