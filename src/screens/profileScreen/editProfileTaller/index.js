@@ -289,6 +289,20 @@ const TallerEditProfileScreen = ({navigation}) => {
     }
   };
 
+  const validateWhatsApp = () => {
+    // Eliminar la máscara para validar solo los números
+    const numericPhone = whats.replace(/[^0-9]/g, ''); // Remueve paréntesis, espacios y guiones
+    const phoneRegex = /^\d{10}$/; // Validar exactamente 10 dígitos
+
+    if (!phoneRegex.test(numericPhone)) {
+      setwhatsError('Teléfono debe contener exactamente 10 dígitos');
+      return false;
+    } else {
+      setwhatsError('');
+      return true;
+    }
+  };
+
   const onHandleChange = async () => {
     const isEmailValid = validateEmail();
     const isPhoneValid = validatePhone();
@@ -662,7 +676,7 @@ const TallerEditProfileScreen = ({navigation}) => {
                   }}
                   keyboardType="numeric"
                   icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                  style={{height: 50}} // Altura para el TextInput
+                  style={{height: 50, color: "black"}} // Altura para el TextInput
                 />
               </View>
             </View>
@@ -837,7 +851,7 @@ const TallerEditProfileScreen = ({navigation}) => {
               }
             }}
             onBlur={() => {
-              validatewhats();
+              validateWhatsApp();
               setCallTyping(false);
             }}
             icon={<Icons name="whatsapp" size={20} color="#9BA6B8" />}
@@ -957,7 +971,6 @@ const TallerEditProfileScreen = ({navigation}) => {
             }
           }}
           onBlur={() => {
-            validateCaracteristicas();
             setCaracteristicasTyping(false);
           }}
           icon={<Icons name="wrench" size={20} color="#9BA6B8" />}
