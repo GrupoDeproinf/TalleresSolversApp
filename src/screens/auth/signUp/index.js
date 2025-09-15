@@ -170,6 +170,20 @@ const SignUp = ({navigation}) => {
     }
   };
 
+  const validateWhatsApp = () => {
+    // Eliminar la máscara para validar solo los números
+    const numericPhone = whats.replace(/[^0-9]/g, ''); // Remueve paréntesis, espacios y guiones
+    const phoneRegex = /^\d{10}$/; // Validar exactamente 10 dígitos
+
+    if (!phoneRegex.test(numericPhone)) {
+      setwhatsError('Teléfono debe contener exactamente 10 dígitos');
+      return false;
+    } else {
+      setwhatsError('');
+      return true;
+    }
+  };
+
   const validatePassword = () => {
     if (password.length < 6) {
       setPasswordError('Password must be at least 6 characters');
@@ -1081,7 +1095,7 @@ const SignUp = ({navigation}) => {
                     }}
                     keyboardType="numeric"
                     icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                    style={{height: 50}} // Altura para el TextInput
+                    style={{height: 50, color: "black"}} // Altura para el TextInput
                   />
                 </View>
               </View>
@@ -1122,7 +1136,7 @@ const SignUp = ({navigation}) => {
             )}
 
             <View style={{marginTop: 5}}>
-              {/* Texto "RIF" arriba de los inputs */}
+              {/* Texto "ESTADO" arriba de los inputs */}
               <Text
                 style={[
                   styles.headingContainer,
@@ -1269,7 +1283,7 @@ const SignUp = ({navigation}) => {
                 }
               }}
               onBlur={() => {
-                validatewhats();
+                validateWhatsApp();
                 setCallTyping(false);
               }}
               icon={<Icons name="whatsapp" size={20} color="#9BA6B8" />}
@@ -1280,7 +1294,7 @@ const SignUp = ({navigation}) => {
             )}
 
             <View style={{marginTop: 5}}>
-              {/* Texto "RIF" arriba de los inputs */}
+              {/* Texto "MÉTODOS DE PAGO" arriba de los inputs */}
               <Text
                 style={[
                   styles.headingContainer,

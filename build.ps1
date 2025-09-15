@@ -43,8 +43,8 @@ if ($bytes.Length -ge 3 -and $bytes[0] -eq 0xEF -and $bytes[1] -eq 0xBB -and $by
 # Ir a la carpeta android y compilar
 Push-Location android
 Write-Host "-----------------------------------------"
-Write-Host "GENERANDO APK..."
-./gradlew assembleRelease
+# Write-Host "GENERANDO APK..."
+# ./gradlew assembleRelease
 Write-Host "-----------------------------------------"
 Write-Host "GENERANDO BUNDLE"
 ./gradlew bundleRelease
