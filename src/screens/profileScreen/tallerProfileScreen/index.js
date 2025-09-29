@@ -1229,23 +1229,22 @@ const TallerProfileScreen = ({navigation}) => {
                 styles.bagIsEmptyText,
                 {color: textColorStyle, textAlign: 'center'},
               ]}>
-              Su taller ha sido registrado parcialmente.
+              ¡Gracias por registrar tu taller en Solvers!
             </Text>
 
             <Text style={[styles.bagisEmptySomething, {textAlign: 'center'}]}>
-              ¡Ya casi está! Solo completa tu perfil y pronto te visitaremos
-              para darte el visto bueno.
+              {"Estamos revisando tu información.\nUna vez aprobada, podrás disfrutar de todos los beneficios de nuestra plataforma.\n¡Te avisaremos pronto!"}
             </Text>
           </View>
 
-          <View style={{width: '100%'}}>
+          {/* <View style={{width: '100%'}}>
             <NavigationButton
               title="Continuar Registro"
               backgroundColor={'#2D3261'}
               color={appColors.screenBg}
               onPress={() => ChangeView()}
             />
-          </View>
+          </View> */}
 
           <View style={{width: '100%', marginBottom: 25, marginTop: 10}}>
             <NavigationButton
