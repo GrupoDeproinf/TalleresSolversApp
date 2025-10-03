@@ -1,4 +1,4 @@
-import {ScrollView, View, Text, TextInput} from 'react-native';
+import {ScrollView, View, Text, TextInput, PermissionsAndroid, Platform, Alert, AppState, ActivityIndicator, Modal} from 'react-native';
 import React, {useEffect, useState, useCallback} from 'react';
 import HeaderContainer from '../../components/homeScreen/headerContainer';
 import SearchContainer from '../../components/homeScreen/searchContainer';
@@ -9,7 +9,7 @@ import {newArrivalSmallData} from '../../data/homeScreen/newArrivalData';
 import {external} from '../../style/external.css';
 import {useValues} from '../../../App';
 import ProductSwiper from '../../components/homeScreen/productSwiper';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import api from '../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import ShowProductsContainer from '../../components/homeScreen/showProducts';
@@ -17,7 +17,7 @@ import ShowProductsContainer from '../../components/homeScreen/showProducts';
 import {Search} from '../../assets/icons/search';
 import {commonStyles, textRTLStyle} from '../../../src/style/commonStyle.css';
 import appColors from '../../../src/themes/appColors';
-
+import Geolocation from '@react-native-community/geolocation';
 
 const HomeScreen = () => {
   const {bgFullStyle, t} = useValues();
@@ -30,6 +30,8 @@ const HomeScreen = () => {
   const [searchText, setSearchText] = useState('');
   const [categories, setCategories] = useState([]);
   const [originalCategory, setoriginalCategory] = useState([]);
+  const [location, setLocation] = useState(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   const normalizeString = (str) => {
     if (!str || typeof str !== 'string') return '';
@@ -92,8 +94,6 @@ const HomeScreen = () => {
 
       const response = await api.get('/home/getServices');
 
-      console.log('API response:', response);
-
       if (response.status === 200) {
         setData(response.data);
         setOriginalData(response.data);
@@ -155,6 +155,24 @@ const HomeScreen = () => {
     getCategories()
   }, [getData]);
 
+  useFocusEffect(
+    React.useCallback(() => {
+      requestLocationPermission();
+    }, [])
+  );
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener("change", (state) => {
+      if (state === "active") {
+        console.log("VOLVI")
+        requestLocationPermission();
+      }
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, []);
 
   const getCategories = async () => {
     try {
@@ -168,7 +186,6 @@ const HomeScreen = () => {
         const result = response.data;
 
         if (Array.isArray(result.categories)) {
-          console.log('Categories:', result.categories);
           result.categories.unshift({id: 'Todos', nombre: 'Todos'});
           setCategories(result.categories);
           setoriginalCategory(result.categories)
@@ -209,6 +226,114 @@ const HomeScreen = () => {
       : 'Servicios'
     : 'Servicios';
 
+    const getCurrentLocation = () => {
+      console.log('🔍 Ejecutando getCurrentLocation...');
+      setIsLoadingLocation(true);
+      
+      Geolocation.getCurrentPosition(
+        info => {
+          console.log('📍 Ubicación obtenida:', info);
+          const { latitude, longitude } = info.coords;
+          console.log('🔍 Ubicación obtenida:', latitude, longitude);
+          setLocation({ latitude, longitude });
+          setIsLoadingLocation(false);
+        },
+        error => {
+          console.error('❌ Error al obtener la ubicación:', error);
+          setIsLoadingLocation(false);
+          
+          // Mostrar un mensaje de error más específico según el tipo de error
+          let errorMessage = 'No se pudo obtener tu ubicación.';
+          
+          switch (error.code) {
+            case 1:
+              errorMessage = 'Permiso de ubicación denegado. Ve a Configuración > Aplicaciones > [Tu App] > Permisos y habilita la ubicación.';
+              break;
+            case 2:
+              errorMessage = 'Ubicación no disponible. Verifica que el GPS esté activado.';
+              break;
+            case 3:
+              errorMessage = 'Tiempo de espera agotado. Verifica tu conexión GPS y vuelve a intentar.';
+              break;
+            default:
+              errorMessage = 'Error al obtener ubicación. Verifica que el GPS esté activado y que hayas concedido permisos.';
+          }
+          
+          Alert.alert(
+            'Error de ubicación',
+            errorMessage,
+            [
+              { text: 'Reintentar', onPress: () => getCurrentLocation() },
+              { text: 'Cancelar', style: 'cancel' }
+            ]
+          );
+        },
+        {
+          enableHighAccuracy: false, // Cambiado a false para mayor compatibilidad
+          timeout: 15000, // Reducido el timeout a 15 segundos
+          maximumAge: 60000, // Aumentado para usar ubicación en caché si está disponible
+        }
+      );
+    };
+    
+      const requestLocationPermission = async () => {
+      try {
+        if (Platform.OS === 'android') {
+          const fine = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+          const coarse = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION);
+    
+          console.log('Permiso fine:', fine);
+          console.log('Permiso coarse:', coarse);
+    
+          // Si ya tenemos permisos, obtener ubicación directamente
+          if (fine === PermissionsAndroid.RESULTS.GRANTED || coarse === PermissionsAndroid.RESULTS.GRANTED) {
+            console.log('Permisos ya concedidos');
+            setTimeout(() => {
+              getCurrentLocation();
+            }, 500);
+            return;
+          }
+    
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+            {
+              title: 'Permiso de ubicación',
+              message: 'Esta app necesita acceder a tu ubicación para mostrar talleres cercanos',
+              buttonNeutral: 'Pregúntame después',
+              buttonNegative: 'Cancelar',
+              buttonPositive: 'OK',
+            }
+          );
+    
+          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+            console.log('Permiso concedido');
+            
+            // Espera un momento antes de obtener ubicación
+            setTimeout(() => {
+              getCurrentLocation();
+            }, 1000);
+          } else {
+            console.warn('Permiso de ubicación denegado');
+            Alert.alert(
+              'Permiso denegado',
+              'Necesitas conceder permisos de ubicación para usar esta función.',
+              [{ text: 'OK' }]
+            );
+          }
+        } else {
+          // Para iOS, intentar obtener ubicación directamente
+          getCurrentLocation();
+        }
+      } catch (err) {
+        console.error('Error al pedir permiso:', err);
+        Alert.alert(
+          'Error de permisos',
+          'Hubo un problema al solicitar permisos de ubicación.',
+          [{ text: 'OK' }]
+        );
+      }
+    };
+
   return (
     <ScrollView
       contentContainerStyle={[external.Pb_80]}
@@ -248,6 +373,7 @@ const HomeScreen = () => {
         value={displayTitle}
         show={true}
         showPlus={true}
+        userLocation={location}
       />
 
       
