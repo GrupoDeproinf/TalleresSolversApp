@@ -78,11 +78,11 @@ const NewCategoriesDetail = ({
                 {color: textColorStyle},
                 {textAlign: textRTLStyle},
               ]}>
-              {t(item.nombre_servicio)}
+              {t(item?.nombre_servicio || '')}
             </Text>
             <Text
               style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
-              {t(item.taller)}
+              {t(item?.taller?.nombre || '')}
             </Text>
             <View
               style={[

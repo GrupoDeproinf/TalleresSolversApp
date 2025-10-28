@@ -1,11 +1,11 @@
-import {Pressable, Text, TextInput, View, TouchableOpacity} from 'react-native';
-import React, {useState} from 'react';
+import { Pressable, Text, TextInput, View, TouchableOpacity, Keyboard, TouchableWithoutFeedback } from 'react-native';
+import React, { useState } from 'react';
 import styles from './style.css';
-import {external} from '../../style/external.css';
+import { external } from '../../style/external.css';
 import appColors from '../../themes/appColors';
-import {useValues} from '../../../App';
+import { useValues } from '../../../App';
 import LinearGradient from 'react-native-linear-gradient';
-import {windowHeight} from '../../themes/appConstant';
+import { windowHeight } from '../../themes/appConstant';
 import Icons from 'react-native-vector-icons/Entypo';
 
 const TextInputs = ({
@@ -32,7 +32,7 @@ const TextInputs = ({
   textAlignVertical,
   showPass,
   changePassValue,
-  ...props
+  autoCapitalize
 }) => {
   const [error, setError] = useState('');
 
@@ -46,106 +46,105 @@ const TextInputs = ({
       }
     }
   };
-  const {isDark, textColorStyle, linearColorStyle, textRTLStyle, viewRTLStyle} =
+  const { isDark, textColorStyle, linearColorStyle, textRTLStyle, viewRTLStyle } =
     useValues();
 
   const colors = isDark
     ? ['#808184', '#2E3036']
     : [appColors.screenBg, appColors.screenBg];
   return (
-    <View style={[external.mt_10]}>
-      <View style={[external.mb_5]}>
-        <Text
-          style={[
-            styles.headingContainer,
-            {color: textColorStyle},
-            {textAlign: textRTLStyle},
-          ]}>
-          {title}
-        </Text>
-        <View>
-          <LinearGradient
-            start={{x: 0.0, y: 0.0}}
-            end={{x: 1.0, y: 1.0}}
-            colors={colors}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <View style={[external.mt_10]}>
+        <View style={[external.mb_5]}>
+          <Text
             style={[
-              show ? styles.textInputView : styles.withoutShow,
-              {shadowColor: appColors.shadowColor},
-              {width: fullWidth || '100%'},
-              {height: height},
-              {flexDirection: 'row', alignItems: 'center'}, // Asegurar que el contenido esté en fila
+              styles.headingContainer,
+              { color: textColorStyle },
+              { textAlign: textRTLStyle },
             ]}>
+            {title}
+          </Text>
+          <View>
             <LinearGradient
-              start={{x: 0.0, y: 0.0}}
-              end={{x: 0.0, y: 1.0}}
-              colors={linearColorStyle}
+              start={{ x: 0.0, y: 0.0 }}
+              end={{ x: 1.0, y: 1.0 }}
+              colors={colors}
               style={[
-                styles.menuItemContent,
-                {shadowColor: appColors.shadowColor},
-                {flexDirection: viewRTLStyle},
-                {width: fullWidthTwo || '100%'},
-                {paddingHorizontal: paddingHorizontalTwo || windowHeight(8)},
-                {flex: 1}, // Asegurar que tome el espacio disponible
+                show ? styles.textInputView : styles.withoutShow,
+                { shadowColor: appColors.shadowColor },
+                { width: fullWidth || '100%' },
+                { height: height },
+                { flexDirection: 'row', alignItems: 'center' }, // Asegurar que el contenido esté en fila
               ]}>
-              <View style={{marginLeft: 5}}>{icon}</View>
-
-              <TextInput
-                keyboardType={keyboardType}
-                secureTextEntry={secureTextEntry}
-                multiline={multiline}
-                numberOfLines={numberOfLines}
-                value={value}
-                editable={editable}
+              <LinearGradient
+                start={{ x: 0.0, y: 0.0 }}
+                end={{ x: 0.0, y: 1.0 }}
+                colors={linearColorStyle}
                 style={[
-                  styles.textInput,
-                  {width: width},
-                  {height: height},
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
-                  {minHeight: minHeight},
-                  {
-                    textDecorationLine:
-                      textDecorationLine == undefined
-                        ? 'none'
-                        : textDecorationLine, // Línea en el centro
-                  },
-                ]}
-                placeholder={placeHolder}
-                placeholderTextColor={color || appColors.subtitle}
-                onChangeText={text => {
-                  onChangeText(text);
-                  if (text !== false) {
-                    setError('');
-                  }
-                }}
-                onBlur={handleValidation}
-                {...props}
-              />
+                  styles.menuItemContent,
+                  { shadowColor: appColors.shadowColor },
+                  { flexDirection: viewRTLStyle },
+                  { width: fullWidthTwo || '100%' },
+                  { paddingHorizontal: paddingHorizontalTwo || windowHeight(8) },
+                  { flex: 1 }, // Asegurar que tome el espacio disponible
+                ]}>
+                <View style={{ marginLeft: 5 }}>{icon}</View>
 
-              {show && <Pressable style={[external.mh_10]}>{value}</Pressable>}
+                <TextInput
+                  autoCapitalize={autoCapitalize}
+                  keyboardType={keyboardType}
+                  secureTextEntry={secureTextEntry}
+                  multiline={multiline}
+                  numberOfLines={numberOfLines}
+                  textAlignVertical={multiline ? "top" : "center"}
+                  value={value}
+                  editable={editable}
+                  style={[
+                    styles.textInput,
+                    { width: width == undefined || width == "" ? '100%' : width },
+                    { height: height == undefined || height == "" ? 60 : height },
+                    { color: textColorStyle },
+                    { textAlign: textRTLStyle },
+                    { minHeight: minHeight },
+                    {
+                      textDecorationLine:
+                        textDecorationLine == undefined
+                          ? 'none'
+                          : textDecorationLine, // Línea en el centro
+                    },
+                  ]}
+                  placeholder={placeHolder}
+                  placeholderTextColor={color || appColors.subtitle}
+                  onChangeText={text => {
+                    onChangeText(text);
+                    if (text !== false) {
+                      setError('');
+                    }
+                  }}
+                  onBlur={handleValidation}
+                />
+
+                {show && <Pressable style={[external.mh_10]}>{value}</Pressable>}
+              </LinearGradient>
+
+              {showPass == true ? (
+                <TouchableOpacity
+                  onPress={changePassValue}
+                  style={{ marginRight: 10 }}>
+                  <View>
+                    <Icons name="eye" size={23} color="#2D3261" />
+                  </View>
+                </TouchableOpacity>
+              ) : null}
             </LinearGradient>
+          </View>
 
-            {showPass == true ? (
-              <TouchableOpacity
-                onPress={changePassValue}
-                style={{marginRight: 10}}>
-                <View>
-                  <Icons
-                    name={secureTextEntry ? 'eye' : 'eye-with-line'}
-                    size={23}
-                    color="#2D3261"
-                  />
-                </View>
-              </TouchableOpacity>
-            ) : null}
-          </LinearGradient>
+          {error !== '' && (
+            <Text style={{ color: 'red', marginTop: 5 }}>{error}</Text>
+          )}
         </View>
-
-        {error !== '' && (
-          <Text style={{color: 'red', marginTop: 5}}>{error}</Text>
-        )}
       </View>
-    </View>
+    </TouchableWithoutFeedback>
   );
 };
 

@@ -1,12 +1,12 @@
-import {Image, ImageBackground} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import { Image, ImageBackground, Text } from 'react-native';
+import React, { useEffect, useState } from 'react';
 import images from '../../utils/images';
 import styles from './style.css';
-import {useValues} from '../../../App';
+import { useValues } from '../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import api from '../../../axiosInstance'; 
+import api from '../../../axiosInstance';
 
-const LoaderScreen = ({navigation}) => {
+const LoaderScreen = ({ navigation }) => {
 
   const [ValidTaller, setValidTaller] = useState(false);
 
@@ -17,36 +17,36 @@ const LoaderScreen = ({navigation}) => {
 
   const getData = async () => {
     try {
-        const jsonValue = await AsyncStorage.getItem('@userInfo');
-        const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+      const jsonValue = await AsyncStorage.getItem('@userInfo');
+      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-        console.log("Userrrr", user)
+      console.log("Userrrr", user)
 
-        if(user){
-          // navigation.replace('DrawerScreen');
+      if (user) {
+        // navigation.replace('DrawerScreen');
 
-        if (user.typeUser == "Admin"){
+        if (user.typeUser == "Admin") {
           goToProfile(user.typeUser, '')
-        } else if (user.typeUser == "Certificador"){
+        } else if (user.typeUser == "Certificador") {
           goToProfile(user.typeUser, '')
-        } 
+        }
         else {
           try {
             // Hacer la solicitud POST utilizando Axios
             const response = await api.post('/usuarios/getUserByUid', {
               uid: user.uid,
             });
-          
+
             // Verificar la respuesta del servidor
             const result = response.data;
             console.log("Este es el usuario encontrado", result);
-          
+
             if (result.message === "Usuario encontrado") {
               try {
                 const jsonValue = JSON.stringify(result.userData);
                 console.log(jsonValue);
                 await AsyncStorage.setItem('@userInfo', jsonValue);
-          
+
                 goToProfile(result.userData.typeUser, result.userData.status);
               } catch (e) {
                 console.error(e);
@@ -64,74 +64,77 @@ const LoaderScreen = ({navigation}) => {
             }
             navigation.replace('Login');
           }
-          
+
         }
-      }else{
+      } else {
         navigation.replace('Login');
       }
 
-    } catch(e) {
-        // error reading value
-        console.log(e)
+    } catch (e) {
+      // error reading value
+      console.log(e)
     }
-};
+  };
 
 
 
-const goToProfile = (typeUser, status) => {
-  if(typeUser == "Cliente"){
-    console.log("**************************************")
-    console.log("Es Cliente")
-    console.log("*************************************")
-    const timer = setTimeout(() => {
-      navigation.replace('DrawerScreen');
-    }, 1000);
-    return () => clearTimeout(timer);
-
-  } else if (typeUser == "Taller") {
-    console.log("**************************************")
-    console.log("Es Taller")
-    console.log("*************************************")
-    if (status == 'Pendiente' || status == 'En espera por aprobación'){
-      const timer = setTimeout(() => {
-        navigation.replace('TallerProfileScreen');
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else {
+  const goToProfile = (typeUser, status) => {
+    if (typeUser == "Cliente") {
+      console.log("**************************************")
+      console.log("Es Cliente")
+      console.log("*************************************")
       const timer = setTimeout(() => {
         navigation.replace('DrawerScreen');
       }, 1000);
       return () => clearTimeout(timer);
+
+    } else if (typeUser == "Taller") {
+      console.log("**************************************")
+      console.log("Es Taller")
+      console.log("*************************************")
+      if (status == 'Pendiente') { // status == 'En espera por aprobación'
+        const timer = setTimeout(() => {
+          navigation.replace('TallerProfileScreen');
+        }, 1000);
+        return () => clearTimeout(timer);
+      } else {
+        const timer = setTimeout(() => {
+          navigation.replace('DrawerScreen');
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
+    } else if (typeUser == "Admin") {
+      console.log("**************************************")
+      console.log("Es Admin")
+      console.log("*************************************")
+      const timer = setTimeout(() => {
+        navigation.replace('DrawerScreen');
+      }, 1000);
+      return () => clearTimeout(timer);
+
+    } else if (typeUser == "Certificador") {
+      console.log("**************************************")
+      console.log("Es Certificador")
+      console.log("*************************************")
+      const timer = setTimeout(() => {
+        navigation.replace('TalleresContainer');
+      }, 1000);
+      return () => clearTimeout(timer);
+
     }
-  } else if(typeUser == "Admin"){
-    console.log("**************************************")
-    console.log("Es Admin")
-    console.log("*************************************")
-    const timer = setTimeout(() => {
-      navigation.replace('DrawerScreen');
-    }, 1000);
-    return () => clearTimeout(timer);
-
-  } else if(typeUser == "Certificador"){
-    console.log("**************************************")
-    console.log("Es Certificador")
-    console.log("*************************************")
-    const timer = setTimeout(() => {
-      navigation.replace('TalleresContainer');
-    }, 1000);
-    return () => clearTimeout(timer);
-
   }
-}
 
 
-  const {isDark} = useValues();
+  const { isDark } = useValues();
   const imageBg = isDark ? images.loaderBgDark : images.loaderBg;
-  const loader = isDark ? images.loading : images.loaderGIF;
+  const loader = isDark ? images.loading : images.loading;
   return (
-    <ImageBackground style={styles.container} source={imageBg}>
+    <ImageBackground
+      style={[styles.container, { width: '100%' }]} // Agregando más ancho al contenedor
+      source={imageBg}
+    >
       <Image
-        style={isDark ? styles.imgStyleDark : styles.imgStyle}
+        style={isDark ? styles.imgStyleDark : styles.imgStyleload}
         source={loader}
       />
     </ImageBackground>

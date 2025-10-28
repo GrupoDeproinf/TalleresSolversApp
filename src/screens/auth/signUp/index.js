@@ -133,7 +133,7 @@ const SignUp = ({ navigation }) => {
 
   // Estados para el sistema de pasos
   const [currentStep, setCurrentStep] = useState(1);
-  const [totalSteps] = useState(6);
+  const [totalSteps] = useState(7);
 
   const [metodosPago, setMetodosPago] = useState([
     { label: 'Efectivo', value: 'efectivo', checked: false },
@@ -325,7 +325,9 @@ const SignUp = ({ navigation }) => {
         return true; // Siempre permite continuar
       case 5: // Redes sociales y seguro - OPCIONAL
         return true; // Siempre permite continuar
-      case 6: // Contraseñas - REQUERIDO
+      case 6: // Documentos - OPCIONAL
+        return true; // Siempre permite continuar
+      case 7: // Contraseñas - REQUERIDO
         return password?.trim() !== '' && confirmPassword?.trim() !== '' && validatePassword() && validateConfirmPassword();
       default:
         return false;
@@ -486,7 +488,6 @@ const SignUp = ({ navigation }) => {
         }
       } else {
 
-        console.log('Taller');
 
         if (lng == -122.406417 && lat == 37.785834 && ModalOpened == false) {
           showToast('Error al crear al usuario, debe seleccionar una ubicación en el mapa');
@@ -562,6 +563,11 @@ const SignUp = ({ navigation }) => {
                 metodos_pago: newFormatMP,
                 estado: estadoSelected,
                 base64: base64 == null || base64 == undefined || base64 == '' ? "" : base64,
+                rifIdFiscal: rifIdFiscalBase64 == null || rifIdFiscalBase64 == undefined || rifIdFiscalBase64 == '' ? "" : rifIdFiscalBase64,
+                permisoOperacion: permisoOperacionBase64 == null || permisoOperacionBase64 == undefined || permisoOperacionBase64 == '' ? "" : permisoOperacionBase64,
+                logotipoNegocio: logotipoNegocioBase64 == null || logotipoNegocioBase64 == undefined || logotipoNegocioBase64 == '' ? "" : logotipoNegocioBase64,
+                fotoFrenteTaller: fotoFrenteTallerBase64 == null || fotoFrenteTallerBase64 == undefined || fotoFrenteTallerBase64 == '' ? "" : fotoFrenteTallerBase64,
+                fotoInternaTaller: fotoInternaTallerBase64 == null || fotoInternaTallerBase64 == undefined || fotoInternaTallerBase64 == '' ? "" : fotoInternaTallerBase64,
                 ubicacion: {
                   lat: lat,
                   lng: lng
@@ -585,7 +591,9 @@ const SignUp = ({ navigation }) => {
                 console.log(response); // Mostrar la respuesta completa
 
                 const result = response.data; // Los datos vienen directamente de response.data
-                console.log(result); // Aquí puedes manejar la respuesta
+                console.log("Este es el resultado de la respuesta", result); // Aquí puedes manejar la respuesta
+
+                infoUserCreated.uid = result.uid;
 
                 try {
                   const jsonValue = JSON.stringify(infoUserCreated);
@@ -614,10 +622,32 @@ const SignUp = ({ navigation }) => {
                 setLinkTiktok('');
                 setseguro('');
                 setwhats(0);
+                setImageUri(null);
+                setBase64(null);
+                setRifIdFiscalUri(null);
+                setRifIdFiscalBase64(null);
+                setPermisoOperacionUri(null);
+                setPermisoOperacionBase64(null);
+                setLogotipoNegocioUri(null);
+                setLogotipoNegocioBase64(null);
+                setFotoFrenteTallerUri(null);
+                setFotoFrenteTallerBase64(null);
+                setFotoInternaTallerUri(null);
+                setFotoInternaTallerBase64(null);
 
-                showToast('Usuario creado exitosamente');
+
+
+                showToast('Negocio registrado exitosamente');
+                setCurrentStep(1)
                 setGetOtpDisabled(false);
-                navigation.navigate('Login');
+                navigation.navigate('PlanesRegistro');
+
+                
+
+
+                
+
+
               } catch (error) {
                 if (error.response) {
                   // La solicitud se hizo y el servidor respondió con un código de estado
@@ -813,7 +843,8 @@ const SignUp = ({ navigation }) => {
       { number: 3, title: 'Contacto' },
       { number: 4, title: 'Taller' },
       { number: 5, title: 'Redes' },
-      { number: 6, title: 'Seguridad' },
+      { number: 6, title: 'Documentos' },
+      { number: 7, title: 'Seguridad' },
     ];
 
     return (
@@ -1026,94 +1057,99 @@ const SignUp = ({ navigation }) => {
         <Text style={styles.errorStyle}>{NombreError}</Text>
       )}
 
-      <View style={{marginTop: 5}}>
-              {/* Texto "RIF" arriba de los inputs */}
-              <Text
-                style={[
-                  styles.headingContainer,
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
-                ]}>
-                Registro de Información Fiscal (RIF)
-              </Text>
+      <View style={{ marginTop: 5 }}>
+        <Text
+          style={[
+            styles.headingContainer,
+            { color: textColorStyle },
+            { textAlign: textRTLStyle },
+          ]}>
+          Registro de Información Fiscal (RIF)
+        </Text>
 
-              {/* Contenedor para el Picker y el TextInput */}
-              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                {/* Select para elegir "J-" o "G-" */}
-                <View
-                  style={{
-                    width: 80, // Más angosto
-                    marginTop: 10,
-                    backgroundColor: '#fff',
-                    borderRadius: 10,
-                    borderWidth: 1,
-                    borderColor: '#ddd',
-                    elevation: 3,
-                    shadowOffset: {width: 0, height: 2},
-                    shadowOpacity: 0.1,
-                    shadowRadius: 4,
-                    marginRight: 55,
-                    height: 50,
-                    justifyContent: 'center',
-                    paddingHorizontal: 0,
-                  }}>
-                  <Dropdown
-                    style={{
-                      height: 50,
-                      backgroundColor: 'transparent',
-                      width: '100%',
-                      paddingLeft: 15,
-                    }}
-                    data={prefixOptions}
-                    labelField="label"
-                    valueField="value"
-                    value={selectedPrefix}
-                    onChange={item => setSelectedPrefix(item.value)}
-                    placeholder="Pref."
-                    maxHeight={250}
-                    itemTextStyle={{color: 'black'}}
-                    selectedTextStyle={{color: 'black'}}
-                    containerStyle={{borderRadius: 10, width: 80}}
-                    dropdownPosition="auto"
-                    showsVerticalScrollIndicator={false}
-                    autoScroll={false}
-                  />
-                </View>
+        <View style={{ flexDirection: 'row', marginTop: 10, marginBottom: 10, alignItems: 'center' }}>
+          <View style={{
+            width: '25%',
+            paddingRight: 0,
+            borderWidth: 1,
+            borderColor: '#ccc',
+            borderRadius: 5,
+            backgroundColor: '#fff',
+            height: 50,
+            justifyContent: 'center',
+          }}>
+            <Dropdown
+              style={{
+                width: '100%',
+                borderWidth: 1,
+                borderColor: '#ccc',
+                borderRadius: 5,
+                paddingHorizontal: 10,
+                backgroundColor: '#fff',
+                height: 50,
+              }}
+              placeholderStyle={{
+                color: 'gray',
+                fontSize: 14,
+              }}
+              selectedTextStyle={{
+                color: 'black',
+                fontSize: 14,
+              }}
+              data={[
+                { label: 'C-', value: 'C-' },
+                { label: 'E-', value: 'E-' },
+                { label: 'G-', value: 'G-' },
+                { label: 'J-', value: 'J-' },
+                { label: 'P-', value: 'P-' },
+                { label: 'V-', value: 'V-' },
+              ]}
+              labelField="label"
+              valueField="value"
+              placeholder="Seleccione un prefijo"
+              value={selectedPrefix}
+              onChange={item => setSelectedPrefix(item.value)}
+            />
+          </View>
 
-                {/* TextInput para el número de RIF */}
-                <View style={{flex: 1, marginTop: -22, marginLeft: -50}}>
-                  <TextInputs
-                    title=""
-                    value={cedula}
-                    placeHolder="Ingrese el número de RIF"
-                    onChangeText={text => {
-                      const numericText = text.replace(/[^0-9]/g, '');
-                      if (numericText.length <= 10) {
-                        // Limitar a 10 caracteres
-                        setcedula(numericText);
-                        setcedulaTyping(true);
-                        if (numericText.trim() === '') {
-                          setcedulaError('RIF es requerido');
-                        } else {
-                          setcedulaError('');
-                        }
-                      }
-                    }}
-                    onBlur={() => {
-                      setcedulaTyping(false);
-                    }}
-                    keyboardType="numeric"
-                    icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                    style={{height: 50, color: "black"}} // Altura para el TextInput
-                  />
-                </View>
-              </View>
-
-              {/* Mensaje de error si el RIF es inválido */}
-              {cedulaError !== '' && (
-                <Text style={styles.errorStyle}>{cedulaError}</Text>
-              )}
-            </View>
+          <View style={{ width: '100%', paddingLeft: 0, marginTop: -40 }}>
+            <TextInputs
+              title=""
+              value={cedula}
+              placeHolder="Ingrese el número de RIF"
+              onChangeText={text => {
+                const numericText = text.replace(/[^0-9]/g, '');
+                if (numericText.length <= 10) {
+                  setcedula(numericText);
+                  setcedulaTyping(true);
+                  if (numericText?.trim() === '') {
+                    setcedulaError('Documento es requerido');
+                  } else {
+                    setcedulaError('');
+                  }
+                }
+              }}
+              onBlur={() => {
+                setcedulaTyping(false);
+              }}
+              keyboardType="numeric"
+              icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
+              style={{
+                height: 50,
+                borderWidth: 1,
+                borderColor: '#ccc',
+                borderRadius: 5,
+                paddingHorizontal: 10,
+                backgroundColor: '#fff',
+                width: '100%',
+              }}
+            />
+            {cedulaError !== '' && (
+              <Text style={styles.errorStyle}>{cedulaError}</Text>
+            )}
+          </View>
+        </View>
+      </View>
 
       <TextInputs
         title="Correo Electrónico"
@@ -1204,7 +1240,6 @@ const SignUp = ({ navigation }) => {
                 color: 'black',
                 fontSize: 14,
               }}
-              itemTextStyle={{color: 'black', fontSize: 14}}
               data={estadosVenezuela}
               labelField="label"
               valueField="value"
@@ -1638,6 +1673,255 @@ const SignUp = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={stepStyles.stepContainer}>
+          <View style={stepStyles.stepHeader}>
+            <Text style={stepStyles.stepTitle}>Servicio</Text>
+            <Text style={stepStyles.stepSubtitle}>
+              Sube los documentos necesarios para verificar tu taller
+            </Text>
+          </View>
+
+          {/* RIF/ID Fiscal */}
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ marginBottom: 10, color: 'black', fontWeight: 'bold' }}>
+              Cargar RIF/ID Fiscal
+            </Text>
+            {rifIdFiscalUri && (
+              <View style={stylesImage.imageContainer}>
+                <Image
+                  source={{ uri: rifIdFiscalUri }}
+                  style={{ width: 200, height: 200 }}
+                />
+                <TouchableOpacity
+                  style={stylesImage.closeButton}
+                  onPress={clearRifIdFiscal}>
+                  <Text style={stylesImage.closeButtonText}>X</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            <TouchableOpacity
+              style={[
+                stylesImage.button,
+                {
+                  borderWidth: 1,
+                  borderColor: '#2D3261',
+                  borderStyle: 'dotted',
+                  borderRadius: 5,
+                  backgroundColor: '#FFF',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 10,
+                  marginTop: 10,
+                },
+              ]}
+              onPress={selectRifIdFiscal}>
+              <Icons name="dollar" size={15} color="#2D3261" />
+              <Text
+                style={[
+                  stylesImage.buttonText,
+                  { marginLeft: 10, color: '#2D3261' },
+                ]}>
+                Cargar RIF/ID Fiscal
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Permiso de Operación */}
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ marginBottom: 10, color: 'black', fontWeight: 'bold' }}>
+              Cargar Permiso de Operación
+            </Text>
+            {permisoOperacionUri && (
+              <View style={stylesImage.imageContainer}>
+                <Image
+                  source={{ uri: permisoOperacionUri }}
+                  style={{ width: 200, height: 200 }}
+                />
+                <TouchableOpacity
+                  style={stylesImage.closeButton}
+                  onPress={clearPermisoOperacion}>
+                  <Text style={stylesImage.closeButtonText}>X</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            <TouchableOpacity
+              style={[
+                stylesImage.button,
+                {
+                  borderWidth: 1,
+                  borderColor: '#2D3261',
+                  borderStyle: 'dotted',
+                  borderRadius: 5,
+                  backgroundColor: '#FFF',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 10,
+                  marginTop: 10,
+                },
+              ]}
+              onPress={selectPermisoOperacion}>
+              <Icons name="dollar" size={15} color="#2D3261" />
+              <Text
+                style={[
+                  stylesImage.buttonText,
+                  { marginLeft: 10, color: '#2D3261' },
+                ]}>
+                Cargar Permiso de Operación
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Logotipo del Negocio (Opcional) */}
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ marginBottom: 10, color: 'black', fontWeight: 'bold' }}>
+              Cargar Logotipo del Negocio (Opcional)
+            </Text>
+            {logotipoNegocioUri && (
+              <View style={stylesImage.imageContainer}>
+                <Image
+                  source={{ uri: logotipoNegocioUri }}
+                  style={{ width: 200, height: 200 }}
+                />
+                <TouchableOpacity
+                  style={stylesImage.closeButton}
+                  onPress={clearLogotipoNegocio}>
+                  <Text style={stylesImage.closeButtonText}>X</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            <TouchableOpacity
+              style={[
+                stylesImage.button,
+                {
+                  borderWidth: 1,
+                  borderColor: '#2D3261',
+                  borderStyle: 'dotted',
+                  borderRadius: 5,
+                  backgroundColor: '#FFF',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 10,
+                  marginTop: 10,
+                },
+              ]}
+              onPress={selectLogotipoNegocio}>
+              <Icons name="dollar" size={15} color="#2D3261" />
+              <Text
+                style={[
+                  stylesImage.buttonText,
+                  { marginLeft: 10, color: '#2D3261' },
+                ]}>
+                Cargar Logotipo del Negocio (Opcional)
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Foto del Frente del Taller */}
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ marginBottom: 10, color: 'black', fontWeight: 'bold' }}>
+              Foto del Frente del Taller
+            </Text>
+            {fotoFrenteTallerUri && (
+              <View style={stylesImage.imageContainer}>
+                <Image
+                  source={{ uri: fotoFrenteTallerUri }}
+                  style={{ width: 200, height: 200 }}
+                />
+                <TouchableOpacity
+                  style={stylesImage.closeButton}
+                  onPress={clearFotoFrenteTaller}>
+                  <Text style={stylesImage.closeButtonText}>X</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            <TouchableOpacity
+              style={[
+                stylesImage.button,
+                {
+                  borderWidth: 1,
+                  borderColor: '#2D3261',
+                  borderStyle: 'dotted',
+                  borderRadius: 5,
+                  backgroundColor: '#FFF',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 10,
+                  marginTop: 10,
+                },
+              ]}
+              onPress={selectFotoFrenteTaller}>
+              <Icons name="file-image-o" size={15} color="#2D3261" />
+              <Text
+                style={[
+                  stylesImage.buttonText,
+                  { marginLeft: 10, color: '#2D3261' },
+                ]}>
+                Foto del Frente del Taller
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Foto Interna del Taller */}
+          <View style={{ marginBottom: 20 }}>
+            <Text style={{ marginBottom: 10, color: 'black', fontWeight: 'bold' }}>
+              Foto Interna del Taller
+            </Text>
+            {fotoInternaTallerUri && (
+              <View style={stylesImage.imageContainer}>
+                <Image
+                  source={{ uri: fotoInternaTallerUri }}
+                  style={{ width: 200, height: 200 }}
+                />
+                <TouchableOpacity
+                  style={stylesImage.closeButton}
+                  onPress={clearFotoInternaTaller}>
+                  <Text style={stylesImage.closeButtonText}>X</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            <TouchableOpacity
+              style={[
+                stylesImage.button,
+                {
+                  borderWidth: 1,
+                  borderColor: '#2D3261',
+                  borderStyle: 'dotted',
+                  borderRadius: 5,
+                  backgroundColor: '#FFF',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  padding: 10,
+                  marginTop: 10,
+                },
+              ]}
+              onPress={selectFotoInternaTaller}>
+              <Icons name="file-image-o" size={15} color="#2D3261" />
+              <Text
+                style={[
+                  stylesImage.buttonText,
+                  { marginLeft: 10, color: '#2D3261' },
+                ]}>
+                Foto Interna del Taller
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+
+  const renderStep7 = () => (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
+      <ScrollView 
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 50 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={stepStyles.stepContainer}>
       <View style={stepStyles.stepHeader}>
         <Text style={stepStyles.stepTitle}>Seguridad</Text>
         <Text style={stepStyles.stepSubtitle}>
@@ -1714,6 +1998,8 @@ const SignUp = ({ navigation }) => {
         return renderStep5();
       case 6:
         return renderStep6();
+      case 7:
+        return renderStep7();
       default:
         return renderStep1();
     }
@@ -1740,6 +2026,22 @@ const SignUp = ({ navigation }) => {
 
   const [imageUri, setImageUri] = useState(null);
   const [base64, setBase64] = useState(null);
+
+  // Estados para los 5 nuevos inputs de archivo
+  const [rifIdFiscalUri, setRifIdFiscalUri] = useState(null);
+  const [rifIdFiscalBase64, setRifIdFiscalBase64] = useState(null);
+  
+  const [permisoOperacionUri, setPermisoOperacionUri] = useState(null);
+  const [permisoOperacionBase64, setPermisoOperacionBase64] = useState(null);
+  
+  const [logotipoNegocioUri, setLogotipoNegocioUri] = useState(null);
+  const [logotipoNegocioBase64, setLogotipoNegocioBase64] = useState(null);
+  
+  const [fotoFrenteTallerUri, setFotoFrenteTallerUri] = useState(null);
+  const [fotoFrenteTallerBase64, setFotoFrenteTallerBase64] = useState(null);
+  
+  const [fotoInternaTallerUri, setFotoInternaTallerUri] = useState(null);
+  const [fotoInternaTallerBase64, setFotoInternaTallerBase64] = useState(null);
 
   const selectImage = () => {
     launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
@@ -1776,6 +2078,107 @@ const SignUp = ({ navigation }) => {
     setBase64(null);
   };
 
+  // Funciones para manejar los 5 nuevos inputs de archivo
+  const selectRifIdFiscal = () => {
+    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else {
+        const source = { uri: response.assets[0].uri };
+        const base64Data = response.assets[0].base64;
+        setRifIdFiscalUri(source.uri);
+        setRifIdFiscalBase64(base64Data);
+      }
+    });
+  };
+
+  const clearRifIdFiscal = () => {
+    setRifIdFiscalUri(null);
+    setRifIdFiscalBase64(null);
+  };
+
+  const selectPermisoOperacion = () => {
+    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else {
+        const source = { uri: response.assets[0].uri };
+        const base64Data = response.assets[0].base64;
+        setPermisoOperacionUri(source.uri);
+        setPermisoOperacionBase64(base64Data);
+      }
+    });
+  };
+
+  const clearPermisoOperacion = () => {
+    setPermisoOperacionUri(null);
+    setPermisoOperacionBase64(null);
+  };
+
+  const selectLogotipoNegocio = () => {
+    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else {
+        const source = { uri: response.assets[0].uri };
+        const base64Data = response.assets[0].base64;
+        setLogotipoNegocioUri(source.uri);
+        setLogotipoNegocioBase64(base64Data);
+      }
+    });
+  };
+
+  const clearLogotipoNegocio = () => {
+    setLogotipoNegocioUri(null);
+    setLogotipoNegocioBase64(null);
+  };
+
+  const selectFotoFrenteTaller = () => {
+    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else {
+        const source = { uri: response.assets[0].uri };
+        const base64Data = response.assets[0].base64;
+        setFotoFrenteTallerUri(source.uri);
+        setFotoFrenteTallerBase64(base64Data);
+      }
+    });
+  };
+
+  const clearFotoFrenteTaller = () => {
+    setFotoFrenteTallerUri(null);
+    setFotoFrenteTallerBase64(null);
+  };
+
+  const selectFotoInternaTaller = () => {
+    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
+      if (response.didCancel) {
+        console.log('User cancelled image picker');
+      } else if (response.error) {
+        console.log('ImagePicker Error: ', response.error);
+      } else {
+        const source = { uri: response.assets[0].uri };
+        const base64Data = response.assets[0].base64;
+        setFotoInternaTallerUri(source.uri);
+        setFotoInternaTallerBase64(base64Data);
+      }
+    });
+  };
+
+  const clearFotoInternaTaller = () => {
+    setFotoInternaTallerUri(null);
+    setFotoInternaTallerBase64(null);
+  };
+
   const [isMounted, setIsMounted] = useState(true);
   const [ModalOpened, setModalOpened] = useState(false);
 
@@ -1787,15 +2190,6 @@ const SignUp = ({ navigation }) => {
     setIsMounted(false); // Desmonta el componente
     setTimeout(() => setIsMounted(true), 100);
   };
-
-  const prefixOptions = [
-    {label: 'C-', value: 'C-'},
-    {label: 'E-', value: 'E-'},
-    {label: 'G-', value: 'G-'},
-    {label: 'J-', value: 'J-'},
-    {label: 'P-', value: 'P-'},
-    {label: 'V-', value: 'V-'},
-  ];
 
   const [showPass, setshowPass] = useState(true);
   const changePassValue = () => {
@@ -2062,54 +2456,67 @@ const SignUp = ({ navigation }) => {
                 <Text style={styles.errorStyle}>{emailError}</Text>
               )}
 
-              <View style={{marginTop: 5}}>
-                              {/* Texto "RIF" arriba de los inputs */}
-                              <Text
-                                style={[
-                                  styles.headingContainer,
-                                  {color: textColorStyle},
-                                  {textAlign: textRTLStyle},
-                                ]}>
-                                Estado
-                              </Text>
-              
-                              {/* Contenedor para el Picker y el TextInput */}
-                              <View style={{flexDirection: 'row', alignItems: 'center'}}>
-                                <Icons4
-                                  name="location"
-                                  size={20}
-                                  color="#9BA6B8"
-                                  style={{marginRight: 10, marginLeft: 10}}
-                                />
-                                <View style={{flex: 1}}>
-                                  <Dropdown
-                                    style={{
-                                      height: 50,
-                                      backgroundColor: '#fff',
-                                      borderColor: '#ddd',
-                                      borderWidth: 1,
-                                      borderRadius: 10,
-                                      paddingLeft: 15,
-                                      paddingRight: 10,
-                                      justifyContent: 'center',
-                                    }}
-                                    data={estadosVenezuela}
-                                    labelField="label"
-                                    valueField="value"
-                                    value={estadoSelected}
-                                    onChange={item => setestadoSelected(item.value)}
-                                    placeholder="Seleccione un estado"
-                                    maxHeight={250}
-                                    itemTextStyle={{color: 'black'}}
-                                    selectedTextStyle={{color: 'black'}}
-                                    containerStyle={{borderRadius: 10}}
-                                    dropdownPosition="auto"
-                                    showsVerticalScrollIndicator={false}
-                                    autoScroll={false}
-                                  />
-                                </View>
-                              </View>
-                            </View>
+              <View style={{ marginTop: 5 }}>
+                {/* Texto "RIF" arriba de los inputs */}
+                <Text
+                  style={[
+                    styles.headingContainer,
+                    { color: textColorStyle },
+                    { textAlign: textRTLStyle },
+                  ]}>
+                  Estado
+                </Text>
+
+                {/* Contenedor para el Picker y el TextInput */}
+
+                <View style={{ flexDirection: 'row', marginTop: 10, marginBottom: 10, alignItems: 'center' }}>
+                  {/* Picker con borde */}
+                  <View style={{
+                    width: '100%',
+                    paddingRight: 0,
+                    borderWidth: 1,
+                    borderColor: '#ccc',
+                    borderRadius: 5,
+                    backgroundColor: '#fff',
+                    height: 50, // para que el borde envuelva el Picker apropiadamente
+                    justifyContent: 'center', // centra el Picker verticalmente
+                  }}>
+
+                    <Dropdown
+                      style={{
+                        width: '100%',
+                        borderWidth: 1,
+                        borderColor: '#ccc',
+                        borderRadius: 5,
+                        paddingHorizontal: 10,
+                        backgroundColor: '#fff',
+                        height: 50,
+                      }}
+                      placeholderStyle={{
+                        color: 'gray',
+                        fontSize: 14,
+                      }}
+                      selectedTextStyle={{
+                        color: 'black',
+                        fontSize: 14,
+                        backgroundColor: '#fff',
+                      }}
+                      data={estadosVenezuela}
+                      labelField="label"
+                      valueField="value"
+                      placeholder="Seleccione un estado"
+                      value={estadoSelected}
+                      search={true}
+                      onChange={item => setestadoSelected(item.value)} // Maneja el cambio de selección
+                    />
+
+
+
+                  </View>
+                </View>
+
+
+              </View>
 
               <TextInputs
                 title="Número Telefónico"
@@ -2250,7 +2657,7 @@ const SignUp = ({ navigation }) => {
                 external.ph_5,
                 { color: textColorStyle },
               ]}>
-              Taller
+              Negocio
             </Text>
           </TouchableOpacity>
         </View>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, Pressable, StyleSheet, TextInput } from 'react-native';
 import { X, Star } from 'lucide-react-native';
+import { KeyboardAvoidingView, Platform } from 'react-native';
 
 
 const BeautifulModal = ({ visible, onClose, onSubmit }) => {
@@ -11,7 +12,7 @@ const BeautifulModal = ({ visible, onClose, onSubmit }) => {
     onSubmit(rating, comment);
     setRating(0);
     setComment('');
-  };  
+  };
 
   return (
     <Modal
@@ -21,37 +22,47 @@ const BeautifulModal = ({ visible, onClose, onSubmit }) => {
       onRequestClose={onClose}
     >
       <View style={styles.overlay}>
-        <View style={styles.modalView}>
-          <Pressable style={styles.closeButton} onPress={onClose}>
-            <X size={24} color="#333" />
-          </Pressable>
-          <Text style={styles.modalTitle}>Califica tu experiencia</Text>
-          
-          <View style={styles.ratingContainer}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Pressable key={star} onPress={() => setRating(star)}>
-                <Star
-                  size={30}
-                  color={star <= rating ? '#FFD700' : '#D3D3D3'}
-                  fill={star <= rating ? '#FFD700' : 'none'}
-                />
-              </Pressable>
-            ))}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={{ flex: 1, justifyContent: 'center', alignItems: 'center',width: '100%' }}
+          keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0} // ajusta según tu header, si tienes uno
+        >
+
+
+
+
+          <View style={styles.modalView}>
+            <Pressable style={styles.closeButton} onPress={onClose}>
+              <X size={24} color="#333" />
+            </Pressable>
+            <Text style={styles.modalTitle}>Califica tu experiencia</Text>
+
+            <View style={styles.ratingContainer}>
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Pressable key={star} onPress={() => setRating(star)}>
+                  <Star
+                    size={30}
+                    color={star <= rating ? '#FFD700' : '#D3D3D3'}
+                    fill={star <= rating ? '#FFD700' : 'none'}
+                  />
+                </Pressable>
+              ))}
+            </View>
+
+            <TextInput
+              style={styles.input}
+              placeholder="Deja tu comentario aquí"
+              placeholderTextColor="#999"
+              value={comment}
+              onChangeText={setComment}
+              multiline
+            />
+
+            <Pressable style={styles.button} onPress={handleSubmit}>
+              <Text style={styles.buttonText}>Enviar</Text>
+            </Pressable>
           </View>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Deja tu comentario aquí"
-            placeholderTextColor="#999"
-            value={comment}
-            onChangeText={setComment}
-            multiline
-          />
-
-          <Pressable style={styles.button} onPress={handleSubmit}>
-            <Text style={styles.buttonText}>Enviar</Text>
-          </Pressable>
-        </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );

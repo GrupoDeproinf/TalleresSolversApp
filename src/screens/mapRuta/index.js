@@ -14,8 +14,8 @@ import Geolocation from '@react-native-community/geolocation';
 import { commonStyles } from '../../style/commonStyle.css';
 import Icons from 'react-native-vector-icons/FontAwesome'; // Asegúrate de importar el ícono que estás usando
 import MapViewDirections from 'react-native-maps-directions';
+import { Linking } from 'react-native';
 
-import { WebView } from 'react-native-webview'
 
 
 const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
@@ -136,6 +136,10 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
     if (location && secondLocation) {
       const currentCoords = { latitude: location.latitude, longitude: location.longitude };
       const destinationCoords = { latitude: secondLocation.latitude, longitude: secondLocation.longitude };
+
+      // const url = `http://maps.apple.com/?saddr=${location.latitude},${location.longitude}&daddr=${secondLocation.latitude},${secondLocation.longitude}`;
+      // Linking.openURL(url);
+
   
       // Actualizamos las coordenadas de la ruta correctamente
       setRouteCoordinates([currentCoords, destinationCoords]);
@@ -226,7 +230,7 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
                   flexDirection: 'row',
                   alignItems: 'center',
                   padding: 15,
-                  marginTop: 0,
+                  marginTop: 70,
                 },
               ]}
               onPress={() => {
@@ -246,7 +250,7 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
 
 
             <MapView
-              provider={PROVIDER_GOOGLE}
+              // provider={PROVIDER_GOOGLE}
               style={styles.map}
               region={location}
               customMapStyle={mapStyle}
@@ -259,15 +263,6 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
               {secondLocation && (
                 <Marker coordinate={secondLocation} title={secondLocation.name_taller} icon={require('../../assets/solversMarker70px.png')} />
               )}
-
-              {/* Dibuja la ruta entre las ubicaciones */}
-          {/* {routeCoordinates.length > 0 && (
-            <Polyline
-              coordinates={routeCoordinates}
-              strokeWidth={5}
-              strokeColor="#2D3261"
-            />
-          )} */}
 
               <MapViewDirections
                   origin={routeCoordinates[0]}

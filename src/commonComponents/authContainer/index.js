@@ -12,6 +12,8 @@ const AuthContainer = ({subtitle, title, value, onPress, showBack, AlignItemTitl
     useValues();
   const navigation = useNavigation('');
 
+  console.log(commonStyles.container);
+
   return (
     <SafeAreaView style={[styles.container, {backgroundColor: bgFullStyle}]}>
       <View

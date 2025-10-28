@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Image,
   ToastAndroid,
+  Alert
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import HeaderContainer from '../../../commonComponents/headingContainer';
@@ -35,14 +36,17 @@ import api from '../../../../axiosInstance';
 
 import notImageFound from '../../../assets/noimageold.jpeg';
 import Icons4 from 'react-native-vector-icons/Entypo';
-import { Dropdown } from 'react-native-element-dropdown';
 
-import {
-  RadioButton,
-  Button
-} from 'react-native-paper';
+
+
+
+import { RadioButton, Button } from 'react-native-paper';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Buffer } from 'buffer';
+import { Dropdown } from 'react-native-element-dropdown';
+
+
+
 
 const EditProfile = ({ navigation }) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
@@ -148,9 +152,9 @@ const EditProfile = ({ navigation }) => {
 
   const [imageFirts, setimageFirts] = useState("");
 
-  const [estadoSelected, setestadoSelected] = useState(''); 
+  const [estadoSelected, setestadoSelected] = useState('');
 
-  
+
   const [estadosVenezuela, setEstadosVenezuela] = useState([
     { label: 'Seleccione un estado', value: '' },
     { label: 'Amazonas', value: 'Amazonas' },
@@ -166,6 +170,7 @@ const EditProfile = ({ navigation }) => {
     { label: 'Falcón', value: 'Falcón' },
     { label: 'Guárico', value: 'Guárico' },
     { label: 'Lara', value: 'Lara' },
+    { label: 'La Guaira', value: 'La Guaira' },
     { label: 'Mérida', value: 'Mérida' },
     { label: 'Miranda', value: 'Miranda' },
     { label: 'Monagas', value: 'Monagas' },
@@ -174,19 +179,10 @@ const EditProfile = ({ navigation }) => {
     { label: 'Sucre', value: 'Sucre' },
     { label: 'Táchira', value: 'Táchira' },
     { label: 'Trujillo', value: 'Trujillo' },
-    { label: 'La Guaira', value: 'La Guaira' },
     { label: 'Yaracuy', value: 'Yaracuy' },
     { label: 'Zulia', value: 'Zulia' }
   ]);
 
-  const prefixOptions = [
-    { label: 'C-', value: 'C-' },
-    { label: 'E-', value: 'E-' },
-    { label: 'G-', value: 'G-' },
-    { label: 'J-', value: 'J-' },
-    { label: 'P-', value: 'P-' },
-    { label: 'V-', value: 'V-' },
-  ];
 
   useEffect(() => {
     getData();
@@ -280,9 +276,12 @@ const EditProfile = ({ navigation }) => {
   };
 
   const validatePhone = () => {
-    const phoneRegex = /^\d{10}$/;
-    if (!phoneRegex.test(phone)) {
-      setPhoneError('Invalid phone number');
+    // Eliminar la máscara para validar solo los números
+    const numericPhone = phone.replace(/[^0-9]/g, ''); // Remueve paréntesis, espacios y guiones
+    const phoneRegex = /^\d{10}$/; // Validar exactamente 10 dígitos
+
+    if (!phoneRegex.test(numericPhone)) {
+      setPhoneError('Teléfono debe contener exactamente 10 dígitos');
       return false;
     } else {
       setPhoneError('');
@@ -293,12 +292,12 @@ const EditProfile = ({ navigation }) => {
   const onHandleChange = async () => {
     console.log("Aquiiii");
     console.log(typeUser);
-  
+
     setGetOtpDisabled(true);
-  
+
     if (typeUser == "Cliente") {
       const isPhoneValid = validatePhone();
-  
+
       if (isPhoneValid == true && Nombre != '' && cedula != 0 && cedula != '') {
         try {
           // Validar si el número de teléfono ya existe en el servidor
@@ -306,12 +305,12 @@ const EditProfile = ({ navigation }) => {
             phone,
             uid: uidprofile,
           });
-  
+
           const emailValidationResponse = await api.post('/home/validateEmail', {
             email,
             uid: uidprofile,
           });
-  
+
           if (
             phoneValidationResponse.status === 200 &&
             phoneValidationResponse.data.valid === true &&
@@ -321,7 +320,7 @@ const EditProfile = ({ navigation }) => {
             const infoUserCreated = {
               Nombre: Nombre,
               cedula: selectedPrefix + "" + cedula,
-              phone: phone,
+              phone: phone?.replace(/\s+/g, ""),
               typeUser: 'Cliente',
               email: email,
               uid: uidprofile,
@@ -329,20 +328,20 @@ const EditProfile = ({ navigation }) => {
               base64: base64 == null || base64 == undefined || base64 == '' ? "" : base64,
               imageTodelete: imageFirts != "" && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == '' ? "" : getImageName(imageFirts) : ""
             };
-  
+
             console.log(infoUserCreated);
-  
+
             try {
               // Hacer la solicitud POST utilizando Axios
               const response = await api.post('/usuarios/UpdateClient', infoUserCreated);
-  
+
               // Verificar la respuesta del servidor
               console.log(response);
-  
+
               if (response.status === 200) {
                 const result = response.data;
                 console.log(result);
-  
+
                 try {
                   const jsonValue = JSON.stringify(infoUserCreated);
                   console.log(jsonValue);
@@ -350,13 +349,13 @@ const EditProfile = ({ navigation }) => {
                 } catch (e) {
                   console.error('Error al guardar en AsyncStorage:', e);
                 }
-  
+
                 setNombre('');
                 setcedula(0);
                 setEmail('');
                 setPhone(0);
                 setSelectedPrefix('J-');
-  
+
                 showToast('Usuario actualizado exitosamente');
                 setGetOtpDisabled(false);
                 navigation.goBack('');
@@ -405,12 +404,12 @@ const EditProfile = ({ navigation }) => {
             phone,
             uid: uidprofile,
           });
-  
+
           const emailValidationResponse = await api.post('/home/validateEmail', {
             email,
             uid: uidprofile,
           });
-  
+
           if (
             phoneValidationResponse.status === 200 &&
             phoneValidationResponse.data.valid === true &&
@@ -436,18 +435,18 @@ const EditProfile = ({ navigation }) => {
               seguro: seguro == undefined ? '' : seguro,
               agenteAutorizado: checked == undefined ? false : checked
             };
-  
+
             console.log(infoUserCreated);
             console.log('Aquiiii1234');
-  
+
             try {
               // Hacer la solicitud POST utilizando Axios
               const response = await api.post('/usuarios/UpdateTaller', infoUserCreated);
-  
+
               if (response.status === 200) {
                 const result = response.data;
                 console.log(result);
-  
+
                 try {
                   const jsonValue = JSON.stringify(infoUserCreated);
                   console.log(jsonValue);
@@ -455,7 +454,7 @@ const EditProfile = ({ navigation }) => {
                 } catch (e) {
                   console.error('Error al guardar en AsyncStorage:', e);
                 }
-  
+
                 showToast('Taller actualizado exitosamente');
                 setGetOtpDisabled(false);
                 navigation.goBack('');
@@ -502,18 +501,11 @@ const EditProfile = ({ navigation }) => {
 
   const { bgFullStyle, textColorStyle, iconColorStyle, isDark, t, textRTLStyle } = useValues();
 
-  // const showToast = (type, text1, position, visibilityTime, autoHide) => {
-  //   Toast.show({
-  //     type: type,
-  //     text1: text1,
-  //     position: position',
-  //     visibilityTime: visibilityTime,
-  //     autoHide: autoHide,
-  //   });
-  // };
+
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    // ToastAndroid.show(text, ToastAndroid.SHORT);
+    Alert.alert('Solvers Informa', text);
   };
 
   const selectImage = () => {
@@ -619,43 +611,29 @@ const EditProfile = ({ navigation }) => {
               {/* Select para elegir "J-" o "G-" */}
               <View
                 style={{
-                  width: 80,
-                  backgroundColor: '#fff',
-                  borderRadius: 10,
-                  borderWidth: 1,
-                  marginTop: 5,
-                  borderColor: '#ddd',
-                  elevation: 3,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 4,
-                  marginRight: 5,
-                  height: 50,
-                  justifyContent: 'center',
-                  paddingHorizontal: 0,
-                }}
-              >
-                <Dropdown
-                  style={{height: 50, backgroundColor: 'transparent', width: '100%', paddingLeft: 15}}
-                  data={prefixOptions}
-                  labelField="label"
-                  valueField="value"
-                  value={selectedPrefix}
-                  onChange={item => setSelectedPrefix(item.value)}
-                  placeholder="Pref."
-                  maxHeight={250}
-                  itemTextStyle={{ color: 'black' }}
-                  selectedTextStyle={{ color: 'black' }}
-                  containerStyle={{ borderRadius: 10, width: 80 }}
-                  dropdownPosition="auto"
-                  showsVerticalScrollIndicator={false}
-                  autoScroll={false}
-                />
+                  overflow: 'hidden',
+                  height: 50, // Asegurar que ambos tengan el mismo height
+                  marginRight: 5, // Espaciado entre el Picker y el TextInput
+                }}>
+                <Picker
+                  selectedValue={selectedPrefix}
+                  onValueChange={itemValue => setSelectedPrefix(itemValue)}
+                  style={{
+                    width: 100,
+                    height: 0, // Altura para el Picker
+                    color: 'black',
+                  }}>
+                  <Picker.Item color='black' label="C-" value="C-" />
+                  <Picker.Item color='black' label="E-" value="E-" />
+                  <Picker.Item color='black' label="G-" value="G-" />
+                  <Picker.Item color='black' label="J-" value="J-" />
+                  <Picker.Item color='black' label="P-" value="P-" />
+                  <Picker.Item color='black' label="V-" value="V-" />
+                </Picker>
               </View>
 
               {/* TextInput para el número de RIF */}
-              <View style={{ flex: 1, marginTop: -22, marginLeft: 0 }}>
+              <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
                 <TextInputs
                   title=""
                   value={cedula}
@@ -1014,6 +992,8 @@ const EditProfile = ({ navigation }) => {
                 marginVertical: 10,
               }}>
               <TextInputs
+                keyboardType="default"
+                autoCapitalize="words"
                 fullWidth={350}
                 title="Nombre y Apellido"
                 editable={true}
@@ -1038,64 +1018,88 @@ const EditProfile = ({ navigation }) => {
                   { color: textColorStyle },
                   { textAlign: textRTLStyle },
                 ]}>
-                Cedula
+                Documento de Identidad
               </Text>
             </View>
 
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              {/* Select para elegir "J-" o "G-" */}
-              <View
-                style={{
-                  width: 80,
-                  backgroundColor: '#fff',
-                  borderRadius: 10,
-                  borderWidth: 1,
-                  marginTop: 5,
-                  borderColor: '#ddd',
-                  elevation: 3,
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 4,
-                  marginRight: 5,
-                  height: 50,
-                  justifyContent: 'center',
-                  paddingHorizontal: 0,
-                }}
-              >
+            <View style={{ flexDirection: 'row', marginTop: 10, marginBottom: 10, alignItems: 'center' }}>
+              {/* Picker con borde */}
+              <View style={{
+                width: '25%',
+                paddingRight: 0,
+                borderWidth: 1,
+                borderColor: '#ccc',
+                borderRadius: 5,
+                backgroundColor: '#fff',
+                height: 50, // para que el borde envuelva el Picker apropiadamente
+                justifyContent: 'center', // centra el Picker verticalmente
+              }}>
                 <Dropdown
-                  style={{height: 50, backgroundColor: 'transparent', width: '100%', paddingLeft: 15}}
-                  data={prefixOptions}
-                  labelField="label"
-                  valueField="value"
-                  value={selectedPrefix}
-                  onChange={item => setSelectedPrefix(item.value)}
-                  placeholder="Pref."
-                  maxHeight={250}
-                  itemTextStyle={{ color: 'black' }}
-                  selectedTextStyle={{ color: 'black' }}
-                  containerStyle={{ borderRadius: 10, width: 80 }}
-                  dropdownPosition="auto"
-                  showsVerticalScrollIndicator={false}
-                  autoScroll={false}
+                  style={{
+                    width: '100%', // Usa todo el ancho disponible en el contenedor
+                    borderWidth: 1, // Borde alrededor del Dropdown
+                    borderColor: '#ccc', // Color del borde
+                    borderRadius: 5, // Bordes redondeados
+                    paddingHorizontal: 10, // Espaciado interno
+                    backgroundColor: '#fff', // Fondo blanco
+                    height: 50, // Altura del Dropdown
+                  }}
+                  placeholderStyle={{
+                    color: 'gray', // Color del texto del placeholder
+                    fontSize: 14, // Tamaño del texto del placeholder
+                  }}
+                  selectedTextStyle={{
+                    color: 'black', // Color del texto seleccionado
+                    fontSize: 14, // Tamaño del texto seleccionado
+                  }}
+                  data={[
+                    { label: 'C-', value: 'C-' },
+                    { label: 'E-', value: 'E-' },
+                    { label: 'G-', value: 'G-' },
+                    { label: 'J-', value: 'J-' },
+                    { label: 'P-', value: 'P-' },
+                    { label: 'V-', value: 'V-' },
+                  ]} // Datos para el Dropdown
+                  labelField="label" // Campo que se mostrará como etiqueta
+                  valueField="value" // Campo que se usará como valor
+                  placeholder="Seleccione un prefijo" // Placeholder del Dropdown
+                  value={selectedPrefix} // Valor seleccionado
+                  onChange={item => setSelectedPrefix(item.value)} // Maneja el cambio de selección
                 />
+
+                {/* <Picker
+                  selectedValue={selectedPrefix}
+                  onValueChange={itemValue => setSelectedPrefix(itemValue)}
+                  style={{
+                    width: '100%', // usa todo el ancho disponible en el contenedor
+                    color: 'black',
+                  }}
+                >
+                  <Picker.Item color='black' label="C-" value="C-" />
+                  <Picker.Item color='black' label="E-" value="E-" />
+                  <Picker.Item color='black' label="G-" value="G-" />
+                  <Picker.Item color='black' label="J-" value="J-" />
+                  <Picker.Item color='black' label="P-" value="P-" />
+                  <Picker.Item color='black' label="V-" value="V-" />
+                </Picker> */}
               </View>
 
-              {/* TextInput para el número de RIF */}
-              <View style={{ flex: 1, marginTop: -22, marginLeft: 0 }}>
+              <View style={{ width: '100%', paddingLeft: 0, marginTop: -40 }}>
                 <TextInputs
-                  fullWidth={350}
                   title=""
                   value={cedula}
-                  placeHolder="Ingrese su cedula"
+                  placeHolder="Ingrese el número de cédula"
                   onChangeText={text => {
                     const numericText = text.replace(/[^0-9]/g, '');
-                    setcedula(numericText);
-                    setcedulaTyping(true);
-                    if (numericText.trim() === '') {
-                      setcedulaError('RIF es requerido');
-                    } else {
-                      setcedulaError('');
+                    if (numericText.length <= 10) {
+                      // Limitar a 10 caracteres
+                      setcedula(numericText);
+                      setcedulaTyping(true);
+                      if (numericText.trim() === '') {
+                        setcedulaError('Documento es requerido');
+                      } else {
+                        setcedulaError('');
+                      }
                     }
                   }}
                   onBlur={() => {
@@ -1103,15 +1107,23 @@ const EditProfile = ({ navigation }) => {
                   }}
                   keyboardType="numeric"
                   icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                  style={{ height: 50 }} // Altura para el TextInput
+                  style={{
+                    height: 50, // Altura para el TextInput
+                    borderWidth: 1, // Borde alrededor del TextInput
+                    borderColor: '#ccc', // Color del borde
+                    borderRadius: 5, // Bordes redondeados
+                    paddingHorizontal: 10, // Espaciado interno
+                    backgroundColor: '#fff', // Fondo blanco
+                    width: '100%',
+                  }}
                 />
+
+                {/* TextInput para el número de cédula */}
+                {cedulaError !== '' && (
+                  <Text style={styles.errorStyle}>{cedulaError}</Text>
+                )}
               </View>
             </View>
-
-            {/* Mensaje de error si el RIF es inválido */}
-            {cedulaError !== '' && (
-              <Text style={styles.errorStyle}>{cedulaError}</Text>
-            )}
 
             <View style={{ marginTop: 5 }}>
               {/* Texto "RIF" arriba de los inputs */}
@@ -1125,92 +1137,125 @@ const EditProfile = ({ navigation }) => {
               </Text>
 
               {/* Contenedor para el Picker y el TextInput */}
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                {/* Icono al lado del Picker */}
-                <Icons4 name="location" size={20} color="#9BA6B8" style={{ marginRight: 10, marginLeft: 10 }} />
-                <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', marginTop: 10, marginBottom: 10, alignItems: 'center' }}>
+                {/* Picker con borde */}
+                <View style={{
+                  width: '100%',
+                  paddingRight: 0,
+                  borderWidth: 1,
+                  borderColor: '#ccc',
+                  borderRadius: 5,
+                  backgroundColor: '#fff',
+                  height: 50, // para que el borde envuelva el Picker apropiadamente
+                  justifyContent: 'center', // centra el Picker verticalmente
+                }}>
+
                   <Dropdown
                     style={{
-                      height: 50,
-                      backgroundColor: '#fff',
-                      borderColor: '#ddd',
+                      width: '100%',
                       borderWidth: 1,
-                      borderRadius: 10,
-                      paddingLeft: 15,
-                      paddingRight: 10,
-                      justifyContent: 'center',
+                      borderColor: '#ccc',
+                      borderRadius: 5,
+                      paddingHorizontal: 10,
+                      backgroundColor: '#fff',
+                      height: 50,
+                    }}
+                    placeholderStyle={{
+                      color: 'gray',
+                      fontSize: 14,
+                    }}
+                    selectedTextStyle={{
+                      color: 'black',
+                      fontSize: 14,
+                      backgroundColor: '#fff',
                     }}
                     data={estadosVenezuela}
                     labelField="label"
                     valueField="value"
-                    value={estadoSelected}
-                    onChange={item => setestadoSelected(item.value)}
                     placeholder="Seleccione un estado"
-                    maxHeight={250}
-                    itemTextStyle={{ color: 'black' }}
-                    selectedTextStyle={{ color: 'black' }}
-                    containerStyle={{ borderRadius: 10 }}
-                    dropdownPosition="auto"
-                    showsVerticalScrollIndicator={false}
-                    autoScroll={false}
+                    value={estadoSelected}
+                    search={true}
+                    onChange={item => setestadoSelected(item.value)} // Maneja el cambio de selección
                   />
+
+
+                  {/* <Picker
+                    selectedValue={estadoSelected}
+                    onValueChange={itemValue => setestadoSelected(itemValue)}
+                    style={{
+                      width: '100%', // usa todo el ancho disponible en el contenedor
+                      color: 'black',
+                    }}
+                  >
+                    {estadosVenezuela.map(estado => (
+                      <Picker.Item color='black'
+                        key={estado.value}
+                        label={estado.label}
+                        value={estado.value}
+                      />
+                    ))}
+                  </Picker> */}
                 </View>
               </View>
             </View>
 
 
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Número Telefónico"
-                value={phone}
-                textDecorationLine={isCheckedTelefono ? 'line-through' : 'none'}
-                editable={true}
-                placeholder="Ingrese su número"
-                keyboardType="numeric"
-                onChangeText={text => {
-                  const numericText = text.replace(/[^0-9]/g, '');
-                  setPhone(numericText);
-                  setPhoneError(
-                    numericText.trim() === ''
-                      ? 'Número telefónico requerido'
-                      : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="phone" size={20} color="#9BA6B8" />}
-              />
-              {phoneError !== '' && (
-                <Text style={styles.errorStyle}>{phoneError}</Text>
-              )}
-            </View>
 
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Email"
-                value={email}
-                editable={false}
-                textDecorationLine={isCheckedEmail ? 'line-through' : 'none'}
-                placeHolder="Ingrese su email"
-                onChangeText={text => {
-                  setEmail(text);
-                  setEmailError(text.trim() === '' ? 'Email es requerido' : '');
-                }}
-                onBlur={() => { }}
-                icon={<Icons3 name="email" size={20} color="#9BA6B8" />}
-              />
-            </View>
+            <TextInputs
+              title="Número Telefónico"
+              value={phone}
+              textDecorationLine={isCheckedTelefono ? 'line-through' : 'none'}
+              editable={true}
+              placeholder="Ingrese su número"
+              keyboardType="numeric"
+              onChangeText={text => {
+                let numericText = text.replace(/[^0-9]/g, '').slice(0, 10); // Limitar a 10 dígitos
+
+                let formattedText = '';
+                if (numericText.length > 0 && numericText.length <= 3) {
+                  formattedText = `${numericText}`;
+                } else if (numericText.length > 3 && numericText.length <= 6) {
+                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3)}`;
+                } else if (numericText.length > 6 && numericText.length <= 8) {
+                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6)}`;
+                } else if (numericText.length > 8) {
+                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6, 8)} ${numericText.slice(8)}`;
+                }
+
+                formattedText = `${formattedText}`;
+
+                setPhone(formattedText);
+                setCallTyping(true);
+
+                if (numericText.trim() === '') {
+                  setPhoneError('Número telefónico requerido');
+                } else {
+                  setPhoneError('');
+                }
+              }}
+              onBlur={() => { }}
+              icon={<Icons name="phone" size={20} color="#9BA6B8" />}
+            />
+
+            {phoneError !== '' && (
+              <Text style={{color:'red'}}>{phoneError}</Text>
+            )}
+
+
+            <TextInputs
+              fullWidth={350}
+              title="Email"
+              value={email}
+              editable={false}
+              textDecorationLine={isCheckedEmail ? 'line-through' : 'none'}
+              placeHolder="Ingrese su email"
+              onChangeText={text => {
+                setEmail(text);
+                setEmailError(text.trim() === '' ? 'Email es requerido' : '');
+              }}
+              onBlur={() => { }}
+              icon={<Email size={20} color="#9BA6B8" />}
+            />
           </View>
         </ScrollView>
       ) : null}

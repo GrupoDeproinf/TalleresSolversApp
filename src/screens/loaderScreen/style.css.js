@@ -15,9 +15,12 @@ const styles = StyleSheet.create({
     borderRadius: windowHeight(100),
   },
   imgStyleDark: {
-    width: windowHeight(200),
-    height: windowHeight(200),
-    borderRadius: windowHeight(200),
+    width: windowHeight(100), // Reducido de 150 a 100
+    height: windowHeight(100), // Reducido de 150 a 100
+  },
+  imgStyleload: {
+    width: windowHeight(100), // Reducido de 150 a 100
+    height: windowHeight(100), // Reducido de 150 a 100
   },
 });
 

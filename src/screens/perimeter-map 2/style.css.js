@@ -1,0 +1,25 @@
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  map: { flex: 1 },
+  details: {
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 16,
+    elevation: 8,
+  },
+  title: { fontSize: 16, fontWeight: '600' },
+  subtitle: { fontSize: 14, color: '#777', marginBottom: 8 },
+  row: { flexDirection: 'row', alignItems: 'center', marginTop: 16 },
+  avatar: { width: 48, height: 48, borderRadius: 24 },
+  bottomRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+  },
+  weight: { fontSize: 14 },
+  status: { fontSize: 14 },
+});

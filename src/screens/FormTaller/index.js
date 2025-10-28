@@ -9,8 +9,9 @@ import {
   Image,
   ToastAndroid,
   Modal,
+  Alert
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import ErrorContainer from '../../commonComponents/errorContainer';
 import {
   addNow,
@@ -19,20 +20,20 @@ import {
   whishlistEmptyDesc,
 } from '../../constant';
 import images from '../../utils/images';
-import {commonStyles} from '../../style/commonStyle.css';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import {useValues} from '../../../App';
+import { commonStyles } from '../../style/commonStyle.css';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import { useValues } from '../../../App';
 import HeaderContainer from '../../commonComponents/headingContainer';
 import CheckBox from 'react-native-check-box';
 
-import {external} from '../../style/external.css';
-import {Call, Edit, Profile, Key, BackLeft} from '../../utils/icon';
+import { external } from '../../style/external.css';
+import { Call, Edit, Profile, Key, BackLeft } from '../../utils/icon';
 import styles from './style.css';
 import TextInputs from '../../commonComponents/textInputs';
-import {Email} from '../../assets/icons/email';
+import { Email } from '../../assets/icons/email';
 import appColors from '../../themes/appColors';
-import {RadioButton, Button} from 'react-native-paper';
-import {windowHeight} from '../../themes/appConstant';
+import { RadioButton, Button } from 'react-native-paper';
+import { windowHeight } from '../../themes/appConstant';
 import NavigationButton from '../../commonComponents/navigationButton';
 import api from '../../../axiosInstance';
 
@@ -143,17 +144,16 @@ const FormTaller = () => {
 
   const [lat, setlat] = useState('');
   const [lng, setlng] = useState('');
-  const [isMounted, setIsMounted] = useState(true);
 
   const [metodosPago, setMetodosPago] = useState([
-    {label: 'Efectivo', value: 'efectivo', checked: false},
-    {label: 'Pago Móvil', value: 'pagoMovil', checked: false},
-    {label: 'Punto de venta', value: 'puntoVenta', checked: false},
-    {label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false},
-    {label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false},
-    {label: 'Transferencia', value: 'transferencia', checked: false},
-    {label: 'Zelle', value: 'zelle', checked: false},
-    {label: 'Zinli', value: 'zinli', checked: false},
+    { label: 'Efectivo', value: 'efectivo', checked: false },
+    { label: 'Pago Móvil', value: 'pagoMovil', checked: false },
+    { label: 'Punto de venta', value: 'puntoVenta', checked: false },
+    { label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false },
+    { label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false },
+    { label: 'Transferencia', value: 'transferencia', checked: false },
+    { label: 'Zelle', value: 'zelle', checked: false },
+    { label: 'Zinli', value: 'zinli', checked: false },
   ]);
 
   const [isEstado, setisEstado] = useState(false);
@@ -165,12 +165,12 @@ const FormTaller = () => {
   const stackNavigation = () => {
     navigation.reset({
       index: 0,
-      routes: [{name: 'MyTabs'}],
+      routes: [{ name: 'MyTabs' }],
     });
   };
 
   useEffect(() => {
-    const {uid} = route.params;
+    const { uid } = route.params;
     setModalVisible(false);
     setuidTaller(uid);
     getData(uid);
@@ -385,17 +385,25 @@ const FormTaller = () => {
   };
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    // ToastAndroid.show(text, ToastAndroid.SHORT);
+    Alert.alert('Solvers Informa', text);
   };
 
-  const GetCoordenadas = () => {};
+  const [isMounted, setIsMounted] = useState(true);
+
+  const GetCoordenadas = location => {
+    setlat(location.latitude);
+    setlng(location.longitude);
+    setIsMounted(false); // Desmonta el componente
+    setTimeout(() => setIsMounted(true), 100);
+  };
 
   return (
     <View
       style={[
         commonStyles.commonContainer,
         external.ph_20,
-        {backgroundColor: bgFullStyle},
+        { backgroundColor: bgFullStyle },
       ]}>
       {/* <HeaderContainer value="Perfil" /> */}
 
@@ -404,25 +412,24 @@ const FormTaller = () => {
           external.fd_row,
           external.ai_center,
           external.pt_15,
-          {justifyContent: 'center'}, // Cambiado a 'center' para centrar el contenido
-          {flexDirection: viewRTLStyle},
+          { justifyContent: 'center' }, // Cambiado a 'center' para centrar el contenido
+          { flexDirection: viewRTLStyle },
         ]}>
         {/* Botón de retroceso */}
         <TouchableOpacity
           onPress={() => navigation.goBack('')}
-          style={{position: 'absolute', left: 0}} // Posiciona el botón de retroceso en la esquina izquierda
+          style={{ position: 'absolute', left: 0 }} // Posiciona el botón de retroceso en la esquina izquierda
         >
-          <View style={{transform: [{scale: imageRTLStyle}]}}>
+          <View style={{ transform: [{ scale: imageRTLStyle }] }}>
             <BackLeft />
           </View>
         </TouchableOpacity>
 
-        {/* Nombre del taller centrado */}
         <Text
           style={[
             commonStyles.hederH2,
             external.as_center,
-            {color: textColorStyle},
+            { color: textColorStyle },
           ]}>
           {NameTaller}
         </Text>
@@ -432,26 +439,25 @@ const FormTaller = () => {
         <View
           style={[
             stylesImage.imageContainer,
-            {justifyContent: 'center', alignItems: 'center'},
+            { justifyContent: 'center', alignItems: 'center' },
           ]}>
-          <Image source={notImageFound} style={{width: 100, height: 100}} />
+          <Image source={notImageFound} style={{ width: 100, height: 100 }} />
         </View>
       ) : (
         <View
           style={[
             stylesImage.imageContainer,
-            {justifyContent: 'center', alignItems: 'center'},
+            { justifyContent: 'center', alignItems: 'center' },
           ]}>
           <Image
-            source={{uri: imagePerfil}}
-            style={{width: 100, height: 100}}
+            source={{ uri: imagePerfil }}
+            style={{ width: 100, height: 100 }}
           />
         </View>
       )}
 
-      <ScrollView style={{marginBottom: 15}}>
+      <ScrollView style={{ marginBottom: 15 }}>
         <View>
-          {/* Nombre y Apellido */}
           <View
             style={{
               flexDirection: 'row',
@@ -482,11 +488,10 @@ const FormTaller = () => {
                 setNombre(text);
                 setNombreError(text.trim() === '' ? 'Nombre es requerido' : '');
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
           </View>
 
-          {/* Registro de Información Fiscal (RIF) */}
           <View
             style={{
               flexDirection: 'row',
@@ -495,7 +500,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isRif}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisRif(!isRif);
@@ -515,12 +520,12 @@ const FormTaller = () => {
                   numericText.trim() === '' ? 'Cedula es requerida' : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
               keyboardType="numeric"
             />
           </View>
 
-          {/* Dirección del Taller */}
+
           <View
             style={{
               flexDirection: 'row',
@@ -529,7 +534,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedDireccion}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedDireccion(!isCheckedDireccion);
@@ -548,14 +553,13 @@ const FormTaller = () => {
                   text.trim() === '' ? 'Direccion es requerida' : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
             {DireccionError !== '' && (
               <Text style={styles.errorStyle}>{DireccionError}</Text>
             )}
           </View>
 
-          {/* Registro Comercial */}
           <View
             style={{
               flexDirection: 'row',
@@ -564,7 +568,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedRegistroComercial}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedRegistroComercial(!isCheckedRegistroComercial);
@@ -588,7 +592,7 @@ const FormTaller = () => {
                     : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
               keyboardType="numeric"
             />
             {RegComercialError !== '' && (
@@ -596,7 +600,6 @@ const FormTaller = () => {
             )}
           </View>
 
-          {/* Estado */}
           <View
             style={{
               flexDirection: 'row',
@@ -605,7 +608,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isEstado}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 console.log('Aquiii');
@@ -618,31 +621,31 @@ const FormTaller = () => {
               value={estadoSelected}
               textDecorationLine={isEstado ? 'line-through' : 'none'}
               editable={false}
-              keyboardType="string"
-              onBlur={() => {}}
+              keyboardType="default"
+              onBlur={() => { }}
             />
           </View>
 
+
           {lat != undefined && lat != '' && lng != undefined && lng != '' ? (
             <View
-              style={[stylesMap.container, {marginTop: 5, marginBottom: 15}]}>
+              style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
               {isMounted && (
                 <MapComponent
-                initialRegion={{
-                  latitude: lat,
-                  longitude: lng,
-                  latitudeDelta: 0.015,
-                  longitudeDelta: 0.015,
-                }}
-                edit={false}
-                returnFunction={GetCoordenadas}
-                useThisCoo={true}
-              />
+                  initialRegion={{
+                    latitude: lat,
+                    longitude: lng,
+                    latitudeDelta: 0.015,
+                    longitudeDelta: 0.015,
+                  }}
+                  edit={false}
+                  returnFunction={GetCoordenadas}
+                  useThisCoo={true}
+                />
               )}
             </View>
           ) : null}
 
-          {/* Número Telefónico */}
           <View
             style={{
               flexDirection: 'row',
@@ -651,7 +654,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedTelefono}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedTelefono(!isCheckedTelefono);
@@ -674,14 +677,13 @@ const FormTaller = () => {
                     : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
             {phoneError !== '' && (
               <Text style={styles.errorStyle}>{phoneError}</Text>
             )}
           </View>
 
-          {/* whatsapp */}
           <View
             style={{
               flexDirection: 'row',
@@ -690,7 +692,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedWhats}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedWhats(!isCheckedWhats);
@@ -704,22 +706,21 @@ const FormTaller = () => {
               editable={false}
               placeholder="Ingrese su número"
               keyboardType="numeric"
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
           </View>
 
-          <View style={{marginTop: 5}}>
-            {/* Texto "RIF" arriba de los inputs */}
+          <View style={{ marginTop: 5 }}>
             <Text
               style={[
                 styles.headingContainer,
-                {color: textColorStyle},
-                {textAlign: textRTLStyle},
+                { color: textColorStyle },
+                { textAlign: textRTLStyle },
               ]}>
               Metodos de Pago
             </Text>
 
-            <View style={{padding: 10}}>
+            <View style={{ padding: 10 }}>
               <View
                 style={{
                   flexDirection: 'row',
@@ -733,7 +734,7 @@ const FormTaller = () => {
                       flexDirection: 'row',
                       alignItems: 'center',
                       marginVertical: 5,
-                      width: '45%', // Ajusta el ancho para hacer columnas
+                      width: '45%',
                     }}>
                     <CheckBox
                       isChecked={method.checked}
@@ -741,7 +742,7 @@ const FormTaller = () => {
                       checkBoxColor="#2D3261"
                       disabled={true}
                     />
-                    <Text style={{marginLeft: 10, color: 'black'}}>
+                    <Text style={{ marginLeft: 10, color: 'black' }}>
                       {method.label}
                     </Text>
                   </View>
@@ -750,7 +751,6 @@ const FormTaller = () => {
             </View>
           </View>
 
-          {/* Email */}
           <View
             style={{
               flexDirection: 'row',
@@ -759,7 +759,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedEmail}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedEmail(!isCheckedEmail);
@@ -767,7 +767,8 @@ const FormTaller = () => {
             />
             <TextInputs
               fullWidth={270}
-              title="Email"
+              title="Correo Electrónico"
+              keyboardType={'email-address'}
               value={email}
               editable={false}
               textDecorationLine={isCheckedEmail ? 'line-through' : 'none'}
@@ -776,11 +777,10 @@ const FormTaller = () => {
                 setEmail(text);
                 setEmailError(text.trim() === '' ? 'Email es requerido' : '');
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
           </View>
 
-          {/* Caracteristicas del Taller */}
           <View
             style={{
               flexDirection: 'row',
@@ -789,7 +789,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedCaracteristicas}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedCaracteristicas(!isCheckedCaracteristicas);
@@ -798,7 +798,7 @@ const FormTaller = () => {
 
             <TextInputs
               fullWidth={270}
-              title="Caracteristicas del taller"
+              title="Caracteristicas del taller12"
               editable={false}
               textDecorationLine={
                 isCheckedCaracteristicas ? 'line-through' : 'none'
@@ -814,7 +814,7 @@ const FormTaller = () => {
                   text.trim() === '' ? 'Caracteristicas es requerido' : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
           </View>
 
@@ -827,7 +827,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedAgente}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedAgente(!isCheckedAgente);
@@ -856,7 +856,7 @@ const FormTaller = () => {
                 status={checked === 'si' ? 'checked' : 'unchecked'}
                 onPress={() => setChecked('si')}
               />
-              <Text style={{color: 'black'}}>Sí</Text>
+              <Text style={{ color: 'black' }}>Sí</Text>
 
               <RadioButton
                 value="no"
@@ -864,11 +864,10 @@ const FormTaller = () => {
                 status={checked === 'no' ? 'checked' : 'unchecked'}
                 onPress={() => setChecked('no')}
               />
-              <Text style={{color: 'black'}}>No</Text>
+              <Text style={{ color: 'black' }}>No</Text>
             </View>
           </View>
 
-          {/* Tiempo de experiencia */}
           <View
             style={{
               flexDirection: 'row',
@@ -877,7 +876,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedExperiencia}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedExperiencia(!isCheckedExperiencia);
@@ -898,11 +897,10 @@ const FormTaller = () => {
                   text.trim() === '' ? 'Experiencia es requerido' : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
           </View>
 
-          {/* Enlaces a Redes Sociales */}
           <View
             style={{
               flexDirection: 'row',
@@ -911,7 +909,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedFacebook}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedFacebook(!isCheckedFacebook);
@@ -930,7 +928,7 @@ const FormTaller = () => {
                   text.trim() === '' ? 'Link de Facebook es requerido' : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
           </View>
 
@@ -942,7 +940,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedInstagram}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedInstagram(!isCheckedInstagram);
@@ -961,7 +959,7 @@ const FormTaller = () => {
                   text.trim() === '' ? 'Link de Instagram es requerido' : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
             {LinkInstagramError !== '' && (
               <Text style={styles.errorStyle}>{LinkInstagramError}</Text>
@@ -976,7 +974,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedTiktok}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedTiktok(!isCheckedTiktok);
@@ -995,11 +993,10 @@ const FormTaller = () => {
                   text.trim() === '' ? 'Link de TikTok es requerido' : '',
                 );
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
           </View>
 
-          {/* Seguro */}
           <View
             style={{
               flexDirection: 'row',
@@ -1008,7 +1005,7 @@ const FormTaller = () => {
             }}>
             <CheckBox
               isChecked={isCheckedSeguro}
-              style={{marginTop: 30, color: '#2D3261', marginRight: 10}}
+              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
               checkedCheckBoxColor="#2D3261"
               onClick={() => {
                 setisCheckedSeguro(!isCheckedSeguro);
@@ -1026,21 +1023,23 @@ const FormTaller = () => {
                 setseguro(text);
                 setseguroError(text.trim() === '' ? 'Seguro es requerido' : '');
               }}
-              onBlur={() => {}}
+              onBlur={() => { }}
             />
             {seguroError !== '' && (
               <Text style={styles.errorStyle}>{seguroError}</Text>
             )}
           </View>
+
         </View>
+
       </ScrollView>
 
-      <View style={{marginBottom: 15}}>
+      <View style={{ marginBottom: 15 }}>
         <View
           style={{
             backgroundColor: buttonColor,
             borderRadius: windowHeight(20),
-            marginBottom: 15, // Margen entre los botones
+            marginBottom: 15,
           }}>
           <NavigationButton
             title="Aprobar solicitud"
@@ -1087,12 +1086,14 @@ const FormTaller = () => {
           </View>
         </View>
       </Modal>
+
+
     </View>
   );
 };
 
 const stylesMap = StyleSheet.create({
-  container: {flex: 1, justifyContent: 'center', alignItems: 'center'},
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
 
 const stylesImage = StyleSheet.create({

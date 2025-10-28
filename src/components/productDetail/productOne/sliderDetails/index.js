@@ -1,9 +1,8 @@
 import React, {useState} from 'react';
 import {FlatList, Image, TouchableOpacity, View, Text} from 'react-native';
 import {sliderStyles} from './styles.css';
-import notImageFound from '../../../../assets/noimageold.jpeg';
+import notImageFound from '../../../../assets/noimageNew.png';
 import {useValues} from '../../../../../App';
-import solversLogo from '../../../../assets/solverslogo.png';
 
 const SliderDetails = ({data}) => {
   const [selected, setSelected] = useState(0);
@@ -13,6 +12,7 @@ const SliderDetails = ({data}) => {
   const formattedData = Array.isArray(data)
     ? data.map(url => ({service_image: url}))
     : [];
+
 
   const renderItem = ({item, index}) => {
     const isSelected = index === selected;
@@ -41,29 +41,17 @@ const SliderDetails = ({data}) => {
 
   if (!formattedData || formattedData.length === 0) {
     return (
-      <View
-        style={[
-          sliderStyles.container,
-          {justifyContent: 'center', alignItems: 'center', height: 180},
-        ]}>
+      <View style={sliderStyles.container}>
         <Image
-          source={solversLogo}
-          style={{
-            width: 80,
-            height: 80,
-            resizeMode: 'contain',
-            marginBottom: 10,
-          }}
+          style={[
+            sliderStyles.productImage, // Estilo para la imagen principal
+            {
+              alignSelf: 'center', // Centramos la imagen
+              marginTop: 20, // Espaciado superior
+            },
+          ]}
+          source={notImageFound}
         />
-        <Text
-          style={{
-            color: '#9BA6B8',
-            fontSize: 18,
-            fontWeight: 'bold',
-            textAlign: 'center',
-          }}>
-          Imagen{'\n'}no disponible
-        </Text>
       </View>
     );
   }

@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   StyleSheet,
@@ -7,16 +7,19 @@ import {
   Platform,
   TouchableOpacity,
   Modal,
-  Alert,
+  Alert
 } from 'react-native';
 // import MapView, {PROVIDER_GOOGLE, Marker} from 'react-native-maps';
 import Geolocation from '@react-native-community/geolocation';
-import {commonStyles} from '../../style/commonStyle.css';
+import { commonStyles } from '../../style/commonStyle.css';
 import Icons from 'react-native-vector-icons/FontAwesome'; // Asegúrate de importar el ícono que estás usando
 
-import MapView, {Marker} from 'react-native-maps';
+import MapView, { Marker } from 'react-native-maps';
 
-const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
+const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
+
+
+
   const [location, setLocation] = useState(null);
   const [modalVisible, setModalVisible] = useState(false);
 
@@ -69,8 +72,8 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
           setshowbutton(false);
         }
       } else {
-        console.log('initialRegion', initialRegion);
-        console.log('useThisCoo', useThisCoo);
+        console.log("initialRegion", initialRegion);
+        console.log("useThisCoo", useThisCoo);
         if (!useThisCoo) {
           getCurrentLocation();
         } else {
@@ -98,8 +101,8 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
   };
 
   useEffect(() => {
-    console.log('initialRegion', initialRegion);
-    console.log('useThisCoo', useThisCoo);
+    console.log("initialRegion", initialRegion);
+    console.log("useThisCoo", useThisCoo);
     if (!useThisCoo) {
       getCurrentLocation();
     } else {
@@ -109,7 +112,7 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
         initialRegion.longitude != undefined &&
         initialRegion.longitude != ''
       ) {
-        console.log('Aquiii');
+        console.log("Aquiii")
         setLocation({
           latitude: initialRegion.latitude,
           longitude: initialRegion.longitude,
@@ -117,10 +120,11 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
           longitudeDelta: 0.0121,
         });
       } else {
-        console.log('Aquiii2');
+        console.log("Aquiii2")
         getCurrentLocation();
       }
     }
+
   }, [initialRegion]);
 
   useEffect(() => {
@@ -132,7 +136,7 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
       console.log('Aqui estoy :>');
       Geolocation.getCurrentPosition(
         info => {
-          const {latitude, longitude} = info.coords;
+          const { latitude, longitude } = info.coords;
           console.log(latitude);
           console.log(longitude);
           setLocation({
@@ -156,7 +160,7 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
 
   const handleMapPress = event => {
     if (edit) {
-      const {latitude, longitude} = event.nativeEvent.coordinate;
+      const { latitude, longitude } = event.nativeEvent.coordinate;
       setLocation({
         latitude,
         longitude,
@@ -167,12 +171,12 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
   };
 
   const validarUbicacion = () => {
-    console.log('useThisCoo', useThisCoo);
+    useThisCoo
 
     if (!useThisCoo) {
       Geolocation.getCurrentPosition(
         info => {
-          const {latitude, longitude} = info.coords;
+          const { latitude, longitude } = info.coords;
           console.log(latitude);
           console.log(longitude);
           setLocation({
@@ -182,18 +186,20 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
             longitudeDelta: 0.0121,
           });
           console.log('Se agregó :>');
-          setModalVisible(true);
+          setModalVisible(true)
         },
         error => {
           console.log('Error al obtener la ubicación:', error);
           setGpsModalVisible(true);
-          setModalVisible(false);
+          setModalVisible(false)
         },
       );
     } else {
-      setModalVisible(true);
+
+      setModalVisible(true)
     }
-  };
+
+  }
 
   return (
     <View style={styles.container}>
@@ -219,7 +225,7 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
           <Text
             style={[
               stylesImage.buttonText,
-              {marginLeft: 10, color: '#2D3261'},
+              { marginLeft: 10, color: '#2D3261' },
             ]}>
             Ubicación
           </Text>
@@ -236,30 +242,25 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
           returnFunction(location);
         }}>
         <View style={styles.modalContainer}>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              padding: 20,
-              marginTop: 50,
-              justifyContent: 'center',
-            }}>
-            <Icons
-              name="question-circle"
-              size={18}
-              color="#2D3261"
-              style={{marginRight: 8}}
-            />
+          <View style={{ flexDirection: 'row', alignItems: 'center', padding: 20, marginTop: 50, justifyContent: 'center' }}>
+
+            {/* Leyenda amigable */}
             <Text
               style={{
                 color: '#2D3261',
                 fontSize: 16,
                 fontWeight: 'bold',
-                textAlign: 'center',
-              }}>
+                textAlign: 'center', // Centra el texto horizontalmente
+              }}
+            >
+              <Icons name="question-circle" size={18} color="#2D3261" style={{ marginRight: 0 }} /> {""}
               Haz clic en el mapa para marcar la ubicación del taller
             </Text>
           </View>
+
+
+
+
 
           <MapView
             style={styles.map}
@@ -272,12 +273,10 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
             )}
           </MapView>
 
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              marginTop: 0,
-            }}>
+
+
+
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 0, }}>
             <TouchableOpacity
               style={[
                 stylesImage.button,
@@ -291,20 +290,23 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
                   alignItems: 'center',
                   padding: 15,
                   marginBottom: 10,
-                  flex: 1,
-                  marginRight: 5,
+                  flex: 1, // Ajusta el ancho del botón
+                  marginRight: 5, // Espaciado entre botones
                 },
               ]}
               onPress={() => {
                 setModalVisible(false);
                 console.log('Aquiiii');
                 returnFunction(initialRegion);
-              }}>
+              }}
+            >
+              {/* <Icons name="map-marker" size={15} color="#2D3261" /> */}
               <Text
                 style={[
                   stylesImage.buttonText,
-                  {marginLeft: 10, color: '#2D3261'},
-                ]}>
+                  { marginLeft: 10, color: '#2D3261' },
+                ]}
+              >
                 Cerrar Mapa
               </Text>
             </TouchableOpacity>
@@ -314,16 +316,16 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
                 stylesImage.button,
                 {
                   borderWidth: 1,
-                  borderColor: '#28a745',
+                  borderColor: '#28a745', // Color verde success
                   borderStyle: 'solid',
                   borderRadius: 5,
-                  backgroundColor: '#28a745',
+                  backgroundColor: '#28a745', // Fondo verde success
                   flexDirection: 'row',
                   alignItems: 'center',
                   padding: 15,
                   marginBottom: 10,
-                  flex: 1,
-                  marginLeft: 5,
+                  flex: 1, // Ajusta el ancho del botón
+                  marginLeft: 5, // Espaciado entre botones
                 },
               ]}
               onPress={() => {
@@ -331,21 +333,22 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
                 console.log('Aquiiii');
                 returnFunction(location == null ? initialRegion : location);
 
-                Alert.alert(
-                  'Solvers Informa',
-                  'Ubicación guardada correctamente',
-                );
-              }}>
-              <Icons name="map-marker" size={15} color="#FFF" />
+                Alert.alert('Solvers Informa', "La ubicación fue tomada correctamente");
+              }}
+            >
+              <Icons name="map-marker" size={15} color="#FFF" /> {/* Ícono con color blanco */}
               <Text
                 style={[
                   stylesImage.buttonText,
-                  {marginLeft: 10, color: '#FFF'},
-                ]}>
+                  { marginLeft: 10, color: '#FFF' }, // Letras blancas
+                ]}
+              >
                 Guardar Ubicación
               </Text>
             </TouchableOpacity>
+
           </View>
+
         </View>
       </Modal>
 
@@ -360,15 +363,14 @@ const MapComponent = ({initialRegion, edit, returnFunction, useThisCoo}) => {
               Usted debe habilitar la ubicacion del dispositivo
             </Text>
             <View style={stylesModal.buttonContainer}>
-              <TouchableOpacity
-                style={stylesModal.buttonNo}
-                onPress={() => setGpsModalVisible(false)}>
+              <TouchableOpacity style={stylesModal.buttonNo} onPress={() => setGpsModalVisible(false)}>
                 <Text style={stylesModal.buttonText}>Cerrar</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
+
     </View>
   );
 };

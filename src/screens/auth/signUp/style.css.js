@@ -25,6 +25,7 @@ const styles = StyleSheet.create({
     color: appColors.red,
     marginBottom: windowHeight(4),
     fontFamily: appFonts.bold,
+    marginLeft:10
   },
 });
 

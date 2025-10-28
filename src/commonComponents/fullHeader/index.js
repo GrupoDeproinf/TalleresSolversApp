@@ -52,7 +52,6 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
 
 
   const createorEditService = async () => {
-    console.log("Aquiii estoy 123123")
 
     if (Number(cantServices) == 0 || Number(cantServices) < 0){
       setModalVisible(true)
@@ -69,6 +68,7 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
 
 
   const gotoPlans = () =>{
+    setModalVisible(false);
     navigationScreen.navigate('Planscreen');
   }
 

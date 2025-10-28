@@ -41,6 +41,8 @@ import api from "../../../axiosInstance"
 
 const { width, height } = Dimensions.get("window")
 
+import MapRutaComponent from '../mapRuta';
+
 const TallerDetail = () => {
   const route = useRoute()
   const navigation = useNavigation()
@@ -56,6 +58,7 @@ const TallerDetail = () => {
   const [tallerInfoAnimation] = useState(new Animated.Value(0))
   const [experienceAnimation] = useState(new Animated.Value(0))
   const [tarifasAnimation] = useState(new Animated.Value(0))
+  const [showMap, setShowMap] = useState(false)
 
   // Métodos de pago disponibles (puedes ajustar según los datos reales del taller)
   const paymentMethods = [
@@ -204,6 +207,14 @@ const TallerDetail = () => {
     )
   }
 
+  const [lat, setlat] = useState('');
+  const [lng, setlng] = useState('');
+  const [isMounted, setIsMounted] = useState(true);
+
+  const GetCoordenadas = location => {
+    setShowMap(false)
+  };
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1E40AF" />
@@ -295,7 +306,8 @@ const TallerDetail = () => {
               styles.actionButton,
               (!taller.ubicacion?.lat || !taller.ubicacion?.lng) && styles.actionButtonDisabled,
             ]}
-            onPress={handleLocation}
+            // onPress={handleLocation}
+            onPress={() => setShowMap(true)}
             disabled={!taller.ubicacion?.lat || !taller.ubicacion?.lng}
           >
             <View style={styles.actionIconContainer}>
@@ -531,7 +543,7 @@ const TallerDetail = () => {
               <Text style={styles.sectionTitle}>REDES SOCIALES</Text>
               <View style={styles.socialButtons}>
                 {taller.LinkFacebook && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.socialButton, { backgroundColor: '#1877F2' }]}
                     onPress={() => handleSocialMedia('Facebook', taller.LinkFacebook)}
                   >
@@ -539,9 +551,9 @@ const TallerDetail = () => {
                     <Text style={styles.socialButtonText}>Facebook</Text>
                   </TouchableOpacity>
                 )}
-                
+
                 {taller.LinkInstagram && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.socialButton, { backgroundColor: '#E4405F' }]}
                     onPress={() => handleSocialMedia('Instagram', taller.LinkInstagram)}
                   >
@@ -549,9 +561,9 @@ const TallerDetail = () => {
                     <Text style={styles.socialButtonText}>Instagram</Text>
                   </TouchableOpacity>
                 )}
-                
+
                 {taller.LinkTiktok && (
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={[styles.socialButton, { backgroundColor: '#000000' }]}
                     onPress={() => handleSocialMedia('TikTok', taller.LinkTiktok)}
                   >
@@ -564,9 +576,33 @@ const TallerDetail = () => {
           )}
         </View>
       </ScrollView>
+
+      {showMap == true ? (
+        <View
+          style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
+          {isMounted && (
+            <MapRutaComponent
+              initialRegion={{
+                latitude: taller.ubicacion?.lat,
+                longitude: taller.ubicacion?.lng,
+                latitudeDelta: 0.015,
+                longitudeDelta: 0.015,
+              }}
+              edit={true}
+              returnFunction={GetCoordenadas}
+              useThisCoo={true}
+            />
+          )}
+        </View>
+      ) : null}
+
     </View>
   )
 }
+
+const stylesMap = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+});
 
 const styles = StyleSheet.create({
   container: {

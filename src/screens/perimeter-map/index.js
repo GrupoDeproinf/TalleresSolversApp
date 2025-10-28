@@ -473,7 +473,7 @@ const PerimeterMapScreen = () => {
               flexDirection: 'row',
               alignItems: 'center',
             }}
-            activeOpacity={0.8}
+            activeOpacity={0.7}
             onPress={() => setshowMap(true)}
           >
             <Map size={16} color="#162556" style={{ marginRight: 6 }} />
@@ -501,7 +501,7 @@ const PerimeterMapScreen = () => {
           position: 'absolute',
           bottom: 0,
           width: screenWidth,
-          height: screenHeight * 0.77,
+          height: screenHeight * 0.7,
           backgroundColor: '#fff',
           borderTopLeftRadius: 60,
           borderTopRightRadius: 60,

@@ -9,7 +9,10 @@ import {
   Image,
   ToastAndroid,
   Modal,
-  ActivityIndicator
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import ErrorContainer from '../../commonComponents/errorContainer';
@@ -45,6 +48,7 @@ import Icons2 from 'react-native-vector-icons/FontAwesome5';
 import notImageFound from '../../assets/noimageold.jpeg';
 import { launchImageLibrary } from 'react-native-image-picker';
 import { Buffer } from 'buffer';
+import { Dropdown } from 'react-native-element-dropdown';
 
 const FormTaller = () => {
   const [isSelected, setSelection] = useState(false);
@@ -172,8 +176,7 @@ const FormTaller = () => {
 
   const [IsEdit, setIsEdit] = useState(false);
 
-
-
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
 
   const stackNavigation = () => {
     navigation.reset({
@@ -215,14 +218,42 @@ const FormTaller = () => {
   }, []);
 
   const getUserActive = async () => {
+
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-      setuserStorage(user);
+      try {
+        // Hacer la solicitud POST utilizando Axios
+        const response = await api.post('/usuarios/getUserByUid', {
+          uid: user.uid,
+        });
+  
+        // Verificar la respuesta del servidor
+        const result = response.data;
+        console.log("Este es el usuario encontrado", result);
+  
+        if (result.message === "Usuario encontrado") {
+            setuserStorage(result.userData);
+            if(result.userData.status == "En espera por aprobación" && result.userData.scheduled_visit != undefined){
+              setChecked('no')
+            }
+        } 
+      } catch (error) {
+        // Manejo de errores
+        if (error.response) {
+          console.error('Error en la solicitud:', error.response.statusText);
+        } else {
+          console.error('Error en la solicitud:', error.message);
+        }
+        
+      }
+
     } catch (e) {
       // error reading value
     }
+
+
   };
 
   const getCaracteristicas = async loadData => {
@@ -425,99 +456,106 @@ const FormTaller = () => {
   const getImageName = (url) => url.split('/').pop();
 
   const onConfirm = async () => {
-    if (
-      Nombre != '' &&
-      Nombre != undefined &&
-      Nombre != undefined &&
-      caracteristicaSelected != '' &&
-      caracteristicaSelected != undefined &&
-      caracteristicaSelected != undefined &&
-      SubcaracteristicaSelected != '' &&
-      SubcaracteristicaSelected != undefined &&
-      precio != '' &&
-      precio != undefined &&
-      precio != undefined &&
-      Description != '' &&
-      Description != undefined &&
-      Description != undefined &&
-      Garantia != '' &&
-      Garantia != undefined &&
-      Garantia != undefined
-    ) {
-      const categoria =
-        caracteristicas.find(c => c.id === caracteristicaSelected)?.nombre ||
-        '';
+    setIsButtonDisabled(true); // Disable the button
+    try {
+      if (
+        Nombre != '' &&
+        Nombre != undefined &&
+        Nombre != undefined &&
+        caracteristicaSelected != '' &&
+        caracteristicaSelected != undefined &&
+        caracteristicaSelected != undefined &&
+        SubcaracteristicaSelected != '' &&
+        SubcaracteristicaSelected != undefined &&
+        precio != '' &&
+        precio != undefined &&
+        precio != undefined &&
+        Description != '' &&
+        Description != undefined &&
+        Description != undefined &&
+        Garantia != '' &&
+        Garantia != undefined &&
+        Garantia != undefined
+      ) {
+        const categoria =
+          caracteristicas.find(c => c.id === caracteristicaSelected)?.nombre ||
+          '';
 
-      const subcategoria =
-        Subcaracteristicas.find(c => c.id === SubcaracteristicaSelected)
-          ?.nombre || '';
+        const subcategoria =
+          Subcaracteristicas.find(c => c.id === SubcaracteristicaSelected)
+            ?.nombre || '';
 
-      let newImages = [];
-      if (images.length > 0) {
-        newImages = images.map(x => x.base64);
-      }
+        let newImages = [];
+        if (images.length > 0) {
+          newImages = images.map(x => x.base64);
+        }
 
 
-      const dataFinal = {
-        id: uidService == undefined || uidService == '' ? '' : uidService,
-        precio: precio,
-        uid_servicio:
-          uidService == undefined || uidService == '' ? '' : uidService,
-        categoria: categoria,
-        uid_categoria: caracteristicaSelected,
-        taller: userStorage.nombre,
-        uid_taller: userStorage.uid,
-        nombre_servicio: Nombre,
-        descripcion: Description,
-        subcategoria: subcategoria,
-        uid_subcategoria: SubcaracteristicaSelected,
-        puntuacion: 4,
-        garantia: Garantia,
-        estatus: checked == 'si' ? true : false,
-        publicOrigin: publicOrigin,
-        images: newImages.length == 0 ? "" : newImages,
-        edit: IsEdit
-      };
+        const dataFinal = {
+          id: uidService == undefined || uidService == '' ? '' : uidService,
+          precio: precio.replace('$', ''),
+          uid_servicio:
+            uidService == undefined || uidService == '' ? '' : uidService,
+          categoria: categoria,
+          uid_categoria: caracteristicaSelected,
+          taller: userStorage.nombre,
+          uid_taller: userStorage.uid,
+          nombre_servicio: Nombre,
+          descripcion: Description,
+          subcategoria: subcategoria,
+          uid_subcategoria: SubcaracteristicaSelected,
+          puntuacion: 4,
+          garantia: Garantia,
+          estatus: checked == 'si' ? true : false,
+          publicOrigin: publicOrigin,
+          images: newImages.length == 0 ? "" : newImages,
+          edit: IsEdit
+        };
 
-      // console.log(dataFinal)
+        try {
+          const response = await api.post(
+            '/usuarios/saveOrUpdateService',
+            dataFinal,
+          );
+          const result = response.data;
 
-      try {
-        // Hacer la solicitud POST utilizando Axios
-        const response = await api.post(
-          '/usuarios/saveOrUpdateService',
-          dataFinal,
-        );
-        // Verificar la respuesta del servidor
-        const result = response.data;
-
-        if (
-          result.message === 'Servicio actualizado exitosamente' ||
-          result.message === 'Servicio creado exitosamente'
-        ) {
-          showToast(result.message);
-          setModalVisible(false);
-          navigation.goBack();
-        } else {
+          if (
+            result.message === 'Servicio actualizado exitosamente' ||
+            result.message === 'Servicio creado exitosamente'
+          ) {
+            showToast(result.message);
+            setModalVisible(false);
+            setIsButtonDisabled(false);
+            navigation.goBack();
+          } else {
+            showToast('Ha ocurrido un error');
+            setIsButtonDisabled(false);
+            setModalVisible(false);
+            navigation.goBack();
+          }
+        } catch (error) {
+          if (error.response) {
+            setIsButtonDisabled(false);
+            console.error(
+              'Error en la solicitud:',
+              error.response.data.message || error.response.statusText,
+            );
+          } else {
+            console.error('Error en la solicitud:', error.message);
+          }
           showToast('Ha ocurrido un error');
           setModalVisible(false);
+          setIsButtonDisabled(false);
           navigation.goBack();
         }
-      } catch (error) {
-        // Manejo de errores
-        if (error.response) {
-          console.error('Error en la solicitud:', error.response.statusText);
-        } else {
-          console.error('Error en la solicitud:', error.message);
-        }
-        showToast('Ha ocurrido un error');
-        setModalVisible(false);
-        navigation.goBack();
+      } else {
+        showToast('Ingrese la información requerida');
+        setIsButtonDisabled(false);
       }
-    } else {
-      showToast('Ingrese la información requerida');
+    } finally {
+      setIsButtonDisabled(false); // Re-enable the button
     }
   };
-
 
   const convertUrlToBase64 = async (imageUrl) => {
     try {
@@ -569,11 +607,13 @@ const FormTaller = () => {
   };
 
   const gotoPlans = () => {
+    setModalVisible2(false);
     navigationScreen.navigate('Planscreen');
   };
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    // ToastAndroid.show(text, ToastAndroid.SHORT);
+    Alert.alert('Solvers Informa', text);
   };
 
 
@@ -611,6 +651,7 @@ const FormTaller = () => {
   };
 
   return (
+
     <View
       style={[
         commonStyles.commonContainer,
@@ -618,397 +659,417 @@ const FormTaller = () => {
         { backgroundColor: bgFullStyle },
       ]}
     >
-      {/* <HeaderContainer value="Perfil" /> */}
-
-      <View
-        style={[
-          external.fd_row,
-          external.ai_center,
-          external.pt_15,
-          { justifyContent: 'center' }, // Cambiado a 'center' para centrar el contenido
-          { flexDirection: viewRTLStyle },
-        ]}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} // Ajusta según tu header
       >
-        {/* Botón de retroceso */}
-        <TouchableOpacity
-          onPress={() => navigation.goBack('')}
-          style={{ position: 'absolute', left: 0 }} // Posiciona el botón de retroceso en la esquina izquierda
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} // paddingBottom asegura que último campo quede visible
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={{ transform: [{ scale: imageRTLStyle }] }}>
-            <BackLeft />
-          </View>
-        </TouchableOpacity>
-
-        {/* Nombre del taller centrado */}
-        <Text
-          style={[
-            commonStyles.hederH2,
-            external.as_center,
-            { color: textColorStyle },
-          ]}
-        >
-          {NameServicio}
-        </Text>
-      </View>
-
-      <View style={[external.as_center, { flexDirection: 'row' }]}>
-        <ScrollView horizontal={true} style={{ width: '100%', maxHeight: 150 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
-            <View style={{ alignItems: 'center', marginRight: 10 }}>
-
-
-              <TouchableOpacity
-                onPress={selectImage}
-                style={{
-                  height: 60,
-                  width: 60,
-                  borderColor: '#2D3261',
-                  borderWidth: 2,
-                  borderRadius: 10,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
-              >
-                <Icons name="plus" size={30} color="#2D3261" />
-              </TouchableOpacity>
-              <Text style={{ marginBottom: 5, color: '#2D3261', fontSize: 13 }}>
-                Agregar imagen
-              </Text>
-            </View>
-            {images.length === 0 && loading ? (
-              <View style={[styles.loadingContainer, { marginLeft: 50 }]}>
-              <ActivityIndicator size="large" color="#2D3261" />
-            </View>
-            
-            ) : (
-              images.map((image, index) => (
-                <View key={index} style={{ position: 'relative', marginRight: 5 }}>
-                  <ImageBackground
-                    resizeMode="contain"
-                    style={{ height: 130, width: 130 }} // Ajusta los valores según tus necesidades
-                    source={{ uri: image.uri }} // Cambia esto a tu enlace de imagen
-                  >
-                    <TouchableOpacity
-                      onPress={() => removeImage(index)}
-                      style={{
-                        position: 'absolute',
-                        top: 0, // Posiciona en la parte superior
-                        left: '50%', // Centra horizontalmente
-                        transform: [{ translateX: -15 }], // Ajusta según sea necesario para centrar el ícono
-                        backgroundColor: '#2D3261',
-                        borderRadius: 50,
-                        padding: 5,
-                      }}
-                    >
-                      <Icons name="times" size={15} color="#fff" />
-                    </TouchableOpacity>
-                  </ImageBackground>
-                </View>
-              ))
-            )}
-
-          </View>
-        </ScrollView>
-
-
-      </View>
-
-
-
-
-      <ScrollView style={{ marginBottom: 15, marginTop: 15 }}>
-        <View style={{ padding: 10 }}>
-          {/* Caracteristicas */}
-          <Text
+    
+          <View
             style={[
-              styles.headingContainer,
-              { color: textColorStyle },
-              { textAlign: textRTLStyle },
-            ]}>
-            Caracteristicas
-          </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <Icons2 name="grip-vertical" size={20} color="#9BA6B8" />
-            <Picker
-              selectedValue={caracteristicaSelected}
-              onValueChange={itemValue => {
-                getSubcaracteristicas(itemValue, false);
-                setcaracteristicaSelected(itemValue);
-              }}
-              style={{
-                width: '100%',
-                height: 0, // Altura para el Picker
-                color: 'black',
-              }}>
-              {caracteristicas.map(option => (
-                <Picker.Item
-                  key={option.id}
-                  label={option.nombre}
-                  value={option.id}
-                />
-              ))}
-            </Picker>
-          </View>
-
-          {/* Subcaracteristicas */}
-          {/* Caracteristicas */}
-          <Text
-            style={[
-              styles.headingContainer,
-              { color: textColorStyle },
-              { textAlign: textRTLStyle },
-            ]}>
-            Subcaracteristicas
-          </Text>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <Icons2 name="grip-horizontal" size={20} color="#9BA6B8" />
-            <Picker
-              selectedValue={SubcaracteristicaSelected}
-              onValueChange={itemValue => {
-                console.log("Estoy en el select")
-                setSubcaracteristicaSelected(itemValue);
-              }}
-              style={{
-                width: '100%',
-                height: 0, // Altura para el Picker
-                color: 'black',
-              }}>
-              {Subcaracteristicas.map(option => (
-                <Picker.Item
-                  key={option.id}
-                  label={option.nombre}
-                  value={option.id}
-                />
-              ))}
-            </Picker>
-          </View>
-
-          {/* Nombre del servicio */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-              marginTop: -5,
-            }}>
-            <TextInputs
-              fullWidth={290}
-              title="Nombre del servicio"
-              value={Nombre}
-              onChangeText={text => {
-                setNombre(text);
-                setNombreError(text.trim() === '' ? 'Nombre es requerido' : '');
-              }}
-              onBlur={() => { }}
-              icon={<Icons name="gears" size={20} color="#9BA6B8" />}
-            />
-          </View>
-
-          {/* precio del servicio */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <TextInputs
-              fullWidth={290}
-              title="Precio"
-              value={precio}
-              placeHolder="Precio del servicio"
-              onChangeText={text => {
-                const numericText = text.replace(/[^0-9]/g, '');
-                setprecio(numericText);
-                setsetprecioError(
-                  numericText.trim() === '' ? 'Precio es requerido' : '',
-                );
-              }}
-              onBlur={() => { }}
-              icon={<Icons name="money" size={20} color="#9BA6B8" />}
-              keyboardType="numeric"
-            />
-          </View>
-
-          {/*Descripcion del servicio  */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <TextInputs
-              fullWidth={290}
-              title="Descripción del servicio"
-              value={Description}
-              placeHolder="Descripción del servicio"
-              multiline={true}
-              numberOfLines={10}
-              // minHeight= {600}
-              height={150}
-              // textAlignVertical= {'top'}
-              onChangeText={text => {
-                setDescription(text);
-                setsetDescriptionError(
-                  text.trim() === '' ? 'Descripción es requerida' : '',
-                );
-              }}
-              onBlur={() => { }}
-              icon={<Icons name="file-text" size={20} color="#9BA6B8" />}
-            />
-          </View>
-
-          {/* Garantia del servicio */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <TextInputs
-              fullWidth={290}
-              title="Garantía del servicio"
-              value={Garantia}
-              placeHolder="Garantía del servicio"
-              multiline={true}
-              numberOfLines={10}
-              // minHeight= {600}
-              height={150}
-              // textAlignVertical= {'top'}
-              onChangeText={text => {
-                setGarantia(text);
-                setsetGarantiaError(
-                  text.trim() === '' ? 'Garantía es requerida' : '',
-                );
-              }}
-              onBlur={() => { }}
-              icon={<Icons name="file-text-o" size={20} color="#9BA6B8" />}
-            />
-          </View>
-
-          {/* Estado del servicio */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-              marginTop: -15,
-            }}>
+              external.fd_row,
+              external.ai_center,
+              external.pt_15,
+              { justifyContent: 'center' },
+              { flexDirection: viewRTLStyle },
+            ]}
+          >
+            {/* Botón de retroceso */}
+            <TouchableOpacity
+              onPress={() => navigation.goBack('')}
+              style={{ position: 'absolute', left: 0 }}
+            >
+              <View style={{ transform: [{ scale: imageRTLStyle }] }}>
+                <BackLeft />
+              </View>
+            </TouchableOpacity>
+    
+            {/* Nombre del taller centrado */}
             <Text
-              style={{
-                marginBottom: 10,
-                color: 'black',
-                marginTop: 35,
-              }}>
-              ¿Publicado?
+              style={[
+                commonStyles.hederH2,
+                external.as_center,
+                { color: textColorStyle },
+              ]}
+            >
+              {NameServicio}
             </Text>
-
+          </View>
+    
+          <View style={[external.as_center, { flexDirection: 'row' }]}>
+            <ScrollView horizontal={true} style={{ width: '100%', maxHeight: 150 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
+                <View style={{ alignItems: 'center', marginRight: 10 }}>
+                  <TouchableOpacity
+                    onPress={selectImage}
+                    style={{
+                      height: 60,
+                      width: 60,
+                      borderColor: '#2D3261',
+                      borderWidth: 2,
+                      borderRadius: 10,
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                    }}
+                  >
+                    <Icons name="plus" size={30} color="#2D3261" />
+                  </TouchableOpacity>
+                  <Text style={{ marginBottom: 5, color: '#2D3261', fontSize: 13 }}>
+                    Agregar imagen
+                  </Text>
+                </View>
+                {images.length === 0 && loading ? (
+                  <View style={[styles.loadingContainer, { marginLeft: 50 }]}>
+                    <ActivityIndicator size="large" color="#2D3261" />
+                  </View>
+                ) : (
+                  images.map((image, index) => (
+                    <View key={index} style={{ position: 'relative', marginRight: 5 }}>
+                      <ImageBackground
+                        resizeMode="contain"
+                        style={{ height: 130, width: 130 }}
+                        source={{ uri: image.uri }}
+                      >
+                        <TouchableOpacity
+                          onPress={() => removeImage(index)}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: '50%',
+                            transform: [{ translateX: -15 }],
+                            backgroundColor: '#2D3261',
+                            borderRadius: 50,
+                            padding: 5,
+                          }}
+                        >
+                          <Icons name="times" size={15} color="#fff" />
+                        </TouchableOpacity>
+                      </ImageBackground>
+                    </View>
+                  ))
+                )}
+              </View>
+            </ScrollView>
+          </View>
+    
+          <View style={{ padding: 10 }}>
+            {/* Caracteristicas */}
+            <Text
+              style={[
+                styles.headingContainer,
+                { color: textColorStyle },
+                { textAlign: textRTLStyle },
+              ]}>
+              Caracteristicas
+            </Text>
             <View
               style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 25,
+                marginTop: 20,
+                marginBottom: 20,
+                width: '100%',
+                paddingRight: 0,
+                borderWidth: 1,
+                borderColor: '#ccc',
+                borderRadius: 5,
+                backgroundColor: '#fff',
+                height: 50,
+                justifyContent: 'center',
               }}>
-              <RadioButton
-                value="si"
-                status={checked === 'si' ? 'checked' : 'unchecked'}
-                onPress={() => setChecked('si')}
+              <Dropdown
+                style={{
+                  width: '100%',
+                  borderWidth: 1,
+                  borderColor: '#ccc',
+                  borderRadius: 5,
+                  paddingHorizontal: 10,
+                  backgroundColor: '#fff',
+                  height: 50,
+                }}
+                placeholderStyle={{
+                  color: 'gray',
+                  fontSize: 14,
+                }}
+                selectedTextStyle={{
+                  color: 'black',
+                  fontSize: 14,
+                }}
+                data={caracteristicas.map(option => ({
+                  label: option.nombre,
+                  value: option.id,
+                }))}
+                labelField="label"
+                valueField="value"
+                placeholder="Seleccione una característica"
+                value={caracteristicaSelected}
+                search={true}
+                onChange={item => {
+                  getSubcaracteristicas(item.value, false);
+                  setcaracteristicaSelected(item.value);
+                }}
+                keyboardAvoiding={true}
               />
-              <Text style={{ color: 'black' }}>Sí</Text>
-
-              <RadioButton
-                value="no"
-                status={checked === 'no' ? 'checked' : 'unchecked'}
-                onPress={() => setChecked('no')}
+            </View>
+    
+            {/* Subcaracteristicas */}
+            <Text
+              style={[
+                styles.headingContainer,
+                { color: textColorStyle },
+                { textAlign: textRTLStyle },
+              ]}>
+              Subcaracteristicas
+            </Text>
+            <View
+              style={{
+                marginTop: 20,
+                marginBottom: 20,
+                width: '100%',
+                paddingRight: 0,
+                borderWidth: 1,
+                borderColor: '#ccc',
+                borderRadius: 5,
+                backgroundColor: '#fff',
+                height: 50,
+                justifyContent: 'center',
+              }}>
+              <Dropdown
+                style={{
+                  width: '100%',
+                  borderWidth: 1,
+                  borderColor: '#ccc',
+                  borderRadius: 5,
+                  paddingHorizontal: 10,
+                  backgroundColor: '#fff',
+                  height: 50,
+                }}
+                placeholderStyle={{
+                  color: 'gray',
+                  fontSize: 14,
+                }}
+                selectedTextStyle={{
+                  color: 'black',
+                  fontSize: 14,
+                }}
+                data={Subcaracteristicas.map(option => ({
+                  label: option.nombre,
+                  value: option.id,
+                }))}
+                labelField="label"
+                valueField="value"
+                placeholder="Seleccione una subcaracterística"
+                value={SubcaracteristicaSelected}
+                search={true}
+                onChange={item => {
+                  console.log("Estoy en el select");
+                  setSubcaracteristicaSelected(item.value);
+                }}
+                dropdownPosition="top"
+                keyboardAvoiding={true}
               />
-              <Text style={{ color: 'black' }}>No</Text>
+            </View>
+    
+            {/* Nombre del servicio */}
+           
+              <TextInputs
+                fullWidth={"100%"}
+                title="Nombre del servicio"
+                value={Nombre}
+                placeHolder="Nombre del servicio"
+                onChangeText={text => {
+                  setNombre(text);
+                  setNombreError(text.trim() === '' ? 'Nombre es requerido' : '');
+                }}
+                onBlur={() => { }}
+                icon={<Icons name="gears" size={20} color="#9BA6B8" />}
+              />
+    
+            {/* precio del servicio */}
+              <TextInputs
+                fullWidth={"100%"}
+                title="Precio"
+                value={precio}
+                placeHolder="Precio del servicio"
+                onChangeText={text => {
+                  const numericText = text.replace(/[^0-9]/g, '');
+                  const formattedText = numericText ? `$${numericText}` : '';
+                  setprecio(formattedText);
+                  setsetprecioError(
+                    numericText.trim() === '' ? 'Precio es requerido' : ''
+                  );
+                }}
+                onBlur={() => { }}
+                icon={<Icons name="money" size={20} color="#9BA6B8" />}
+                keyboardType="numeric"
+              />
+            
+    
+            {/*Descripcion del servicio  */}
+            
+              <TextInputs
+                fullWidth={"100%"}
+                title="Descripción del servicio"
+                value={Description}
+                placeHolder="Descripción del servicio"
+                // multiline={true}
+                // numberOfLines={10}
+                // height={150}
+                onChangeText={text => {
+                  setDescription(text);
+                  setsetDescriptionError(
+                    text.trim() === '' ? 'Descripción es requerida' : '',
+                  );
+                }}
+                onBlur={() => { }}
+                icon={<Icons name="file-text" size={20} color="#9BA6B8" />}
+              />
+    
+            {/* Garantia del servicio */}
+            
+              <TextInputs
+                fullWidth={"100%"}
+                title="Garantía del servicio"
+                value={Garantia}
+                placeHolder="Garantía del servicio"
+                // multiline={true}
+                // numberOfLines={10}
+                // height={150}
+                onChangeText={text => {
+                  setGarantia(text);
+                  setsetGarantiaError(
+                    text.trim() === '' ? 'Garantía es requerida' : '',
+                  );
+                }}
+                onBlur={() => { }}
+                icon={<Icons name="file-text-o" size={20} color="#9BA6B8" />}
+              />
+    
+            {/* Estado del servicio */}
+
+            {
+              userStorage?.status == "En espera por aprobación" || userStorage?.subscripcion_actual?.status != 'Aprobado' ? null : (
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    marginVertical: 10,
+                    marginTop: -15,
+                  }}>
+                  <Text
+                    style={{
+                      marginBottom: 10,
+                      color: 'black',
+                      marginTop: 35,
+                    }}>
+                    ¿Publicado?
+                  </Text>
+        
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      marginTop: 25,
+                    }}>
+                    <RadioButton
+                      value="si"
+                      status={checked === 'si' ? 'checked' : 'unchecked'}
+                      onPress={() => setChecked('si')}
+                    />
+                    <Text style={{ color: 'black' }}>Sí</Text>
+        
+                    <RadioButton
+                      value="no"
+                      status={checked === 'no' ? 'checked' : 'unchecked'}
+                      onPress={() => setChecked('no')}
+                    />
+                    <Text style={{ color: 'black' }}>No</Text>
+                  </View>
+                </View>
+              )
+            }
+
+
+            
+          </View>
+    
+          <View style={{ marginBottom: 15 }}>
+            <View
+              style={{
+                backgroundColor: buttonColor,
+                borderRadius: windowHeight(20),
+                marginBottom: 15,
+              }}>
+              <NavigationButton
+                title="Guardar Cambios"
+                onPress={() => onHandleChange('Aprobar')}
+                backgroundColor={'#2D3261'}
+                color={appColors.screenBg}
+              />
             </View>
           </View>
-        </View>
-      </ScrollView>
-
-      <View style={{ marginBottom: 15 }}>
-        <View
-          style={{
-            backgroundColor: buttonColor,
-            borderRadius: windowHeight(20),
-            marginBottom: 15, // Margen entre los botones
-          }}>
-          <NavigationButton
-            title="Guardar Cambios"
-            onPress={() => onHandleChange('Aprobar')}
-            backgroundColor={'#2D3261'}
-            color={appColors.screenBg}
-          />
-        </View>
-      </View>
-      <Modal
-        transparent={true}
-        animationType="slide"
-        visible={modalVisible}
-        onRequestClose={onCancel}>
-        <View style={stylesModal.container}>
-          <View style={stylesModal.modalView}>
-            <Text style={stylesModal.modalText}>
-              ¿Estás seguro de que quieres aplicar estos cambios?
-            </Text>
-            <View style={stylesModal.buttonContainer}>
-              <TouchableOpacity
-                style={stylesModal.buttonYes}
-                onPress={onConfirm}>
-                <Text style={stylesModal.buttonText}>Sí</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={stylesModal.buttonNo} onPress={onCancel}>
-                <Text style={stylesModal.buttonText}>No</Text>
-              </TouchableOpacity>
+    
+    
+          <Modal
+            transparent={true}
+            animationType="slide"
+            visible={modalVisible}
+            onRequestClose={onCancel}>
+            <View style={stylesModal.container}>
+              <View style={stylesModal.modalView}>
+                <Text style={stylesModal.modalText}>
+                  ¿Estás seguro de que quieres aplicar estos cambios?
+                </Text>
+                <View style={stylesModal.buttonContainer}>
+                  <TouchableOpacity
+                    style={[
+                      stylesModal.buttonYes,
+                      { opacity: isButtonDisabled ? 0.5 : 1 },
+                    ]}
+                    onPress={onConfirm}
+                    disabled={isButtonDisabled}
+                  >
+                    <Text style={stylesModal.buttonText}>Sí</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={stylesModal.buttonNo} onPress={onCancel}>
+                    <Text style={stylesModal.buttonText}>No</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-          </View>
-        </View>
-      </Modal>
-
-      <Modal
-        transparent={true}
-        animationType="slide"
-        visible={modalVisible2}
-        onRequestClose={onCancel2}>
-        <View style={stylesModal.container}>
-          <View style={stylesModal.modalView}>
-            <Text style={stylesModal.modalText}>
-              Usted ha alcanzado la cantidad máxima de servicios permitidos en
-              su plan. Para crear nuevos servicios, debe actualizar su plan.
-            </Text>
-            <View style={stylesModal.buttonContainer}>
-              <TouchableOpacity
-                style={stylesModal.buttonYes}
-                onPress={gotoPlans}>
-                <Text style={stylesModal.buttonText}>Ir a planes</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={stylesModal.buttonNo}
-                onPress={onCancel2}>
-                <Text style={stylesModal.buttonText}>Cancelar</Text>
-              </TouchableOpacity>
+          </Modal>
+    
+          <Modal
+            transparent={true}
+            animationType="slide"
+            visible={modalVisible2}
+            onRequestClose={onCancel2}>
+            <View style={stylesModal.container}>
+              <View style={stylesModal.modalView}>
+                <Text style={stylesModal.modalText}>
+                  Usted ha alcanzado la cantidad máxima de servicios permitidos en
+                  su plan. Para crear nuevos servicios, debe actualizar su plan.
+                </Text>
+                <View style={stylesModal.buttonContainer}>
+                  <TouchableOpacity
+                    style={stylesModal.buttonYes}
+                    onPress={gotoPlans}>
+                    <Text style={stylesModal.buttonText}>Ir a planes</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={stylesModal.buttonNo}
+                    onPress={onCancel2}>
+                    <Text style={stylesModal.buttonText}>Cancelar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
-          </View>
-        </View>
-      </Modal>
-
-
-
+          </Modal>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
-
-
-
-
 
 
   );

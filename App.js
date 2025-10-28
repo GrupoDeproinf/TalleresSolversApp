@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { SafeAreaView, LogBox, Platform, PermissionsAndroid } from 'react-native';
+import { SafeAreaView, LogBox } from 'react-native';
 import MyStack from './src/navigation';
-import { external } from './src/style/external.css';
+import { external } from './src/style/external.css.js';
 import {
   textRTLStyle,
   viewRTLStyle,
@@ -19,15 +19,12 @@ import {
 } from './src/style/darkStyle';
 import { useTranslation } from 'react-i18next';
 import CustomLoader from './src/commonComponents/customLoader';
-import api, { setLoadingFunction } from './axiosInstance'; // Asegúrate de que la ruta sea correcta
-import { firebase } from '@react-native-firebase/app';
+import api, { setLoadingFunction } from './axiosInstance';
+import firebase from '@react-native-firebase/app';
 import messaging from '@react-native-firebase/messaging';
-import DropdownAlert, {
-  DropdownAlertData,
-  DropdownAlertType,
-} from 'react-native-dropdownalert';
+import Toast from 'react-native-toast-message';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-// import * as Notifications from 'expo-notifications';
+import { toastConfig } from './src/utils/toastConfig';
 
 LogBox.ignoreLogs(['Your specific warning here']);
 
@@ -43,44 +40,25 @@ const firebaseConfig = {
   measurementId: "G-DXQ986SLJR"
 };
 
+console.log('firebaseConfig', firebaseConfig);
 
+// Inicializa Firebase ANTES de usar messaging()
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
+// Configura el manejador de mensajes en segundo plano
+messaging().setBackgroundMessageHandler(async remoteMessage => {
+  console.log('Message handled in the background!', JSON.stringify(remoteMessage));
+});
 
 const App = () => {
-
-  useEffect(() => {
-    LogBox.ignoreAllLogs();
-
-    // Inicializar Firebase
-    try {
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
-    } catch (error) {
-      console.error("Error initializing Firebase:", error);
-    }
-
-    // Solicitar permisos de notificaciones push
-    setTimeout(() => {
-      requestUserPermission();
-    }, 2000);
-
-    // Escuchar notificaciones entrantes
-    listenToNotifications();
-  }, []);
-
-  const [loading, setLoading] = useState(false); // Estado para el loading
-
-  // Establece la función de setLoading en el módulo de Axios
-  useEffect(() => {
-    setLoadingFunction(setLoading);
-  }, []);
-
+  const [loading, setLoading] = useState(false);
   const [isRTL, setIsRTL] = useState(false);
   const [isDark, setIsDark] = useState(false);
   const [currSymbol, setCurrSymbol] = useState('$');
   const [currPrice, setCurrPrice] = useState(1);
   const { t } = useTranslation();
-  
 
   const contextValues = {
     isRTL,
@@ -105,104 +83,72 @@ const App = () => {
     setCurrPrice,
   };
 
+  useEffect(() => {
+    LogBox.ignoreAllLogs();
+
+    // 🔧 Inicializa el estado global del loader
+    setLoadingFunction(setLoading);
+
+    // 🔔 Solicita permisos para notificaciones
+    requestUserPermission();
+
+    // 🔔 Escucha notificaciones en primer plano
+    const unsubscribe = messaging().onMessage(async remoteMessage => {
+      handleForegroundNotification(remoteMessage);
+    });
+
+    return unsubscribe;
+  }, []);
+
   const requestUserPermission = async () => {
+    const authStatus = await messaging().requestPermission();
+    const enabled =
+      authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
+      authStatus === messaging.AuthorizationStatus.PROVISIONAL;
 
-    
+    if (enabled) {
+      console.log('Authorization status:', authStatus);
+    }
   };
-
-  let alert = (_data: DropdownAlertData) => new Promise<DropdownAlertData>(res => res);
-
-  
-  messaging().setBackgroundMessageHandler(async remoteMessage => {
-    console.log('Message handled in the background!', JSON.stringify(remoteMessage));
-    // Aquí puedes manejar la notificación en segundo plano como desees
-  });
 
   const handleForegroundNotification = async (remoteMessage) => {
-    console.log('A new FCM message arrived in the foreground!', JSON.stringify(remoteMessage));
-    // Aquí puedes manejar la notificación como desees
+    console.log('Foreground message:', JSON.stringify(remoteMessage));
+    const { title, body } = remoteMessage.notification || {};
+    const { secretCode } = remoteMessage.data || {};
+    let type = 'info';
 
-
-    console.log(remoteMessage.notification)
-
-    console.log(remoteMessage.data.secretCode)
-    if (remoteMessage.data.secretCode == "Aprovado Taller"){
-      const alertData = await alert({
-        type: DropdownAlertType.Success,
-        title: remoteMessage.notification.title,
-        message: remoteMessage.notification.body,
-        interval: 8000,
-        onDismissPress: () => {
-          console.log("Foreground notification dismissed");
-        }
-      });
-    } else if (remoteMessage.data.secretCode == "Rechazo Taller"){
-      const alertData = await alert({
-        type: DropdownAlertType.Error,
-        title: remoteMessage.notification.title,
-        message: remoteMessage.notification.body,
-        interval: 8000,
-        onDismissPress: () => {
-          console.log("Foreground notification dismissed");
-        }
-      });
-    } else if (remoteMessage.data.secretCode == "Usuario contacta a taller"){
-      const alertData = await alert({
-        type: DropdownAlertType.Info,
-        title: remoteMessage.notification.title,
-        message: remoteMessage.notification.body,
-        interval: 8000,
-        onDismissPress: () => {
-          console.log("Foreground notification dismissed");
-        }
-      });
-    } else if (remoteMessage.data.secretCode == "New Taller Created"){
-      const alertData = await alert({
-        type: DropdownAlertType.Success,
-        title: remoteMessage.notification.title,
-        message: remoteMessage.notification.body,
-        interval: 8000,
-        onDismissPress: () => {
-          console.log("Foreground notification dismissed");
-        }
-      });
+    switch (secretCode) {
+      case 'Aprovado Taller':
+      case 'New Taller Created':
+        type = 'success';
+        break;
+      case 'Rechazo Taller':
+        type = 'error';
+        break;
+      default:
+        type = 'info';
     }
 
-
-
-  };
-
-  const listenToNotifications = () => {
-    messaging().onMessage(async remoteMessage => {
-      handleForegroundNotification(remoteMessage);
+    Toast.show({
+      type,
+      text1: title || 'Notificación',
+      text2: body || '',
+      visibilityTime: 8000,
     });
   };
 
-  const test = () =>{
-    console.log("51561jsdlghjksdhfjlksdhfjk")
-  }
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-    <CommonContext.Provider value={contextValues}>
-      <SafeAreaView style={[external.fx_1]}>
-        <MyStack />
-        <CustomLoader visible={loading} />
-      </SafeAreaView>
-
-      <DropdownAlert
-        alert={func => (alert = func)}
-        containerStyle={{ backgroundColor: '#2D3261' }}
-        titleStyle={{ color: '#FFF' }}
-        messageStyle={{ color: '#FFF' }}
-        onDismissPress={() => test()}
-      />
-
-    </CommonContext.Provider>
+      <CommonContext.Provider value={contextValues}>
+        <SafeAreaView style={[external.fx_1]}>
+          <MyStack />
+          <CustomLoader visible={loading} />
+        </SafeAreaView>
+        <Toast config={toastConfig} />
+      </CommonContext.Provider>
     </GestureHandlerRootView>
   );
 };
 
 export const useValues = () => useContext(CommonContext);
-
 export default App;

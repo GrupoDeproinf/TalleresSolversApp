@@ -8,7 +8,7 @@ import {BackLeft, Notification} from '../../../utils/icon';
 import {useValues} from '../../../../App';
 import { imageRTLStyle } from '../../../style/rtlStyle';
 import { useNavigation } from '@react-navigation/native';
-import { TouchableOpacity } from 'react-native-gesture-handler';
+import { Pressable } from 'react-native-gesture-handler';
 
 const HeaderContainer = () => {
   const {textColorStyle, viewRTLStyle, t} = useValues();
@@ -23,14 +23,14 @@ const HeaderContainer = () => {
           external.ai_center,
           {flexDirection: viewRTLStyle, alignItems: 'center'},
         ]}>
-        {/* <TouchableOpacity
+        {/* <Pressable
           onPress={() => navigation.goBack('')}
           style={{position: 'absolute'}} // Posiciona el botón de retroceso en la esquina izquierda
         >
           <View>
             <BackLeft style={[{marginTop: -4, paddingTop: 0}]}/>
           </View>
-        </TouchableOpacity> */}
+        </Pressable> */}
         <Text
           style={[
             commonStyles.titleText19,

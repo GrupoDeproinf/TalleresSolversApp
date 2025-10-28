@@ -95,7 +95,7 @@ export default Images = {
   opacityProductFour: require('../assets/images/productDetail/opacityProductFour.png'),
   onboardingTwoDark: require('../assets/images/onboarding/onboardingTwoDark.png'),
   loaderBgDark: require('../assets/images/signUp/loaderBgDark.png'),
-  loading: require('../assets/images/signUp/loading.gif'),
+  loading: require('../assets/images/signUp/loadingSolversNew.gif'),
   deleteDarkGif: require('../assets/images/darkModeGIF/deleteDark.gif'),
   onboardingImageTwo: require('../assets/images/onboarding/onboardingImageTwo.png'),
   onboardingImageThree: require('../assets/images/onboarding/onboardingImageThree.png'),

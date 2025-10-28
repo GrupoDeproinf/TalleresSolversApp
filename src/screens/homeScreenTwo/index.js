@@ -7,7 +7,7 @@ import {external} from '../../style/external.css';
 import CarouselContainer from '../../components/homeScreenTwo/carouselContainer';
 import WhosTrending from '../../components/homeScreenTwo/whosTending';
 import {dealDataTwo} from '../../data/homeScreen/dealData';
-import DealContainer from '../../components/homeScreen/dealContainer';
+// import DealContainer from '../../components/homeScreen/dealContainer';
 import TopBrandContainerTwo from '../../components/homeScreenTwo/topBrandContainerTwo';
 import {
   justWatchedData,
@@ -47,7 +47,7 @@ const HomeScreenTwo = () => {
         horizontal={true}
         show={true}
       />
-      <DealContainer data={dealDataTwo} />
+      {/* <DealContainer data={dealDataTwo} /> */}
       <NewArrivalBigContainer
         data={justWatchedData}
         width={178}

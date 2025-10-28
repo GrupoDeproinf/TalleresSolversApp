@@ -17,6 +17,7 @@ const IconContact = data => {
     ? ['#3D3F45', '#45474B', '#2A2C32']
     : [appColors.screenBg, appColors.screenBg];
 
+    console.log('data1234', data);
   
 
   const handleContact = async typeContact => {
@@ -27,7 +28,7 @@ const IconContact = data => {
       id: data.data[0]?.uid_servicio,
       nombre_servicio: data.data[0]?.nombre_servicio,
       precio: data.data[0]?.precio,
-      taller: data.data[0]?.taller?.nombre,
+      taller: data.data[0]?.taller.nombre,
       uid_servicio: data.data[0]?.uid_servicio,
       uid_taller: data.data[0]?.uid_taller,
       usuario_id: user?.uid || '',
@@ -65,22 +66,22 @@ const IconContact = data => {
   return (
     <View style={[styles.view]}>
       <Text style={[styles.textTitle]}>Contacto</Text>
-      <LinearGradient
+      {/* <LinearGradient
         start={{x: 0.0, y: 0.0}}
         end={{x: 0.0, y: 1.0}}
         colors={colors}
         style={[
           styles.refreshIcon,
           {shadowColor: appColors.shadowColor, borderRadius: 6},
-        ]}>
-        <LinearGradient
+        ]}> */}
+        {/* <LinearGradient
           start={{x: 0.0, y: 0.0}}
           end={{x: 0.0, y: 1.0}}
           colors={linearColorStyle}
           style={[
             styles.menuItemContent,
             {shadowColor: appColors.shadowColor},
-          ]}>
+          ]}> */}
           <View style={[styles.gridContainer]}>
             {data.data[0]?.taller?.phone && (
               <View style={[styles.gridItem]}>
@@ -90,7 +91,7 @@ const IconContact = data => {
                     handleContact('Llamada');
                     Linking.openURL(`tel:0${data.data[0]?.taller?.phone}`);
                   }}>
-                  📞 Teléfono: {data.data[0]?.taller?.phone}
+                  📞Teléfono: {data.data[0]?.taller?.phone}
                 </Text>
               </View>
             )}
@@ -105,13 +106,13 @@ const IconContact = data => {
                       `https://wa.me/+58${data.data[0]?.taller?.whatsapp}`,
                     );
                   }}>
-                  🔗 WhatsApp: {data.data[0]?.taller?.whatsapp}
+                  🔗WhatsApp: {data.data[0]?.taller?.whatsapp}
                 </Text>
               </View>
             )}
           </View>
-        </LinearGradient>
-      </LinearGradient>
+        {/* </LinearGradient> */}
+      {/* </LinearGradient> */}
     </View>
   );
 };

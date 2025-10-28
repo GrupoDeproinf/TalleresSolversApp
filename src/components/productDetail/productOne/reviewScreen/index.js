@@ -1,5 +1,5 @@
 import {Text, TouchableOpacity, View} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {fontSizes, windowHeight} from '../../../../themes/appConstant';
 import appColors from '../../../../themes/appColors';
 import {external} from '../../../../style/external.css';
@@ -7,7 +7,7 @@ import {commonStyles} from '../../../../style/commonStyle.css';
 import {reviews} from '../../../../constant';
 import {RightSmallArrow} from '../../../../utils/icon';
 import {ratingScreen} from '../../../../data/ratingScreen';
-import {useNavigation} from '@react-navigation/native';
+import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import styles from './styles.css';
 import {useValues} from '../../../../../App';
 import api from '../../../../../axiosInstance';
@@ -36,11 +36,12 @@ const RatingScreen = data => {
   }
   
   const getComments = async data => {
-    
+
     try {
       
       const response = await api.post('/home/getCommentsByService', {
-        uid_service: data.id ?? data.uid_servicio,
+        uid_service: data?.uid_servicio,
+        // uid_service: data?.id ?? data?.uid_servicio,
       });
 
       if (response.status === 200) {
@@ -48,7 +49,11 @@ const RatingScreen = data => {
         console.log('Respuesta del servidor:', response.data);
 
         const averageScore = calculateAverageScore(response.data);
-        setDataAverage(averageScore.toFixed(1));
+        const roundedScore = Math.min(Math.max(Math.ceil(averageScore), 0), 5); // Redondear hacia arriba, limitar entre 0 y 5
+        console.log('Puntuación promedio redondeada:', roundedScore);
+
+
+        setDataAverage(roundedScore);
       } else {
         console.warn('Respuesta inesperada del servidor:', response.status);
         setDataComments([]);
@@ -66,6 +71,21 @@ const RatingScreen = data => {
     console.log('---------------------------------------123');
     getComments(data.data);
   }, []);
+
+
+  useFocusEffect(
+    useCallback(() => {
+      console.log('Volviendo a esta pantalla', data.data);
+      getComments(data.data);
+      // myFunction();
+  
+      return () => {
+        console.log('Saliendo de esta pantalla');
+      };
+    }, [])
+  );
+
+
 
   return (
     <View>
@@ -118,13 +138,9 @@ const RatingScreen = data => {
               {alignItems: 'center', justifyContent: 'center'},
             ]}>
             <View style={styles.viewContainer}>
-              <Text
-                style={[
-                  styles.fourPointOne,
-                  {alignItems: 'center', justifyContent: 'center'},
-                ]}>
+             
                 {dataAverage} <Star size={15} color={'#D3D3D3'} fill={'none'} />
-              </Text>
+    
               <Text style={styles.outOfFive}>de 5</Text>
             </View>
           </View>

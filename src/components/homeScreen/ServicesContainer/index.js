@@ -141,6 +141,9 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
+            marginTop: 5,
+            paddingRight: 80,
+            marginBottom: 15,
           }}
         >
           <TouchableOpacity
@@ -169,20 +172,10 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
               fontSize: 18,
               color: '#2D3261',
               fontWeight: 'bold',
-              textAlign: 'right',
-              marginRight: 30,
-              marginTop: 10,
             }}
           >
             ${item.precio}
           </Text>
-          <Snackbar
-            visible={visibleHint === item.uid}
-            onDismiss={onDismissHint}
-            duration={900}
-          >
-            {statusLabel}
-          </Snackbar>
         </View>
       </View>
     </LinearGradient>
@@ -200,6 +193,13 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop}) => {
         )}
       </View>
       <FlatList data={data} renderItem={renderItem} />
+      <Snackbar
+        visible={visibleHint !== null && visibleHint !== false}
+        onDismiss={onDismissHint}
+        duration={900}
+      >
+        {statusLabel}
+      </Snackbar>
     </View>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
-import { MyTabs, MyTabsCliente, MyTabsTaller, MyTabsAdmin } from '../myTab';
+import { MyTabs, MyTabsCliente, MyTabsTaller, MyTabsTallerPendiente, MyTabsAdmin } from '../myTab';
 import { useValues } from '../../App';
 import { windowHeight, windowWidth } from '../themes/appConstant';
 import DrawerContent from './drawerContent';
@@ -35,6 +35,7 @@ const CustomDrawerNavigator = () => {
       console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
       console.log("Userrrr12344444navbarrr", userNew);
       console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
+
     } catch (e) {
       console.log("Aquiiii esta el errooooooooor23", e);
     }
@@ -42,7 +43,12 @@ const CustomDrawerNavigator = () => {
 
   // Adaptación: Renderizar directamente los componentes según el tipo de usuario
   if (user.typeUser === 'Taller') {
-    return <MyTabsTaller />;
+    // Validar si es taller con status "En espera por aprobación" para mostrar Servicios como inicial
+    if (user.status === 'En espera por aprobación') {
+      return <MyTabsTallerPendiente />;
+    } else {
+      return <MyTabsTaller />;
+    }
   }
 
   if (user.typeUser === 'Cliente') {
@@ -53,7 +59,7 @@ const CustomDrawerNavigator = () => {
     return <MyTabsAdmin />;
   }
 
-  // Opcional: manejar el caso en que user.typeUser no esté definido
+  // Opcional: manejar el caso en que `user.typeUser` no esté definido
   return null;
 };
 

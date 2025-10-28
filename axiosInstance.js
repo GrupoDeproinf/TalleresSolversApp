@@ -29,7 +29,7 @@ api.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.log("Error recibido", error);
+    console.log("Error recibido en la ruta:", error.config?.url); // Muestra la ruta que dio error
     setLoading(false); // Desactiva el loading en caso de error
     return Promise.reject(error);
   }

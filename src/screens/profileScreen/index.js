@@ -1,4 +1,4 @@
-import { Image, Pressable, Text, View, ImageBackground, Linking } from 'react-native';
+import { Image, Pressable, Text, View, ImageBackground, Linking, Alert, ScrollView } from 'react-native';
 import React, { useState, useEffect } from 'react';
 import { external } from '../../style/external.css';
 import { commonStyles } from '../../style/commonStyle.css';
@@ -126,7 +126,7 @@ const ProfileScreen = () => {
           commonStyles.hederH2,
           { color: textColorStyle },
         ]}>
-        Mi Perfil
+        Mi Perfil {infoUser.typeUser}
       </Text>
       <View style={[external.as_center, { marginTop: 10 }]}>
 
@@ -154,7 +154,7 @@ const ProfileScreen = () => {
       </View>
       <View style={[external.mt_10]}>
         {
-          infoUser && (infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente") ? (
+          infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente" ? (
             profileDataAdmin.map((item, index) => (
               <Pressable
                 key={index}
@@ -176,16 +176,9 @@ const ProfileScreen = () => {
                     }
                   }
                 }}>
-                <LinearGradient
-                  start={{ x: 0.0, y: 0.0 }}
-                  end={{ x: 0.0, y: 1.0 }}
-                  colors={colors}
-                  style={styles.container}>
-                  <LinearGradient
-                    start={{ x: 0.0, y: 0.0 }}
-                    end={{ x: 0.0, y: 1.0 }}
-                    colors={linearColorStyle}
-                    style={styles.menuItemContent}>
+
+                <View style={[styles.container, { backgroundColor: colors[0] }]}>
+                  <View style={[styles.menuItemContent, { backgroundColor: linearColorStyle[0] }]}>
                     <View
                       style={[
                         external.fd_row,
@@ -207,144 +200,185 @@ const ProfileScreen = () => {
                         <RightArrow />
                       </View>
                     </View>
-                  </LinearGradient>
-                </LinearGradient>
+                  </View>
+                </View>
+
               </Pressable>
             ))
           ) : null
         }
 
 
-{
-  infoUser && (infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente") ? (
-    profileDataAdmin
-      .filter(item => item.id !== 3 || infoUser.typeUser === "Taller") // Filtrar si el ID es 3 y el usuario no es Taller
-      .map((item, index) => (
-        <Pressable
-          key={index}
-          activeOpacity={0.9}
-          onPress={() => {
-            if (item.id === 6) {
-              removePropertyFromStorage();
-              handleLogout();
-            } else {
-              if (infoUser.typeUser == "Taller") {
-                if (item.screenName == "EditProfile") {
-                  console.log("aquiii");
-                  navigation.navigate('TallerEditProfileScreen');
-                } else {
-                  navigation.navigate(item.screenName);
-                }
-              } else {
-                navigation.navigate(item.screenName);
-              }
-            }
-          }}>
-          <LinearGradient
-            start={{ x: 0.0, y: 0.0 }}
-            end={{ x: 0.0, y: 1.0 }}
-            colors={colors}
-            style={styles.container}>
-            <LinearGradient
-              start={{ x: 0.0, y: 0.0 }}
-              end={{ x: 0.0, y: 1.0 }}
-              colors={linearColorStyle}
-              style={styles.menuItemContent}>
-              <View
-                style={[
-                  external.fd_row,
-                  external.ai_center,
-                  { flexDirection: viewRTLStyle },
-                ]}>
-                {item.icon}
-                <View style={{ width: '86%' }}>
-                  <Text
-                    style={[
-                      styles.titleText,
-                      { color: textColorStyle },
-                      { textAlign: textRTLStyle },
-                    ]}>
-                    {t(item.title)}
-                  </Text>
-                </View>
-                <View style={{ transform: [{ scale: imageRTLStyle }] }}>
-                  <RightArrow />
-                </View>
-              </View>
-            </LinearGradient>
-          </LinearGradient>
-        </Pressable>
-      ))
-  ) : null
-}
+        {
+          infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente" ? (
+            profileDataAdmin
+              .filter(item => item.id !== 3 || infoUser.typeUser === "Taller") // Filtrar si el ID es 3 y el usuario no es Taller
+              .map((item, index) => (
+                <Pressable
+                  key={index}
+                  activeOpacity={0.9}
+                  onPress={() => {
+                    if (item.id === 6) {
+                      removePropertyFromStorage();
+                      handleLogout();
+                    } else {
+                      if (infoUser.typeUser == "Taller") {
+                        if (item.screenName == "EditProfile") {
+                          console.log("aquiii");
+                          navigation.navigate('TallerEditProfileScreen');
+                        } else {
+                          navigation.navigate(item.screenName);
+                        }
+                      } else {
+                        navigation.navigate(item.screenName);
+                      }
+                    }
+                  }}>
 
-{
-  infoUser && (infoUser.typeUser == "Taller" || infoUser.typeUser == "Cliente") ? (
-    profileData
-      .filter(item => item.id !== 3 || infoUser.typeUser === "Taller") // Filtrar si el ID es 3 y el usuario no es Taller
-      .map((item, index) => (
-        <Pressable
-          key={index}
-          activeOpacity={0.9}
-          onPress={() => {
-            if (item.id === 6) {
-              removePropertyFromStorage();
-              handleLogout();
-            } else {
-              if (infoUser.typeUser == "Taller") {
-                if (item.screenName == "EditProfile") {
-                  console.log("aquiii");
-                  navigation.navigate('TallerEditProfileScreen');
-                } else {
-                  navigation.navigate(item.screenName);
-                }
-              } else {
-                navigation.navigate(item.screenName);
-              }
-            }
+                  <View style={[styles.container, { backgroundColor: colors[0] }]}>
+                    <View style={[styles.menuItemContent, { backgroundColor: linearColorStyle[0] }]}>
+                      <View
+                        style={[
+                          external.fd_row,
+                          external.ai_center,
+                          { flexDirection: viewRTLStyle },
+                        ]}>
+                        {item.icon}
+                        <View style={{ width: '86%' }}>
+                          <Text
+                            style={[
+                              styles.titleText,
+                              { color: textColorStyle },
+                              { textAlign: textRTLStyle },
+                            ]}>
+                            {t(item.title)}
+                          </Text>
+                        </View>
+                        <View style={{ transform: [{ scale: imageRTLStyle }] }}>
+                          <RightArrow />
+                        </View>
+                      </View>
+                    </View>
+                  </View>
 
-            if (item.id === 7) {
-              Linking.openURL(item.screenName);
-            }
-          }}>
-          <LinearGradient
-            start={{ x: 0.0, y: 0.0 }}
-            end={{ x: 0.0, y: 1.0 }}
-            colors={colors}
-            style={styles.container}>
-            <LinearGradient
-              start={{ x: 0.0, y: 0.0 }}
-              end={{ x: 0.0, y: 1.0 }}
-              colors={linearColorStyle}
-              style={styles.menuItemContent}>
-              <View
-                style={[
-                  external.fd_row,
-                  external.ai_center,
-                  { flexDirection: viewRTLStyle },
-                ]}>
-                {item.icon}
-                <View style={{ width: '86%' }}>
-                  <Text
-                    style={[
-                      styles.titleText,
-                      { color: textColorStyle },
-                      { textAlign: textRTLStyle },
-                    ]}>
-                    {t(item.title)}
-                  </Text>
-                </View>
-                <View style={{ transform: [{ scale: imageRTLStyle }] }}>
-                  <RightArrow />
-                </View>
-              </View>
-            </LinearGradient>
-          </LinearGradient>
-        </Pressable>
-      ))
-  ) : null
-}
+                </Pressable>
+              ))
+          ) : null
+        }
 
+        <ScrollView contentContainerStyle={{ paddingBottom: 250 }}>
+          {
+            infoUser.typeUser == "Taller" || infoUser.typeUser == "Cliente" ? (
+              profileData
+                .filter(item => item.id !== 3 || infoUser.typeUser === "Taller") // Filtrar si el ID es 3 y el usuario no es Taller
+                .map((item, index) => (
+                  <Pressable
+                    key={index}
+                    activeOpacity={0.9}
+                    onPress={async () => {
+                      if (item.id === 8) {
+                        Alert.alert(
+                          "Confirmación",
+                          "¿Estás seguro de que deseas eliminar tu cuenta?",
+                          [
+                            {
+                              text: "Cancelar",
+                              onPress: () => console.log("Cancelado"),
+                              style: "cancel", // Estilo de botón de cancelación
+                            },
+                            {
+                              text: "Eliminar",
+                              onPress: async () => {
+                                console.log("estoy en test");
+                        
+                                try {
+                                  const jsonValue = await AsyncStorage.getItem('@userInfo');
+                                  const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+                                  console.log("valor del storage", user.uid);
+                                  try {
+                                    // Hacer la solicitud POST utilizando Axios
+                                    const response = await api.post('/usuarios/deleteUserFromAuth', {
+                                      uid: user.uid,
+                                    });
+                        
+                                    // Verificar la respuesta del servidor
+                                    const result = response.data; // Los datos vienen directamente de response.data
+                                    console.log('esto es lo despues ', result); // Aquí puedes manejar la respuesta
+                        
+                                    removePropertyFromStorage();
+                                    handleLogout();
+                        
+                                  } catch (error) {
+                                    if (error.response) {
+                                      console.log(error);
+                                    } else {
+                                      console.log("error mas abajo");
+                                    }
+                                  }
+                        
+                                } catch (e) {
+                                  // error reading value
+                                  console.log(e);
+                                }
+                              },
+                              style: "destructive", // Estilo rojo para el botón de eliminación
+                            },
+                          ],
+                          { cancelable: false }
+                        );
+                        return false;
+                      }
+
+                      if (item.id === 6) {
+                        removePropertyFromStorage();
+                        handleLogout();
+                      } else {
+                        if (infoUser.typeUser == "Taller") {
+                          if (item.screenName == "EditProfile") {
+                            console.log("aquiii");
+                            navigation.navigate('TallerEditProfileScreen');
+                          } else {
+                            navigation.navigate(item.screenName);
+                          }
+                        } else {
+                          navigation.navigate(item.screenName);
+                        }
+                      }
+
+                      if (item.id === 7) {
+                        Linking.openURL(item.screenName);
+                      }
+                    }}>
+
+                    <View style={[styles.container, { padding: 10, borderRadius: 15, backgroundColor: colors[0] }]}>
+                      <View style={[styles.menuItemContent, { padding: 10, borderRadius: 10, backgroundColor: linearColorStyle[0] }]}>
+                        <View
+                          style={[
+                            external.fd_row,
+                            external.ai_center,
+                            { flexDirection: viewRTLStyle },
+                          ]}>
+                          {item.icon}
+                          <View style={{ width: '86%' }}>
+                            <Text
+                              style={[
+                                styles.titleText,
+                                { color: textColorStyle, textAlign: textRTLStyle },
+                              ]}>
+                              {t(item.title)}
+                            </Text>
+                          </View>
+                          <View style={{ transform: [{ scale: imageRTLStyle }] }}>
+                            <RightArrow />
+                          </View>
+                        </View>
+                      </View>
+                    </View>
+                  </Pressable>
+                ))
+            ) : null
+          }
+        </ScrollView>
       </View>
     </View>
   );

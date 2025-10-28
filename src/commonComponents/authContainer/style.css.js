@@ -8,6 +8,7 @@ const styles = StyleSheet.create({
     ...external.fx_1,
     backgroundColor: appColors.lightScreenBg,
     paddingTop: windowHeight(20),
+    paddingHorizontal: windowWidth(0),
   },
   transformLine: {
     transform: [{rotate: '-90deg'}],

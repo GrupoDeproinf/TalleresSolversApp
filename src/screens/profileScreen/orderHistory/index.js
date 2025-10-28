@@ -111,7 +111,7 @@ const OrderHistory = () => {
             style={[
               external.fd_row,
               external.ai_center,
-              {flexDirection: viewRTLStyle},
+              {flexDirection: viewRTLStyle, justifyContent: 'space-between', marginRight: 13},
             ]}>
             <Text
               numberOfLines={2}
@@ -139,7 +139,7 @@ const OrderHistory = () => {
             style={[
               external.fd_row,
               external.ai_center,
-              {flexDirection: viewRTLStyle},
+              {justifyContent: 'space-between'},
             ]}>
             <Text
               style={[
@@ -154,6 +154,7 @@ const OrderHistory = () => {
               style={[
                 styles.orderContainer,
                 {borderTopEndRadius: isRTL ? windowHeight(9) : undefined},
+                {width: "23%"},
               ]}>
               <Text
                 style={styles.buyAgain}
