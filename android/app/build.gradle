@@ -87,9 +87,6 @@ android {
     }
     packagingOptions {
         pickFirst '**/libc++_shared.so'
-        pickFirst '**/libjsc.so'
-        pickFirst '**/libfabricjni.so'
-        pickFirst '**/libreact_render*.so'
     }
     signingConfigs {
         debug {
@@ -114,15 +111,15 @@ android {
             // see https://reactnative.dev/docs/signed-apk-android.
             signingConfig signingConfigs.release
             minifyEnabled enableProguardInReleaseBuilds
+            shrinkResources false
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            // Asegurar que las reglas de ProGuard se apliquen incluso cuando minifyEnabled es false
+            // Esto previene que R8 elimine código necesario de react-native-maps
         }
     }
 }
 
 dependencies {
-    implementation 'com.facebook.fresco:fresco:2.0.0'
-    implementation 'com.facebook.fresco:animated-gif:2.6.0'
-    // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
     if (hermesEnabled.toBoolean()) {

@@ -23,9 +23,6 @@ import OrderHistory from '../screens/profileScreen/orderHistory';
 import CheckoutScreen from '../screens/checkOut';
 import Splash from '../screens/intro/splash';
 
-
-import Onboarding from '../screens/intro/onBording';
-import OnboardingTwo from '../screens/intro/onBordingTwo';
 import FormTaller from '../screens/FormTaller'
 import FormService from '../screens/FormService'
 
@@ -98,11 +95,6 @@ const MyStack = () => {
         <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
         <Stack.Screen name="ResetPassword" component={ResetPassword} />
 
-
-        {/* <Stack.Screen name="Onboarding" component={Onboarding} />
-        <Stack.Screen name="OnboardingTwo" component={OnboardingTwo} />
-        <Stack.Screen name="OtpVerfication" component={OtpVerfication} /> */}
-
         <Stack.Screen name="Splash" component={Splash} />
 
         
@@ -150,11 +142,6 @@ const MyStack = () => {
 
         <Stack.Screen name="DrawerScreen" component={DrawerScreen} />
         <Stack.Screen name="TallerDetail" component={TallerDetail} />
-
-
-        {/* <Stack.Screen name="HomeScreenTwo" component={HomeScreenTwo} />
-        <Stack.Screen name="ProductDetailThree" component={ProductDetailThree} />
-        <Stack.Screen name="ProductDetailTwo" component={ProductDetailTwo} /> */}
 
       </Stack.Navigator>
     </NavigationContainer>

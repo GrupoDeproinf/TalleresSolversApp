@@ -3,14 +3,13 @@ import React, {useCallback, useEffect, useState} from 'react';
 import FullHeader from '../../../commonComponents/fullHeader';
 import {external} from '../../../style/external.css';
 import {Notification} from '../../../utils/icon';
-import NewArrivalBigContainer from '../../../components/homeScreenTwo/newArrivalTwoContainer';
+import NewArrivalContainer from '../../../components/homeScreen/newArrivalContainer';
 import {categoryDetailData} from '../../../data/homeScreenTwo/newArrivalData';
 import SortContainer from '../../../components/categoryContainer/sortContainer';
 import {commonStyles} from '../../../style/commonStyle.css';
 import {windowWidth} from '../../../themes/appConstant';
 import {useValues} from '../../../../App';
 import api from '../../../../axiosInstance';
-import NewCategoriesDetail from '../../../components/homeScreenTwo/newCategoriesDetail';
 import { useRoute } from '@react-navigation/native';
 import {Filter} from '../../../utils/icon';
 import appColors from '../../../themes/appColors';
@@ -156,11 +155,8 @@ const CategoryDetail = ({navigation}) => {
           />
         </View>
         
-        <NewCategoriesDetail
+        <NewArrivalContainer
           data={dataByCategory}
-          horizontal={false}
-          numColumns={2}
-          width={windowWidth(210)}
         />
       </ScrollView>
     </View>

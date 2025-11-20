@@ -17,7 +17,7 @@ import { external } from '../../../style/external.css';
 import { BackLeft, Plus } from '../../../utils/icon';
 import { addtoBag, buyNow, writeYourReview } from '../../../constant';
 import styles from './style.css';
-import NewArrivalBigContainer from '../../../components/homeScreenTwo/newArrivalTwoContainer';
+import NewArrivalContainer from '../../../components/homeScreen/newArrivalContainer';
 import { newArrivalBigData } from '../../../data/homeScreenTwo/newArrivalData';
 import H3HeadingCategory from '../../../commonComponents/headingCategory/H3HeadingCategory';
 import { Cart } from '../../../assets/icons/cart';
@@ -475,14 +475,8 @@ const ProductDetailOne = ({ navigation }) => {
 
         <View style={[external.mh_20, external.mt_20]}>
           <H3HeadingCategory value={'Productos Similares'} />
-          <NewArrivalBigContainer
+          <NewArrivalContainer
             data={dataProductCategory}
-            horizontal={true}
-            width={windowWidth(205)}
-            onNavigate={uidServ => {
-              getDataFirst(uidServ);
-              scrollRef.current?.scrollTo({ y: 0, animated: true }); // Scroll to top
-            }}
           />
         </View>
       </ScrollView>
