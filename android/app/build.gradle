@@ -82,7 +82,7 @@ android {
         applicationId "com.solvers.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 25
+        versionCode 37
         versionName "1.0"
     }
     packagingOptions {
@@ -114,7 +114,7 @@ android {
             shrinkResources false
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
             // Asegurar que las reglas de ProGuard se apliquen incluso cuando minifyEnabled es false
-            // Esto previene que R8 elimine código necesario de react-native-maps
+            // Esto previene que R8 elimine cÃƒÆ’Ã‚Â³digo necesario de react-native-maps
         }
     }
 }
