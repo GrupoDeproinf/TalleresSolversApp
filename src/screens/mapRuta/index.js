@@ -3,7 +3,6 @@ import {
   View,
   StyleSheet,
   Text,
-  PermissionsAndroid,
   Platform,
   TouchableOpacity,
   Modal,
@@ -11,77 +10,26 @@ import {
   Alert
 } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
-import Geolocation from '@react-native-community/geolocation';
 import Icons from 'react-native-vector-icons/FontAwesome';
 
 MapboxGL.setAccessToken('pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ');
 
-const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
-  const [location, setLocation] = useState(null);
-  const [secondLocation, setSecondLocation] = useState(null);
+const MapRutaComponent = ({ initialRegion, edit, returnFunction, location }) => {
+  const secondLocation = initialRegion;
   const [modalVisible, setModalVisible] = useState(true);
-  const [gpsModalVisible, setGpsModalVisible] = useState(false);
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [loadingRoute, setLoadingRoute] = useState(false);
-  const [showbutton, setshowbutton] = useState(true);
 
   const MAPBOX_DIRECTIONS_API = 'https://api.mapbox.com/directions/v5/mapbox/driving';
-
-  const requestLocationPermission = async () => {
-    try {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-          {
-            title: 'Permiso de ubicación',
-            message: 'Esta aplicación necesita acceso a tu ubicación',
-            buttonNeutral: 'Pregúntame más tarde',
-            buttonNegative: 'Cancelar',
-            buttonPositive: 'OK',
-          },
-        );
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          setshowbutton(true);
-          if (initialRegion?.latitude && initialRegion?.longitude) {
-            setSecondLocation({
-              ...initialRegion
-            });
-          }
-          getCurrentLocation();
-        } else setshowbutton(false);
-      } else {
-        if (initialRegion?.latitude && initialRegion?.longitude) {
-          setSecondLocation({
-            ...initialRegion
-          });
-        }
-        getCurrentLocation();
-      }
-    } catch (error) {
-      console.error('Error permisos ubicación:', error);
-      setshowbutton(false);
-    }
-  };
-
-  useEffect(() => { requestLocationPermission(); }, []);
-
-  const getCurrentLocation = () => {
-    Geolocation.getCurrentPosition(
-      info => {
-        const { latitude, longitude } = info.coords;
-        setLocation({ latitude, longitude });
-      },
-      error => { console.error(error); setGpsModalVisible(true); },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 }
-    );
-  };
 
   const fetchRoute = async () => {
     if (!location || !secondLocation) return;
     setLoadingRoute(true);
     try {
-      const url = `${MAPBOX_DIRECTIONS_API}/${location.longitude},${location.latitude};${secondLocation.longitude},${secondLocation.latitude}?geometries=geojson&access_token=TU_MAPBOX_TOKEN`;
+      console.log("AQUIIIIIIII")
+      const url = `${MAPBOX_DIRECTIONS_API}/${location.longitude},${location.latitude};${secondLocation.longitude},${secondLocation.latitude}?geometries=geojson&access_token=pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ`;
       const response = await fetch(url);
+      console.log(response)
       const data = await response.json();
       if (data.routes && data.routes.length > 0) {
         const coords = data.routes[0].geometry.coordinates.map(c => ({ longitude: c[0], latitude: c[1] }));
@@ -101,28 +49,11 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
     if (!edit) return;
     const [longitude, latitude] = e.geometry.coordinates;
     if (!location) setLocation({ latitude, longitude });
-    // si quisieras permitir edición de segundo punto, podrías agregar aquí
   };
 
   return (
     <View style={styles.container}>
-      <Modal
-        transparent={true}
-        animationType="slide"
-        visible={gpsModalVisible}
-        onRequestClose={() => setGpsModalVisible(false)}
-      >
-        <View style={stylesModal.container}>
-          <View style={stylesModal.modalView}>
-            <Text style={stylesModal.modalText}>Debe habilitar la ubicación del dispositivo</Text>
-            <View style={stylesModal.buttonContainer}>
-              <TouchableOpacity style={stylesModal.buttonNo} onPress={() => setGpsModalVisible(false)}>
-                <Text style={stylesModal.buttonText}>Cerrar</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      
 
       {location && secondLocation && (
         <Modal
@@ -152,7 +83,7 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
               {location && (
                 <MapboxGL.Camera
                   centerCoordinate={[location.longitude, location.latitude]}
-                  zoomLevel={15}
+                  zoomLevel={10}
                 />
               )}
 
@@ -167,7 +98,7 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) =
 
               {secondLocation && (
                 <MapboxGL.PointAnnotation
-                  id="destination"
+                  id="selectedPoint"
                   coordinate={[secondLocation.longitude, secondLocation.latitude]}
                 >
                   <View style={{ height: 25, width: 25, borderRadius: 12.5, backgroundColor: 'red' }} />
@@ -200,13 +131,6 @@ const stylesImage = StyleSheet.create({
   buttonText: { color: 'white', fontWeight: 'bold' },
 });
 
-const stylesModal = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
-  modalView: { margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 35, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
-  modalText: { marginBottom: 15, textAlign: 'center' },
-  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between' },
-  buttonNo: { backgroundColor: '#2196F3', borderRadius: 20, padding: 10, elevation: 2 },
-  buttonText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
-});
+
 
 export default MapRutaComponent;

@@ -40,8 +40,6 @@ const firebaseConfig = {
   measurementId: "G-DXQ986SLJR"
 };
 
-console.log('firebaseConfig', firebaseConfig);
-
 // Inicializa Firebase ANTES de usar messaging()
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
@@ -105,10 +103,6 @@ const App = () => {
     const enabled =
       authStatus === messaging.AuthorizationStatus.AUTHORIZED ||
       authStatus === messaging.AuthorizationStatus.PROVISIONAL;
-
-    if (enabled) {
-      console.log('Authorization status:', authStatus);
-    }
   };
 
   const handleForegroundNotification = async (remoteMessage) => {

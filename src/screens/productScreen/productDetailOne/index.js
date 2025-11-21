@@ -2,6 +2,7 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
+  PermissionsAndroid,
   View,
   ToastAndroid,
   Modal,
@@ -15,37 +16,25 @@ import { commonStyles } from '../../../style/commonStyle.css';
 import { windowWidth } from '../../../themes/appConstant';
 import { external } from '../../../style/external.css';
 import { BackLeft, Plus } from '../../../utils/icon';
-import { addtoBag, buyNow, writeYourReview } from '../../../constant';
 import styles from './style.css';
 import NewArrivalContainer from '../../../components/homeScreen/newArrivalContainer';
-import { newArrivalBigData } from '../../../data/homeScreenTwo/newArrivalData';
 import H3HeadingCategory from '../../../commonComponents/headingCategory/H3HeadingCategory';
 import { Cart } from '../../../assets/icons/cart';
 import DetailsTextContainer from '../../../components/productDetail/productOne/detailsText';
-import DescriptionText from '../../../components/productDetail/productOne/descriptionText';
 import InfoContainer from '../../../components/productDetail/productOne/infoContainer';
 import BrandData from '../../../components/productDetail/productOne/brandData';
 import IconProduct from '../../../components/productDetail/productOne/iconProduct';
-import KeyFeatures from '../../../components/productDetail/productOne/keyFeatures';
 import RatingScreen from '../../../components/productDetail/productOne/reviewScreen';
 import { useValues } from '../../../../App';
 import SliderDetails from '../../../components/productDetail/productOne/sliderDetails';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import api from '../../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { FlatList } from 'react-native';
-import Clipboard from '@react-native-clipboard/clipboard';
-import {
-  ClipboardDocumentIcon,
-  ClipboardIcon,
-  PhoneIcon,
-} from 'react-native-heroicons/outline'; // Importar íconos
 import { Linking } from 'react-native';
-import { TouchableHighlight } from 'react-native-gesture-handler';
 import IconContact from '../../../components/productDetail/productOne/iconContact';
-import MapComponent from '../../map';
 import MapRutaComponent from '../../mapRuta';
+import Geolocation from '@react-native-community/geolocation';
+
 
 const ProductDetailOne = ({ navigation }) => {
   const { bgFullStyle, textColorStyle, t, textRTLStyle, iconColorStyle } =
@@ -76,6 +65,9 @@ const ProductDetailOne = ({ navigation }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [dataUser, setDataUser] = useState();
   const [dataProductCategory, setDataProductCategory] = useState('');
+  const [location, setLocation] = useState(null);
+  const [gpsModalVisible, setGpsModalVisible] = useState(false);
+
 
   const [showRuta, setshowRuta] = useState(false);
 
@@ -90,6 +82,46 @@ const ProductDetailOne = ({ navigation }) => {
     getDataFirst(uid, typeUser);
     scrollRef.current?.scrollTo({ y: 0, animated: true }); // Scroll to top
   }, []);
+
+  const requestLocationPermission = async () => {
+    try {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Permiso de ubicación',
+            message: 'Esta aplicación necesita acceso a tu ubicación',
+            buttonNeutral: 'Pregúntame más tarde',
+            buttonNegative: 'Cancelar',
+            buttonPositive: 'OK',
+          },
+        );
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          if (data[0]?.taller?.ubicacion?.lat && data[0]?.taller?.ubicacion?.lng) {
+          }
+          getCurrentLocation();
+        }
+      } else {
+        if (data[0]?.taller?.ubicacion?.lat && data[0]?.taller?.ubicacion?.lng) {
+        }
+        getCurrentLocation();
+      }
+    } catch (error) {
+      console.error('Error permisos ubicación:', error);
+    }
+  };
+
+  const getCurrentLocation = async () => {
+    await Geolocation.getCurrentPosition(
+      info => {
+        const { latitude, longitude } = info.coords;
+        console.log("OBTENIDO", latitude, longitude);
+        setLocation({ latitude, longitude });
+      },
+      error => { console.error(error); setGpsModalVisible(true); },
+      { timeout: 25000 }
+    );
+  };
 
   const getDataFirst = (uid, typeUser) => {
     getService(uid);
@@ -338,8 +370,6 @@ const ProductDetailOne = ({ navigation }) => {
     setModalVisible(false);
   };
 
-  const GetCoordenadas = () => { };
-
   const closeMapRutas = () => {
     setshowRuta(false);
   };
@@ -347,7 +377,6 @@ const ProductDetailOne = ({ navigation }) => {
   const stylesMap = StyleSheet.create({
     container: { justifyContent: 'center', alignItems: 'center' },
   });
-  const dataTest = [{ phone: '4241436070' }];
 
   return (
     <View
@@ -415,7 +444,9 @@ const ProductDetailOne = ({ navigation }) => {
               <View
                 style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
                 <TouchableOpacity
-                  onPress={() => {
+                  onPress={async () => {
+                    await requestLocationPermission();
+                    await getCurrentLocation();
                     setshowRuta(true);
                   }}
                   style={[
@@ -461,6 +492,7 @@ const ProductDetailOne = ({ navigation }) => {
                   edit={false}
                   returnFunction={closeMapRutas}
                   useThisCoo={true}
+                  location={location}
                 />
               </View>
             ) : null}
@@ -558,9 +590,35 @@ const ProductDetailOne = ({ navigation }) => {
           }
         />
       </View>
+      <Modal
+        transparent={true}
+        animationType="slide"
+        visible={gpsModalVisible}
+        onRequestClose={() => setGpsModalVisible(false)}
+      >
+        <View style={stylesModal.container}>
+          <View style={stylesModal.modalView}>
+            <Text style={stylesModal.modalText}>Hubo un problema al obtener tu ubicación, vuelve a intentarlo.</Text>
+            <View style={stylesModal.buttonContainer}>
+              <TouchableOpacity style={stylesModal.buttonNo} onPress={() => setGpsModalVisible(false)}>
+                <Text style={stylesModal.buttonText}>Cerrar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
+
+const stylesModal = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalView: { margin: 20, backgroundColor: 'white', borderRadius: 20, padding: 35, alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.25, shadowRadius: 4, elevation: 5 },
+  modalText: { marginBottom: 15, textAlign: 'center' },
+  buttonContainer: { flexDirection: 'row', justifyContent: 'space-between' },
+  buttonNo: { backgroundColor: '#2196F3', borderRadius: 20, padding: 10, elevation: 2 },
+  buttonText: { color: 'white', fontWeight: 'bold', textAlign: 'center' },
+});
 
 const stylesImage = StyleSheet.create({
   button: {
