@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Solvers</string>
+    <string name="facebook_app_id">663249886635250</string>
+    <string name="facebook_client_token">fdbfcf3416fa141d0e65a18992dd6149</string>
 </resources>
