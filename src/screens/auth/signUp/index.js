@@ -131,6 +131,11 @@ const SignUp = ({ navigation }) => {
   const [seguroError, setseguroError] = useState('');
   const [seguroTyping, setseguroTyping] = useState(false);
 
+  // Estados de error para documentos requeridos
+  const [rifIdFiscalError, setRifIdFiscalError] = useState('');
+  const [fotoFrenteTallerError, setFotoFrenteTallerError] = useState('');
+  const [fotoInternaTallerError, setFotoInternaTallerError] = useState('');
+
   // Estados para el sistema de pasos
   const [currentStep, setCurrentStep] = useState(1);
   const [totalSteps] = useState(7);
@@ -297,7 +302,9 @@ const SignUp = ({ navigation }) => {
 
   // Funciones para navegación entre pasos
   const nextStep = () => {
-    if (currentStep < totalSteps) {
+    // Ejecutar validación antes de avanzar
+    const isValid = validateCurrentStep();
+    if (isValid && currentStep < totalSteps) {
       setCurrentStep(currentStep + 1);
     }
   };
@@ -316,7 +323,12 @@ const SignUp = ({ navigation }) => {
   const validateCurrentStep = () => {
     switch (currentStep) {
       case 1: // Información básica - REQUERIDO
-        return Nombre?.trim() !== '' && cedula !== '' && email?.trim() !== '' && validateEmail();
+        return Nombre?.trim() !== '' && 
+               selectedPrefix !== '' && 
+               cedula !== '' && 
+               cedula !== 0 && 
+               email?.trim() !== '' && 
+               validateEmail();
       case 2: // Ubicación - REQUERIDO
         return estadoSelected !== '' && Direccion?.trim() !== '';
       case 3: // Contacto - REQUERIDO
@@ -325,8 +337,32 @@ const SignUp = ({ navigation }) => {
         return true; // Siempre permite continuar
       case 5: // Redes sociales y seguro - OPCIONAL
         return true; // Siempre permite continuar
-      case 6: // Documentos - OPCIONAL
-        return true; // Siempre permite continuar
+      case 6: // Documentos - REQUERIDO
+        // Validar y establecer errores
+        if (!rifIdFiscalUri || rifIdFiscalUri === '') {
+          setRifIdFiscalError('RIF/ID Fiscal es requerido');
+        } else {
+          setRifIdFiscalError('');
+        }
+        
+        if (!fotoFrenteTallerUri || fotoFrenteTallerUri === '') {
+          setFotoFrenteTallerError('Foto del Frente del Taller es requerida');
+        } else {
+          setFotoFrenteTallerError('');
+        }
+        
+        if (!fotoInternaTallerUri || fotoInternaTallerUri === '') {
+          setFotoInternaTallerError('Foto Interna del Taller es requerida');
+        } else {
+          setFotoInternaTallerError('');
+        }
+        
+        return rifIdFiscalUri !== null && 
+               rifIdFiscalUri !== '' && 
+               fotoFrenteTallerUri !== null && 
+               fotoFrenteTallerUri !== '' && 
+               fotoInternaTallerUri !== null && 
+               fotoInternaTallerUri !== '';
       case 7: // Contraseñas - REQUERIDO
         return password?.trim() !== '' && confirmPassword?.trim() !== '' && validatePassword() && validateConfirmPassword();
       default:
@@ -1703,7 +1739,7 @@ const SignUp = ({ navigation }) => {
                 stylesImage.button,
                 {
                   borderWidth: 1,
-                  borderColor: '#2D3261',
+                  borderColor: rifIdFiscalError !== '' ? '#ff0000' : '#2D3261',
                   borderStyle: 'dotted',
                   borderRadius: 5,
                   backgroundColor: '#FFF',
@@ -1723,6 +1759,9 @@ const SignUp = ({ navigation }) => {
                 Cargar RIF/ID Fiscal
               </Text>
             </TouchableOpacity>
+            {rifIdFiscalError !== '' && (
+              <Text style={styles.errorStyle}>{rifIdFiscalError}</Text>
+            )}
           </View>
 
           {/* Permiso de Operación */}
@@ -1838,7 +1877,7 @@ const SignUp = ({ navigation }) => {
                 stylesImage.button,
                 {
                   borderWidth: 1,
-                  borderColor: '#2D3261',
+                  borderColor: fotoFrenteTallerError !== '' ? '#ff0000' : '#2D3261',
                   borderStyle: 'dotted',
                   borderRadius: 5,
                   backgroundColor: '#FFF',
@@ -1858,6 +1897,9 @@ const SignUp = ({ navigation }) => {
                 Foto del Frente del Taller
               </Text>
             </TouchableOpacity>
+            {fotoFrenteTallerError !== '' && (
+              <Text style={styles.errorStyle}>{fotoFrenteTallerError}</Text>
+            )}
           </View>
 
           {/* Foto Interna del Taller */}
@@ -1883,7 +1925,7 @@ const SignUp = ({ navigation }) => {
                 stylesImage.button,
                 {
                   borderWidth: 1,
-                  borderColor: '#2D3261',
+                  borderColor: fotoInternaTallerError !== '' ? '#ff0000' : '#2D3261',
                   borderStyle: 'dotted',
                   borderRadius: 5,
                   backgroundColor: '#FFF',
@@ -1903,6 +1945,9 @@ const SignUp = ({ navigation }) => {
                 Foto Interna del Taller
               </Text>
             </TouchableOpacity>
+            {fotoInternaTallerError !== '' && (
+              <Text style={styles.errorStyle}>{fotoInternaTallerError}</Text>
+            )}
           </View>
         </View>
       </ScrollView>
@@ -2090,6 +2135,7 @@ const SignUp = ({ navigation }) => {
         const base64Data = response.assets[0].base64;
         setRifIdFiscalUri(source.uri);
         setRifIdFiscalBase64(base64Data);
+        setRifIdFiscalError(''); // Limpiar error al seleccionar imagen
       }
     });
   };
@@ -2097,6 +2143,9 @@ const SignUp = ({ navigation }) => {
   const clearRifIdFiscal = () => {
     setRifIdFiscalUri(null);
     setRifIdFiscalBase64(null);
+    if (currentStep === 6) {
+      setRifIdFiscalError('RIF/ID Fiscal es requerido');
+    }
   };
 
   const selectPermisoOperacion = () => {
@@ -2150,6 +2199,7 @@ const SignUp = ({ navigation }) => {
         const base64Data = response.assets[0].base64;
         setFotoFrenteTallerUri(source.uri);
         setFotoFrenteTallerBase64(base64Data);
+        setFotoFrenteTallerError(''); // Limpiar error al seleccionar imagen
       }
     });
   };
@@ -2157,6 +2207,9 @@ const SignUp = ({ navigation }) => {
   const clearFotoFrenteTaller = () => {
     setFotoFrenteTallerUri(null);
     setFotoFrenteTallerBase64(null);
+    if (currentStep === 6) {
+      setFotoFrenteTallerError('Foto del Frente del Taller es requerida');
+    }
   };
 
   const selectFotoInternaTaller = () => {
@@ -2170,6 +2223,7 @@ const SignUp = ({ navigation }) => {
         const base64Data = response.assets[0].base64;
         setFotoInternaTallerUri(source.uri);
         setFotoInternaTallerBase64(base64Data);
+        setFotoInternaTallerError(''); // Limpiar error al seleccionar imagen
       }
     });
   };
@@ -2177,6 +2231,9 @@ const SignUp = ({ navigation }) => {
   const clearFotoInternaTaller = () => {
     setFotoInternaTallerUri(null);
     setFotoInternaTallerBase64(null);
+    if (currentStep === 6) {
+      setFotoInternaTallerError('Foto Interna del Taller es requerida');
+    }
   };
 
   const [isMounted, setIsMounted] = useState(true);

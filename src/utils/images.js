@@ -1,6 +1,10 @@
 // eslint-disable-next-line no-undef
 export default Images = {
   homeBannerOne: require('../assets/images/homeScreenOne/banner.jpg'),
+  newBannerOne: require('../assets/images/homeScreenOne/Banner-Solvers-1.jpg'),
+  newBannerTwo: require('../assets/images/homeScreenOne/Banner-Solvers-2.jpg'),
+  newBannerThree: require('../assets/images/homeScreenOne/Banner-Solvers-3.jpg'),
+  newBannerFour: require('../assets/images/homeScreenOne/Banner-Solvers-4.jpg'),
   loginSignupLine: require('../assets/images/signUp/loginSignupLine.gif'),
   productImageOne: require('../assets/images/homeScreenOne/Content/productImage1.png'),
   productImageTwo: require('../assets/images/homeScreenOne/Content/productImage2.png'),
