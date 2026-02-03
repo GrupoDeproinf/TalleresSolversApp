@@ -45,9 +45,9 @@ Push-Location android
 Write-Host "-----------------------------------------"
 Write-Host "GENERANDO APK..."
 ./gradlew assembleRelease
-Write-Host "-----------------------------------------"
-Write-Host "GENERANDO BUNDLE"
-./gradlew bundleRelease
+# Write-Host "-----------------------------------------"
+# Write-Host "GENERANDO BUNDLE"
+# ./gradlew bundleRelease
 Pop-Location
 
 # Abrir carpeta de salida (opcional)

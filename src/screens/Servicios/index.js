@@ -270,7 +270,7 @@ const ServiciosContainer = ({ navigation }) => {
             >
               <View style={modalStyles.modalView}>
                 <View style={modalStyles.iconContainer}>
-                  <Icons name="calendar-check-o" size={60} color="#2D3261" />
+                  <Icons name="calendar-check-o" size={80} color="#2D3261" />
                 </View>
 
                 <Text style={modalStyles.titleText}>
@@ -278,7 +278,7 @@ const ServiciosContainer = ({ navigation }) => {
                 </Text>
 
                 <Text style={modalStyles.descriptionText}>
-                  Para comenzar a ofrecer tus servicios, necesitamos verificar tu información. Agenda una cita y uno de nuestros agentes certificadores visitará tu taller.
+                  Ya tenemos tu información. Para comenzar a ofrecer tus servicios, puedes agendar una visita o esperar a que uno de nuestros agentes se ponga en contacto contigo para verificar tu taller.
                 </Text>
 
                 <View style={modalStyles.warningBox}>
@@ -400,7 +400,7 @@ const ServiciosContainer = ({ navigation }) => {
           </View>
 
           <Text style={modalStyles.descriptionText}>
-            Nuestro agente certificador visitará tu taller en la fecha indicada para verificar la información y aprobar tus servicios.
+            Nuestro agente certificador puede visitar tu taller en la fecha indicada o ponerse en contacto contigo para verificar la información y aprobar tus servicios.
           </Text>
 
           <View style={modalStyles.infoBoxPending}>
@@ -423,7 +423,7 @@ const ServiciosContainer = ({ navigation }) => {
               <View style={modalStyles.stepNumber}>
                 <Text style={modalStyles.stepNumberText}>2</Text>
               </View>
-              <Text style={modalStyles.stepText}>Espera la visita del certificador</Text>
+              <Text style={modalStyles.stepText}>Espera a que el certificador te contacte o visite tu taller</Text>
             </View>
             <View style={modalStyles.stepItem}>
               <View style={modalStyles.stepNumber}>
@@ -439,9 +439,8 @@ const ServiciosContainer = ({ navigation }) => {
           >
             <Icons name="check" size={20} color="#fff" style={modalStyles.buttonIcon} />
             <Text style={modalStyles.buttonText}>Entendido</Text>
-          </TouchableOpacity>          
+          </TouchableOpacity>
         </View>
-        
       </View>
     </Modal>
   );
@@ -654,21 +653,20 @@ const modalStyles = StyleSheet.create({
     paddingVertical: 20,
   },
   modalView: {
-    marginLeft: 5,
-    marginRight: 10,
+    margin: 20,
     backgroundColor: 'white',
     borderRadius: 20,
-    padding: 25,
+    padding: 35,
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 0,
+      height: 2,
     },
     shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 7,
-
+    shadowRadius: 4,
+    elevation: 5,
+    width: '85%',
   },
   iconContainer: {
     marginBottom: 20,
@@ -681,7 +679,7 @@ const modalStyles = StyleSheet.create({
     color: '#000',
   },
   descriptionText: {
-    fontSize: 14,
+    fontSize: 15,
     textAlign: 'center',
     marginBottom: 20,
     color: '#666',
@@ -959,7 +957,7 @@ const modalStyles = StyleSheet.create({
     fontWeight: 'bold',
   },
   stepText: {
-
+    flex: 1,
     fontSize: 14,
     color: '#333',
   },
@@ -967,6 +965,7 @@ const modalStyles = StyleSheet.create({
     backgroundColor: '#28a745',
     borderRadius: 10,
     padding: 15,
+    width: '100%',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
