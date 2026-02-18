@@ -277,8 +277,12 @@ const ServiciosContainer = ({ navigation }) => {
                   ¡Estás a un paso de activar tu taller!
                 </Text>
 
-                <Text style={modalStyles.descriptionText}>
+                {/* <Text style={modalStyles.descriptionText}>
                   Ya tenemos tu información. Para comenzar a ofrecer tus servicios, puedes agendar una visita o esperar a que uno de nuestros agentes se ponga en contacto contigo para verificar tu taller.
+                </Text> */}
+
+                <Text style={modalStyles.descriptionText}>
+                  Ya tenemos tu información y puedes crear tus servicios, pero deberás esperar a que nuestros agentes se pongan en contacto para que sean visibles a los usuarios.
                 </Text>
 
                 <View style={modalStyles.warningBox}>
@@ -300,7 +304,7 @@ const ServiciosContainer = ({ navigation }) => {
                       </View>
                     )}
 
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                       style={modalStyles.button}
                       onPress={handleAgendarCita}
                     >
@@ -308,7 +312,7 @@ const ServiciosContainer = ({ navigation }) => {
                       <Text style={modalStyles.buttonText}>
                         {dateConfirmed ? 'Cambiar Fecha' : 'Agendar Cita'}
                       </Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
                     {dateConfirmed && (
                       <TouchableOpacity
@@ -324,7 +328,8 @@ const ServiciosContainer = ({ navigation }) => {
                       style={modalStyles.skipButton}
                       onPress={() => setShowModalAprobacion(false)}
                     >
-                      <Text style={modalStyles.skipButtonText}>Saltar por ahora</Text>
+                      {/* <Text style={modalStyles.skipButtonText}>Saltar por ahora</Text> */}
+                      <Text style={modalStyles.skipButtonText}>Cerrar</Text>
                     </TouchableOpacity>
                   </>
                 ) : (
