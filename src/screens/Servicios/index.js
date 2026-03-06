@@ -38,6 +38,8 @@ const ServiciosContainer = ({ navigation }) => {
 
   const [cantServices, setcantServices] = useState(0);
 
+  const [modalVisible, setModalVisible] = useState(false);
+
 
   const navigationScreen = useNavigation();
 
@@ -59,6 +61,11 @@ const ServiciosContainer = ({ navigation }) => {
     // Aquí va tu lógica para cargar datos
     console.log('Cargando datos...');
   };
+
+  const onCancel = () => {
+    setModalVisible(false);
+  };
+
 
 
   const getData = async () => {
@@ -277,8 +284,12 @@ const ServiciosContainer = ({ navigation }) => {
                   ¡Estás a un paso de activar tu taller!
                 </Text>
 
-                <Text style={modalStyles.descriptionText}>
+                {/* <Text style={modalStyles.descriptionText}>
                   Ya tenemos tu información. Para comenzar a ofrecer tus servicios, puedes agendar una visita o esperar a que uno de nuestros agentes se ponga en contacto contigo para verificar tu taller.
+                </Text> */}
+
+                <Text style={modalStyles.descriptionText}>
+                  Ya tenemos tu información y puedes crear tus servicios, pero deberás esperar a que nuestros agentes se pongan en contacto para que sean visibles a los usuarios.
                 </Text>
 
                 <View style={modalStyles.warningBox}>
@@ -300,7 +311,7 @@ const ServiciosContainer = ({ navigation }) => {
                       </View>
                     )}
 
-                    <TouchableOpacity
+                    {/* <TouchableOpacity
                       style={modalStyles.button}
                       onPress={handleAgendarCita}
                     >
@@ -308,7 +319,7 @@ const ServiciosContainer = ({ navigation }) => {
                       <Text style={modalStyles.buttonText}>
                         {dateConfirmed ? 'Cambiar Fecha' : 'Agendar Cita'}
                       </Text>
-                    </TouchableOpacity>
+                    </TouchableOpacity> */}
 
                     {dateConfirmed && (
                       <TouchableOpacity
@@ -324,7 +335,8 @@ const ServiciosContainer = ({ navigation }) => {
                       style={modalStyles.skipButton}
                       onPress={() => setShowModalAprobacion(false)}
                     >
-                      <Text style={modalStyles.skipButtonText}>Saltar por ahora</Text>
+                      {/* <Text style={modalStyles.skipButtonText}>Saltar por ahora</Text> */}
+                      <Text style={modalStyles.skipButtonText}>Cerrar</Text>
                     </TouchableOpacity>
                   </>
                 ) : (
@@ -556,17 +568,26 @@ const ServiciosContainer = ({ navigation }) => {
   }
 
 
+  const createorEditService = () => {
+    if (Number(cantServices) == 0 || Number(cantServices) < 0){
+      setModalVisible(true)
+    } else {
+      navigationScreen.navigate('FormService', {uid: ''});
+      setModalVisible(false)
+    }
+  }
+
 
   if (showServices) {
     return (
       <View
-        style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle }]}>
+        style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle, flex: 1 }]}>
         {renderModalAprobacion()}
         {renderModalCitaAgendada()}
         <View style={[external.mh_20]}>
           <FullHeader
             cantServices={cantServices}
-            showNewService={true}
+            showNewService={false}
             showArrow={false}
             show={false}
             showClose={false}
@@ -578,7 +599,7 @@ const ServiciosContainer = ({ navigation }) => {
           />
         </View>
         {dataServicios.length === 0 ? (
-          <View style={modalStyles.emptyStateContainer}>
+          <View style={[modalStyles.emptyStateContainer, { flex: 1 }]}>
             <View style={modalStyles.emptyStateIconContainer}>
               <Icons name="wrench" size={80} color="#2D3261" />
             </View>
@@ -616,8 +637,9 @@ const ServiciosContainer = ({ navigation }) => {
           </View>
         ) : (
           <ScrollView
+            style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[external.Pb_80]}>
+            contentContainerStyle={[external.Pb_80, { paddingBottom: 100 }]}>
             <ServicesContainer
               data={dataServicios}
               show={false}
@@ -625,7 +647,58 @@ const ServiciosContainer = ({ navigation }) => {
             />
           </ScrollView>
         )}
+        <View style={modalStyles.footer}>
+          <TouchableOpacity
+            style={modalStyles.footerAddButton}
+            onPress={() => createorEditService()}
+            activeOpacity={0.88}>
+            <View style={modalStyles.footerAddButtonIconWrap}>
+              <Icons name="plus" size={15} color="#FFFFFF" />
+            </View>
+            <Text style={modalStyles.footerAddButtonText}>Agregar</Text>
+          </TouchableOpacity>
+        </View>
+
+
+
+
+        <Modal
+        transparent={true}
+        animationType="slide"
+        visible={modalVisible}
+        onRequestClose={onCancel}>
+        <View style={stylesModal.container}>
+          <View style={stylesModal.modalView}>
+            <Text style={stylesModal.modalText}>
+              Usted ha alcanzado la cantidad máxima de servicios permitidos en su plan. Para crear nuevos servicios, debe actualizar su plan.
+            </Text>
+            <View style={stylesModal.buttonContainer}>
+              <TouchableOpacity
+                style={stylesModal.buttonYes}
+                onPress={gotoPlans}>
+                <Text style={stylesModal.buttonText}>Ir a planes</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={stylesModal.buttonNo} onPress={onCancel}>
+                <Text style={stylesModal.buttonText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+
+
+
+
+
+
+
       </View>
+
+      
+
+
+
     );
   }
 
@@ -969,6 +1042,103 @@ const modalStyles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  footer: {
+    width: '100%',
+    paddingHorizontal: 2,
+    paddingTop: 0,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 0,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  footerAddButton: {
+    width: '100%',
+    backgroundColor: appColors?.primary ?? '#2D3261',
+    borderRadius: 16,
+    paddingVertical: 18,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: appColors?.primary ?? '#2D3261',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 8,
+    overflow: 'hidden',
+  },
+  footerAddButtonIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  footerAddButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+});
+
+const stylesModal = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalView: {
+    margin: 20,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    color: '#333',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  buttonYes: {
+    backgroundColor: '#2D3261', // Color del botón "Sí"
+    borderRadius: 5,
+    padding: 10,
+    width: '48%', // Ajustar ancho para espacio entre botones
+    alignItems: 'center',
+  },
+  buttonNo: {
+    backgroundColor: '#bdbdbd',
+    color: '#2D3261', // Color del botón "No"
+    borderRadius: 5,
+    padding: 10,
+    width: '48%', // Ajustar ancho para espacio entre botones
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white', // Color del texto del botón
+    fontWeight: 'bold',
   },
 });
 

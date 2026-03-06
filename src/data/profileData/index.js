@@ -10,8 +10,11 @@ import {
   Minus,
   CheckOutIcon,
   MinusIcon,
-  
 } from '../../utils/icon';
+
+import Icons from 'react-native-vector-icons/FontAwesome';
+import Icons2 from 'react-native-vector-icons/AntDesign';
+
 export const profileData = [
   {
     id: 0,
@@ -24,6 +27,12 @@ export const profileData = [
     title: 'Mis Intereses',
     icon: <OrderHistory />,
     screenName: 'OrderHistory',
+  },
+  {
+    id: 10,
+    title: 'Mis Vehiculos',
+    icon: <Icons2 name="car" size={24} color="#2D3261" />,
+    screenName: 'VehiclesScreen',
   },
 
   {

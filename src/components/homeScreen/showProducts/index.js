@@ -1,40 +1,93 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { MapPin, Wrench, Navigation } from 'lucide-react-native';
+import React, {useState, useRef, useCallback, useEffect} from 'react';
+import {View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import {StarRatingDisplay} from 'react-native-star-rating-widget';
+import styles from './styles.css';
+import {windowHeight} from '../../../themes/appConstant';
 import H3HeadingCategory from '../../../commonComponents/headingCategory/H3HeadingCategory';
-import { windowHeight } from '../../../themes/appConstant';
-import { external } from '../../../style/external.css';
+import {external} from '../../../style/external.css';
 import appColors from '../../../themes/appColors';
-import { useValues } from '../../../../App';
+import {useNavigation} from '@react-navigation/native';
+import {useValues} from '../../../../App';
+import { MapPin } from 'lucide-react-native';
+import { Wrench } from 'lucide-react-native';
+import { Navigation } from 'lucide-react-native';
+import { ChevronRight } from 'lucide-react-native';
+
+// Note: Some imports and styles are omitted for brevity
 
 const ShowProductsContainer = React.memo(({
   data,
   value,
+  show,
+  showPlus,
   marginTop,
   userLocation,
+  onEndReached,
+  loadingMore = false,
+  hasMore = true,
 }) => {
   const {
+    linearColorStyle,
     textColorStyle,
-    viewRTLStyle,
-    textRTLStyle,
-    t,
     isDark,
+    imageContainer,
+    textRTLStyle,
+    viewRTLStyle,
+    t,
+    linearColorStyleTwo,
+    currSymbol,
+    currPrice,
   } = useValues();
-
   const navigation = useNavigation();
-  const color = isDark ? appColors.blackBg : appColors.bgLayout;
+  const colors = isDark
+    ? ['#3D3F45', '#45474B', '#2A2C32']
+    : [appColors.screenBg, appColors.screenBg];
 
-  const [visibleHint, setVisibleHint] = useState(null);
+
+
+  const [visibleHint, setVisibleHint] = useState(false);
   const [statusLabel, setstatusLabel] = useState(false);
+  const userHasScrolled = useRef(false);
 
-  const goToDetail = useCallback((item) => {
+  const handleScroll = useCallback(() => {
+    userHasScrolled.current = true;
+  }, []);
+
+  const handleEndReached = useCallback(() => {
+    if (!userHasScrolled.current || !onEndReached) return;
+    if (!hasMore || loadingMore) return;
+    onEndReached();
+  }, [onEndReached, hasMore, loadingMore]);
+
+  // Al mostrar solo la primera página (10 o menos ítems), exigir scroll antes de permitir más cargas
+  useEffect(() => {
+    if (data?.length <= 10) userHasScrolled.current = false;
+  }, [data?.length]);
+
+  const goToDetail = item => {
+    console.log(item);
+
     navigation.navigate('ProductDetailOne', { uid: item.uid_servicio || item.id });
-  }, [navigation]);
+  };
 
-  const toRad = useCallback((value) => (value * Math.PI) / 180, []);
+  const onLongPressHandler = (itemId, status) => {
+    setVisibleHint(itemId); // Muestra el Snackbar para el ítem presionado
+    setstatusLabel(status);
+    setTimeout(() => {
+      setVisibleHint(null); // Oculta el Snackbar después de un tiempo
+    }, 1000);
+  };
 
-  const calcularDistancia = useCallback((lat1, lon1, lat2, lon2) => {
+  const onDismissHint = () => {
+    setVisibleHint(null); // Oculta el Snackbar cuando se presiona para cerrar
+  };
+
+  const toRad = React.useCallback((value) => {
+    return (value * Math.PI) / 180;
+  }, []);
+
+  const calcularDistancia = React.useCallback((lat1, lon1, lat2, lon2) => {
     const R = 6371; // km
     const dLat = toRad(lat2 - lat1);
     const dLon = toRad(lon2 - lon1);
@@ -45,73 +98,59 @@ const ShowProductsContainer = React.memo(({
     return R * c;
   }, [toRad]);
 
-  // 1️⃣ Pre-calcula distancia y ordena solo una vez
-  const sortedData = useMemo(() => {
-    if (!data || data.length === 0 || !userLocation) return data;
+    const color = isDark ? appColors.blackBg : appColors.bgLayout;
 
-    return [...data]
-      .map(item => {
-        if (item?.taller?.ubicacion?.lat && item?.taller?.ubicacion?.lng) {
-          const distancia = calcularDistancia(
-            userLocation.latitude,
-            userLocation.longitude,
-            parseFloat(item.taller.ubicacion.lat),
-            parseFloat(item.taller.ubicacion.lng)
-          );
-          return { ...item, _distanciaKm: distancia };
-        }
-        return item;
-      })
-      .sort((a, b) => {
-        if (a._distanciaKm != null && b._distanciaKm != null) return a._distanciaKm - b._distanciaKm;
-        if (a._distanciaKm != null) return -1;
-        if (b._distanciaKm != null) return 1;
-        return 0;
-      });
-  }, [data, userLocation, calcularDistancia]);
-
-  const renderItem = useCallback(({ item }) => (
-    <TouchableOpacity
-      style={stylesNew.container}
-      onPress={() => goToDetail(item)}
-      activeOpacity={0.8}
-    >
+  const renderItem = React.useCallback(({item}) => {
+    // Calcular distancia si tenemos la ubicación del usuario y del taller
+    if (userLocation && item?.taller?.ubicacion?.lat && item?.taller?.ubicacion?.lng) {
+      const distancia = calcularDistancia(
+        userLocation.latitude,
+        userLocation.longitude,
+        parseFloat(item.taller.ubicacion.lat),
+        parseFloat(item.taller.ubicacion.lng)
+      );
+      
+      console.log(`📍 Distancia a ${item?.taller?.nombre || 'Taller'}: ${distancia.toFixed(2)} km`);
+    }
+    
+    return (
+    <TouchableOpacity style={stylesNew.container} onPress={() => goToDetail(item)} activeOpacity={0.8}>
       <View style={stylesNew.gradientBackground}>
         <View style={[stylesNew.content, { flexDirection: viewRTLStyle }]}>
-          {/* Imagen del servicio */}
+          {/* Imagen del servicio con el estilo del icono */}
           <View style={[stylesNew.imageContainer, { backgroundColor: color }]}>
             <Image
               style={stylesNew.serviceImage}
               source={{
-                uri: Array.isArray(item?.service_image)
-                  ? item?.service_image[0]
-                  : item?.service_image,
+                uri: Array.isArray(item?.service_image) ? item?.service_image[0] : item?.service_image,
               }}
             />
           </View>
 
           {/* Contenido principal */}
           <View style={stylesNew.leftContent}>
+            {/* Header con nombre del servicio y badge de categoría */}
             <View style={[stylesNew.header, { flexDirection: viewRTLStyle }]}>
               <Text style={[stylesNew.serviceName, { color: textColorStyle, textAlign: textRTLStyle }]} numberOfLines={2}>
                 {t(item.nombre_servicio)}
               </Text>
             </View>
 
+            {/* Nombre del taller */}
             <View style={stylesNew.tallerContainer}>
               <MapPin size={12} color="#64748B" />
               <Text style={[stylesNew.tallerName, { textAlign: textRTLStyle }]} numberOfLines={1}>
                 {t(item?.taller?.nombre || item?.taller || "Nombre no disponible")}
               </Text>
             </View>
-
             {item?.categoria && (
-              <View style={stylesNew.tallerContainer}>
-                <Wrench size={10} color="#64748B" />
-                <Text style={stylesNew.tallerName}>{t(item.categoria)}</Text>
-              </View>
-            )}
+                <View style={stylesNew.tallerContainer}>
+                  <Wrench size={10} color="#64748B" />
+                  <Text style={stylesNew.tallerName}>{t(item.categoria)}</Text>
+                </View>
+              )}
 
+            {/* Estado del taller y distancia en la misma fila */}
             <View style={stylesNew.statusAndDistanceRow}>
               {(item?.taller?.estado || item?.estado) && (
                 <View style={stylesNew.statusContainer}>
@@ -120,52 +159,72 @@ const ShowProductsContainer = React.memo(({
                 </View>
               )}
 
-              {item._distanciaKm != null && (
+              {userLocation && item?.taller?.ubicacion?.lat && item?.taller?.ubicacion?.lng && (
                 <View style={stylesNew.distanceContainer}>
                   <Navigation size={10} color="#3A4A85" />
                   <Text style={stylesNew.distanceText}>
-                    {item._distanciaKm.toFixed(1)} km
+                    {calcularDistancia(
+                      userLocation.latitude,
+                      userLocation.longitude,
+                      parseFloat(item.taller.ubicacion.lat),
+                      parseFloat(item.taller.ubicacion.lng)
+                    ).toFixed(1)} km
                   </Text>
                 </View>
               )}
             </View>
+
+            {/* Información adicional si existe */}
+            
           </View>
+
+          
         </View>
       </View>
-    </TouchableOpacity>
-  ), [goToDetail, viewRTLStyle, color, textColorStyle, textRTLStyle, t]);
+         </TouchableOpacity>
+   );
+   }, [userLocation, textColorStyle, viewRTLStyle, color, t, goToDetail]);
 
   return (
-    <View style={stylesNew.newArrivalContainer}>
-      <View style={{ marginTop: marginTop || windowHeight(14) }}>
-        {data.length > 0 && <H3HeadingCategory value={value} />}
+    <>
+      <View style={styles.newArrivalContainer}>
+               <View style={{marginTop: marginTop || windowHeight(14)}}>
+         {data.length > 0 ? (
+           <H3HeadingCategory value={value} />
+         ): null}
+       </View>
+       
+                   <FlatList
+           data={data || []}
+           renderItem={renderItem}
+           keyExtractor={(item, index) => item.id || index.toString()}
+           onScroll={handleScroll}
+           scrollEventThrottle={200}
+           onEndReached={handleEndReached}
+           onEndReachedThreshold={0.4}
+           ListFooterComponent={
+             loadingMore ? (
+               <View style={stylesNew.footerLoader}>
+                 <ActivityIndicator size="small" color="#3A4A85" />
+               </View>
+             ) : null
+           }
+         />
       </View>
-
-      <FlatList
-        data={sortedData || []}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => item.uid_servicio?.toString() ?? item.id?.toString() ?? index.toString()}
-        initialNumToRender={6}
-        maxToRenderPerBatch={6}
-        windowSize={7}
-        removeClippedSubviews
-      />
-    </View>
+    </>
   );
 });
 
-// ✅ Estilos optimizados
 const stylesNew = StyleSheet.create({
-  newArrivalContainer: {
-    paddingHorizontal: 16,  // tu padding anterior
-    paddingBottom: 0,      // si quieres mantener espacio al final (igual que tu ScrollView)
-  },
   container: {
     marginHorizontal: 4,
     marginBottom: 14,
     borderRadius: 16,
     shadowColor: "#3A4A85",
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 4,
@@ -189,6 +248,14 @@ const stylesNew = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
+    // shadowColor: "#3A4A85",
+    // shadowOffset: {
+    //   width: 0,
+    //   height: 1,
+    // },
+    // shadowOpacity: 0.25,
+    // shadowRadius: 2,
+    // elevation: 2,
     overflow: "hidden",
   },
   serviceImage: {
@@ -207,10 +274,29 @@ const stylesNew = StyleSheet.create({
   },
   serviceName: {
     fontSize: 12,
+    
     fontWeight: "700",
+    color: "#2D3748",
     flex: 1,
     marginRight: 8,
     textTransform: "uppercase",
+  },
+  categoryBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0F2F8",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#D1D9E8",
+    minWidth: 50,
+  },
+  categoryText: {
+    fontSize: 10,
+    color: "#3A4A85",
+    marginLeft: 3,
+    fontWeight: "600",
   },
   tallerContainer: {
     flexDirection: "row",
@@ -262,14 +348,69 @@ const stylesNew = StyleSheet.create({
     marginLeft: 4,
     fontWeight: "600",
   },
+  rightContent: {
+    marginLeft: 8,
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  arrowContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#ffca00",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#ffca00",
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  locationContainer: {
+    backgroundColor: '#f0f8ff',
+    padding: 12,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#2D3261',
+  },
+  locationTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#2D3261',
+    marginBottom: 4,
+  },
+  locationText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontFamily: 'monospace',
+  },
+  footerLoader: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });
 
-// Comparación de props para evitar re-renders innecesarios
+// Función de comparación personalizada para evitar re-renderizados innecesarios
 const arePropsEqual = (prevProps, nextProps) => {
+  // Comparar datos
   if (prevProps.data?.length !== nextProps.data?.length) return false;
+  
+  // Comparar ubicación del usuario
   if (prevProps.userLocation?.latitude !== nextProps.userLocation?.latitude ||
       prevProps.userLocation?.longitude !== nextProps.userLocation?.longitude) return false;
-  if (prevProps.value !== nextProps.value || prevProps.marginTop !== nextProps.marginTop) return false;
+  
+  // Comparar otras props importantes
+  if (prevProps.value !== nextProps.value ||
+      prevProps.marginTop !== nextProps.marginTop ||
+      prevProps.loadingMore !== nextProps.loadingMore ||
+      prevProps.hasMore !== nextProps.hasMore) return false;
+  
   return true;
 };
 
