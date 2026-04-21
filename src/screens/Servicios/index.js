@@ -10,16 +10,15 @@ import { useValues } from '../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import api from '../../../axiosInstance';
-import NavigationButton from '../../commonComponents/navigationButton';
-import appColors from '../../themes/appColors';
 import Icons from 'react-native-vector-icons/FontAwesome';
 import Icons2 from 'react-native-vector-icons/MaterialIcons';
 import DatePicker from 'react-native-date-picker';
-
-
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ArrowLeft } from 'lucide-react-native';
+import { windowHeight, windowWidth } from '../../themes/appConstant';
 
 const ServiciosContainer = ({ navigation }) => {
-
+  const insets = useSafeAreaInsets();
   const { bgFullStyle, textColorStyle, t } = useValues();
 
   const [dataServicios, setdataServicios] = useState([]);
@@ -158,8 +157,9 @@ const ServiciosContainer = ({ navigation }) => {
     }
   };
 
+  /** Misma navegación que el CTA de Mis planes → catálogo con flujo de regreso coherente. */
   const gotoPlans = () => {
-    navigationScreen.navigate('Planscreen');
+    navigationScreen.navigate('PlanesRegistro', {fromPlanesTaller: true});
   };
 
   const handleAgendarCita = () => {
@@ -223,7 +223,56 @@ const ServiciosContainer = ({ navigation }) => {
     return selectedDate.toLocaleDateString('es-ES', options);
   };
 
+  /** Misma lógica que productDetailOne / getCommentsByService */
+  const calculateAverageScore = comments => {
+    if (!Array.isArray(comments) || comments.length === 0) {
+      return 0;
+    }
+    const totalScore = comments.reduce(
+      (sum, comment) => sum + (comment?.puntuacion || 0),
+      0,
+    );
+    const averageScore = totalScore / comments.length;
+    return Math.min(Math.max(Math.ceil(averageScore), 0), 5);
+  };
 
+  /** Por cada servicio consulta comentarios y sustituye `puntuacion` por el promedio calculado */
+  const enrichServicesWithCommentRatings = async services => {
+
+    console.log("services", services)
+    if (!Array.isArray(services) || services.length === 0) {
+      return services;
+    }
+    return Promise.all(
+      services.map(async svc => {
+        const uidService = svc?.uid_servicio || svc?.id;
+
+        console.log("uidService", uidService)
+        if (!uidService) {
+          return svc;
+        }
+        try {
+          const res = await api.post('/home/getCommentsByService', {
+            uid_service: uidService,
+          });
+          console.log("res12312", res)
+          if (res.status === 200) {
+            const comments = Array.isArray(res.data) ? res.data : [];
+            console.log("comments", comments)
+            const avg = calculateAverageScore(comments);
+            console.log("avg", avg)
+            return {...svc, puntuacion: avg};
+          } else {
+            return {...svc, puntuacion: 0};
+          }
+        } catch (err) {
+          console.log("err12312", err)
+          console.error('Error en comentarios del servicio:', err);
+        }
+        return svc;
+      }),
+    );
+  };
 
   const getServices = async (uid) => {
     try {
@@ -239,8 +288,10 @@ const ServiciosContainer = ({ navigation }) => {
         const result = response.data;
         console.log("usuarios de resultados", result.services); // Aquí puedes manejar la respuesta
 
-
-        setdataServicios(result.services);
+        const services = Array.isArray(result.services) ? result.services : [];
+        const withRatings = await enrichServicesWithCommentRatings(services);
+        
+        setdataServicios(withRatings);
       } else {
         setdataServicios([]);
       }
@@ -264,11 +315,7 @@ const ServiciosContainer = ({ navigation }) => {
       visible={showModalAprobacion}
       onRequestClose={() => setShowModalAprobacion(false)}
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={modalStyles.centeredView}
-      >
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      
           <View style={modalStyles.centeredView}>
             <ScrollView
               contentContainerStyle={modalStyles.scrollViewContent}
@@ -281,7 +328,7 @@ const ServiciosContainer = ({ navigation }) => {
                 </View>
 
                 <Text style={modalStyles.titleText}>
-                  ¡Estás a un paso de activar tu taller!
+                  ¡Estás a un paso de activar tu negocio!
                 </Text>
 
                 {/* <Text style={modalStyles.descriptionText}>
@@ -380,8 +427,6 @@ const ServiciosContainer = ({ navigation }) => {
               </View>
             </ScrollView>
           </View>
-        </TouchableWithoutFeedback>
-      </KeyboardAvoidingView>
     </Modal>
   );
 
@@ -460,57 +505,81 @@ const ServiciosContainer = ({ navigation }) => {
   if (showPlanes) {
     return (
       <View
-        style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle }]}>
+        style={[
+          commonStyles.commonContainer,
+          {backgroundColor: bgFullStyle, flex: 1},
+        ]}>
         {renderModalAprobacion()}
         {renderModalCitaAgendada()}
-        <View style={[styles.container2]}>
-          <View
-            style={[
-              external.ai_center,
-              external.js_center,
-              external.as_center,
-            ]}>
-            <Text
-              style={[
-                commonStyles.titleText19,
-                external.ti_center,
-                { color: textColorStyle },
-              ]}>
-              Seleccionar Plan
-            </Text>
+        <View
+          style={[
+            modalStyles.servicesHeaderWrapper,
+            {paddingTop: insets.top + windowHeight(3.8)},
+          ]}>
+          <View style={modalStyles.servicesHeaderCircle1} />
+          <View style={modalStyles.servicesHeaderCircle2} />
+          <View style={modalStyles.servicesHeaderRow}>
+            <View style={modalStyles.servicesHeaderCenter}>
+              <Text style={modalStyles.servicesHeaderTitle}>Tu plan</Text>
+              <Text style={modalStyles.servicesHeaderSubtitle}>
+                Sin plan activo tus servicios quedan desactivados. Elige un plan
+                para volver a ofrecerlos a tus clientes.
+              </Text>
+            </View>
           </View>
         </View>
 
-        <View style={styles.flexView}>
-          <View
-            style={{ justifyContent: 'center', alignItems: 'center', flex: 1 }}>
-            <Image
-              source={require('../../assets/solverslogo.png')} // Asegúrate de que la ruta sea correcta
-              style={{ width: 100, height: 100, marginBottom: 20 }} // Aumentar el tamaño de la imagen y agregar marginBottom
-              resizeMode="contain" // Esto asegura que la imagen mantenga sus proporciones
-            />
-
-            <Text
-              style={[
-                styles.bagIsEmptyText,
-                { color: textColorStyle, textAlign: 'center' },
-              ]}>
-              Actualmente, usted no tiene un plan activo.
-            </Text>
-
-            <Text style={[styles.bagisEmptySomething, { textAlign: 'justify' }]}>
-              Tu prueba gratuita ha finalizado, pero aún conservas tus servicios. Estos se encuentran temporalmente desactivados; adquiere un nuevo plan para reactivarlos y continuar ofreciendo tus servicios.
-            </Text>
+        <ScrollView
+          style={{flex: 1}}
+          contentContainerStyle={modalStyles.planInactiveScrollContent}
+          showsVerticalScrollIndicator={false}>
+          <View style={modalStyles.planInactiveCardOuter}>
+            <View style={modalStyles.planInactiveCard}>
+              <View style={modalStyles.planInactiveLogoWrap}>
+                <Image
+                  source={require('../../assets/solverslogo2.png')}
+                  style={modalStyles.planInactiveLogoImg}
+                  resizeMode="contain"
+                />
+              </View>
+              <View style={modalStyles.planInactiveFriendlyTag}>
+                <Text style={modalStyles.planInactiveFriendlyTagText}>
+                  Tus servicios siguen guardados
+                </Text>
+              </View>
+              <Text
+                style={[modalStyles.planInactiveTitle, {color: textColorStyle}]}>
+                Reactivar es rápido y sencillo
+              </Text>
+              <Text style={modalStyles.planInactiveSubtitle}>
+                La prueba gratuita terminó, pero tu trabajo en la app no se
+                pierde: solo está en pausa.
+              </Text>
+              <Text style={modalStyles.planInactiveBody}>
+                Cuando elijas un plan, tus servicios vuelven a activarse y podrás
+                seguir recibiendo solicitudes de clientes como siempre.
+              </Text>
+            </View>
           </View>
+        </ScrollView>
 
-          <View style={{ width: '100%' }}>
-            <NavigationButton
-              title="Planes"
-              backgroundColor={'#2D3261'}
-              color={appColors.screenBg}
-              onPress={() => gotoPlans()}
-            />
-          </View>
+        <View
+          style={[
+            modalStyles.planInactiveFooter,
+            {paddingBottom: Math.max(insets.bottom, 10), backgroundColor: bgFullStyle},
+          ]}>
+          <TouchableOpacity
+            style={modalStyles.planInactiveFooterBtn}
+            onPress={gotoPlans}
+            activeOpacity={0.88}
+            accessibilityRole="button"
+            accessibilityLabel="Renovar plan"
+            accessibilityHint="Abre el catálogo de planes para reactivar tus servicios.">
+            <Text style={modalStyles.planInactiveFooterBtnTitle}>Renovar plan</Text>
+            <Text style={modalStyles.planInactiveFooterBtnHint}>
+              Ver catálogo de planes y reactivar tus servicios.
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -584,80 +653,109 @@ const ServiciosContainer = ({ navigation }) => {
         style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle, flex: 1 }]}>
         {renderModalAprobacion()}
         {renderModalCitaAgendada()}
-        <View style={[external.mh_20]}>
-          <FullHeader
-            cantServices={cantServices}
-            showNewService={false}
-            showArrow={false}
-            show={false}
-            showClose={false}
-            title="Servicios"
-            text={
-              <Text style={styles.container}>Filtrar</Text>
-            }
-            onpressBack={() => navigation.goBack('')}
-          />
-        </View>
+        {dataServicios.length > 0 ? (
+          <View
+            style={[
+              modalStyles.servicesHeaderWrapper,
+              { paddingTop: insets.top + windowHeight(3.8) },
+            ]}>
+            <View style={modalStyles.servicesHeaderCircle1} />
+            <View style={modalStyles.servicesHeaderCircle2} />
+            <View style={modalStyles.servicesHeaderRow}>
+              <View style={modalStyles.servicesHeaderCenter}>
+                <Text style={modalStyles.servicesHeaderTitle}>Servicios</Text>
+                <Text style={modalStyles.servicesHeaderSubtitle}>
+                  Publica y administra los servicios que ofreces a tus clientes.
+                </Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
         {dataServicios.length === 0 ? (
           <View style={[modalStyles.emptyStateContainer, { flex: 1 }]}>
-            <View style={modalStyles.emptyStateIconContainer}>
-              <Icons name="wrench" size={80} color="#2D3261" />
-            </View>
-
-            <Text style={modalStyles.emptyStateTitle}>
-              ¡Comienza a ofrecer tus servicios!
-            </Text>
-
-            <Text style={modalStyles.emptyStateDescription}>
-              Aún no tienes servicios creados. Crea tu primer servicio y comienza a recibir solicitudes de clientes.
-            </Text>
-
-            <View style={modalStyles.emptyStateFeaturesContainer}>
-              <View style={modalStyles.emptyStateFeature}>
-                <Icons name="check-circle" size={20} color="#28a745" />
-                <Text style={modalStyles.emptyStateFeatureText}>Define tus propios precios</Text>
-              </View>
-              <View style={modalStyles.emptyStateFeature}>
-                <Icons name="check-circle" size={20} color="#28a745" />
-                <Text style={modalStyles.emptyStateFeatureText}>Gestiona tu disponibilidad</Text>
-              </View>
-              <View style={modalStyles.emptyStateFeature}>
-                <Icons name="check-circle" size={20} color="#28a745" />
-                <Text style={modalStyles.emptyStateFeatureText}>Recibe solicitudes al instante</Text>
+            {/* Hero superior */}
+            <View style={modalStyles.emptyHero}>
+              <View style={modalStyles.emptyHeroInner}>
+                {/* <Text style={modalStyles.emptyHeroTag}>SERVICIOS</Text> */}
+                <Text style={modalStyles.emptyHeroTitle}>
+                  ¡LLEVA TU NEGOCIO AL{'\n'}SIGUIENTE NIVEL! {' '} 
+                  {/* <Text style={{ fontSize: 35, fontWeight: 'bold', color: '#FFD60A' }}>🚀</Text> */}
+                </Text>
+                <Text style={modalStyles.emptyHeroSubtitle}>
+                  Crea tu perfil de servicios hoy mismo y empieza a conectar con cientos de
+                  clientes que buscan lo que tú haces mejor.
+                </Text>
               </View>
             </View>
 
-            {/* <TouchableOpacity
-              style={modalStyles.emptyStateButton}
-              onPress={() => navigationScreen.navigate('NewService')}
-            >
-              <Icons name="plus-circle" size={20} color="#fff" style={{ marginRight: 8 }} />
-              <Text style={modalStyles.emptyStateButtonText}>Crear mi primer servicio</Text>
-            </TouchableOpacity> */}
+            {/* Tarjeta de beneficios */}
+            <View style={modalStyles.emptyCard}>
+              <View style={modalStyles.emptyCardItem}>
+                <Icons name="check-circle" size={18} color="#1F2344" />
+                <View style={modalStyles.emptyCardItemTextWrap}>
+                  <Text style={modalStyles.emptyCardItemTitle}>Ponle valor a tu trabajo</Text>
+                  <Text style={modalStyles.emptyCardItemSubtitle}>Tú decides el precio</Text>
+                </View>
+              </View>
+              <View style={modalStyles.emptyCardItem}>
+                <Icons name="check-circle" size={18} color="#1F2344" />
+                <View style={modalStyles.emptyCardItemTextWrap}>
+                  <Text style={modalStyles.emptyCardItemTitle}>Sé dueño de tu tiempo</Text>
+                  <Text style={modalStyles.emptyCardItemSubtitle}>Gestiona tu agenda</Text>
+                </View>
+              </View>
+              <View style={modalStyles.emptyCardItem}>
+                <Icons name="check-circle" size={20} color="#1F2344" />
+                <View style={modalStyles.emptyCardItemTextWrap}>
+                  <Text style={modalStyles.emptyCardItemTitle}>Clientes reales</Text>
+                  <Text style={modalStyles.emptyCardItemSubtitle}>Recibe solicitudes al instante</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Botón principal */}
+            <TouchableOpacity
+              style={modalStyles.emptyPrimaryButton}
+              activeOpacity={0.9}
+              onPress={createorEditService}>
+              <View style={modalStyles.emptyPrimaryIconWrap}>
+                <Icons name="plus" size={25} color="#FFFFFF" />
+              </View>
+              <Text style={modalStyles.emptyPrimaryText}>Agrega tus servicios</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <ScrollView
             style={{ flex: 1 }}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={[external.Pb_80, { paddingBottom: 100 }]}>
+            contentContainerStyle={[
+              external.Pb_80,
+              { paddingBottom: insets.bottom + 120 },
+            ]}>
             <ServicesContainer
               data={dataServicios}
               show={false}
               showPlus={true}
+              uidTaller={userData?.uid}
+              nombreTaller={
+                userData?.nombre_taller ?? userData?.nombre ?? userData?.taller ?? ''
+              }
             />
           </ScrollView>
         )}
-        <View style={modalStyles.footer}>
+        {dataServicios.length > 0 && (
           <TouchableOpacity
-            style={modalStyles.footerAddButton}
-            onPress={() => createorEditService()}
-            activeOpacity={0.88}>
-            <View style={modalStyles.footerAddButtonIconWrap}>
-              <Icons name="plus" size={15} color="#FFFFFF" />
-            </View>
-            <Text style={modalStyles.footerAddButtonText}>Agregar</Text>
+            style={[
+              modalStyles.fabAdd,
+              { bottom: insets.bottom + 16, right: 16 },
+            ]}
+            onPress={createorEditService}
+            activeOpacity={0.88}
+            accessibilityRole="button"
+            accessibilityLabel="Agregar servicio">
+            <Icons name="plus" size={32} color="#FFD60A" />
           </TouchableOpacity>
-        </View>
+        )}
 
 
 
@@ -879,74 +977,320 @@ const modalStyles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 15,
   },
-  // Estilos para Empty State
+  // Estilos para Empty State (pantalla Servicios sin servicios)
   emptyStateContainer: {
     flex: 1,
-    justifyContent: 'center',
+    width: '100%',
     alignItems: 'center',
-    paddingHorizontal: 30,
-    paddingVertical: 40,
+    paddingHorizontal: 0,
+    paddingTop: 0,
   },
-  emptyStateIconContainer: {
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: '#E8F0FF',
+  servicesHeaderWrapper: {
+    width: '100%',
+    backgroundColor: '#1F2344',
+    paddingBottom: windowHeight(4.6),
+    paddingHorizontal: windowWidth(5),
     justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 25,
+    overflow: 'hidden',
+    borderBottomLeftRadius: 34,
+    borderBottomRightRadius: 34,
+    borderBottomWidth: 7,
+    borderBottomColor: '#FFD60A',
+    position: 'relative',
   },
-  emptyStateTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#2D3261',
+  servicesHeaderCircle1: {
+    position: 'absolute',
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: 'rgba(255,214,10,0.12)',
+    top: -34,
+    right: -22,
+  },
+  servicesHeaderCircle2: {
+    position: 'absolute',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    top: 30,
+    left: -14,
+  },
+  servicesHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+  },
+  servicesHeaderCenter: {
+    flex: 1,
+    alignItems: 'center',
+    paddingHorizontal: 0,
+    width: '100%',
+  },
+  servicesHeaderBackBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,214,10,0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'absolute',
+    top: windowHeight(1.4),
+    left: windowWidth(4),
+    zIndex: 3,
+  },
+  servicesHeaderTitle: {
     textAlign: 'center',
-    marginBottom: 15,
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#FFD60A',
+    marginBottom: 10,
   },
-  emptyStateDescription: {
+  servicesHeaderSubtitle: {
+    textAlign: 'center',
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    opacity: 0.95,
+    lineHeight: 22,
+    paddingHorizontal: 0,
+    width: '96%',
+  },
+  planInactiveScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    width: '100%',
+  },
+  planInactiveCardOuter: {
+    width: '100%',
+    maxWidth: 400,
+    alignSelf: 'center',
+    alignItems: 'center',
+  },
+  planInactiveCard: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingVertical: 28,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(31, 35, 68, 0.06)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#1F2344',
+        shadowOffset: {width: 0, height: 10},
+        shadowOpacity: 0.14,
+        shadowRadius: 24,
+      },
+      android: {
+        elevation: 12,
+      },
+      default: {
+        shadowColor: '#000',
+        shadowOffset: {width: 0, height: 6},
+        shadowOpacity: 0.12,
+        shadowRadius: 16,
+        elevation: 8,
+      },
+    }),
+  },
+  planInactiveLogoWrap: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 214, 10, 0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  planInactiveLogoImg: {
+    width: 68,
+    height: 68,
+  },
+  planInactiveFriendlyTag: {
+    backgroundColor: 'rgba(31, 35, 68, 0.06)',
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 999,
+    marginBottom: 14,
+  },
+  planInactiveFriendlyTagText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+    letterSpacing: 0.2,
+  },
+  planInactiveTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    textAlign: 'center',
+    marginBottom: 10,
+    letterSpacing: -0.35,
+    lineHeight: 28,
+    paddingHorizontal: 4,
+  },
+  planInactiveSubtitle: {
     fontSize: 16,
-    color: '#666',
+    fontWeight: '600',
+    color: '#475569',
     textAlign: 'center',
     lineHeight: 24,
-    marginBottom: 30,
-  },
-  emptyStateFeaturesContainer: {
-    width: '100%',
-    marginBottom: 30,
-  },
-  emptyStateFeature: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 12,
-    paddingLeft: 10,
+    paddingHorizontal: 2,
   },
-  emptyStateFeatureText: {
+  planInactiveBody: {
     fontSize: 15,
-    color: '#333',
-    marginLeft: 12,
+    fontWeight: '500',
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  planInactiveFooter: {
+    width: '100%',
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: 'rgba(31, 35, 68, 0.12)',
+  },
+  planInactiveFooterBtn: {
+    width: '100%',
+    borderRadius: 999,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    backgroundColor: '#FFD60A',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  planInactiveFooterBtnTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#1F2344',
+    textAlign: 'center',
+  },
+  planInactiveFooterBtnHint: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: 'rgba(31, 35, 68, 0.78)',
+    textAlign: 'center',
+    marginTop: 6,
+    lineHeight: 17,
+    paddingHorizontal: 4,
+  },
+  emptyHero: {
+    width: '100%',
+    backgroundColor: '#1F2344',
+    borderBottomLeftRadius: 120,
+    borderBottomRightRadius: 120,
+    paddingTop: 32,
+    paddingBottom: 90,
+    alignItems: 'center',
+    overflow: 'hidden',
+    borderBottomWidth: 3,
+    borderBottomColor: '#FFD60A',
+    borderRightColor: '#FFD60A',
+    borderLeftColor: '#FFD60A',
+    borderTopColor: '#FFD60A',
+    // borderTopWidth: 6,
+    // borderTopLeftRadius: 120,
+    // borderTopRightRadius: 120,
+    borderLeftWidth: 3,
+    borderRightWidth: 3,
+    borderBottomWidth: 12,
+
+  },
+  emptyHeroInner: {
+    width: '88%',
+    alignItems: 'center',
+  },
+  emptyHeroTag: {
+    fontSize: 12,
+    letterSpacing: 1,
+    color: '#E5E7EB',
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  emptyHeroTitle: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    lineHeight: 35,
+    marginBottom: 12,
+  },
+  emptyHeroSubtitle: {
+    fontSize: 20,
+    color: '#E5E7EB',
+    textAlign: 'center',
+    lineHeight: 25,
+  },
+  emptyCard: {
+    width: '80%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    paddingVertical: 18,
+    paddingHorizontal: 18,
+    marginTop: 45,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    textAlign: 'center',
+  },
+  emptyCardItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  emptyCardItemTextWrap: {
+    marginLeft: 10,
     flex: 1,
   },
-  emptyStateButton: {
-    backgroundColor: '#2D3261',
-    borderRadius: 12,
-    paddingVertical: 15,
-    paddingHorizontal: 30,
+  emptyCardItemTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1F2344',
+    marginBottom: 2,
+  },
+  emptyCardItemSubtitle: {
+    fontSize: 17,
+    color: '#1F2344',
+  },
+  emptyPrimaryButton: {
+    marginTop: -10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#2D3261',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 999,
+    backgroundColor: '#1F2344',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
+    width: '80%',
+    height: 70,
   },
-  emptyStateButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  emptyPrimaryIconWrap: {
+    width: 45,
+    height: 45,
+    borderRadius: 45,
+    backgroundColor: '#9CA3AF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 10,
+  },
+  emptyPrimaryText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#FFFFFF',
   },
   // Estilos para Modal Cita Agendada
   iconContainerSuccess: {
@@ -1043,48 +1387,22 @@ const modalStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  footer: {
-    width: '100%',
-    paddingHorizontal: 2,
-    paddingTop: 0,
-    paddingBottom: Platform.OS === 'ios' ? 0 : 0,
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 0,
+  fabAdd: {
+    position: 'absolute',
+    zIndex: 30,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#1F2344',
+    justifyContent: 'center',
+    alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  footerAddButton: {
-    width: '100%',
-    backgroundColor: appColors?.primary ?? '#2D3261',
-    borderRadius: 16,
-    paddingVertical: 18,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: appColors?.primary ?? '#2D3261',
-    shadowOffset: { width: 0, height: 6 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 8,
-    overflow: 'hidden',
-  },
-  footerAddButtonIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  footerAddButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '700',
-    letterSpacing: 0.3,
+    shadowRadius: 10,
+    elevation: 12,
+    borderWidth: 1,
+    borderColor: '#FFD60A',
   },
 });
 

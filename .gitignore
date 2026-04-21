@@ -35,6 +35,10 @@ local.properties
 !debug.keystore
 .kotlin/
 
+# Mapbox (no subir tokens)
+mapbox.properties
+.env.mapbox
+
 # node.js
 #
 node_modules/

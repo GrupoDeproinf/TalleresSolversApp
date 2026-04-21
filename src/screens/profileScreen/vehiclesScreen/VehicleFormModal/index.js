@@ -235,6 +235,7 @@ const VehicleFormModal = ({ visible, onClose, onSubmit, initialValues }) => {
     const marca = (form.vehiculo_marca || '').trim();
     const modelo = (form.vehiculo_modelo || '').trim();
     const anio = (form.vehiculo_anio || '').trim();
+    const km = (form.KM || '').trim();
     if (!marca) {
       Alert.alert('Campo requerido', 'La marca del vehículo es obligatoria.');
       return;
@@ -245,6 +246,10 @@ const VehicleFormModal = ({ visible, onClose, onSubmit, initialValues }) => {
     }
     if (!anio) {
       Alert.alert('Campo requerido', 'El año del vehículo es obligatorio.');
+      return;
+    }
+    if (!km) {
+      Alert.alert('Campo requerido', 'El kilometraje del vehículo es obligatorio.');
       return;
     }
 
@@ -272,7 +277,7 @@ const VehicleFormModal = ({ visible, onClose, onSubmit, initialValues }) => {
       vehiculo_color: (form.vehiculo_color || '').trim() || null,
       tipo_vehiculo: (form.tipo_vehiculo || '').trim() || null,
       uid_tipo_vehiculo: (form.uid_tipo_vehiculo || '').trim() || null,
-      KM: form.KM ? parseInt(form.KM, 10) : null,
+      KM: parseInt(km, 10),
       KM_correa_tiempo: form.KM_correa_tiempo ? parseInt(form.KM_correa_tiempo, 10) : null,
       KM_ultima_rotacion_cauchos: form.KM_ultima_rotacion_cauchos ? parseInt(form.KM_ultima_rotacion_cauchos, 10) : null,
       proximo_cambio_aceite: safeDate(form.proximo_cambio_aceite),
@@ -440,7 +445,9 @@ const VehicleFormModal = ({ visible, onClose, onSubmit, initialValues }) => {
                     )}
                   </View>
                   <View style={styles.field}>
-                    <Text style={styles.label}>Kilometraje (KM)</Text>
+                    <Text style={styles.label}>
+                      Kilometraje (KM) <Text style={styles.labelRequired}>*</Text>
+                    </Text>
                     <TextInput
                       style={styles.input}
                       value={form.KM}

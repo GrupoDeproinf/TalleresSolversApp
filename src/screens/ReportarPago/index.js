@@ -15,7 +15,6 @@ import {
   Alert
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import HeaderContainer from '../../commonComponents/headingContainer';
 import { successfullyReset } from '../../constant';
 import { external } from '../../style/external.css';
 import appColors from '../../themes/appColors';
@@ -25,7 +24,7 @@ import SolidLine from '../../commonComponents/solidLine';
 import { otherPaymentMode, paymentData } from '../../data/paymentData';
 import DashedBorderComponent from '../../commonComponents/dashBorder';
 import BottomContainer from '../../commonComponents/bottomContainer';
-import { Cross, SendMoney } from '../../utils/icon';
+import { BackLeft, Cross, SendMoney } from '../../utils/icon';
 import RadioButton from '../../commonComponents/radioButton';
 import { styles } from './style.css';
 import CommonModal from '../../commonComponents/commonModel';
@@ -87,8 +86,13 @@ const ReportarPago = ({ navigation }) => {
 
   const [date, setDate] = useState(new Date());
   const [open, setOpen] = useState(false);
-
-  const [buttonColor, setButtonColor] = useState('#848688');
+  const formattedPaymentDate = date
+    ? date.toLocaleDateString('es-VE', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+    : '';
 
   const bancos = [
     { value: '', label: '--- SELECCIONE UN BANCO ---' },
@@ -154,6 +158,8 @@ const ReportarPago = ({ navigation }) => {
 
   const navigationScreen = useNavigation();
   const route = useRoute();
+  /** true si se llegó desde PlanesRegistro con param enviado desde Mis planes. */
+  const fromPlanesTaller = route.params?.fromPlanesTaller === true;
 
   useEffect(() => {
     const { data } = route.params;
@@ -514,204 +520,296 @@ const ReportarPago = ({ navigation }) => {
   }
 
   return (
+    <>
     <View
-      style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle }]}>
-      <View style={[external.mh_20]}>
-        <HeaderContainer value="Reportar Pago" />
-        {/* <LinearGradient
-          start={{ x: 0.0, y: 0.0 }}
-          end={{ x: 0.0, y: 1.0 }}
-          colors={colors}
-          style={[
-            styles.viewContainer,
-            { shadowColor: appColors.shadowColor, borderradius: 6 },
-          ]}>
-          <LinearGradient
-            start={{ x: 0.0, y: 0.0 }}
-            end={{ x: 0.0, y: 1.0 }}
-            colors={linearColorStyle}
-            style={[
-              styles.menuItemContent,
-              { shadowColor: appColors.shadowColor },
-            ]}
-            > */}
-
+      style={[commonStyles.commonContainer, { backgroundColor: '#F5F6F8' }]}>
+      <View style={{ flex: 1 }}>
         <View
-          style={[
-            external.fd_row,
-            external.js_space,
-            { flexDirection: viewRTLStyle },
-          ]}>
-          <Text
+          style={{
+            marginBottom: 12,
+            backgroundColor: '#1F2344',
+            paddingTop: 24,
+            paddingBottom: 22,
+            paddingHorizontal: 12,
+            borderBottomWidth: 8,
+            borderBottomColor: '#FFD60A',
+            borderBottomLeftRadius: 60,
+            borderBottomRightRadius: 60,
+            marginHorizontal: -12,
+          }}>
+          <View
             style={[
-              commonStyles.subtitleText,
-              external.mh_15,
-              external.mt_10,
-              { color: textColorStyle, fontSize: fontSizes.FONT19 },
+              external.fd_row,
+              external.ai_center,
+              {
+                flexDirection: viewRTLStyle,
+                justifyContent: 'center',
+                minHeight: 44,
+              },
             ]}>
-            Seleccione tipo de Pago
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={{
+                width: 38,
+                height: 38,
+                position: 'absolute',
+                left: 8,
+                zIndex: 2,
+                borderRadius: 19,
+                backgroundColor: '#2D3261',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <Icons name="chevron-left" size={16} color="#FFD60A" />
+            </TouchableOpacity>
+            <Text
+              style={{
+                fontSize: 28,
+                fontWeight: '900',
+                color: '#FFD60A',
+                textAlign: 'center',
+              }}>
+              Métodos de Pago
+            </Text>
+          </View>
+          <Text
+            style={{
+              fontSize: 14,
+              color: '#FFFFFF',
+              opacity: 0.95,
+              textAlign: 'center',
+              lineHeight: 18,
+              fontWeight: '600',
+              marginBottom: 6,
+              marginTop: 6,
+            }}>
+            Selecciona el medio por el cual realizaste tu transacción.
           </Text>
         </View>
-        <SolidLine />
+        {/* <SolidLine /> */}
 
 
-        {
-          dataMetodos.length != 0 ? (
-
-
-            dataMetodos.map((item, index) => {
-              return (
-                <View key={index}>
-                  <View
-                    style={[
-                      external.fd_row,
-                      external.p_10,
-                      external.ai_center,
-                      { flexDirection: viewRTLStyle },
-                    ]}
-                  >
-
-                    <View style={[external.ph_10, external.fg_9]}>
-                      <Text
-                        style={[
-                          commonStyles.subtitleText,
-                          { color: textColorStyle, textAlign: textRTLStyle },
-                        ]}
-                      >
-                        {t(item.tipo_pago)}
-                      </Text>
-
-                      {item.tipo_pago === 'Transferencia' && (
-                        <>
-                          <Text
-                            style={[
-                              commonStyles.subtitleText,
-                              { textAlign: textRTLStyle },
-                            ]}
-                          >
-                            {t('Cuenta: ' + item.cuenta)}
-                          </Text>
-                          <Text
-                            style={[
-                              commonStyles.subtitleText,
-                              { textAlign: textRTLStyle },
-                            ]}
-                          >
-                            {t('Titular: ' + item.titular)}
-                          </Text>
-                          <Text
-                            style={[
-                              commonStyles.subtitleText,
-                              { textAlign: textRTLStyle },
-                            ]}
-                          >
-                            {t('Cedula/RIF: ' + item.cedula_rif)}
-                          </Text>
-                          <Text
-                            style={[
-                              commonStyles.subtitleText,
-                              { textAlign: textRTLStyle },
-                            ]}
-                          >
-                            {t('Tipo: ' + item.tipo_cuenta)}
-                          </Text>
-                          <Text
-                            style={[
-                              commonStyles.subtitleText,
-                              { textAlign: textRTLStyle },
-                            ]}
-                          >
-                            {t('Banco: ' + item.banco)}
-                          </Text>
-                        </>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingBottom: 140 }}>
+          {
+            dataMetodos.length != 0 ? (
+              dataMetodos.map((item, index) => {
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    activeOpacity={0.9}
+                    onPress={() => {
+                      setmetodoSelected(item.tipo_pago);
+                      paymentDatas(index);
+                    }}
+                    style={{ width: '100%' }}>
+                    <LinearGradient
+                      colors={['#1F2344', '#151939']}
+                      style={[
+                        styles.paymentCard,
+                        item.tipo_pago === 'Efectivo' && { minHeight: 120 },
+                        // El borde amarillo se pinta con overlay interno (sin afectar layout)
+                        index === selectedItem && styles.paymentCardSelected,
+                      ]}>
+                      {index === selectedItem && (
+                        <View style={styles.paymentCardSelectedOverlay} />
                       )}
+                      <View style={styles.paymentCardHeader}>
+                        <View style={styles.paymentHeaderLeft}>
+                          <View
+                            style={[
+                              styles.paymentIconCircle,
+                              item.tipo_pago === 'Efectivo'
+                                ? styles.paymentIconCash
+                                : styles.paymentIconDefault,
+                            ]}>
+                            {item.tipo_pago === 'Efectivo' ? (
+                              <Icons3
+                                name="money-bill"
+                                size={24}
+                                color="#1F2344"
+                              />
+                            ) : item.tipo_pago === 'Pago Móvil' ? (
+                              <Icons name="mobile" size={30} color="#1F2344" />
+                            ) : item.tipo_pago === 'Transferencia' ? (
+                              <Icons name="exchange" size={24} color="#1F2344" />
+                            ) : (
+                              <Icons name="credit-card" size={24} color="#1F2344" />
+                            )}
+                          </View>
 
-                      {item.tipo_pago === 'Pago Móvil' && (
-                        <>
-                          <Text
+                          <View>
+                            <Text style={styles.paymentTitles}>
+                              {t(item.tipo_pago)}
+                            </Text>
+                            <Text style={styles.paymentSubtitle}>
+                              {item.tipo_pago === 'Efectivo'
+                                ? 'Pago presencial'
+                                : item.tipo_pago === 'Pago Móvil'
+                                  ? 'Transacción digital'
+                                  : item.tipo_pago === 'Transferencia'
+                                    ? 'Cuentas nacionales'
+                                    : 'Pago'}
+                            </Text>
+                          </View>
+                        </View>
+
+                        <View
+                          style={[
+                            styles.radioOuter,
+                            index === selectedItem && styles.radioOuterSelected,
+                          ]}>
+                          <View
                             style={[
-                              commonStyles.subtitleText,
-                              { textAlign: textRTLStyle },
+                              styles.radioInnerDot,
+                              index === selectedItem
+                                ? styles.radioInnerDotVisible
+                                : styles.radioInnerDotHidden,
                             ]}
-                          >
-                            {t('Número: ' + item.telefono)}
-                          </Text>
-                          <Text
+                          />
+                        </View>
+                      </View>
+
+                      {(item.tipo_pago === 'Pago Móvil' ||
+                        item.tipo_pago === 'Transferencia' ||
+                        item.tipo_pago === 'Zelle') && (
+                        <View style={styles.paymentDetailsWrap}>
+                          <View
                             style={[
-                              commonStyles.subtitleText,
-                              { textAlign: textRTLStyle },
-                            ]}
-                          >
-                            {t('Cedula/RIF: ' + item.cedula_rif)}
-                          </Text>
-                          <Text
-                            style={[
-                              commonStyles.subtitleText,
-                              { textAlign: textRTLStyle },
-                            ]}
-                          >
-                            {t('Banco: ' + item.banco)}
-                          </Text>
-                        </>
+                              item.tipo_pago === 'Transferencia' && {
+                                marginBottom: 10,
+                              },
+                            ]}>
+                            {item.tipo_pago === 'Pago Móvil' && (
+                              <>
+                                <View style={styles.detailsGridRow}>
+                                  <View style={styles.detailsCol}>
+                                    <Text style={styles.detailsLabel}>Número</Text>
+                                    <Text style={styles.detailsValueSmall}>
+                                      {item.telefono}
+                                    </Text>
+                                  </View>
+                                  <View style={styles.detailsCol}>
+                                    <Text style={styles.detailsLabel}>
+                                      Cédula / RIF
+                                    </Text>
+                                    <Text style={styles.detailsValueSmall}>
+                                      {item.cedula_rif}
+                                    </Text>
+                                  </View>
+                                </View>
+
+                                <View style={{ marginTop: 0 }}>
+                                  <Text style={styles.detailsLabel}>Banco</Text>
+                                  <Text style={styles.detailsValueSmall}>
+                                    {item.banco}
+                                  </Text>
+                                </View>
+                              </>
+                            )}
+
+                            {item.tipo_pago === 'Transferencia' && (
+                              <>
+                                <View style={styles.detailsGridRow}>
+                                  <View style={styles.detailsCol}>
+                                    <Text style={styles.detailsLabel}>
+                                      Número de Cuenta
+                                    </Text>
+                                    <Text style={styles.detailsValueSmall}>
+                                      {item.cuenta}
+                                    </Text>
+                                  </View>
+                                </View>
+
+                                <View style={styles.detailsGridRow}>
+                                  <View style={styles.detailsCol}>
+                                    <Text style={styles.detailsLabel}>Titular</Text>
+                                    <Text style={styles.detailsValueSmall}>
+                                      {item.titular}
+                                    </Text>
+                                  </View>
+                                  <View style={styles.detailsCol}>
+                                    <Text style={styles.detailsLabel}>Tipo</Text>
+                                    <Text style={styles.detailsValueSmall}>
+                                      {item.tipo_cuenta?.toUpperCase?.() ||
+                                        item.tipo_cuenta}
+                                    </Text>
+                                  </View>
+                                </View>
+
+                                <View style={{ marginTop: 0 }}>
+                                  <Text style={styles.detailsLabel}>Banco</Text>
+                                  <Text style={styles.detailsValueSmall}>
+                                    {item.banco}
+                                  </Text>
+                                </View>
+                              </>
+                            )}
+
+                            {item.tipo_pago === 'Zelle' && (
+                              <>
+                                <View style={styles.detailsGridRow}>
+                                  <View style={styles.detailsCol}>
+                                    <Text style={styles.detailsLabel}>Email</Text>
+                                    <Text style={styles.detailsValueSmall}>
+                                      {item.email}
+                                    </Text>
+                                  </View>
+                                  <View style={styles.detailsCol}>
+                                    <Text style={styles.detailsLabel}>Código</Text>
+                                    <Text style={styles.detailsValueSmall}>
+                                      {item.num_ref}
+                                    </Text>
+                                  </View>
+                                </View>
+                              </>
+                            )}
+                          </View>
+                        </View>
                       )}
-
-                      {item.tipo_pago === 'Zelle' && (
-                        <>
-                          <Text
-                            style={[
-                              commonStyles.subtitleText,
-                              { textAlign: textRTLStyle },
-                            ]}
-                          >
-                            {t('Email: ' + item.email)}
-                          </Text>
-                          <Text
-                            style={[
-                              commonStyles.subtitleText,
-                              { textAlign: textRTLStyle },
-                            ]}
-                          >
-                            {t('Codigo: ' + item.num_ref)}
-                          </Text>
-                        </>
-                      )}
-                    </View>
-
-                    <RadioButton
-                      onPress={() => {
-                        setmetodoSelected(item.tipo_pago);
-                        paymentDatas(index);
-                      }}
-                      checked={index === selectedItem}
-                    />
-                  </View>
-                  <DashedBorderComponent />
-                </View>
-              );
-            })
-
-          ) : (
-            <Text
-            >
-              no carga
-            </Text>
-          )
-        }
-
-
-        {/* </LinearGradient>
-        </LinearGradient> */}
+                    </LinearGradient>
+                  </TouchableOpacity>
+                );
+              })
+            ) : (
+              <Text>no carga</Text>
+            )
+          }
+        </ScrollView>
 
       </View>
 
-      <View style={[external.fx_1, external.js_end]}>
+      
+
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          paddingBottom: 24,
+          paddingTop: 8,
+          paddingHorizontal: 12,
+          backgroundColor: '#F5F6F8',
+        }}>
         <BottomContainer
+          backgroundColors={['#F5F6F8', '#F5F6F8']}
+          contentColors={['#F5F6F8', '#F5F6F8']}
           leftValue={
-            <Text style={[styles.priceText, { color: textColorStyle }]}>
-              ${PrecioPago}{' '}
-              <Text style={[commonStyles.subtitleText]}>({nombrePlan})</Text>
-            </Text>
+            <View style={styles.footerLeftContainer}>
+              <Text style={styles.footerTotalText}>Total a Pagar</Text>
+              <View style={styles.footerPriceRow}>
+                <Text style={styles.footerAmountText}>${PrecioPago}</Text>
+                <View style={styles.footerPlanBadge}>
+                  <Text style={styles.footerPlanBadgeText}>
+                    ({nombrePlan})
+                  </Text>
+                </View>
+              </View>
+            </View>
           }
+          valueContainerStyle={styles.footerValueContainer}
           value={
             <TouchableOpacity
               onPress={() => {
@@ -723,13 +821,15 @@ const ReportarPago = ({ navigation }) => {
                   clearImage();
                 }
               }}
-              style={[external.fd_row, external.ai_center, external.pt_4]}>
-              <SendMoney />
+              style={[external.fd_row, external.ai_center, styles.footerReportButton]}>
+              <Icons name="send" size={16} color="#1F2344" />
               <Text style={styles.payNowText}>Reportar</Text>
             </TouchableOpacity>
           }
         />
       </View>
+
+    </View>
 
 
 
@@ -769,7 +869,9 @@ const ReportarPago = ({ navigation }) => {
                 title="Ir al inicio"
                 onPress={() => {
                   closeModal();
-                  if (dataPlan.flag == 'from-plan') {
+                  if (fromPlanesTaller) {
+                    navigation.navigate('Planes');
+                  } else if (dataPlan.flag == 'from-plan') {
                     goToServices();
                   } else {
                     navigation.navigate('DrawerScreen');
@@ -789,33 +891,37 @@ const ReportarPago = ({ navigation }) => {
           <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.container}>
               {metodoSelected === 'Zelle' ? (
-                <ScrollView style={{ marginBottom: 15, marginTop: 70 }}>
+                <ScrollView
+                  style={styles.modalBodyTop}
+                  contentContainerStyle={styles.modalScrollContent}>
                   <View>
-                    <View
-                      style={[
-                        external.fd_row,
-                        external.ai_center,
-                        external.js_space,
-                      ]}>
-                      <Text
-                        style={[commonStyles.titleText19, { color: textColorStyle }]}>
-                        Reportar Pago (Precio: ${PrecioPago})
+                    <LinearGradient
+                      colors={['#1F2344', '#2D3261']}
+                      start={{x: 0, y: 0}}
+                      end={{x: 1, y: 1}}
+                      style={styles.modalHeroCard}>
+                      <View style={styles.modalHeroTopRow}>
+                        <Text style={styles.modalHeroEyebrow}>Reportar pago</Text>
+                        <View style={styles.modalHeroTypeBadge}>
+                          <Text style={styles.modalHeroTypeBadgeText}>{nombrePlan}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.modalHeroTitle}>
+                        Total: ${PrecioPago}
                       </Text>
-                    </View>
+                      <Text style={styles.modalHeroSubtitle}>
+                        Sube tu comprobante y completa los datos para validar tu
+                        pago por Zelle.
+                      </Text>
+                    </LinearGradient>
                     <SolidLine />
 
-                    <View
-                      style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginTop: 10,
-                      }}>
+                    <View style={styles.modalUploadCard}>
                       {imageUri && (
                         <View style={stylesImage.imageContainer}>
                           <Image
                             source={{ uri: imageUri }}
-                            style={{ width: 200, height: 200 }}
+                            style={styles.uploadPreviewImage}
                           />
                           <TouchableOpacity
                             style={stylesImage.closeButton}
@@ -826,30 +932,16 @@ const ReportarPago = ({ navigation }) => {
                       )}
 
                       <TouchableOpacity
-                        style={[
-                          stylesImage.button,
-                          {
-                            borderWidth: 1,
-                            borderColor: '#2D3261',
-                            borderStyle: 'dotted', // Establecer el borde como interlineal
-                            borderRadius: 5, // Opcional: Añadir esquinas redondeadas
-                            backgroundColor: '#FFF',
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            padding: 10,
-                            marginTop: 10,
-                          },
-                        ]}
+                        style={[stylesImage.button, styles.uploadButton]}
                         onPress={selectImage}>
                         <Icons3 name="money-bill" size={15} color="#2D3261" />
-                        <Text
-                          style={[
-                            stylesImage.buttonText,
-                            { marginLeft: 10, color: '#2D3261' },
-                          ]}>
+                        <Text style={[stylesImage.buttonText, styles.uploadButtonText]}>
                           Comprobante de Pago
                         </Text>
                       </TouchableOpacity>
+                      <Text style={styles.uploadHelperText}>
+                        Formatos recomendados: JPG o PNG
+                      </Text>
                     </View>
 
                     <TextInputs
@@ -884,74 +976,42 @@ const ReportarPago = ({ navigation }) => {
                       Fecha del Pago
                     </Text>
 
-                    <DatePicker
-                      maximumDate={new Date()}
-                      date={date}
-                      onDateChange={setDate}
-                      theme="light"
-                      mode="date"
-                      title="Fecha del Pago"
-                      locale="es"
-                    />
+                    <TouchableOpacity
+                      activeOpacity={0.85}
+                      style={styles.dateInputTrigger}
+                      onPress={() => setOpen(true)}>
+                      <Text style={styles.dateInputText}>{formattedPaymentDate}</Text>
+                    </TouchableOpacity>
 
-                    <View style={{ marginTop: 10 }}>
-                      <View
-                        style={{
-                          backgroundColor: buttonColor,
-                          borderRadius: windowHeight(20),
-                          marginBottom: 15, // Margen entre los botones
-                        }}>
-                        <NavigationButton
-                          title="Reportar Pago"
-                          onPress={() => ReportarPagoData()}
-                          backgroundColor={'#2D3261'}
-                          color={'white'}
-                        />
-                      </View>
-
-                      <View
-                        style={{
-                          backgroundColor: buttonColor,
-                          borderRadius: windowHeight(20),
-                        }}>
-                        <NavigationButton
-                          title="Cancelar"
-                          onPress={() => closeSecondModel()}
-                          backgroundColor={'#848688'}
-                          color={'white'}
-                        />
-                      </View>
-                    </View>
                   </View>
                 </ScrollView>
               ) : metodoSelected === 'Transferencia' ? (
-                <ScrollView style={{ marginBottom: 15, marginTop: 70 }}>
+                <ScrollView
+                  style={styles.modalBodyTop}
+                  contentContainerStyle={styles.modalScrollContent}>
                   <View>
-                    <View
-                      style={[
-                        external.fd_row,
-                        external.ai_center,
-                        external.js_space,
-                      ]}>
-                      <Text
-                        style={[commonStyles.titleText19, { color: textColorStyle }]}>
-                        Reportar Pago (Precio: ${PrecioPago})
+                  <View style={styles.modalHeroCard} backgroundColor='#1F2344'>
+                      <View style={styles.modalHeroTopRow}>
+                        <Text style={styles.modalHeroEyebrow}>Reportar pago</Text>
+                        <View style={styles.modalHeroTypeBadge}>
+                          <Text style={styles.modalHeroTypeBadgeText}>{nombrePlan}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.modalHeroTitle}>
+                        Total: ${PrecioPago}
                       </Text>
-                    </View>
-                    <SolidLine />
+                      <Text style={styles.modalHeroSubtitle}>
+                        Ingresa la referencia y los datos bancarios para reportar tu
+                        transferencia.
+                      </Text>
+                      </View>
 
-                    <View
-                      style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginTop: 10,
-                      }}>
+                    <View style={styles.modalUploadCard}>
                       {imageUri && (
                         <View style={stylesImage.imageContainer}>
                           <Image
                             source={{ uri: imageUri }}
-                            style={{ width: 200, height: 200 }}
+                            style={styles.uploadPreviewImage}
                           />
                           <TouchableOpacity
                             style={stylesImage.closeButton}
@@ -962,30 +1022,16 @@ const ReportarPago = ({ navigation }) => {
                       )}
 
                       <TouchableOpacity
-                        style={[
-                          stylesImage.button,
-                          {
-                            borderWidth: 1,
-                            borderColor: '#2D3261',
-                            borderStyle: 'dotted', // Establecer el borde como interlineal
-                            borderRadius: 5, // Opcional: Añadir esquinas redondeadas
-                            backgroundColor: '#FFF',
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            padding: 10,
-                            marginTop: 10,
-                          },
-                        ]}
+                        style={[stylesImage.button, styles.uploadButton]}
                         onPress={selectImage}>
                         <Icons3 name="money-bill" size={15} color="#2D3261" />
-                        <Text
-                          style={[
-                            stylesImage.buttonText,
-                            { marginLeft: 10, color: '#2D3261' },
-                          ]}>
+                        <Text style={[stylesImage.buttonText, styles.uploadButtonText]}>
                           Comprobante de Pago
                         </Text>
                       </TouchableOpacity>
+                      <Text style={styles.uploadHelperText}>
+                        Formatos recomendados: JPG o PNG
+                      </Text>
                     </View>
 
                     <View>
@@ -1122,110 +1168,79 @@ const ReportarPago = ({ navigation }) => {
                         </View>
                       </View>
 
-                      <View style={{ marginTop: 0 }}>
-                        <TextInputs
-                          title={'Monto'}
-                          value={monto}
-                          onChangeText={text => {
-                            const numericText = text.replace(/[^0-9]/g, ''); // Eliminar caracteres no numéricos
-                            console.log('numericText', numericText);
-                            if (numericText == "") {
-                              setmonto('');
-                            } else {
-                              setmonto(`${numericText}`); // Agregar el símbolo $ al inicio
-                            }
-                          }}
-                          keyboardType="numeric"
-                          placeHolder={'Ingrese el monto'}
-                        />
-
-                        <Text
-                          style={[
-                            styles.headingContainer,
-                            { color: textColorStyle },
-                            { textAlign: textRTLStyle },
-                            { marginTop: 10 }, // Agregar marginTop de 10
-                          ]}>
-                          Fecha del Pago
-                        </Text>
-
-                        <View
-                          style={{
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                          }}>
-                          <DatePicker
-                            maximumDate={new Date()}
-                            date={date}
-                            onDateChange={setDate}
-                            theme="light"
-                            mode="date"
-                            title="Fecha del Pago"
-                            style={{ height: 150 }} // Ajustar el tamaño
-                            locale="es"
+                      <View style={[styles.efectivoInputsRow, { marginTop: 0 }]}>
+                        <View style={styles.efectivoInputCol}>
+                          <TextInputs
+                            title={'Monto'}
+                            value={monto}
+                            onChangeText={text => {
+                              const numericText = text.replace(/[^0-9]/g, ''); // Eliminar caracteres no numéricos
+                              console.log('numericText', numericText);
+                              if (numericText == '') {
+                                setmonto('');
+                              } else {
+                                setmonto(`${numericText}`); // Agregar el símbolo $ al inicio
+                              }
+                            }}
+                            keyboardType="numeric"
+                            placeHolder={'Ingrese el monto'}
                           />
+                        </View>
+
+                        <View style={styles.efectivoInputCol}>
+                          <Text
+                            style={[
+                              styles.headingContainer,
+                              { color: textColorStyle },
+                              { textAlign: textRTLStyle },
+                              { marginTop: 10 },
+                            ]}>
+                            Fecha del Pago
+                          </Text>
+
+                          <TouchableOpacity
+                            activeOpacity={0.85}
+                            style={styles.dateInputTrigger}
+                            onPress={() => setOpen(true)}>
+                            <Text style={styles.dateInputText}>
+                              {formattedPaymentDate}
+                            </Text>
+                          </TouchableOpacity>
                         </View>
                       </View>
 
-                      <View style={{ marginBottom: 20 }}>
-                        <View
-                          style={{
-                            backgroundColor: buttonColor,
-                            borderRadius: windowHeight(20),
-                            marginBottom: 5, // Margen entre los botones
-                          }}>
-                          <NavigationButton
-                            title="Reportar Pago"
-                            onPress={() => ReportarPagoData()}
-                            backgroundColor={'#2D3261'}
-                            color={'white'}
-                          />
-                        </View>
-
-                        <View
-                          style={{
-                            backgroundColor: buttonColor,
-                            borderRadius: windowHeight(20),
-                          }}>
-                          <NavigationButton
-                            title="Cancelar"
-                            onPress={() => closeSecondModel()}
-                            backgroundColor={'#848688'}
-                            color={'white'}
-                          />
-                        </View>
-                      </View>
                     </View>
                   </View>
                 </ScrollView>
               ) : metodoSelected === 'Pago Móvil' ? (
-                <ScrollView style={{ marginBottom: 15, marginTop: 70 }}>
+                <ScrollView
+                  style={styles.modalBodyTop}
+                  contentContainerStyle={styles.modalScrollContent}>
                   <View>
-                    <View
-                      style={[
-                        external.fd_row,
-                        external.ai_center,
-                        external.js_space,
-                      ]}>
-                      <Text
-                        style={[commonStyles.titleText19, { color: textColorStyle }]}>
-                        Reportar Pago (Precio: ${PrecioPago})
+                    <View style={styles.modalHeroCard} backgroundColor='#1F2344'>
+                      <View style={styles.modalHeroTopRow}>
+                        <Text style={styles.modalHeroEyebrow}>Reportar pago</Text>
+                        <View style={styles.modalHeroTypeBadge}>
+                          <Text style={styles.modalHeroTypeBadgeText}>{nombrePlan}</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.modalHeroTitle}>
+                        Total: ${PrecioPago}
                       </Text>
+                      <Text style={styles.modalHeroSubtitle}>
+                        Completa la referencia, teléfono y bancos para registrar tu
+                        pago móvil.
+                      </Text>
+
                     </View>
                     <SolidLine />
 
-                    <View
-                      style={{
-                        flex: 1,
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        marginTop: 10,
-                      }}>
+                    <View style={styles.modalUploadCard}>
                       {imageUri && (
                         <View style={stylesImage.imageContainer}>
                           <Image
                             source={{ uri: imageUri }}
-                            style={{ width: 200, height: 200 }}
+                            style={styles.uploadPreviewImage}
                           />
                           <TouchableOpacity
                             style={stylesImage.closeButton}
@@ -1236,88 +1251,65 @@ const ReportarPago = ({ navigation }) => {
                       )}
 
                       <TouchableOpacity
-                        style={[
-                          stylesImage.button,
-                          {
-                            borderWidth: 1,
-                            borderColor: '#2D3261',
-                            borderStyle: 'dotted', // Establecer el borde como interlineal
-                            borderRadius: 5, // Opcional: Añadir esquinas redondeadas
-                            backgroundColor: '#FFF',
-                            flexDirection: 'row',
-                            alignItems: 'center',
-                            padding: 10,
-                            marginTop: 10,
-                          },
-                        ]}
+                        style={[stylesImage.button, styles.uploadButton]}
                         onPress={selectImage}>
                         <Icons3 name="money-bill" size={15} color="#2D3261" />
-                        <Text
-                          style={[
-                            stylesImage.buttonText,
-                            { marginLeft: 10, color: '#2D3261' },
-                          ]}>
+                        <Text style={[stylesImage.buttonText, styles.uploadButtonText]}>
                           Comprobante de Pago
                         </Text>
                       </TouchableOpacity>
+                      <Text style={styles.uploadHelperText}>
+                        Formatos recomendados: JPG o PNG
+                      </Text>
                     </View>
 
-                    <TextInputs
-                      title={'Nro de referencia'}
-                      placeHolder={'000000000'}
-                      onChangeText={text => {
-                        const numericText = text.replace(/[^0-9]/g, '');
-                        setnro_referencia(numericText);
-                      }}
-                      keyboardType="numeric"
-                    />
+                    <View style={styles.efectivoInputsRow}>
+                      <View style={styles.efectivoInputCol}>
+                        <TextInputs
+                          title={'Nro de referencia'}
+                          placeHolder={'000000000'}
+                          onChangeText={text => {
+                            const numericText = text.replace(/[^0-9]/g, '');
+                            setnro_referencia(numericText);
+                          }}
+                          keyboardType="numeric"
+                        />
+                      </View>
 
-                    <TextInputs
-                      title={'Número telefónico'}
-                      // onChangeText={text => {
-                      //   // Aplicar formato de máscara (XXX) XXX-XXXX
-                      //   const numericText = text
-                      //     .replace(/[^0-9]/g, '')
-                      //     .slice(0, 10);
+                      <View style={styles.efectivoInputCol}>
+                        <TextInputs
+                          title={'Número telefónico'}
+                          keyboardType="numeric"
+                          placeHolder="Ejem (414) 261-79-66"
+                          value={telefono} // Para mantener el valor actualizado con la máscara
+                          onChangeText={text => {
+                            let numericText = text
+                              .replace(/[^0-9]/g, '')
+                              .slice(0, 10); // Limitar a 10 dígitos
 
-                      //   // Aplicar formato de máscara (XXX) XXX-XXXX
-                      //   let formattedText = numericText;
-                      //   if (numericText.length > 3 && numericText.length <= 6) {
-                      //     formattedText = `(${numericText.slice(
-                      //       0,
-                      //       3,
-                      //     )}) ${numericText.slice(3)}`;
-                      //   } else if (numericText.length > 6) {
-                      //     formattedText = `(${numericText.slice(
-                      //       0,
-                      //       3,
-                      //     )}) ${numericText.slice(3, 6)}-${numericText.slice(6)}`;
-                      //   }
+                            let formattedText = '';
+                            if (numericText.length > 0 && numericText.length <= 3) {
+                              formattedText = `${numericText}`;
+                            } else if (
+                              numericText.length > 3 &&
+                              numericText.length <= 6
+                            ) {
+                              formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3)}`;
+                            } else if (
+                              numericText.length > 6 &&
+                              numericText.length <= 8
+                            ) {
+                              formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6)}`;
+                            } else if (numericText.length > 8) {
+                              formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6, 8)} ${numericText.slice(8)}`;
+                            }
 
-                      //   settelefono(numericText);
-                      // }}
-                      keyboardType="numeric"
-                      placeHolder="Ejem (414) 261-79-66"
-                      value={telefono} // Para mantener el valor actualizado con la máscara
-                      onChangeText={text => {
-                        let numericText = text.replace(/[^0-9]/g, '').slice(0, 10); // Limitar a 10 dígitos
-
-                        let formattedText = '';
-                        if (numericText.length > 0 && numericText.length <= 3) {
-                          formattedText = `${numericText}`;
-                        } else if (numericText.length > 3 && numericText.length <= 6) {
-                          formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3)}`;
-                        } else if (numericText.length > 6 && numericText.length <= 8) {
-                          formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6)}`;
-                        } else if (numericText.length > 8) {
-                          formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6, 8)} ${numericText.slice(8)}`;
-                        }
-
-                        formattedText = `${formattedText}`;
-
-                        settelefono(formattedText);
-                      }}
-                    />
+                            formattedText = `${formattedText}`;
+                            settelefono(formattedText);
+                          }}
+                        />
+                      </View>
+                    </View>
 
                     <View style={{ marginTop: 5 }}>
                       <Text
@@ -1437,94 +1429,70 @@ const ReportarPago = ({ navigation }) => {
                       </View>
                     </View>
 
-                    <View style={{ marginTop: 5 }}>
-                      <TextInputs
-                        title={'Monto'}
-                        value={monto}
-                        onChangeText={text => {
-                          const numericText = text.replace(/[^0-9]/g, ''); // Eliminar caracteres no numéricos
-                          console.log('numericText', numericText);
-                          if (numericText == "") {
-                            setmonto('');
-                          } else {
-                            setmonto(`${numericText}`); // Agregar el símbolo $ al inicio
-                          }
-                        }}
-                        keyboardType="numeric"
-                        placeHolder={'Ingrese el monto'}
-                      />
-
-                      <Text
-                        style={[
-                          styles.headingContainer,
-                          { color: textColorStyle },
-                          { textAlign: textRTLStyle },
-                          { marginTop: 10 }, // Agregar marginTop de 10
-                        ]}>
-                        Fecha del Pago
-                      </Text>
-
-                      <View
-                        style={{
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}>
-                        <DatePicker
-                          maximumDate={new Date()}
-                          date={date}
-                          onDateChange={setDate}
-                          theme="light"
-                          title="Fecha del Pago"
-                          mode="date"
-                          locale="es"
+                    <View style={[styles.efectivoInputsRow, { marginTop: 5 }]}>
+                      <View style={styles.efectivoInputCol}>
+                        <TextInputs
+                          title={'Monto'}
+                          value={monto}
+                          onChangeText={text => {
+                            const numericText = text.replace(/[^0-9]/g, ''); // Eliminar caracteres no numéricos
+                            console.log('numericText', numericText);
+                            if (numericText == '') {
+                              setmonto('');
+                            } else {
+                              setmonto(`${numericText}`); // Agregar el símbolo $ al inicio
+                            }
+                          }}
+                          keyboardType="numeric"
+                          placeHolder={'Ingrese el monto'}
                         />
                       </View>
-                    </View>
-                  </View>
-                  <View style={{ marginBottom: 0, marginTop: 15 }}>
-                    <View
-                      style={{
-                        backgroundColor: buttonColor,
-                        borderRadius: windowHeight(20),
-                        marginBottom: 5, // Margen entre los botones
-                      }}>
-                      <NavigationButton
-                        title="Reportar Pago"
-                        onPress={() => ReportarPagoData()}
-                        backgroundColor={'#2D3261'}
-                        color={'white'}
-                      />
-                    </View>
 
-                    <View
-                      style={{
-                        backgroundColor: buttonColor,
-                        borderRadius: windowHeight(20),
-                      }}>
-                      <NavigationButton
-                        title="Cancelar"
-                        onPress={() => closeSecondModel()}
-                        backgroundColor={'#848688'}
-                        color={'white'}
-                      />
+                      <View style={styles.efectivoInputCol}>
+                        <Text
+                          style={[
+                            styles.headingContainer,
+                            { color: textColorStyle },
+                            { textAlign: textRTLStyle },
+                            { marginTop: 10 },
+                          ]}>
+                          Fecha del Pago
+                        </Text>
+
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          style={styles.dateInputTrigger}
+                          onPress={() => setOpen(true)}>
+                          <Text style={styles.dateInputText}>
+                            {formattedPaymentDate}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
                     </View>
                   </View>
                 </ScrollView>
               ) : // </View>
                 metodoSelected === 'Efectivo' ? (
-                  <View style={{ marginTop: 70 }}>
-                    <View
-                      style={[
-                        external.fd_row,
-                        external.ai_center,
-                        external.js_space,
-                      ]}>
-                      <Text
-                        style={[commonStyles.titleText19, { color: textColorStyle }]}>
-                        Reportar Pago (Precio: ${PrecioPago})
-                      </Text>
+                  <ScrollView
+                    style={styles.modalBodyTop}
+                    contentContainerStyle={styles.modalScrollContent}>
+                    <View>
+                    <View style={styles.modalHeroCard} backgroundColor='#1F2344'>
+                        <View style={styles.modalHeroTopRow}>
+                          <Text style={styles.modalHeroEyebrow}>Reportar pago</Text>
+                          <View style={styles.modalHeroTypeBadge}>
+                            <Text style={styles.modalHeroTypeBadgeText}>{nombrePlan}</Text>
+                          </View>
+                        </View>
+                        <Text style={styles.modalHeroTitle}>
+                          Total: ${PrecioPago}
+                        </Text>
+                        <Text style={styles.modalHeroSubtitle}>
+                          Confirma los datos de contacto y registra el pago en
+                          efectivo realizado.
+                        </Text>
+                    
                     </View>
-                    <SolidLine />
 
                     <TextInputs
                       title={'Numero telefonico'}
@@ -1533,63 +1501,72 @@ const ReportarPago = ({ navigation }) => {
                       placeHolder="Ejem (414) 261-79-66"
                       value={telefono} // Para mantener el valor actualizado con la máscara
                       onChangeText={text => {
-                        let numericText = text.replace(/[^0-9]/g, '').slice(0, 10); // Limitar a 10 dígitos
+                        let numericText = text
+                          .replace(/[^0-9]/g, '')
+                          .slice(0, 10); // Limitar a 10 dígitos
 
                         let formattedText = '';
                         if (numericText.length > 0 && numericText.length <= 3) {
                           formattedText = `${numericText}`;
-                        } else if (numericText.length > 3 && numericText.length <= 6) {
+                        } else if (
+                          numericText.length > 3 &&
+                          numericText.length <= 6
+                        ) {
                           formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3)}`;
-                        } else if (numericText.length > 6 && numericText.length <= 8) {
+                        } else if (
+                          numericText.length > 6 &&
+                          numericText.length <= 8
+                        ) {
                           formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6)}`;
                         } else if (numericText.length > 8) {
                           formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6, 8)} ${numericText.slice(8)}`;
                         }
 
                         formattedText = `${formattedText}`;
-
                         settelefono(formattedText);
                       }}
                     />
 
-                    <TextInputs
-                      title={'Monto'}
-                      value={monto}
-                      onChangeText={text => {
-                        const numericText = text.replace(/[^0-9]/g, ''); // Eliminar caracteres no numéricos
-                        console.log('numericText', numericText);
-                        if (numericText == "") {
-                          setmonto('');
-                        } else {
-                          setmonto(`${numericText}`); // Agregar el símbolo $ al inicio
-                        }
-                      }}
-                      keyboardType="numeric"
-                      placeHolder={'Ingrese el monto'}
-                    />
+                    <View style={styles.efectivoInputsRow}>
+                      <View style={styles.efectivoInputCol}>
+                        <TextInputs
+                          title={'Monto'}
+                          value={monto}
+                          onChangeText={text => {
+                            const numericText = text.replace(/[^0-9]/g, ''); // Eliminar caracteres no numéricos
+                            console.log('numericText', numericText);
+                            if (numericText == '') {
+                              setmonto('');
+                            } else {
+                              setmonto(`${numericText}`); // Agregar el símbolo $ al inicio
+                            }
+                          }}
+                          keyboardType="numeric"
+                          placeHolder={'Ingrese el monto'}
+                        />
+                      </View>
 
-                    <Text
-                      style={[
-                        styles.headingContainer,
-                        { color: textColorStyle },
-                        { textAlign: textRTLStyle },
-                        { marginTop: 10 }, // Agregar marginTop de 10
-                      ]}>
-                      Fecha del Pago
-                    </Text>
+                      <View style={styles.efectivoInputCol}>
+                        <Text
+                          style={[
+                            styles.headingContainer,
+                            { color: textColorStyle },
+                            { textAlign: textRTLStyle },
+                            { marginTop: 10 },
+                          ]}>
+                          Fecha del Pago
+                        </Text>
 
-
-                    <DatePicker
-                      maximumDate={new Date()}
-                      style={{ width: 350 }}
-                      date={date}
-                      onDateChange={setDate}
-                      theme="light"
-                      mode="date"
-                      title="Fecha del Pago"
-                      locale="es"
-
-                    />
+                        <TouchableOpacity
+                          activeOpacity={0.85}
+                          style={styles.dateInputTrigger}
+                          onPress={() => setOpen(true)}>
+                          <Text style={styles.dateInputText}>
+                            {formattedPaymentDate}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
 
 
                     {/* <View
@@ -1617,43 +1594,55 @@ const ReportarPago = ({ navigation }) => {
                       />
                     </View>
                   </View> */}
-                    <View style={{ marginTop: 50 }}>
-                      <View
-                        style={{
-                          backgroundColor: buttonColor,
-                          borderRadius: windowHeight(20),
-                          marginBottom: 15, // Margen entre los botones
-                        }}>
-                        <NavigationButton
-                          title="Reportar Pago"
-                          onPress={() => ReportarPagoData()}
-                          backgroundColor={'#2D3261'}
-                          color={'white'}
-                        />
-                      </View>
-
-                      <View
-                        style={{
-                          backgroundColor: buttonColor,
-                          borderRadius: windowHeight(20),
-                        }}>
-                        <NavigationButton
-                          title="Cancelar"
-                          onPress={() => closeSecondModel()}
-                          backgroundColor={'#848688'}
-                          color={'white'}
-                        />
-                      </View>
                     </View>
-                  </View>
+                  </ScrollView>
                 ) : null}
+
+              <DatePicker
+                modal
+                open={open}
+                date={date}
+                mode="date"
+                maximumDate={new Date()}
+                locale="es"
+                title="Fecha del Pago"
+                onConfirm={selectedDate => {
+                  setOpen(false);
+                  setDate(selectedDate);
+                }}
+                onCancel={() => {
+                  setOpen(false);
+                }}
+              />
+
+              <View style={styles.modalFixedFooter}>
+                <View style={styles.modalFixedFooterRow}>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    style={[styles.modalActionBtn, styles.modalActionBtnCancel]}
+                    onPress={() => closeSecondModel()}>
+                    <Text style={styles.modalActionBtnText}>Cancelar</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    style={[styles.modalActionBtn, styles.modalActionBtnReport]}
+                    onPress={() => ReportarPagoData()}>
+                    <Icons
+                      name="send"
+                      size={16}
+                      color="#1F2344"
+                      style={styles.modalActionBtnIconSpacing}
+                    />
+                    <Text style={styles.modalActionBtnText}>Reportar Pago</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
           </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
       </Modal>
-
-
-    </View>
+    </>
   );
 };
 
@@ -1684,32 +1673,40 @@ const stylesKey = StyleSheet.create({
 
 const stylesImage = StyleSheet.create({
   button: {
-    padding: 10,
-    borderRadius: 5,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: '#1F2344',
+    fontWeight: '700',
+    fontSize: 14,
   },
   imageContainer: {
     position: 'relative',
-    marginTop: 20,
+    marginTop: 16,
+    borderRadius: 14,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#D8E1F0',
+    backgroundColor: '#FFFFFF',
+    padding: 6,
   },
   closeButton: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
+    top: 10,
+    right: 10,
+    backgroundColor: '#1F2344',
+    borderRadius: 16,
+    width: 32,
+    height: 32,
     alignItems: 'center',
     justifyContent: 'center',
   },
   closeButtonText: {
-    color: 'white',
+    color: '#FFD60A',
     fontWeight: 'bold',
   },
 });

@@ -4,6 +4,7 @@ import {useValues} from '../../../App';
 
 export function BackLeft({color, width, height}) {
   const {iconColorStyle} = useValues();
+  const stroke = color != null ? color : iconColorStyle;
   return (
     <Svg
       xmlns="http://www.w3.org/2000/svg"
@@ -13,7 +14,7 @@ export function BackLeft({color, width, height}) {
       fill="none">
       <Path
         d="M9.57 5.92969L3.5 11.9997L9.57 18.0697"
-        stroke={iconColorStyle}
+        stroke={stroke}
         strokeWidth="1.5"
         strokeMiterlimit="10"
         strokeLinecap="round"
@@ -21,7 +22,7 @@ export function BackLeft({color, width, height}) {
       />
       <Path
         d="M20.4999 12H3.66992"
-        stroke={iconColorStyle}
+        stroke={stroke}
         strokeWidth="1.5"
         strokeMiterlimit="10"
         strokeLinecap="round"

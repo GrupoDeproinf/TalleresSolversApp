@@ -9,6 +9,7 @@ const BeautifulModal = ({ visible, onClose, onSubmit }) => {
   const [comment, setComment] = useState('');
 
   const handleSubmit = () => {
+    if (!rating) return;
     onSubmit(rating, comment);
     setRating(0);
     setComment('');
@@ -33,9 +34,15 @@ const BeautifulModal = ({ visible, onClose, onSubmit }) => {
 
           <View style={styles.modalView}>
             <Pressable style={styles.closeButton} onPress={onClose}>
-              <X size={24} color="#333" />
+              <X size={22} color="#1F2344" />
             </Pressable>
+            <View style={styles.headerChip}>
+              <Text style={styles.headerChipText}>COMENTARIOS</Text>
+            </View>
             <Text style={styles.modalTitle}>Califica tu experiencia</Text>
+            <Text style={styles.modalSubtitle}>
+              Tu opinion nos ayuda a mejorar el servicio para todos.
+            </Text>
 
             <View style={styles.ratingContainer}>
               {[1, 2, 3, 4, 5].map((star) => (
@@ -59,7 +66,7 @@ const BeautifulModal = ({ visible, onClose, onSubmit }) => {
             />
 
             <Pressable style={styles.button} onPress={handleSubmit}>
-              <Text style={styles.buttonText}>Enviar</Text>
+              <Text style={styles.buttonText}>Enviar comentario</Text>
             </Pressable>
           </View>
         </KeyboardAvoidingView>
@@ -71,68 +78,99 @@ const BeautifulModal = ({ visible, onClose, onSubmit }) => {
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(9,13,46,0.42)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalView: {
-    backgroundColor: 'white',
-    borderRadius: 20,
-    padding: 25,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 20,
     alignItems: 'center',
-    shadowColor: '#000',
+    shadowColor: '#1F2344',
     shadowOffset: {
       width: 0,
       height: 2,
     },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 7,
     width: '90%',
     maxWidth: 400,
+    borderWidth: 1,
+    borderColor: '#D9E2F3',
   },
   closeButton: {
     position: 'absolute',
-    right: 10,
-    top: 10,
+    right: 12,
+    top: 12,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#EEF2F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#1F2344',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    marginBottom: 8,
+  },
+  headerChipText: {
+    color: '#FFD60A',
+    fontSize: 10,
+    fontWeight: '900',
   },
   modalTitle: {
-    marginBottom: 15,
+    marginBottom: 6,
     textAlign: 'center',
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#1F2344',
+  },
+  modalSubtitle: {
+    textAlign: 'center',
+    color: '#5B6383',
+    fontSize: 13,
+    marginBottom: 12,
   },
   ratingContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginVertical: 15,
+    marginVertical: 10,
+    gap: 6,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 10,
-    padding: 10,
+    borderColor: '#CBD7EE',
+    borderRadius: 14,
+    padding: 12,
     width: '100%',
-    height: 100,
+    minHeight: 108,
     textAlignVertical: 'top',
-    marginBottom: 20,
-    color: '#333',
-    fontSize: 16,
+    marginBottom: 14,
+    color: '#1F2344',
+    fontSize: 15,
+    backgroundColor: '#F8FBFF',
   },
   placeholderText: {
     color: '#999',
   },
   button: {
-    borderRadius: 20,
-    padding: 10,
+    borderRadius: 14,
+    paddingVertical: 12,
     elevation: 2,
-    backgroundColor: '#2D3261',
+    backgroundColor: '#FFD60A',
     width: '100%',
+    borderWidth: 1,
+    borderColor: '#E7BF00',
   },
   buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
+    color: '#1F2344',
+    fontWeight: '900',
     textAlign: 'center',
     fontSize: 16,
   },

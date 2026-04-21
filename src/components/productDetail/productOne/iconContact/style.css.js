@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
   deliveryIn: {
     ...commonStyles.titleText19,
-    width: windowWidth(110),
+    width: windowWidth(105),
     fontSize: fontSizes.FONT16,
     marginHorizontal: windowHeight(8),
     lineHeight: windowHeight(17),

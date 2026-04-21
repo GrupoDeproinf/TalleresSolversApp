@@ -1,0 +1,3 @@
+# Copia a "mapbox.properties" en la raíz del proyecto (mapbox.properties está en .gitignore).
+# Misma clave que usa AndroidManifest vía Gradle (manifestPlaceholders).
+MAPBOX_ACCESS_TOKEN=

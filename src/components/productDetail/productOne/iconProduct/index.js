@@ -1,85 +1,43 @@
-import {StyleSheet, Text, View} from 'react-native';
-import React, {useEffect} from 'react';
-import IconBackground from '../../../../commonComponents/iconBackGround';
-import {Bus, Refresh} from '../../../../utils/icon';
+import {Text, View} from 'react-native';
+import React from 'react';
 import styles from './style.css';
-import {useValues} from '../../../../../App';
-import LinearGradient from 'react-native-linear-gradient';
-import appColors from '../../../../themes/appColors';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const IconProduct = data => {
-  const {textColorStyle, linearColorStyle, isDark} = useValues();
-  const colors = isDark
-    ? ['#3D3F45', '#45474B', '#2A2C32']
-    : [appColors.screenBg, appColors.screenBg];
+  const methodsEnabled = Object.entries(data.data || {})
+    .filter(([, value]) => !!value)
+    .map(([key]) => {
+      const config = {
+        transferencia: {name: 'Transferencia Bancaria', icon: 'wallet-outline'},
+        pagoMovil: {name: 'Pago Móvil', icon: 'phone-outline'},
+        efectivo: {name: 'Efectivo', icon: 'cash'},
+        zelle: {name: 'Zelle / Divisas', icon: 'credit-card-outline'},
+        puntoVenta: {name: 'Punto de Venta', icon: 'credit-card-outline'},
+        tarjetaCreditoN: {name: 'Tarjeta Crédito Nacional', icon: 'credit-card-outline'},
+        tarjetaCreditoI: {name: 'Tarjeta Crédito Internacional', icon: 'credit-card-outline'},
+        zinli: {name: 'Zinli', icon: 'wallet-plus-outline'},
+      };
+      return config[key] || null;
+    })
+    .filter(Boolean);
 
-  
   return (
-    <View style={[styles.view]}>
+    <View style={styles.paymentCard}>
       <Text style={[styles.textTitle]}>Métodos de Pago</Text>
-      <LinearGradient
-        start={{x: 0.0, y: 0.0}}
-        end={{x: 0.0, y: 1.0}}
-        colors={colors}
-        style={[
-          styles.refreshIcon,
-          {shadowColor: appColors.shadowColor, borderRadius: 6},
-        ]}>
-        <LinearGradient
-          start={{x: 0.0, y: 0.0}}
-          end={{x: 0.0, y: 1.0}}
-          colors={linearColorStyle}
-          style={[
-            styles.menuItemContent,
-            {shadowColor: appColors.shadowColor},
-          ]}>
-          
-          
-          <View style={[styles.gridContainer]}>
-            
-            {Object.entries(data.data || {}).map(([key, value]) => {
-              if (value) {
-                const config = {
-                  efectivo: {name: 'Efectivo', icon: <Text>💵</Text>},
-                  pagoMovil: {name: 'Pago Móvil', icon: <Text>📱</Text>},
-                  puntoVenta: {name: 'Punto de Venta', icon: <Text>🛒</Text>},
-                  tarjetaCreditoI: {
-                    name: 'Tarjeta Crédito Internacional',
-                    icon: <Text>💳</Text>,
-                  },
-                  tarjetaCreditoN: {
-                    name: 'Tarjeta Crédito Nacional',
-                    icon: <Text>💳</Text>,
-                  },
-                  transferencia: {name: 'Transferencia', icon: <Text>🔄</Text>},
-                  zelle: {name: 'Zelle', icon: <Text>💸</Text>},
-                  zinli: {name: 'Zinli', icon: <Text>📤</Text>},
-                };
-
-                const item = config[key]; // Obtén el nombre e ícono según la clave
-
-                if (!item) {
-                  return null; // Ignorar claves no configuradas
-                }
-
-                return (
-                  <View key={key} style={[styles.gridItem]}>
-                    <IconBackground
-                      value={item.icon}
-                      onPress={() => console.log(key)}
-                    />
-                    <Text style={[styles.deliveryIn, {color: textColorStyle}]}>
-                      {item.name} {/* Mostrar el nombre personalizado */}
-                    </Text>
-                    
-                  </View>
-                );
-              }
-              return null; // Ignorar métodos de pago deshabilitados
-            })}
+      <View style={styles.gridContainer}>
+        {methodsEnabled.map((item, idx) => (
+          <View style={styles.gridItem} key={`${item.name}-${idx}`}>
+            <View style={styles.iconCircle}>
+              <MaterialCommunityIcons
+                name={item.icon}
+                size={20}
+                color="#1F2344"
+              />
+            </View>
+            <Text style={styles.deliveryIn}>{item.name}</Text>
           </View>
-        </LinearGradient>
-      </LinearGradient>
+        ))}
+      </View>
     </View>
   );
 };

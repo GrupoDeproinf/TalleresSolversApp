@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { Dimensions, View, TouchableOpacity, StyleSheet, PermissionsAndroid, Platform, Alert, ActivityIndicator, Modal } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { View, TouchableOpacity, StyleSheet, PermissionsAndroid, Platform, Alert, ActivityIndicator, Modal, useWindowDimensions } from 'react-native';
 import { Text } from 'react-native-elements';
 import { ScrollView } from 'react-native-gesture-handler';
-import { MapPin, Navigation, Clock, Map, SlidersHorizontal } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Navigation, Clock, Map, SlidersHorizontal } from 'lucide-react-native';
 import NearlyTallerItem from './components/nearlyTaller';
 import api from '../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,6 +11,15 @@ import { useNavigation } from '@react-navigation/native';
 import MapComponent from '../mapMultimarker';
 import MapTalleres from '../mapMultimarker'; // Importar el componente de mapa
 import MapRutaComponent from '../mapRuta'; // Importar el componente de ruta
+
+/** Solo para textos del listado de categorías (filtro): minúsculas y primera mayúscula. */
+const categoryLabelSentenceCase = raw => {
+  const s = String(raw ?? '').trim();
+  if (!s) {
+    return '';
+  }
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+};
 
 const RadioSelector = ({ options, selectedValue, onSelect, style }) => (
   <View style={[styles.radioContainer, style]}>
@@ -38,12 +47,15 @@ const RadioSelector = ({ options, selectedValue, onSelect, style }) => (
   </View>
 );
 
+/** Ancho lógico ≥ esto: Pro Max / Plus / tablet; por debajo: Pro y modelos estándar (sin subtítulo en cabecera). */
+const HEADER_SUBTITLE_MIN_WIDTH = 428;
+
 const PerimeterMapScreen = () => {
   const navigation = useNavigation();
-  const screenHeight = Dimensions.get('window').height;
-  const screenWidth = Dimensions.get('window').width;
+  const { width: screenWidth, height: screenHeight } = useWindowDimensions();
+  const showHeaderSubtitle = screenWidth >= HEADER_SUBTITLE_MIN_WIDTH;
 
-  const [searchRadius, setSearchRadius] = useState(10); // Valor por defecto
+  const [searchRadius, setSearchRadius] = useState(5); // Valor por defecto
   const [talleres, setTalleres] = useState([]);
   const [userInfo, setUserInfo] = useState(null);
   const [location, setLocation] = useState(null);
@@ -120,7 +132,7 @@ const PerimeterMapScreen = () => {
       }
 
       // Verificar si alguna de las categorías del taller coincide con las seleccionadas
-      return taller.categorias.some(categoria => 
+      return taller.categorias.some(categoria =>
         selectedCategories.includes(categoria.uid_categoria)
       );
     });
@@ -195,7 +207,7 @@ const PerimeterMapScreen = () => {
       .filter(taller => taller.ubicacion.latitud && taller.ubicacion.longitud)
       .map(taller => ({
         latitude: parseFloat(taller.ubicacion.latitud),
-        longitude: parseFloat(taller.ubicacion.longitud), 
+        longitude: parseFloat(taller.ubicacion.longitud),
         title: taller.nombre || 'Taller',
         description: taller.direccion || ''
       }));
@@ -209,7 +221,7 @@ const PerimeterMapScreen = () => {
           position: "absolute",
           bottom: 30,
           right: 20,
-          backgroundColor: selectedCategories.length > 0 ? "#ffca00" : "#162556",
+          backgroundColor: '#1F2344',
           width: 56,
           height: 56,
           borderRadius: 28,
@@ -224,9 +236,9 @@ const PerimeterMapScreen = () => {
         activeOpacity={0.8}
         onPress={handleOpenFilterModal}
       >
-        <SlidersHorizontal size={24} color={selectedCategories.length > 0 ? "#162556" : "#E4E4E7"} />
+        <SlidersHorizontal size={24} color="#FFD60A" />
       </TouchableOpacity>
-      
+
       {/* Indicador de filtros activos */}
       {selectedCategories.length > 0 && (
         <View style={{
@@ -263,17 +275,17 @@ const PerimeterMapScreen = () => {
     {
       value: 5,
       label: '5km',
-      icon: <MapPin size={14} color={searchRadius === 5 ? '#162556' : '#162556'} />,
+      icon: <MapPin size={14} color={searchRadius === 5 ? '#1F2344' : '#1F2344'} />,
     },
     {
       value: 10,
       label: '10km',
-      icon: <Navigation size={14} color={searchRadius === 10 ? '#162556' : '#162556'} />,
+      icon: <Navigation size={14} color={searchRadius === 10 ? '#1F2344' : '#1F2344'} />,
     },
     {
       value: 20,
       label: '20km',
-      icon: <Clock size={14} color={searchRadius === 20 ? '#162556' : '#162556'} />,
+      icon: <Clock size={14} color={searchRadius === 20 ? '#1F2344' : '#1F2344'} />,
     },
   ];
 
@@ -288,122 +300,122 @@ const PerimeterMapScreen = () => {
     }
   };
 
- const getCurrentLocation = () => {
-  console.log('🔍 Ejecutando getCurrentLocation...');
-  setIsLoadingLocation(true);
-  
-  Geolocation.getCurrentPosition(
-    info => {
-      console.log('📍 Ubicación obtenida:', info);
-      const { latitude, longitude } = info.coords;
-      console.log('🔍 Ubicación obtenida:', latitude, longitude);
-      setLocation({ latitude, longitude });
-      setIsLoadingLocation(false);
-    },
-    error => {
-      console.error('❌ Error al obtener la ubicación:', error);
-      setIsLoadingLocation(false);
-      
-      // Mostrar un mensaje de error más específico según el tipo de error
-      let errorMessage = 'No se pudo obtener tu ubicación.';
-      
-      switch (error.code) {
-        case 1:
-          errorMessage = 'Permiso de ubicación denegado. Ve a Configuración > Aplicaciones > [Tu App] > Permisos y habilita la ubicación.';
-          break;
-        case 2:
-          errorMessage = 'Ubicación no disponible. Verifica que el GPS esté activado.';
-          break;
-        case 3:
-          errorMessage = 'Tiempo de espera agotado. Verifica tu conexión GPS y vuelve a intentar.';
-          break;
-        default:
-          errorMessage = 'Error al obtener ubicación. Verifica que el GPS esté activado y que hayas concedido permisos.';
+  const getCurrentLocation = () => {
+    console.log('🔍 Ejecutando getCurrentLocation...');
+    setIsLoadingLocation(true);
+
+    Geolocation.getCurrentPosition(
+      info => {
+        console.log('📍 Ubicación obtenida:', info);
+        const { latitude, longitude } = info.coords;
+        console.log('🔍 Ubicación obtenida:', latitude, longitude);
+        setLocation({ latitude, longitude });
+        setIsLoadingLocation(false);
+      },
+      error => {
+        console.error('❌ Error al obtener la ubicación:', error);
+        setIsLoadingLocation(false);
+
+        // Mostrar un mensaje de error más específico según el tipo de error
+        let errorMessage = 'No se pudo obtener tu ubicación.';
+
+        switch (error.code) {
+          case 1:
+            errorMessage = 'Permiso de ubicación denegado. Ve a Configuración > Aplicaciones > [Tu App] > Permisos y habilita la ubicación.';
+            break;
+          case 2:
+            errorMessage = 'Ubicación no disponible. Verifica que el GPS esté activado.';
+            break;
+          case 3:
+            errorMessage = 'Tiempo de espera agotado. Verifica tu conexión GPS y vuelve a intentar.';
+            break;
+          default:
+            errorMessage = 'Error al obtener ubicación. Verifica que el GPS esté activado y que hayas concedido permisos.';
+        }
+
+        Alert.alert(
+          'Error de ubicación',
+          errorMessage,
+          [
+            { text: 'Reintentar', onPress: () => getCurrentLocation() },
+            { text: 'Cancelar', style: 'cancel' }
+          ]
+        );
+      },
+      {
+        enableHighAccuracy: false, // Cambiado a false para mayor compatibilidad
+        timeout: 15000, // Reducido el timeout a 15 segundos
+        maximumAge: 60000, // Aumentado para usar ubicación en caché si está disponible
       }
-      
-      Alert.alert(
-        'Error de ubicación',
-        errorMessage,
-        [
-          { text: 'Reintentar', onPress: () => getCurrentLocation() },
-          { text: 'Cancelar', style: 'cancel' }
-        ]
-      );
-    },
-    {
-      enableHighAccuracy: false, // Cambiado a false para mayor compatibilidad
-      timeout: 15000, // Reducido el timeout a 15 segundos
-      maximumAge: 60000, // Aumentado para usar ubicación en caché si está disponible
-    }
-  );
-};
+    );
+  };
 
   const requestLocationPermission = async () => {
-  try {
-    if (Platform.OS === 'android') {
-      const fine = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
-      const coarse = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION);
+    try {
+      if (Platform.OS === 'android') {
+        const fine = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+        const coarse = await PermissionsAndroid.check(PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION);
 
-      console.log('Permiso fine:', fine);
-      console.log('Permiso coarse:', coarse);
+        console.log('Permiso fine:', fine);
+        console.log('Permiso coarse:', coarse);
 
-      // Si ya tenemos permisos, obtener ubicación directamente
-      if (fine === PermissionsAndroid.RESULTS.GRANTED || coarse === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Permisos ya concedidos');
-        setTimeout(() => {
-          getCurrentLocation();
-        }, 500);
-        return;
-      }
-
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        {
-          title: 'Permiso de ubicación',
-          message: 'Esta app necesita acceder a tu ubicación para mostrar talleres cercanos',
-          buttonNeutral: 'Pregúntame después',
-          buttonNegative: 'Cancelar',
-          buttonPositive: 'OK',
+        // Si ya tenemos permisos, obtener ubicación directamente
+        if (fine === PermissionsAndroid.RESULTS.GRANTED || coarse === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('Permisos ya concedidos');
+          setTimeout(() => {
+            getCurrentLocation();
+          }, 500);
+          return;
         }
-      );
 
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Permiso concedido');
-        
-        // Espera un momento antes de obtener ubicación
-        setTimeout(() => {
-          getCurrentLocation();
-        }, 1000);
-      } else {
-        console.warn('Permiso de ubicación denegado');
-        Alert.alert(
-          'Permiso denegado',
-          'Necesitas conceder permisos de ubicación para usar esta función.',
-          [{ text: 'OK' }]
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+          {
+            title: 'Permiso de ubicación',
+            message: 'Esta app necesita acceder a tu ubicación para mostrar negocios cercanos',
+            buttonNeutral: 'Pregúntame después',
+            buttonNegative: 'Cancelar',
+            buttonPositive: 'OK',
+          }
         );
+
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          console.log('Permiso concedido');
+
+          // Espera un momento antes de obtener ubicación
+          setTimeout(() => {
+            getCurrentLocation();
+          }, 1000);
+        } else {
+          console.warn('Permiso de ubicación denegado');
+          Alert.alert(
+            'Permiso denegado',
+            'Necesitas conceder permisos de ubicación para usar esta función.',
+            [{ text: 'OK' }]
+          );
+        }
+      } else {
+        // Para iOS, intentar obtener ubicación directamente
+        getCurrentLocation();
       }
-    } else {
-      // Para iOS, intentar obtener ubicación directamente
-      getCurrentLocation();
+    } catch (err) {
+      console.error('Error al pedir permiso:', err);
+      Alert.alert(
+        'Error de permisos',
+        'Hubo un problema al solicitar permisos de ubicación.',
+        [{ text: 'OK' }]
+      );
     }
-  } catch (err) {
-    console.error('Error al pedir permiso:', err);
-    Alert.alert(
-      'Error de permisos',
-      'Hubo un problema al solicitar permisos de ubicación.',
-      [{ text: 'OK' }]
-    );
-  }
-};
+  };
 
   useEffect(() => {
     const fetchNearbyTalleres = async () => {
       if (!location || !userInfo?.estado) return;
 
       setIsLoadingTalleres(true);
-      
+
       try {
-        console.log('🔍 Buscando talleres cercanos...');
+        console.log('🔍 Buscando negocios cercanos...');
         console.log('📍 Ubicación:', location);
         console.log('🏢 Estado:', userInfo.estado);
         console.log('📏 Radio:', searchRadius);
@@ -412,20 +424,20 @@ const PerimeterMapScreen = () => {
           estado: userInfo?.estado,
           lat: location?.latitude,
           lng: location?.longitude,
-          radio: searchRadius || 10, // Valor por defecto si no hay radio seleccionado
+          radio: searchRadius || 5, // Valor por defecto si no hay radio seleccionado
         });
 
         console.log('✅ Respuesta de talleres:', response.data);
         setTalleres(response.data.talleres || response.data || []);
       } catch (error) {
-        console.error('❌ Error al obtener talleres cercanos:', error);
-        
+        console.error('❌ Error al obtener negocios cercanos:', error);
+
         // Mostrar mensaje de error más específico
         if (error.response) {
           console.error('Error del servidor:', error.response.data);
           Alert.alert(
             'Error del servidor',
-            'No se pudieron obtener los talleres cercanos. Inténtalo de nuevo más tarde.',
+            'No se pudieron obtener los negocios cercanos. Inténtalo de nuevo más tarde.',
             [{ text: 'OK' }]
           );
         } else if (error.request) {
@@ -442,7 +454,7 @@ const PerimeterMapScreen = () => {
             [{ text: 'OK' }]
           );
         }
-        
+
         setTalleres([]);
       } finally {
         setIsLoadingTalleres(false);
@@ -452,14 +464,54 @@ const PerimeterMapScreen = () => {
     fetchNearbyTalleres();
   }, [searchRadius, location, userInfo]);
 
+  const visibleTalleres = useMemo(() => {
+    const filtered = getFilteredTalleres();
+    return filtered
+      .map(taller => {
+        const hasDistance =
+          taller?.distancia !== undefined && taller?.distancia !== null;
+        const distanciaMostrada = hasDistance
+          ? `${Number(taller.distancia).toFixed(2)} km`
+          : 'Distancia no disponible';
+        return {
+          ...taller,
+          distanciaMostrada,
+          hasDistance,
+        };
+      })
+      .filter(taller => (taller.hasDistance ? taller.distancia <= searchRadius : true))
+      .sort((a, b) => {
+        if (a.hasDistance && b.hasDistance) return a.distancia - b.distancia;
+        if (a.hasDistance) return -1;
+        if (b.hasDistance) return 1;
+        return 0;
+      });
+  }, [talleres, selectedCategories, searchRadius]);
+
   return (
     <>
-      <View style={{ flex: 1, backgroundColor: '#2D3261', padding: 20 }}>
+      <View style={{ flex: 1, backgroundColor: '#1F2344', padding: 20, overflow: 'hidden' }}>
+        <View style={styles.headerCircle1} />
+        <View style={styles.headerCircle2} />
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#eeeeee', flex: 1 }}>
-            Talleres cercanos
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.85}
+            style={{
+              width: 34,
+              height: 34,
+              borderRadius: 17,
+              backgroundColor: 'rgba(255,214,10,0.14)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 10,
+            }}>
+            <ArrowLeft size={20} color="#FFD60A" />
+          </TouchableOpacity>
+          <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#FFD60A', flex: 1 }}>
+            Negocios cercanos
           </Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={{
               backgroundColor: '#ffca00',
               paddingHorizontal: 16,
@@ -477,23 +529,27 @@ const PerimeterMapScreen = () => {
             onPress={() => setshowMap(true)}
           >
             <Map size={16} color="#162556" style={{ marginRight: 6 }} />
-            <Text style={{ 
-              color: '#162556', 
-              fontSize: 14, 
-              fontWeight: '600' 
+            <Text style={{
+              color: '#162556',
+              fontSize: 14,
+              fontWeight: '600'
             }}>
               Ver mapa
             </Text>
           </TouchableOpacity>
         </View>
-        <Text style={{ fontSize: 14, color: '#e8eaf6', marginBottom: 20 }}>
-          Aquí se mostrarán los talleres cercanos a tu ubicación.
-          {selectedCategories.length > 0 && (
-            <Text style={{ color: '#ffca00', fontWeight: 'bold' }}>
-              {' '}Filtrados por {selectedCategories.length} categoría{selectedCategories.length > 1 ? 's' : ''}
-            </Text>
-          )}
-        </Text>
+        {showHeaderSubtitle ? (
+          <Text style={{ fontSize: 14, color: '#e8eaf6', marginBottom: 20 }}>
+            Aquí se mostrarán los negocios cercanos a tu ubicación.
+            {selectedCategories.length > 0 && (
+              <Text style={{ color: '#ffca00', fontWeight: 'bold' }}>
+                {' '}
+                Filtrados por {selectedCategories.length} categoría
+                {selectedCategories.length > 1 ? 's' : ''}
+              </Text>
+            )}
+          </Text>
+        ) : null}
       </View>
 
       <View
@@ -501,7 +557,7 @@ const PerimeterMapScreen = () => {
           position: 'absolute',
           bottom: 0,
           width: screenWidth,
-          height: screenHeight * 0.7,
+          height: screenHeight * 0.77,
           backgroundColor: '#fff',
           borderTopLeftRadius: 60,
           borderTopRightRadius: 60,
@@ -517,130 +573,107 @@ const PerimeterMapScreen = () => {
             onSelect={setSearchRadius}
             style={styles.bottomSelector}
           />
-                     {location && talleres.length > 0 && (
-             <Text style={{ 
-               color: '#2D3261', 
-               fontSize: 14, 
-               marginTop: 10,
-               textAlign: 'center',
-               fontWeight: '500'
-             }}>
-               {getFilteredTalleres().filter(taller => {
-                 return taller.distancia !== undefined && taller.distancia !== null && taller.distancia <= searchRadius;
-               }).length} talleres encontrados en {searchRadius}km
-               {selectedCategories.length > 0 && ` (filtrados por ${selectedCategories.length} categoría${selectedCategories.length > 1 ? 's' : ''})`}
-             </Text>
-           )}
+          {location && talleres.length > 0 && (
+            <Text style={{
+              color: '#1F2344',
+              fontSize: 14,
+              marginTop: 10,
+              textAlign: 'center',
+              fontWeight: '500'
+            }}>
+              {getFilteredTalleres().filter(taller => {
+                return taller.distancia !== undefined && taller.distancia !== null && taller.distancia <= searchRadius;
+              }).length} negocios encontrados en {searchRadius}km
+              {selectedCategories.length > 0 && ` (filtrados por ${selectedCategories.length} categoría${selectedCategories.length > 1 ? 's' : ''})`}
+            </Text>
+          )}
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false}>
           {isLoadingTalleres ? (
-            <View style={{ 
-              flexDirection: 'row', 
-              alignItems: 'center', 
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
               justifyContent: 'center',
-              padding: 20 
+              padding: 20,
             }}>
-              <ActivityIndicator size="small" color="#2D3261" style={{ marginRight: 10 }} />
-              <Text style={{ color: '#2D3261', fontSize: 14 }}>
-                Buscando talleres cercanos...
-              </Text>
+              <View style={{
+                backgroundColor: '#1F2344',
+                borderRadius: 999,
+                paddingVertical: 10,
+                paddingHorizontal: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+              }}>
+                <ActivityIndicator size="small" color="#FFD60A" style={{ marginRight: 10 }} />
+                <Text style={{ color: '#FFD60A', fontSize: 14, fontWeight: '700' }}>
+                Buscando negocios cercanos...
+                </Text>
+              </View>
             </View>
-                     ) : getFilteredTalleres().length > 0 ? (
-             getFilteredTalleres()
-               .map(taller => {
-                // Usar la distancia que viene de la API
-                console.log('🏢 Taller:', taller);
-                let distanciaMostrada = 'Distancia no disponible';
-                if (taller.distancia !== undefined && taller.distancia !== null) {
-                  distanciaMostrada = `${taller.distancia.toFixed(2)} km`;
-                  console.log('🏢 Taller:', taller.nombre, 'Distancia de API:', distanciaMostrada);
-                } else {
-                  console.log('🏢 Taller:', taller.nombre, 'No hay distancia en la API');
-                }
-                
-                return {
-                  ...taller,
-                  distanciaMostrada
-                };
-              })
-              .filter(taller => {
-                // Filtrar por radio usando la distancia de la API
-                if (taller.distancia !== undefined && taller.distancia !== null) {
-                  return taller.distancia <= searchRadius;
-                }
-                // Si no hay distancia, mostrar el taller de todas formas
-                return true;
-              })
-              .sort((a, b) => {
-                // Ordenar por distancia (más cercanos primero)
-                if (a.distancia !== undefined && b.distancia !== undefined) {
-                  return a.distancia - b.distancia;
-                }
-                return 0;
-              })
-              .map(taller => (
-                                 <NearlyTallerItem
-                   key={taller.id || taller.uid}
-                   item={{
-                     nombre: taller.nombre,
-                     direccion: taller.Direccion || 'Dirección no disponible',
-                     distancia: taller.distanciaMostrada,
-                     estado: taller.estado,
-                     metodosPago: taller.metodos_pago,
-                   }}
-                   onPress={() => handleTallerPress(taller)}
-                   onRoutePress={() => handleRoutePress(taller)}
-                   navigation={navigation}
-                 />
-              ))
-                     ) : location && userInfo?.estado ? (
-             <View style={{ 
-               alignItems: 'center', 
-               padding: 20 
-             }}>
-               <Text style={{ color: '#94A3B8', fontSize: 16, textAlign: 'center' }}>
-                 {selectedCategories.length > 0 
-                   ? `No se encontraron talleres con las categorías seleccionadas en un radio de ${searchRadius}km`
-                   : `No se encontraron talleres en un radio de ${searchRadius}km`
-                 }
-               </Text>
-               <Text style={{ color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 10 }}>
-                 {selectedCategories.length > 0 
-                   ? 'Intenta cambiar las categorías o aumentar el radio de búsqueda'
-                   : 'Intenta aumentar el radio de búsqueda'
-                 }
-               </Text>
-             </View>
-          ) : (
-            <View style={{ 
-              alignItems: 'center', 
-              padding: 20 
+          ) : visibleTalleres.length > 0 ? (
+            visibleTalleres.map(taller => (
+              <NearlyTallerItem
+                key={taller.id || taller.uid}
+                item={{
+                  nombre: taller.nombre,
+                  direccion: taller.Direccion || 'Dirección no disponible',
+                  distancia: taller.distanciaMostrada,
+                  estado: taller.estado,
+                  metodosPago: taller.metodos_pago,
+                }}
+                onPress={() => handleTallerPress(taller)}
+                onRoutePress={() => handleRoutePress(taller)}
+                navigation={navigation}
+              />
+            ))
+          ) : location && userInfo?.estado ? (
+            <View style={{
+              alignItems: 'center',
+              padding: 20
             }}>
               <Text style={{ color: '#94A3B8', fontSize: 16, textAlign: 'center' }}>
-                {!location ? 'Obtén tu ubicación para ver talleres cercanos' : 'Selecciona un estado para buscar talleres'}
+                {selectedCategories.length > 0
+                  ? `No se encontraron talleres con las categorías seleccionadas en un radio de ${searchRadius}km`
+                  : `No se encontraron talleres en un radio de ${searchRadius}km`
+                }
+              </Text>
+              <Text style={{ color: '#94A3B8', fontSize: 14, textAlign: 'center', marginTop: 10 }}>
+                {selectedCategories.length > 0
+                  ? 'Intenta cambiar las categorías o aumentar el radio de búsqueda'
+                  : 'Intenta aumentar el radio de búsqueda'
+                }
+              </Text>
+            </View>
+          ) : (
+            <View style={{
+              alignItems: 'center',
+              padding: 20
+            }}>
+              <Text style={{ color: '#94A3B8', fontSize: 16, textAlign: 'center' }}>
+                {!location ? 'Obtén tu ubicación para ver negocios cercanos' : 'Selecciona un estado para buscar negocios'}
               </Text>
             </View>
           )}
-                 </ScrollView>
+        </ScrollView>
 
-                   {/* Mapa condicional */}
-          {showMap == true ? (
-            <View
-              style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
-              {getFilteredTalleres().length > 0 ? (
-                <MapTalleres
-                  talleres={getFilteredTalleres()}
-                  // edit={false}
-                  returnFunction={redirectToTaller}
-                  // useThisCoo={true}
-                />
-              ) : null}
-            </View>
-          ) : null}
-       </View>
+        {/* Mapa condicional */}
+        {showMap == true ? (
+          <View
+            style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
+            {getFilteredTalleres().length > 0 ? (
+              <MapTalleres
+                talleres={getFilteredTalleres()}
+                // edit={false}
+                returnFunction={redirectToTaller}
+              // useThisCoo={true}
+              />
+            ) : null}
+          </View>
+        ) : null}
+      </View>
 
-       {/* Botón flotante de filtros */}
+      {/* Botón flotante de filtros */}
       <FloatingFilterButton />
 
       {/* Modal del mapa con talleres */}
@@ -657,7 +690,7 @@ const PerimeterMapScreen = () => {
             justifyContent: 'space-between',
             padding: 20,
             paddingTop: 50,
-            backgroundColor: '#2D3261',
+            backgroundColor: '#1F2344',
           }}>
             <Text style={{
               color: '#ffffff',
@@ -679,7 +712,7 @@ const PerimeterMapScreen = () => {
               </Text>
             </TouchableOpacity>
           </View>
-          
+
           <MapComponent
             initialRegion={location || {
               latitude: 19.4326,
@@ -707,14 +740,14 @@ const PerimeterMapScreen = () => {
           backgroundColor: 'rgba(0,0,0,0.5)',
           justifyContent: 'flex-end',
         }}>
-                     <View style={{
-             backgroundColor: '#fff',
-             borderTopLeftRadius: 20,
-             borderTopRightRadius: 20,
-             padding: 20,
-             minHeight: 500,
-             maxHeight: '80%',
-           }}>
+          <View style={{
+            backgroundColor: '#fff',
+            borderTopLeftRadius: 20,
+            borderTopRightRadius: 20,
+            padding: 20,
+            minHeight: 500,
+            maxHeight: '80%',
+          }}>
             <View style={{
               flexDirection: 'row',
               justifyContent: 'space-between',
@@ -724,7 +757,7 @@ const PerimeterMapScreen = () => {
               <Text style={{
                 fontSize: 18,
                 fontWeight: 'bold',
-                color: '#2D3261',
+                color: '#1F2344',
               }}>
                 Filtros
               </Text>
@@ -736,7 +769,7 @@ const PerimeterMapScreen = () => {
                   backgroundColor: '#f0f0f0',
                 }}
               >
-                <Text style={{ color: '#2D3261', fontSize: 16, fontWeight: 'bold' }}>
+                <Text style={{ color: '#1F2344', fontSize: 16, fontWeight: 'bold' }}>
                   ✕
                 </Text>
               </TouchableOpacity>
@@ -747,67 +780,64 @@ const PerimeterMapScreen = () => {
               <Text style={{
                 fontSize: 16,
                 fontWeight: '600',
-                color: '#2D3261',
+                color: '#1F2344',
                 marginBottom: 15,
               }}>
                 Filtrar por categorías
               </Text>
-              
-                             {/* Lista de categorías */}
-               <ScrollView style={{ maxHeight: 350 }}>
+
+              {/* Categorías como etiquetas (misma lógica de selección) */}
+              <ScrollView
+                style={styles.categoryTagsScroll}
+                contentContainerStyle={styles.categoryTagsScrollContent}
+                showsVerticalScrollIndicator={false}>
                 {categories.length > 0 ? (
-                  categories.map((category) => (
-                    <TouchableOpacity
-                      key={category.id}
-                      style={{
-                        backgroundColor: selectedCategories.includes(category.id) ? '#ffca00' : '#f8f9fa',
-                        padding: 15,
-                        borderRadius: 10,
-                        marginBottom: 10,
-                        borderWidth: 1,
-                        borderColor: selectedCategories.includes(category.id) ? '#ffca00' : '#e9ecef',
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                      }}
-                      onPress={() => handleCategoryToggle(category.id)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={{ 
-                        color: selectedCategories.includes(category.id) ? '#162556' : '#2D3261', 
-                        fontSize: 14,
-                        fontWeight: selectedCategories.includes(category.id) ? '600' : '400'
-                      }}>
-                        {category.nombre || category.name || 'Categoría sin nombre'}
-                      </Text>
-                      {selectedCategories.includes(category.id) && (
-                        <Text style={{ color: '#162556', fontSize: 16, fontWeight: 'bold' }}>
-                          ✓
-                        </Text>
-                      )}
-                    </TouchableOpacity>
-                  ))
+                  <View style={styles.categoryTagsWrap}>
+                    {categories.map(category => {
+                      const selected = selectedCategories.includes(category.id);
+                      const label = categoryLabelSentenceCase(
+                        category.nombre ||
+                          category.name ||
+                          'Categoría sin nombre',
+                      );
+                      return (
+                        <TouchableOpacity
+                          key={category.id}
+                          style={[
+                            styles.categoryTag,
+                            selected && styles.categoryTagSelected,
+                          ]}
+                          onPress={() => handleCategoryToggle(category.id)}
+                          activeOpacity={0.75}>
+                          <Text
+                            style={[
+                              styles.categoryTagText,
+                              selected && styles.categoryTagTextSelected,
+                            ]}
+                            numberOfLines={1}
+                            ellipsizeMode="tail">
+                            {label}
+                          </Text>
+                          {selected ? (
+                            <Text style={styles.categoryTagCheck}>✓</Text>
+                          ) : null}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
                 ) : (
-                  <View style={{ 
-                    alignItems: 'center', 
-                    padding: 20 
-                  }}>
-                    <ActivityIndicator size="small" color="#2D3261" />
-                    <Text style={{ 
-                      color: '#94A3B8', 
-                      fontSize: 14, 
-                      textAlign: 'center',
-                      marginTop: 10 
-                    }}>
-                      Cargando categorías...
+                  <View style={styles.categoryTagsEmpty}>
+                    <ActivityIndicator size="small" color="#1F2344" />
+                    <Text style={styles.categoryTagsEmptyText}>
+                      {categoryLabelSentenceCase('Cargando categorías...')}
                     </Text>
                   </View>
                 )}
               </ScrollView>
 
               {/* Botones de acción */}
-              <View style={{ 
-                flexDirection: 'row', 
+              <View style={{
+                flexDirection: 'row',
                 justifyContent: 'space-between',
                 marginTop: 20,
                 paddingTop: 15,
@@ -827,8 +857,8 @@ const PerimeterMapScreen = () => {
                   }}
                   onPress={handleClearFilters}
                 >
-                  <Text style={{ 
-                    color: '#2D3261', 
+                  <Text style={{
+                    color: '#1F2344',
                     fontSize: 14,
                     textAlign: 'center',
                     fontWeight: '500'
@@ -839,7 +869,7 @@ const PerimeterMapScreen = () => {
 
                 <TouchableOpacity
                   style={{
-                    backgroundColor: '#162556',
+                    backgroundColor: '#1F2344',
                     paddingVertical: 12,
                     paddingHorizontal: 20,
                     borderRadius: 8,
@@ -848,8 +878,8 @@ const PerimeterMapScreen = () => {
                   }}
                   onPress={handleApplyFilters}
                 >
-                  <Text style={{ 
-                    color: '#ffffff', 
+                  <Text style={{
+                    color: '#ffffff',
                     fontSize: 14,
                     textAlign: 'center',
                     fontWeight: '600'
@@ -860,29 +890,47 @@ const PerimeterMapScreen = () => {
               </View>
             </View>
           </View>
-                 </View>
-       </Modal>
+        </View>
+      </Modal>
 
-       {/* Modal del componente de ruta */}
-       {showRouteModal && selectedTallerForRoute && (
-         <MapRutaComponent
-           initialRegion={{
-             latitude: parseFloat(selectedTallerForRoute.ubicacion?.latitud || selectedTallerForRoute.ubicacion?.lat || 0),
-             longitude: parseFloat(selectedTallerForRoute.ubicacion?.longitud || selectedTallerForRoute.ubicacion?.lng || 0),
-             latitudeDelta: 0.015,
-             longitudeDelta: 0.0121,
-             name_taller: selectedTallerForRoute.nombre
-           }}
-           edit={false}
-           returnFunction={handleCloseRouteModal}
-           useThisCoo={true}
-         />
-       )}
-     </>
-   );
- };
+      {/* Modal del componente de ruta */}
+      {showRouteModal && selectedTallerForRoute && (
+        <MapRutaComponent
+          initialRegion={{
+            latitude: parseFloat(selectedTallerForRoute.ubicacion?.latitud || selectedTallerForRoute.ubicacion?.lat || 0),
+            longitude: parseFloat(selectedTallerForRoute.ubicacion?.longitud || selectedTallerForRoute.ubicacion?.lng || 0),
+            latitudeDelta: 0.015,
+            longitudeDelta: 0.0121,
+            name_taller: selectedTallerForRoute.nombre
+          }}
+          edit={false}
+          returnFunction={handleCloseRouteModal}
+          useThisCoo={true}
+        />
+      )}
+    </>
+  );
+};
 
 const styles = StyleSheet.create({
+  headerCircle1: {
+    position: 'absolute',
+    width: 110,
+    height: 110,
+    borderRadius: 55,
+    backgroundColor: 'rgba(255,214,10,0.12)',
+    top: -30,
+    right: -20,
+  },
+  headerCircle2: {
+    position: 'absolute',
+    width: 74,
+    height: 74,
+    borderRadius: 37,
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    top: 52,
+    left: -14,
+  },
   bottomSelectorContainer: {
     marginBottom: 20,
     alignItems: 'center',
@@ -923,23 +971,79 @@ const styles = StyleSheet.create({
   radioText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#162556',
+    color: '#1F2344',
     marginLeft: 6,
   },
-     radioTextSelected: {
-     color: '#162556',
-   },
- });
+  radioTextSelected: {
+    color: '#1F2344',
+  },
+  categoryTagsScroll: {
+    maxHeight: 350,
+  },
+  categoryTagsScrollContent: {
+    paddingBottom: 8,
+    flexGrow: 1,
+  },
+  categoryTagsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    alignItems: 'flex-start',
+  },
+  categoryTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    maxWidth: '100%',
+    gap: 6,
+  },
+  categoryTagSelected: {
+    backgroundColor: '#ffca00',
+    borderColor: '#E7BF00',
+    borderWidth: 1.5,
+  },
+  categoryTagText: {
+    color: '#475569',
+    fontSize: 13,
+    fontWeight: '500',
+    maxWidth: 220,
+  },
+  categoryTagTextSelected: {
+    color: '#1F2344',
+    fontWeight: '700',
+  },
+  categoryTagCheck: {
+    color: '#1F2344',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  categoryTagsEmpty: {
+    alignItems: 'center',
+    padding: 20,
+  },
+  categoryTagsEmptyText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 10,
+  },
+});
 
- // Estilos para el mapa
- const stylesMap = StyleSheet.create({
-   container: {
-     flex: 1,
-     width: '100%',
-     height: 300, // Altura fija para el mapa
-     borderRadius: 10,
-     overflow: 'hidden',
-   },
- });
+// Estilos para el mapa
+const stylesMap = StyleSheet.create({
+  container: {
+    flex: 1,
+    width: '100%',
+    height: 300, // Altura fija para el mapa
+    borderRadius: 10,
+    overflow: 'hidden',
+  },
+});
 
- export default PerimeterMapScreen;
+export default PerimeterMapScreen;

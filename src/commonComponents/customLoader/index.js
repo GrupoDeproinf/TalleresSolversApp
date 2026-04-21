@@ -17,7 +17,7 @@ const CustomLoader = ({ visible }) => {
       <View style={styles.overlay}>
         <View style={styles.loaderContainer}>
           <Image
-            source={Images.loaderGIF}
+            source={Images.loading}
             style={styles.loaderImage}
             resizeMode="contain"
           />
@@ -42,8 +42,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loaderImage: {
-    width: 100,
-    height: 100,
+    width: 120,
+    height: 120,
   },
 });
 

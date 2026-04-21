@@ -1,18 +1,21 @@
-import React, {useState, useRef, useCallback, useEffect} from 'react';
-import {View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator} from 'react-native';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {StarRatingDisplay} from 'react-native-star-rating-widget';
 import styles from './styles.css';
-import {windowHeight} from '../../../themes/appConstant';
+import { windowHeight } from '../../../themes/appConstant';
 import H3HeadingCategory from '../../../commonComponents/headingCategory/H3HeadingCategory';
-import {external} from '../../../style/external.css';
+import { external } from '../../../style/external.css';
 import appColors from '../../../themes/appColors';
-import {useNavigation} from '@react-navigation/native';
-import {useValues} from '../../../../App';
-import { MapPin } from 'lucide-react-native';
-import { Wrench } from 'lucide-react-native';
-import { Navigation } from 'lucide-react-native';
-import { ChevronRight } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useValues } from '../../../../App';
+import {
+  MapPin,
+  Wrench,
+  Navigation,
+  ChevronRight,
+  Star,
+} from 'lucide-react-native';
+import images from '../../../utils/images';
 
 // Note: Some imports and styles are omitted for brevity
 
@@ -62,6 +65,9 @@ const ShowProductsContainer = React.memo(({
 
   // Al mostrar solo la primera página (10 o menos ítems), exigir scroll antes de permitir más cargas
   useEffect(() => {
+    console.log("dataewewrwere", data);
+
+
     if (data?.length <= 10) userHasScrolled.current = false;
   }, [data?.length]);
 
@@ -98,9 +104,9 @@ const ShowProductsContainer = React.memo(({
     return R * c;
   }, [toRad]);
 
-    const color = isDark ? appColors.blackBg : appColors.bgLayout;
+  const color = isDark ? appColors.blackBg : appColors.bgLayout;
 
-  const renderItem = React.useCallback(({item}) => {
+  const renderItem = React.useCallback(({ item }) => {
     // Calcular distancia si tenemos la ubicación del usuario y del taller
     if (userLocation && item?.taller?.ubicacion?.lat && item?.taller?.ubicacion?.lng) {
       const distancia = calcularDistancia(
@@ -109,107 +115,143 @@ const ShowProductsContainer = React.memo(({
         parseFloat(item.taller.ubicacion.lat),
         parseFloat(item.taller.ubicacion.lng)
       );
-      
+
       console.log(`📍 Distancia a ${item?.taller?.nombre || 'Taller'}: ${distancia.toFixed(2)} km`);
     }
-    
+
+    const imageUri = Array.isArray(item?.service_image) ? item?.service_image[0] : item?.service_image;
+    const hasValidImage = typeof imageUri === 'string' && imageUri.trim() !== '';
+    const toSentenceCase = value => {
+      const lower = String(value || '').toLowerCase();
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    };
+
     return (
-    <TouchableOpacity style={stylesNew.container} onPress={() => goToDetail(item)} activeOpacity={0.8}>
-      <View style={stylesNew.gradientBackground}>
-        <View style={[stylesNew.content, { flexDirection: viewRTLStyle }]}>
-          {/* Imagen del servicio con el estilo del icono */}
-          <View style={[stylesNew.imageContainer, { backgroundColor: color }]}>
-            <Image
-              style={stylesNew.serviceImage}
-              source={{
-                uri: Array.isArray(item?.service_image) ? item?.service_image[0] : item?.service_image,
-              }}
-            />
-          </View>
-
-          {/* Contenido principal */}
-          <View style={stylesNew.leftContent}>
-            {/* Header con nombre del servicio y badge de categoría */}
-            <View style={[stylesNew.header, { flexDirection: viewRTLStyle }]}>
-              <Text style={[stylesNew.serviceName, { color: textColorStyle, textAlign: textRTLStyle }]} numberOfLines={2}>
-                {t(item.nombre_servicio)}
-              </Text>
+      <TouchableOpacity style={stylesNew.container} onPress={() => goToDetail(item)} activeOpacity={0.8}>
+        <View style={stylesNew.gradientBackground}>
+          <View style={[stylesNew.content, { flexDirection: viewRTLStyle }]}>
+            {/* Imagen del servicio con el estilo del icono */}
+            <View style={[stylesNew.imageContainer, { backgroundColor: color }]}>
+              <Image
+                style={stylesNew.serviceImage}
+                source={
+                  hasValidImage
+                    ? { uri: imageUri }
+                    : require('../../../assets/noimageNew.png')
+                }
+              />
             </View>
 
-            {/* Nombre del taller */}
-            <View style={stylesNew.tallerContainer}>
-              <MapPin size={12} color="#64748B" />
-              <Text style={[stylesNew.tallerName, { textAlign: textRTLStyle }]} numberOfLines={1}>
-                {t(item?.taller?.nombre || item?.taller || "Nombre no disponible")}
-              </Text>
-            </View>
-            {item?.categoria && (
+            {/* Contenido principal */}
+            <View style={stylesNew.leftContent}>
+              {/* Header: nombre + puntuación (esquina superior derecha en LTR) */}
+              <View style={[stylesNew.header, { flexDirection: viewRTLStyle }]}>
+                <Text
+                  style={[
+                    stylesNew.serviceName,
+                    { color: textColorStyle, textAlign: textRTLStyle },
+                  ]}
+                  numberOfLines={2}>
+                  {String(t(item.nombre_servicio || '')).toUpperCase()}
+                </Text>
+                <View style={stylesNew.ratingPill}>
+                  <View style={stylesNew.ratingPillLeft}>
+                    <Star size={14} color="#B91C1C" fill="#B91C1C" />
+                    <Text style={stylesNew.ratingPillText}>
+                      {item?.puntuacion != null && String(item.puntuacion).trim() !== ''
+                        ? String(item.puntuacion)
+                        : '—'}
+                    </Text>
+                  </View>
+                  <ChevronRight size={17} color="#B91C1C" strokeWidth={2.5} />
+                </View>
+              </View>
+
+              {/* Nombre del taller */}
+              <View style={stylesNew.tallerContainer}>
+                <MapPin size={12} color="#64748B" />
+                <Text style={[stylesNew.tallerName, { textAlign: textRTLStyle }]} numberOfLines={1}>
+                  {toSentenceCase(t(item?.taller?.nombre || item?.taller || 'Nombre no disponible'))}
+                </Text>
+              </View>
+              
+              {item?.nombre_categoria && (
                 <View style={stylesNew.tallerContainer}>
                   <Wrench size={10} color="#64748B" />
-                  <Text style={stylesNew.tallerName}>{t(item.categoria)}</Text>
+                  <Text style={stylesNew.tallerName}>{toSentenceCase(t(item.nombre_categoria))}</Text>
                 </View>
               )}
 
-            {/* Estado del taller y distancia en la misma fila */}
-            <View style={stylesNew.statusAndDistanceRow}>
-              {(item?.taller?.estado || item?.estado) && (
-                <View style={stylesNew.statusContainer}>
-                  <View style={stylesNew.statusDot} />
-                  <Text style={stylesNew.statusText}>{t(item?.taller?.estado || item?.estado || "")}</Text>
+              {item?.categoria && (
+                <View style={stylesNew.tallerContainer}>
+                  <Wrench size={10} color="#64748B" />
+                  <Text style={stylesNew.tallerName}>{toSentenceCase(t(item.categoria))}</Text>
                 </View>
               )}
 
-              {userLocation && item?.taller?.ubicacion?.lat && item?.taller?.ubicacion?.lng && (
+              {/* Estado del taller y distancia en la misma fila */}
+              <View style={stylesNew.statusAndDistanceRow}>
+                {(item?.taller?.estado || item?.estado) && (
+                  <View style={stylesNew.statusContainer}>
+                    <View style={stylesNew.statusDot} />
+                    <Text style={stylesNew.statusText}>
+                      {toSentenceCase(t(item?.taller?.estado || item?.estado || ''))}
+                    </Text>
+                  </View>
+                )}
+
+                {/* {userLocation && item?.taller?.ubicacion?.lat && item?.taller?.ubicacion?.lng && ( */}
                 <View style={stylesNew.distanceContainer}>
                   <Navigation size={10} color="#3A4A85" />
                   <Text style={stylesNew.distanceText}>
-                    {calcularDistancia(
+                    {item?._distanceKm != null ? Number(item._distanceKm).toFixed(2) : '—'} km
+                    {/* {calcularDistancia(
                       userLocation.latitude,
                       userLocation.longitude,
                       parseFloat(item.taller.ubicacion.lat),
                       parseFloat(item.taller.ubicacion.lng)
-                    ).toFixed(1)} km
+                    ).toFixed(1)} km */}
                   </Text>
                 </View>
-              )}
+                {/* )} */}
+              </View>
+
+              {/* Información adicional si existe */}
+
             </View>
 
-            {/* Información adicional si existe */}
-            
-          </View>
 
-          
+          </View>
         </View>
-      </View>
-         </TouchableOpacity>
-   );
-   }, [userLocation, textColorStyle, viewRTLStyle, color, t, goToDetail]);
+      </TouchableOpacity>
+    );
+  }, [userLocation, textColorStyle, viewRTLStyle, color, t, goToDetail]);
 
   return (
     <>
       <View style={styles.newArrivalContainer}>
-               <View style={{marginTop: marginTop || windowHeight(14)}}>
-         {data.length > 0 ? (
-           <H3HeadingCategory value={value} />
-         ): null}
-       </View>
-       
-                   <FlatList
-           data={data || []}
-           renderItem={renderItem}
-           keyExtractor={(item, index) => item.id || index.toString()}
-           onScroll={handleScroll}
-           scrollEventThrottle={200}
-           onEndReached={handleEndReached}
-           onEndReachedThreshold={0.4}
-           ListFooterComponent={
-             loadingMore ? (
-               <View style={stylesNew.footerLoader}>
-                 <ActivityIndicator size="small" color="#3A4A85" />
-               </View>
-             ) : null
-           }
-         />
+        <View style={{ marginTop: marginTop || windowHeight(14) }}>
+          {data.length > 0 ? (
+            <H3HeadingCategory value={value} />
+          ) : null}
+        </View>
+
+        <FlatList
+          data={data || []}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => item.id || index.toString()}
+          onScroll={handleScroll}
+          scrollEventThrottle={200}
+          onEndReached={handleEndReached}
+          onEndReachedThreshold={0.4}
+          ListFooterComponent={
+            loadingMore ? (
+              <View style={stylesNew.footerLoader}>
+                <ActivityIndicator size="small" color="#3A4A85" />
+              </View>
+            ) : null
+          }
+        />
       </View>
     </>
   );
@@ -230,10 +272,10 @@ const stylesNew = StyleSheet.create({
     elevation: 4,
   },
   gradientBackground: {
-    backgroundColor: "#FEFEFE",
+    backgroundColor: "#EEF2F7",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#E8EAF0",
+    borderColor: "#DEE5EE",
     overflow: "hidden",
   },
   content: {
@@ -268,18 +310,45 @@ const stylesNew = StyleSheet.create({
   },
   header: {
     flexDirection: "row",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "space-between",
     marginBottom: 6,
+    gap: 8,
   },
   serviceName: {
     fontSize: 12,
-    
     fontWeight: "700",
     color: "#2D3748",
     flex: 1,
-    marginRight: 8,
+    minWidth: 0,
+    marginRight: 0,
     textTransform: "uppercase",
+  },
+  ratingPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    flexShrink: 0,
+    backgroundColor: "#FFD60A",
+    paddingLeft: 8,
+    paddingRight: 6,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#E7BF00",
+    marginTop: 1,
+    gap: 6,
+  },
+  ratingPillLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexShrink: 0,
+  },
+  ratingPillText: {
+    marginStart: 4,
+    color: "#B91C1C",
+    fontWeight: "700",
+    fontSize: 12,
   },
   categoryBadge: {
     flexDirection: "row",
@@ -400,17 +469,17 @@ const stylesNew = StyleSheet.create({
 const arePropsEqual = (prevProps, nextProps) => {
   // Comparar datos
   if (prevProps.data?.length !== nextProps.data?.length) return false;
-  
+
   // Comparar ubicación del usuario
   if (prevProps.userLocation?.latitude !== nextProps.userLocation?.latitude ||
-      prevProps.userLocation?.longitude !== nextProps.userLocation?.longitude) return false;
-  
+    prevProps.userLocation?.longitude !== nextProps.userLocation?.longitude) return false;
+
   // Comparar otras props importantes
   if (prevProps.value !== nextProps.value ||
-      prevProps.marginTop !== nextProps.marginTop ||
-      prevProps.loadingMore !== nextProps.loadingMore ||
-      prevProps.hasMore !== nextProps.hasMore) return false;
-  
+    prevProps.marginTop !== nextProps.marginTop ||
+    prevProps.loadingMore !== nextProps.loadingMore ||
+    prevProps.hasMore !== nextProps.hasMore) return false;
+
   return true;
 };
 

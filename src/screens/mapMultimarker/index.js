@@ -12,8 +12,12 @@ import {
 import MapboxGL from '@rnmapbox/maps';
 import Geolocation from '@react-native-community/geolocation';
 import Icons from 'react-native-vector-icons/FontAwesome';
+import {getMapboxPublicToken} from '../../config/mapboxPublicToken';
 
-MapboxGL.setAccessToken('pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ');
+const mapboxToken = getMapboxPublicToken();
+if (mapboxToken) {
+  MapboxGL.setAccessToken(mapboxToken);
+}
 
 const MapTalleres = ({ talleres = [], initialRegion = null, edit = false, returnFunction = null, useThisCoo = false }) => {
   const [location, setLocation] = useState(null);

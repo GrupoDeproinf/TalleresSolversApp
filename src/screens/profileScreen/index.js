@@ -1,22 +1,23 @@
-import { Image, Pressable, Text, View, ImageBackground, Linking, Alert, ScrollView } from 'react-native';
+import { Image, Pressable, Text, View, ImageBackground, Linking, Alert, ScrollView, Dimensions } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import { external } from '../../style/external.css';
-import { commonStyles } from '../../style/commonStyle.css';
-import images from '../../utils/images';
-import { profileData, profileDataAdmin } from '../../data/profileData';
-import { RightArrow } from '../../assets/icons/rightArrow';
+import { profileData, profileDataAdmin, profileDataTaller } from '../../data/profileData';
 import styles from './style.css';
 import { useNavigation } from '@react-navigation/native';
 import { useValues } from '../../../App';
-import LinearGradient from 'react-native-linear-gradient';
-import appColors from '../../themes/appColors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import notImageFound from '../../assets/noimageold.jpeg';
 import api from '../../../axiosInstance';
+import Icons from 'react-native-vector-icons/FontAwesome5';
+import Icons2 from 'react-native-vector-icons/AntDesign';
+
+const SOLVERS_WEB_SIGN_IN =
+  'https://app.solversapp.com/sign-in?redirectUrl=/';
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
+  const screenHeight = Dimensions.get('window').height;
+  const screenWidth = Dimensions.get('window').width;
   const [infoUser, setinfoUser] = useState(
     {
       uid: "",
@@ -94,19 +95,11 @@ const ProfileScreen = () => {
   };
 
   const {
-    textColorStyle,
-    linearColorStyle,
-    bgFullStyle,
-    isDark,
     viewRTLStyle,
     textRTLStyle,
     imageRTLStyle,
     t,
   } = useValues();
-
-  const colors = isDark
-    ? ['#43454A', '#24262C']
-    : [appColors.screenBg, appColors.screenBg];
 
 
   const removePropertyFromStorage = async (propertyName) => {
@@ -118,266 +111,249 @@ const ProfileScreen = () => {
     }
   };
 
-  return (
-    <View style={[styles.viewContainer, { backgroundColor: bgFullStyle }]}>
-      <Text
-        style={[
-          external.ti_center,
-          commonStyles.hederH2,
-          { color: textColorStyle },
-        ]}>
-        Mi Perfil {infoUser.typeUser}
-      </Text>
-      <View style={[external.as_center, { marginTop: 10 }]}>
+  const handleMainOptionPress = async (item) => {
+    if (item.id === 2 && infoUser.typeUser === 'Taller') {
+      try {
+        await Linking.openURL(SOLVERS_WEB_SIGN_IN);
+      } catch (e) {
+        Alert.alert(
+          'Solvers',
+          'No se pudo abrir el enlace. Comprueba tu conexión e inténtalo de nuevo.',
+        );
+      }
+      return;
+    }
 
-        {imagePerfil == null || imagePerfil == "" ? (
-          <Image
-            resizeMode="contain"
-            style={styles.imgStyle}
-            source={notImageFound} // Reemplaza esto con la variable que contiene tu imagen
-          />
-
-        ) : (
-          <ImageBackground
-            resizeMode="contain"
-            style={[styles.imgStyle, { height: 150, width: 150 }]} // Ajusta los valores según tus necesidades
-            source={{ uri: imagePerfil }} // Cambia esto a tu enlace de imagen
-          >
-          </ImageBackground>
-        )}
-        <Text style={[styles.nameText, { color: textColorStyle }]}>
-          {infoUser.nombre}
-        </Text>
-        <Text style={[commonStyles.subtitleText, external.ti_center]}>
-          {infoUser.email}
-        </Text>
-      </View>
-      <View style={[external.mt_10]}>
-        {
-          infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente" ? (
-            profileDataAdmin.map((item, index) => (
-              <Pressable
-                key={index}
-                activeOpacity={0.9}
-                onPress={() => {
-                  if (item.id === 6) {
-                    removePropertyFromStorage();
-                    handleLogout();
-                  } else {
-                    if (infoUser.typeUser == "Taller") {
-                      if (item.screenName == "EditProfile") {
-                        console.log("aquiii");
-                        navigation.navigate('TallerEditProfileScreen');
-                      } else {
-                        navigation.navigate(item.screenName);
-                      }
-                    } else {
-                      navigation.navigate(item.screenName);
-                    }
-                  }
-                }}>
-
-                <View style={[styles.container, { backgroundColor: colors[0] }]}>
-                  <View style={[styles.menuItemContent, { backgroundColor: linearColorStyle[0] }]}>
-                    <View
-                      style={[
-                        external.fd_row,
-                        external.ai_center,
-                        { flexDirection: viewRTLStyle },
-                      ]}>
-                      {item.icon}
-                      <View style={{ width: '86%' }}>
-                        <Text
-                          style={[
-                            styles.titleText,
-                            { color: textColorStyle },
-                            { textAlign: textRTLStyle },
-                          ]}>
-                          {t(item.title)}
-                        </Text>
-                      </View>
-                      <View style={{ transform: [{ scale: imageRTLStyle }] }}>
-                        <RightArrow />
-                      </View>
-                    </View>
-                  </View>
-                </View>
-
-              </Pressable>
-            ))
-          ) : null
-        }
-
-
-        {
-          infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente" ? (
-            profileDataAdmin
-              .filter(item => item.id !== 3 || infoUser.typeUser === "Taller") // Filtrar si el ID es 3 y el usuario no es Taller
-              .map((item, index) => (
-                <Pressable
-                  key={index}
-                  activeOpacity={0.9}
-                  onPress={() => {
-                    if (item.id === 6) {
-                      removePropertyFromStorage();
-                      handleLogout();
-                    } else {
-                      if (infoUser.typeUser == "Taller") {
-                        if (item.screenName == "EditProfile") {
-                          console.log("aquiii");
-                          navigation.navigate('TallerEditProfileScreen');
-                        } else {
-                          navigation.navigate(item.screenName);
-                        }
-                      } else {
-                        navigation.navigate(item.screenName);
-                      }
-                    }
-                  }}>
-
-                  <View style={[styles.container, { backgroundColor: colors[0] }]}>
-                    <View style={[styles.menuItemContent, { backgroundColor: linearColorStyle[0] }]}>
-                      <View
-                        style={[
-                          external.fd_row,
-                          external.ai_center,
-                          { flexDirection: viewRTLStyle },
-                        ]}>
-                        {item.icon}
-                        <View style={{ width: '86%' }}>
-                          <Text
-                            style={[
-                              styles.titleText,
-                              { color: textColorStyle },
-                              { textAlign: textRTLStyle },
-                            ]}>
-                            {t(item.title)}
-                          </Text>
-                        </View>
-                        <View style={{ transform: [{ scale: imageRTLStyle }] }}>
-                          <RightArrow />
-                        </View>
-                      </View>
-                    </View>
-                  </View>
-
-                </Pressable>
-              ))
-          ) : null
-        }
-
-        <ScrollView contentContainerStyle={{ paddingBottom: 250 }}>
+    if (item.id === 8) {
+      Alert.alert(
+        "Confirmación",
+        "¿Estás seguro de que deseas eliminar tu cuenta?",
+        [
           {
-            infoUser.typeUser == "Taller" || infoUser.typeUser == "Cliente" ? (
-              profileData
-                .filter(item => item.id !== 3 || infoUser.typeUser === "Taller") // Filtrar si el ID es 3 y el usuario no es Taller
-                .map((item, index) => (
-                  <Pressable
-                    key={index}
-                    activeOpacity={0.9}
-                    onPress={async () => {
-                      if (item.id === 8) {
-                        Alert.alert(
-                          "Confirmación",
-                          "¿Estás seguro de que deseas eliminar tu cuenta?",
-                          [
-                            {
-                              text: "Cancelar",
-                              onPress: () => console.log("Cancelado"),
-                              style: "cancel", // Estilo de botón de cancelación
-                            },
-                            {
-                              text: "Eliminar",
-                              onPress: async () => {
-                                console.log("estoy en test");
-                        
-                                try {
-                                  const jsonValue = await AsyncStorage.getItem('@userInfo');
-                                  const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-                                  console.log("valor del storage", user.uid);
-                                  try {
-                                    // Hacer la solicitud POST utilizando Axios
-                                    const response = await api.post('/usuarios/deleteUserFromAuth', {
-                                      uid: user.uid,
-                                    });
-                        
-                                    // Verificar la respuesta del servidor
-                                    const result = response.data; // Los datos vienen directamente de response.data
-                                    console.log('esto es lo despues ', result); // Aquí puedes manejar la respuesta
-                        
-                                    removePropertyFromStorage();
-                                    handleLogout();
-                        
-                                  } catch (error) {
-                                    if (error.response) {
-                                      console.log(error);
-                                    } else {
-                                      console.log("error mas abajo");
-                                    }
-                                  }
-                        
-                                } catch (e) {
-                                  // error reading value
-                                  console.log(e);
-                                }
-                              },
-                              style: "destructive", // Estilo rojo para el botón de eliminación
-                            },
-                          ],
-                          { cancelable: false }
-                        );
-                        return false;
-                      }
+            text: "Cancelar",
+            onPress: () => console.log("Cancelado"),
+            style: "cancel",
+          },
+          {
+            text: "Eliminar",
+            onPress: async () => {
+              console.log("estoy en test");
 
-                      if (item.id === 6) {
-                        removePropertyFromStorage();
-                        handleLogout();
-                      } else {
-                        if (infoUser.typeUser == "Taller") {
-                          if (item.screenName == "EditProfile") {
-                            console.log("aquiii");
-                            navigation.navigate('TallerEditProfileScreen');
-                          } else {
-                            navigation.navigate(item.screenName);
-                          }
-                        } else {
-                          navigation.navigate(item.screenName);
-                        }
-                      }
+              try {
+                const jsonValue = await AsyncStorage.getItem('@userInfo');
+                const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+                console.log("valor del storage", user.uid);
+                try {
+                  const response = await api.post('/usuarios/deleteUserFromAuth', {
+                    uid: user.uid,
+                  });
 
-                      if (item.id === 7) {
-                        Linking.openURL(item.screenName);
-                      }
-                    }}>
+                  const result = response.data;
+                  console.log('esto es lo despues ', result);
 
-                    <View style={[styles.container, { padding: 10, borderRadius: 15, backgroundColor: colors[0] }]}>
-                      <View style={[styles.menuItemContent, { padding: 10, borderRadius: 10, backgroundColor: linearColorStyle[0] }]}>
-                        <View
-                          style={[
-                            external.fd_row,
-                            external.ai_center,
-                            { flexDirection: viewRTLStyle },
-                          ]}>
-                          {item.icon}
-                          <View style={{ width: '86%' }}>
-                            <Text
-                              style={[
-                                styles.titleText,
-                                { color: textColorStyle, textAlign: textRTLStyle },
-                              ]}>
-                              {t(item.title)}
-                            </Text>
-                          </View>
-                          <View style={{ transform: [{ scale: imageRTLStyle }] }}>
-                            <RightArrow />
-                          </View>
-                        </View>
-                      </View>
-                    </View>
-                  </Pressable>
-                ))
-            ) : null
+                  removePropertyFromStorage();
+                  handleLogout();
+
+                } catch (error) {
+                  if (error.response) {
+                    console.log(error);
+                  } else {
+                    console.log("error mas abajo");
+                  }
+                }
+
+              } catch (e) {
+                console.log(e);
+              }
+            },
+            style: "destructive",
+          },
+        ],
+        { cancelable: false }
+      );
+      return false;
+    }
+
+    if (item.id === 6) {
+      removePropertyFromStorage();
+      handleLogout();
+    } else {
+      if (infoUser.typeUser == "Taller") {
+        if (item.screenName == "EditProfile") {
+          console.log("aquiii");
+          navigation.navigate('TallerEditProfileScreen');
+          // navigation.navigate('EditProfile');
+        } else {
+          navigation.navigate(item.screenName);
+        }
+      } else {
+        navigation.navigate(item.screenName);
+      }
+    }
+
+    if (item.id === 7) {
+      Linking.openURL(item.screenName);
+    }
+  };
+
+  const handleAdminOptionPress = (item) => {
+    if (item.id === 6) {
+      removePropertyFromStorage();
+      handleLogout();
+    } else {
+      if (infoUser.typeUser == "Taller") {
+        if (item.screenName == "EditProfile") {
+          console.log("aquiii");
+          navigation.navigate('TallerEditProfileScreen');
+        } else {
+          navigation.navigate(item.screenName);
+        }
+      } else {
+        navigation.navigate(item.screenName);
+      }
+    }
+  };
+
+  const renderMenuIcon = (item) => {
+    let iconName = 'circle';
+
+    if (item.id === 0) iconName = 'user-circle';
+    else if (item.id === 2) iconName = 'heart';
+    else if (item.id === 10) iconName = 'car-side';
+    else if (item.id === 3) iconName = 'tags';
+    else if (item.id === 5) iconName = 'key';
+    else if (item.id === 7) iconName = 'life-ring';
+    else if (item.id === 8) iconName = 'trash-alt';
+    else if (item.id === 6) iconName = 'sign-out-alt';
+
+    return <Icons name={iconName} size={18} color="#FFD60A" />;
+  };
+
+  const renderOptionCard = (item, index, onPressHandler) => (
+    <Pressable
+      key={index}
+      onPress={() => onPressHandler(item)}
+      style={({ pressed }) => [
+        styles.optionCardOuter,
+        pressed && styles.optionCardOuterPressed,
+      ]}>
+      <View
+        style={styles.optionCardInner}>
+        <View style={[styles.optionRow, { flexDirection: viewRTLStyle }]}>
+          {infoUser.typeUser == "Taller"
+            ? item.id === 2 ? <View style={styles.optionIconWrap}>
+            <Icons2 name="dashboard" size={18} color="#FFD60A" />
+          </View> : (
+              
+              <View style={styles.optionIconWrap}>
+              {renderMenuIcon(item)}
+            </View>
+            )
+            : (
+              <View style={styles.optionIconWrap}>
+                {renderMenuIcon(item)}
+              </View>
+            )
           }
+
+          <View style={styles.optionTitleWrap}>
+            <Text
+              style={[
+                styles.titleText,
+                { textAlign: textRTLStyle },
+              ]}
+              numberOfLines={2}>
+              {t(item.title)}
+            </Text>
+          </View>
+          <View style={styles.optionArrowWrap}>
+            <View style={{ transform: [{ scale: imageRTLStyle }] }}>
+              <Icons name="chevron-right" size={14} color="#1F2344" />
+            </View>
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+
+  return (
+    <View style={styles.screenRoot}>
+      <View style={styles.perimeterTopArea}>
+        <View style={styles.headerCircle1} />
+        <View style={styles.headerCircle2} />
+        <View style={styles.perimeterHeaderBlock}>
+          <Text style={styles.perimeterTitle}>Mi Perfil</Text>
+          <Text style={styles.perimeterSubtitle}>
+            Administra tu información y accesos de forma rápida.
+          </Text>
+        </View>
+      </View>
+
+      <View
+        style={[
+          styles.perimeterBottomSheet,
+          {
+            width: screenWidth,
+            height: screenHeight * 0.69,
+          },
+        ]}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.perimeterScrollContent}>
+          <View style={styles.profileCard}>
+            <View style={styles.avatarFrameOuter}>
+              <View style={styles.avatarFrameInner}>
+                {imagePerfil == null || imagePerfil == "" ? (
+                  <Image
+                    resizeMode="cover"
+                    style={styles.imgStyle}
+                    source={notImageFound}
+                  />
+                ) : (
+                  <ImageBackground
+                    resizeMode="cover"
+                    style={styles.imgStyle}
+                    source={{ uri: imagePerfil }}
+                  />
+                )}
+              </View>
+            </View>
+            <Text style={styles.nameText}>{infoUser.nombre || 'Usuario'}</Text>
+            <Text style={styles.emailText}>{infoUser.email || 'Sin correo registrado'}</Text>
+            <View style={styles.userTypeBadge}>
+              <Text style={styles.userTypeBadgeText}>{infoUser.typeUser || 'Usuario'}</Text>
+            </View>
+          </View>
+
+          <View style={styles.menuSection}>
+            {infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente"
+              ? profileDataAdmin.map((item, index) =>
+                renderOptionCard(item, `admin-a-${index}`, handleAdminOptionPress),
+              )
+              : null}
+            {infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente"
+              ? profileDataAdmin
+                .filter(item => item.id !== 3 || infoUser.typeUser === "Taller")
+                .map((item, index) =>
+                  renderOptionCard(item, `admin-b-${index}`, handleAdminOptionPress),
+                )
+              : null}
+            {infoUser.typeUser == "Cliente"
+              ? profileData
+                .filter(item => item.id !== 3 || infoUser.typeUser === "Taller")
+                .map((item, index) =>
+                  renderOptionCard(item, `user-${index}`, handleMainOptionPress),
+                )
+              : null}
+
+            {infoUser.typeUser == "Taller"
+              ? profileDataTaller
+                .filter(item => item.id !== 3 || infoUser.typeUser === "Taller")
+                .map((item, index) =>
+                  renderOptionCard(item, `user-${index}`, handleMainOptionPress),
+                )
+              : null}
+          </View>
         </ScrollView>
       </View>
     </View>

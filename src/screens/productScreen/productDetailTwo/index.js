@@ -6,7 +6,7 @@ import appColors from '../../../themes/appColors';
 import {windowWidth} from '../../../themes/appConstant';
 import styles from './style.css';
 import {Plus} from '../../../utils/icon';
-import NewArrivalContainer from '../../../components/homeScreen/newArrivalContainer';
+import NewArrivalBigContainer from '../../../components/homeScreenTwo/newArrivalTwoContainer';
 import {newArrivalBigData} from '../../../data/homeScreenTwo/newArrivalData';
 import BottomContainer from '../../../commonComponents/bottomContainer';
 import {Cart} from '../../../assets/icons/cart';
@@ -65,8 +65,10 @@ const ProductDetailTwo = ({navigation}) => {
           </View>
           <IconContainer />
           <KeyFeatureContainer />
-          <NewArrivalContainer
+          <NewArrivalBigContainer
             data={newArrivalBigData}
+            horizontal={true}
+            width={windowWidth(220)}
           />
         </View>
       </ScrollView>

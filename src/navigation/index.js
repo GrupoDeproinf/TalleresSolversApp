@@ -1,14 +1,20 @@
 import React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
+import {NavigationContainer, createNavigationContainerRef} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Login from '../screens/auth/login';
+
 
 import SignUp from '../screens/auth/signUp';
 import ForgetPassword from '../screens/auth/forgotPassword';
 import ResetPassword from '../screens/auth/resetPassword';
 
+
+
+
+
 import CategoryDetail from '../screens/categoryScreen/CategoryDetail';
 import OtpVerfication from '../screens/auth/verificationCode';
+
 
 import NotificationScreen from '../screens/notification';
 import MyWhishList from '../screens/myWhishList';
@@ -21,6 +27,9 @@ import OrderHistory from '../screens/profileScreen/orderHistory';
 import CheckoutScreen from '../screens/checkOut';
 import Splash from '../screens/intro/splash';
 
+
+import Onboarding from '../screens/intro/onBording';
+import OnboardingTwo from '../screens/intro/onBordingTwo';
 import FormTaller from '../screens/FormTaller'
 import FormService from '../screens/FormService'
 
@@ -33,7 +42,10 @@ import ServiciosContainer from '../screens/Servicios'
 
 import TallerEditProfileScreen from '../screens/profileScreen/editProfileTaller';
 
+
+
 import LoaderScreen from '../screens/loaderScreen';
+
 
 import OfferScreen from '../screens/offerScreen';
 import Settings from '../screens/profileScreen/notificationSetting';
@@ -55,24 +67,67 @@ import DrawerScreen from '../drawer';
 import TallerDetail from '../screens/tallerDetail';
 
 import VehiclesScreen from '../screens/profileScreen/vehiclesScreen';
+import VehicleAddStepper from '../screens/profileScreen/vehiclesScreen/VehicleAddStepper';
+import VehicleNotificationsScreen from '../screens/profileScreen/vehiclesScreen/VehicleNotificationsScreen';
+import VehicleMaintenanceScreen from '../screens/profileScreen/vehiclesScreen/VehicleMaintenanceScreen';
+import SolicitudServicio from '../screens/SolicitudServicio';
+import MisSolicitudesScreen from '../screens/misSolicitudes';
+import SolicitudesTallerScreen from '../screens/solicitudesTaller';
+import TallerInfoScreen from '../screens/tallerInfo';
+
+
+// import ProductDetailTwo from '../screens/productScreen/productDetailTwo';
+// import ProductDetailThree from '../screens/productScreen/productDetailThree';
+// import HomeScreenTwo from '../screens/homeScreenTwo';
+
+import RadioSelector from '../screens/perimeter-map';
+
 
 const Stack = createNativeStackNavigator();
+export const navigationRef = createNavigationContainerRef();
+
+export const navigate = (name, params) => {
+  if (navigationRef.isReady()) {
+    navigationRef.navigate(name, params);
+  }
+};
+
 const MyStack = () => {
+  // const [initialScreen, setInitialScreen] = useState();
+  
+  // const validator = () => {
+  //   AsyncStorage.getItem('token').then((value) => {
+  //     if (value !== null) {
+  //       navigation.navigate('HomeScreenTwo');
+  //     }
+  //   });
+  // }
+
+  // useEffect(() => {
+  //   validator()
+  // }, [])
+
 
   return (
-    <NavigationContainer>
+    <NavigationContainer ref={navigationRef}>
       <Stack.Navigator initialRouteName='LoaderScreen' screenOptions={{headerShown: false}}>
         <Stack.Screen name="Login" component={Login} />
+        {/* <Stack.Screen name="Login" component={Login} /> */}
+
+
+
         
         <Stack.Screen name="SignUp" component={SignUp} />
         <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
         <Stack.Screen name="ResetPassword" component={ResetPassword} />
+
 
         {/* <Stack.Screen name="Onboarding" component={Onboarding} />
         <Stack.Screen name="OnboardingTwo" component={OnboardingTwo} />
         <Stack.Screen name="OtpVerfication" component={OtpVerfication} /> */}
 
         <Stack.Screen name="Splash" component={Splash} />
+
         
         <Stack.Screen name="CategoryDetail" component={CategoryDetail} />
         
@@ -90,8 +145,11 @@ const MyStack = () => {
         <Stack.Screen name="EditProfile" component={EditProfile} />
         <Stack.Screen name="TallerProfileScreen" component={TallerProfileScreen} /> 
 
+
         <Stack.Screen name="TallerEditProfileScreen" component={TallerEditProfileScreen} /> 
         <Stack.Screen name="OrderHistory" component={OrderHistory} />
+
+
 
         {/* por validar */}
 
@@ -112,11 +170,30 @@ const MyStack = () => {
         <Stack.Screen name="PlanesRegistro" component={PlanesRegistro} />
         <Stack.Screen name="LoaderScreen" component={LoaderScreen} />
 
+
         <Stack.Screen name="DrawerScreen" component={DrawerScreen} />
+
+
+
         <Stack.Screen name="TallerDetail" component={TallerDetail} />
+
+
 
         {/* Nuevas rutas, nueva version */}
         <Stack.Screen name="VehiclesScreen" component={VehiclesScreen} />
+        <Stack.Screen name="VehicleAddStepper" component={VehicleAddStepper} />
+        <Stack.Screen name="VehicleNotificationsScreen" component={VehicleNotificationsScreen} />
+        <Stack.Screen name="VehicleMaintenanceScreen" component={VehicleMaintenanceScreen} />
+        <Stack.Screen name="SolicitudServicio" component={SolicitudServicio} />
+        <Stack.Screen name="MisSolicitudes" component={MisSolicitudesScreen} />
+        <Stack.Screen name="SolicitudesTaller" component={SolicitudesTallerScreen} />
+        <Stack.Screen name="TallerInfoScreen" component={TallerInfoScreen} />
+
+        <Stack.Screen name="RadioSelector" component={RadioSelector} />
+
+        {/* <Stack.Screen name="HomeScreenTwo" component={HomeScreenTwo} />
+        <Stack.Screen name="ProductDetailThree" component={ProductDetailThree} />
+        <Stack.Screen name="ProductDetailTwo" component={ProductDetailTwo} /> */}
 
       </Stack.Navigator>
     </NavigationContainer>

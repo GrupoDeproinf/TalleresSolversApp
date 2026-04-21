@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
   },
   container: {
     ...commonStyles.commonContainer,
-    paddingHorizontal: windowHeight(14),
+    paddingHorizontal: windowWidth(12),
   },
   errorStyle: {
     color: appColors.red,

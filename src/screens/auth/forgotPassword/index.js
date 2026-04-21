@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, ToastAndroid, Alert } from 'react-native';
+import { View, Text, Alert, StyleSheet, TouchableOpacity } from 'react-native';
 import AuthContainer from '../../../commonComponents/authContainer';
 import {
   emailId,
@@ -76,20 +76,54 @@ const ForgetPassword = ({ navigation }) => {
     setGetOtpDisabled(emailError !== '');
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [email, emailError]);
-  const { t, bgFullStyle, iconColorStyle } = useValues();
+
+  const { bgFullStyle, iconColorStyle } = useValues();
+
+  const forgotStyles = StyleSheet.create({
+    wrap: {
+      flex: 1,
+      backgroundColor: bgFullStyle,
+      paddingHorizontal: 0,
+      paddingTop: 0,
+      paddingBottom: 32,
+    },
+    formCard: {
+      backgroundColor: appColors.screenBg,
+      borderRadius: 20,
+      paddingHorizontal: 16,
+      paddingVertical: 24,
+      marginTop: 16,
+    },
+    btnWrap: {
+      marginTop: 28,
+      paddingHorizontal: 20,
+    },
+    backLink: {
+      marginTop: 24,
+      alignItems: 'center',
+      paddingHorizontal: 20,
+    },
+    backLinkText: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: appColors.primary,
+    },
+  });
+
   return (
-    <View style={[styles.headingContainer, { backgroundColor: bgFullStyle, }]}>
+    <View style={[styles.headingContainer, forgotStyles.wrap]}>
       <AuthContainer
-        title="¿Olvido la contraseña?"
-        subtitle="Ingrese su correo y restablezca su contraseña"
-        AlignItemTitle={"center"}
+        title="Recuperar contraseña"
+        subtitle="Ingresa tu correo y te enviaremos un enlace para restablecerla."
+        AlignItemTitle="center"
         showBack={true}
         value={
-          <View>
+          <View style={forgotStyles.formCard}>
             <TextInputs
-              title="Correo Electrónico"
-              keyboardType={'email-address'}
-              placeHolder="Ingrese su correo (email@email.com)"
+              title="Correo electrónico"
+              keyboardType="email-address"
+              value={email}
+              placeHolder="Ej. tu@correo.com"
               onChangeText={onEmailChange}
               onBlur={validateEmail}
               icon={
@@ -98,20 +132,27 @@ const ForgetPassword = ({ navigation }) => {
                 />
               }
             />
-
             {isButtonPressed && emailError !== '' && (
               <Text style={styles.errorStyle}>{emailError}</Text>
             )}
           </View>
         }
       />
-      <NavigationButton
-        title="Recuperar Clave"
-        onPress={onHandleChange}
-        disabled={isGetOtpDisabled}
-        backgroundColor={isGetOtpDisabled ? '#848688' : '#2D3261'}
-        color={isGetOtpDisabled ? '#051E47' : appColors.screenBg}
-      />
+      <View style={forgotStyles.btnWrap}>
+        <NavigationButton
+          title="Enviar enlace de recuperación"
+          onPress={onHandleChange}
+          disabled={isGetOtpDisabled}
+          backgroundColor={isGetOtpDisabled ? appColors.lightButton : appColors.primary}
+          color={isGetOtpDisabled ? appColors.titleText : appColors.screenBg}
+        />
+      </View>
+      <TouchableOpacity
+        style={forgotStyles.backLink}
+        onPress={() => navigation.goBack()}
+        activeOpacity={0.8}>
+        <Text style={forgotStyles.backLinkText}>Volver</Text>
+      </TouchableOpacity>
     </View>
   );
 };

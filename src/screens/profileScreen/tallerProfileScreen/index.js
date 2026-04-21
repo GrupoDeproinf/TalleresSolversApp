@@ -1222,7 +1222,7 @@ const TallerProfileScreen = ({ navigation }) => {
           )} */}
 
           <TextInputs
-            title="Seguro del taller"
+            title="Seguro del negocio"
             placeHolder="Ingrese su seguro"
             value={seguro}
             height={150}

@@ -65,9 +65,14 @@ const ProductSwiper = ({returnValues, categories}) => {
       <Text
         style={[
           commonStyles.subtitleText,
+          styles.menuItemText,
           item.id === selectedItem ? styles.selectedMenuItemText : null,
         ]}>
-        {t(item.nombre)}
+        {(() => {
+          const value = String(t(item.nombre) || '');
+          const lower = value.toLowerCase();
+          return lower.charAt(0).toUpperCase() + lower.slice(1);
+        })()}
       </Text>
     </TouchableOpacity>
   );

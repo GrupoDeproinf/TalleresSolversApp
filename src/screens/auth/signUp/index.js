@@ -9,7 +9,8 @@ import {
   ToastAndroid,
   Button,
   KeyboardAvoidingView,
-  Alert
+  Alert,
+  Modal,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 // import AuthContainer from '../../../commonComponents/authContainer';
@@ -47,7 +48,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 
 import Icons from 'react-native-vector-icons/FontAwesome';
-import Icons2 from 'react-native-vector-icons/FontAwesome5';
+import Icons2 from 'react-native-vector-icons/Ionicons';
+import Icons5 from 'react-native-vector-icons/AntDesign';
 
 import Icons3 from 'react-native-vector-icons/Fontisto';
 import Icons4 from 'react-native-vector-icons/Entypo';
@@ -59,12 +61,34 @@ import { launchImageLibrary } from 'react-native-image-picker';
 import { Buffer } from 'buffer';
 
 import MapComponent from '../../map';
+import MapboxTestModalContent from './mapboxTest/MapboxTestModalContent';
 import messaging from '@react-native-firebase/messaging';
 
 import Geolocation from '@react-native-community/geolocation';
 import { Dropdown } from 'react-native-element-dropdown';
 
 
+
+const BUSINESS_DAYS = [
+  { key: 'lunes', label: 'Lunes' },
+  { key: 'martes', label: 'Martes' },
+  { key: 'miercoles', label: 'Miércoles' },
+  { key: 'jueves', label: 'Jueves' },
+  { key: 'viernes', label: 'Viernes' },
+  { key: 'sabado', label: 'Sábado' },
+  { key: 'domingo', label: 'Domingo' },
+];
+
+const TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
+  const value = `${String(hour).padStart(2, '0')}:00`;
+  return { label: value, value };
+});
+
+const buildDefaultBusinessHours = () =>
+  BUSINESS_DAYS.reduce((acc, day) => {
+    acc[day.key] = { enabled: false, open: '08:00', close: '17:00' };
+    return acc;
+  }, {});
 
 const SignUp = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -138,7 +162,9 @@ const SignUp = ({ navigation }) => {
 
   // Estados para el sistema de pasos
   const [currentStep, setCurrentStep] = useState(1);
-  const [totalSteps] = useState(7);
+  const [totalSteps] = useState(8);
+
+  const [showMapboxTestModal, setShowMapboxTestModal] = useState(false);
 
   const [metodosPago, setMetodosPago] = useState([
     { label: 'Efectivo', value: 'efectivo', checked: false },
@@ -180,6 +206,9 @@ const SignUp = ({ navigation }) => {
     { label: 'Yaracuy', value: 'Yaracuy' },
     { label: 'Zulia', value: 'Zulia' },
   ]);
+
+  const [businessHours, setBusinessHours] = useState(buildDefaultBusinessHours);
+  const [businessHoursError, setBusinessHoursError] = useState('');
 
   const layout = useWindowDimensions();
 
@@ -300,6 +329,32 @@ const SignUp = ({ navigation }) => {
     }
   };
 
+  const validateBusinessHours = () => {
+    const hasSelectedDay = BUSINESS_DAYS.some(day => businessHours[day.key]?.enabled);
+    if (!hasSelectedDay) {
+      setBusinessHoursError('Debes seleccionar al menos un día de atención');
+      return false;
+    }
+
+    const invalidDay = BUSINESS_DAYS.find(day => {
+      const item = businessHours[day.key];
+      if (!item?.enabled) {
+        return false;
+      }
+      return !item.open || !item.close || item.open >= item.close;
+    });
+
+    if (invalidDay) {
+      setBusinessHoursError(
+        'Verifica que la hora de cierre sea mayor a la de apertura',
+      );
+      return false;
+    }
+
+    setBusinessHoursError('');
+    return true;
+  };
+
   // Funciones para navegación entre pasos
   const nextStep = () => {
     // Ejecutar validación antes de avanzar
@@ -346,13 +401,13 @@ const SignUp = ({ navigation }) => {
         }
         
         if (!fotoFrenteTallerUri || fotoFrenteTallerUri === '') {
-          setFotoFrenteTallerError('Foto del Frente del Taller es requerida');
+          setFotoFrenteTallerError('Foto del Frente del Negocio es requerida');
         } else {
           setFotoFrenteTallerError('');
         }
         
         if (!fotoInternaTallerUri || fotoInternaTallerUri === '') {
-          setFotoInternaTallerError('Foto Interna del Taller es requerida');
+          setFotoInternaTallerError('Foto Interna del Negocio es requerida');
         } else {
           setFotoInternaTallerError('');
         }
@@ -363,7 +418,9 @@ const SignUp = ({ navigation }) => {
                fotoFrenteTallerUri !== '' && 
                fotoInternaTallerUri !== null && 
                fotoInternaTallerUri !== '';
-      case 7: // Contraseñas - REQUERIDO
+      case 7: // Horarios - REQUERIDO
+        return validateBusinessHours();
+      case 8: // Contraseñas - REQUERIDO
         return password?.trim() !== '' && confirmPassword?.trim() !== '' && validatePassword() && validateConfirmPassword();
       default:
         return false;
@@ -388,6 +445,20 @@ const SignUp = ({ navigation }) => {
     getCurrentLocation();
   }, []);
 
+  // useEffect(() => {
+  //   getFCMToken();
+  // }, []);
+
+  // const getFCMToken = async () => {
+  //   // Registra el dispositivo para mensajes remotos
+  //   await messaging().registerDeviceForRemoteMessages();
+
+  //   const token = await messaging().getToken();
+  //   console.log("FCM el token 1:", token);
+  // }
+
+
+
 
 
   const onHandleChange = async () => {
@@ -400,7 +471,7 @@ const SignUp = ({ navigation }) => {
       await messaging().registerDeviceForRemoteMessages();
 
       const token = await messaging().getToken();
-      console.log("FCM Token123:", token);
+      console.log("FCM el token 1:", token);
       // setGetOtpDisabled(true);
 
       if (typeOfView == 'Cliente') {
@@ -597,6 +668,7 @@ const SignUp = ({ navigation }) => {
                 agenteAutorizado: checked == undefined ? false : checked,
                 whatsapp: whats?.replace(/\s+/g, ""),
                 metodos_pago: newFormatMP,
+                horarios_atencion: businessHours,
                 estado: estadoSelected,
                 base64: base64 == null || base64 == undefined || base64 == '' ? "" : base64,
                 rifIdFiscal: rifIdFiscalBase64 == null || rifIdFiscalBase64 == undefined || rifIdFiscalBase64 == '' ? "" : rifIdFiscalBase64,
@@ -670,6 +742,8 @@ const SignUp = ({ navigation }) => {
                 setFotoFrenteTallerBase64(null);
                 setFotoInternaTallerUri(null);
                 setFotoInternaTallerBase64(null);
+                setBusinessHours(buildDefaultBusinessHours());
+                setBusinessHoursError('');
 
 
 
@@ -758,9 +832,9 @@ const SignUp = ({ navigation }) => {
       alignItems: 'center',
     },
     stepDot: {
-      width: 30,
-      height: 30,
-      borderRadius: 15,
+      width: 26,
+      height: 26,
+      borderRadius: 13,
       backgroundColor: '#e9ecef',
       justifyContent: 'center',
       alignItems: 'center',
@@ -768,23 +842,23 @@ const SignUp = ({ navigation }) => {
       borderColor: '#e9ecef',
     },
     stepDotActive: {
-      backgroundColor: '#2D3261',
-      borderColor: '#2D3261',
+      backgroundColor: '#FFD60A',
+      borderColor: '#FFD60A',
     },
     stepDotCompleted: {
-      backgroundColor: '#28a745',
-      borderColor: '#28a745',
+      backgroundColor: '#FFD60A',
+      borderColor: '#FFD60A',
     },
     stepNumber: {
       color: '#6c757d',
-      fontSize: 12,
+      fontSize: 11,
       fontWeight: 'bold',
     },
     stepNumberActive: {
-      color: '#ffffff',
+      color: '#1F2344',
     },
     stepNumberCompleted: {
-      color: '#ffffff',
+      color: '#1F2344',
     },
     stepTitle: {
       fontSize: 10,
@@ -798,13 +872,25 @@ const SignUp = ({ navigation }) => {
       fontWeight: 'bold',
     },
     stepTitleCompleted: {
-      color: '#28a745',
+      color: '#FFD60A',
       fontWeight: 'bold',
     },
     stepContainer: {
       flex: 1,
       paddingHorizontal: 20,
       paddingTop: 20,
+      paddingBottom: 24,
+      marginTop: 8,
+      marginBottom: 16,
+      borderRadius: 20,
+      backgroundColor: '#FFFFFF',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.06,
+      shadowRadius: 10,
+      elevation: 3,
+      borderWidth: 1,
+      borderColor: 'rgba(15,23,42,0.05)',
     },
     stepHeader: {
       marginBottom: 20,
@@ -877,22 +963,47 @@ const SignUp = ({ navigation }) => {
       { number: 1, title: 'Básico' },
       { number: 2, title: 'Ubicación' },
       { number: 3, title: 'Contacto' },
-      { number: 4, title: 'Taller' },
+      { number: 4, title: 'Negocio' },
       { number: 5, title: 'Redes' },
       { number: 6, title: 'Documentos' },
-      { number: 7, title: 'Seguridad' },
+      { number: 7, title: 'Horarios' },
+      { number: 8, title: 'Seguridad' },
     ];
 
+    const progressPercent = Math.round((currentStep / totalSteps) * 100);
+    const currentStepConfig = steps.find(s => s.number === currentStep);
+    let motivationalText = 'Completa cada paso para registrar tu negocio.';
+    if (progressPercent >= 25 && progressPercent < 50) {
+      motivationalText = '¡Buen comienzo! Sigue avanzando con los siguientes datos.';
+    } else if (progressPercent >= 50 && progressPercent < 75) {
+      motivationalText = '¡Vas a mitad de camino! Cada paso te acerca a más clientes.';
+    } else if (progressPercent >= 75 && progressPercent < 100) {
+      motivationalText = '¡Ya casi terminas! Revisa y completa los últimos detalles.';
+    } else if (progressPercent === 100) {
+      motivationalText = '¡Excelente! Tu registro está listo para enviarse.';
+    }
+
     return (
-      <View style={stepStyles.progressContainer}>
-        <View style={stepStyles.progressBar}>
-          <View 
-            style={[
-              stepStyles.progressFill, 
-              { width: `${(currentStep / totalSteps) * 100}%` }
-            ]} 
-          />
-        </View>
+      <View
+        style={[
+          stepStyles.progressContainer,
+          typeOfView === 'Taller' && {
+            paddingVertical: 4,
+            paddingHorizontal: 12,
+            backgroundColor: 'transparent',
+            borderBottomWidth: 0,
+          },
+        ]}>
+        {typeOfView !== 'Taller' && (
+          <View style={stepStyles.progressBar}>
+            <View
+              style={[
+                stepStyles.progressFill,
+                { width: `${(currentStep / totalSteps) * 100}%` },
+              ]}
+            />
+          </View>
+        )}
         <View style={stepStyles.stepIndicator}>
           {steps.map((step) => {
             const isActive = step.number === currentStep;
@@ -919,6 +1030,32 @@ const SignUp = ({ navigation }) => {
               </View>
             );
           })}
+        </View>
+        <View style={{ marginTop: 4 }}>
+          <Text
+            style={[
+              commonStyles.subtitleText,
+              {
+                fontSize: 11,
+                color: appColors.subtitle,
+                textAlign: 'center',
+              },
+            ]}>
+            Paso {currentStep} de {totalSteps}
+            {currentStepConfig ? ` · ${currentStepConfig.title}` : ''}
+          </Text>
+          <Text
+            style={[
+              commonStyles.subtitleText,
+              {
+                fontSize: 11,
+                color: appColors.primary,
+                textAlign: 'center',
+                marginTop: 1,
+              },
+            ]}>
+            {motivationalText}
+          </Text>
         </View>
       </View>
     );
@@ -1011,67 +1148,127 @@ const SignUp = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={stepStyles.stepContainer}>
-      <View style={stepStyles.stepHeader}>
-        <Text style={stepStyles.stepTitle}>Información Básica</Text>
-        <Text style={stepStyles.stepSubtitle}>
-          Comencemos con los datos básicos de tu taller
+      <View
+        style={{
+          marginBottom: 18,
+          paddingVertical: 12,
+          paddingHorizontal: 14,
+          borderRadius: 18,
+          backgroundColor: '#F9FAFF',
+          borderWidth: 1,
+          borderColor: 'rgba(37, 99, 235, 0.16)',
+        }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: '800',
+            color: '#1F2937',
+            textAlign: 'left',
+            marginBottom: 6,
+          }}>
+          Información básica del negocio
+        </Text>
+        <Text
+          style={{
+            fontSize: 13,
+            color: '#4B5563',
+            lineHeight: 18,
+          }}>
+          Empecemos con el nombre y los datos fiscales principales de tu negocio.
         </Text>
       </View>
 
-      <View style={{ marginBottom: 20 }}>
+      <View
+        style={{
+          marginTop: 0,
+          marginBottom: 20,
+        }}>
         <View
           style={{
-            flex: 1,
-            justifyContent: 'center',
+            flexDirection: 'row',
             alignItems: 'center',
-            marginTop: 10,
           }}>
-          {imageUri && (
-            <View style={stylesImage.imageContainer}>
-              <Image
-                source={{ uri: imageUri }}
-                style={{ width: 200, height: 200 }}
-              />
-              <TouchableOpacity
-                style={stylesImage.closeButton}
-                onPress={clearImage}>
-                <Text style={stylesImage.closeButtonText}>X</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          <TouchableOpacity
-            style={[
-              stylesImage.button,
-              {
-                borderWidth: 1,
-                borderColor: '#2D3261',
-                borderStyle: 'dotted',
-                borderRadius: 5,
-                backgroundColor: '#FFF',
-                flexDirection: 'row',
-                alignItems: 'center',
-                padding: 10,
-                marginTop: 10,
-              },
-            ]}
-            onPress={selectImage}>
-            <Icons name="user" size={15} color="#2D3261" />
-            <Text
+          <View
+            style={{
+              flex: 1,
+              alignItems: 'center',
+              marginRight: 10,
+            }}>
+            {imageUri ? (
+              <View style={stylesImage.imageContainer}>
+                <Image
+                  source={{ uri: imageUri }}
+                  style={{ width: 90, height: 90, borderRadius: 18 }}
+                />
+                <TouchableOpacity
+                  style={stylesImage.closeButton}
+                  onPress={clearImage}>
+                  <Text style={stylesImage.closeButtonText}>X</Text>
+                </TouchableOpacity>
+              </View>
+            ) : (
+              <View
+                style={{
+                  width: 90,
+                  height: 90,
+                  borderRadius: 18,
+                  backgroundColor: '#EEF2FF',
+                  borderWidth: 1,
+                  borderColor: 'rgba(45, 50, 97, 0.25)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                <Icons name="image" size={32} color="#2D3261" />
+              </View>
+            )}
+          </View>
+          <View style={{ flex: 2 }}>
+            <TouchableOpacity
               style={[
-                stylesImage.buttonText,
-                { marginLeft: 10, color: '#2D3261' },
-              ]}>
-              Foto de perfil
+                stylesImage.button,
+                {
+                  borderWidth: 1,
+                  borderColor: '#2D3261',
+                  borderStyle: 'dotted',
+                  borderRadius: 999,
+                  backgroundColor: '#FFF',
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
+                },
+              ]}
+              onPress={selectImage}>
+              <Icons name="camera" size={16} color="#2D3261" />
+              <Text
+                style={[
+                  stylesImage.buttonText,
+                  {
+                    marginLeft: 8,
+                    color: '#2D3261',
+                    fontSize: 13,
+                    fontWeight: '600',
+                  },
+                ]}>
+                Subir foto del negocio
+              </Text>
+            </TouchableOpacity>
+            <Text
+              style={{
+                marginTop: 6,
+                fontSize: 10,
+                color: '#9CA3AF',
+              }}>
+              JPG o PNG, máximo 5MB.
             </Text>
-          </TouchableOpacity>
+          </View>
         </View>
       </View>
 
       <TextInputs
         keyboardType="default"
         autoCapitalize="words"
-        title="Nombre del Taller"
+        title="Nombre del Negocio"
         placeHolder="Ingrese el nombre"
         value={Nombre}
         onChangeText={text => {
@@ -1088,6 +1285,10 @@ const SignUp = ({ navigation }) => {
           setNombreTyping(false);
         }}
         icon={<Icons name="user" size={20} color="#9BA6B8" />}
+        style={{
+          backgroundColor: '#F3F4F6',
+          borderRadius: 10,
+        }}
       />
       {NombreError !== '' && (
         <Text style={styles.errorStyle}>{NombreError}</Text>
@@ -1110,7 +1311,7 @@ const SignUp = ({ navigation }) => {
             borderWidth: 1,
             borderColor: '#ccc',
             borderRadius: 5,
-            backgroundColor: '#fff',
+            backgroundColor: '#F3F4F6',
             height: 50,
             justifyContent: 'center',
           }}>
@@ -1121,7 +1322,7 @@ const SignUp = ({ navigation }) => {
                 borderColor: '#ccc',
                 borderRadius: 5,
                 paddingHorizontal: 10,
-                backgroundColor: '#fff',
+                backgroundColor: '#F3F4F6',
                 height: 50,
               }}
               placeholderStyle={{
@@ -1176,7 +1377,7 @@ const SignUp = ({ navigation }) => {
                 borderColor: '#ccc',
                 borderRadius: 5,
                 paddingHorizontal: 10,
-                backgroundColor: '#fff',
+                backgroundColor: '#F3F4F6',
                 width: '100%',
               }}
             />
@@ -1208,6 +1409,10 @@ const SignUp = ({ navigation }) => {
         icon={
           <Email color={isEmailTyping ? '#051E47' : appColors.subtitle} />
         }
+        style={{
+          backgroundColor: '#F3F4F6',
+          borderRadius: 10,
+        }}
       />
       {emailError !== '' && (
         <Text style={styles.errorStyle}>{emailError}</Text>
@@ -1230,66 +1435,100 @@ const SignUp = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={stepStyles.stepContainer}>
-      <View style={stepStyles.stepHeader}>
-        <Text style={stepStyles.stepTitle}>Ubicación</Text>
-        <Text style={stepStyles.stepSubtitle}>
-          Selecciona el estado y la ubicación exacta de tu taller
+      <View
+        style={{
+          marginBottom: 18,
+          paddingVertical: 12,
+          paddingHorizontal: 14,
+          borderRadius: 18,
+          backgroundColor: '#F9FAFF',
+          borderWidth: 1,
+          borderColor: 'rgba(37, 99, 235, 0.16)',
+        }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: '800',
+            color: '#1F2937',
+            textAlign: 'left',
+            marginBottom: 6,
+          }}>
+          Ubicación del negocio
+        </Text>
+        <Text
+          style={{
+            fontSize: 13,
+            color: '#4B5563',
+            lineHeight: 18,
+          }}>
+          Selecciona el estado y marca en el mapa dónde se encuentra tu negocio.
         </Text>
       </View>
 
-      <View style={{ marginTop: 5 }}>
+      <View
+        style={{
+          marginTop: 8,
+          marginBottom: 16,
+        }}>
         <Text
           style={[
             styles.headingContainer,
-            { color: textColorStyle },
-            { textAlign: textRTLStyle },
+            {
+              color: textColorStyle,
+              textAlign: 'left',
+              marginBottom: 8,
+            },
           ]}>
           Estado
         </Text>
 
-        <View style={{ flexDirection: 'row', marginTop: 10, marginBottom: 30, alignItems: 'center' }}>
-          <View style={{
-            width: '100%',
-            paddingRight: 0,
+        <View
+          style={{
             borderWidth: 1,
-            borderColor: '#ccc',
-            borderRadius: 5,
-            backgroundColor: '#fff',
+            borderColor: '#D1D5DB',
+            borderRadius: 10,
+            backgroundColor: '#F3F4F6',
             height: 50,
             justifyContent: 'center',
+            paddingHorizontal: 8,
           }}>
-            <Dropdown
-              style={{
-                width: '100%',
-                borderWidth: 1,
-                borderColor: '#ccc',
-                borderRadius: 5,
-                paddingHorizontal: 10,
-                backgroundColor: '#fff',
-                height: 50,
-              }}
-              placeholderStyle={{
-                color: 'gray',
-                fontSize: 14,
-              }}
-              selectedTextStyle={{
-                color: 'black',
-                fontSize: 14,
-              }}
-              data={estadosVenezuela}
-              labelField="label"
-              valueField="value"
-              placeholder="Seleccione un estado"
-              value={estadoSelected}
-              onChange={item => setestadoSelected(item.value)}
-              search={true}
-            />
-          </View>
+          <Dropdown
+            style={{
+              width: '100%',
+              borderWidth: 0,
+              paddingHorizontal: 4,
+              backgroundColor: 'transparent',
+              height: 42,
+            }}
+            placeholderStyle={{
+              color: 'gray',
+              fontSize: 13,
+            }}
+            selectedTextStyle={{
+              color: '#111827',
+              fontSize: 13,
+            }}
+            data={estadosVenezuela}
+            labelField="label"
+            valueField="value"
+            placeholder="Seleccione un estado"
+            value={estadoSelected}
+            onChange={item => setestadoSelected(item.value)}
+            search={true}
+          />
         </View>
       </View>
 
-      <View
-        style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
+      {/* <View
+        style={[
+          stylesMap.container,
+          {
+            marginTop: 0,
+            marginBottom: 12,
+            borderRadius: 18,
+            overflow: 'hidden',
+          },
+        ]}>
         {isMounted && (
           <MapComponent
             initialRegion={{
@@ -1303,26 +1542,92 @@ const SignUp = ({ navigation }) => {
             useThisCoo={true}
           />
         )}
-      </View>
+      </View> */}
 
-      <TextInputs
-        title="Dirección del Taller"
-        placeHolder="Ingrese su direccion"
-        value={Direccion}
-        onChangeText={text => {
-          setDireccion(text);
-          setDireccionTyping(true);
-          if (text?.trim() === '') {
-            setDireccionError('Direccion es requerido');
-          } else {
-            setDireccionError('');
-          }
-        }}
-        onBlur={() => {
-          setDireccionTyping(false);
-        }}
-        icon={<Icons name="map-marker" size={20} color="#9BA6B8" />}
-      />
+      <TouchableOpacity
+        onPress={() => setShowMapboxTestModal(true)}
+        activeOpacity={0.85}
+        style={{
+          marginBottom: 16,
+          alignSelf: 'stretch',
+          borderRadius: 16,
+          backgroundColor: '#2D3261',
+          paddingVertical: 16,
+          paddingHorizontal: 20,
+          flexDirection: 'row',
+          alignItems: 'center',
+          shadowColor: '#2D3261',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.35,
+          shadowRadius: 8,
+          elevation: 6,
+        }}>
+        <View
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            backgroundColor: 'rgba(255,255,255,0.15)',
+            alignItems: 'center',
+            justifyContent: 'center',
+            marginRight: 14,
+          }}>
+          <Icons2 name="location-sharp" size={24} color="#FFFFFF" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text
+            style={{
+              color: '#FFFFFF',
+              fontSize: 15,
+              fontWeight: '700',
+              marginBottom: 2,
+            }}>
+            Seleccionar ubicación
+          </Text>
+          <Text
+            style={{
+              color: 'rgba(255,255,255,0.65)',
+              fontSize: 12,
+              fontWeight: '400',
+            }}>
+            {lat && lng
+              ? `${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)}`
+              : 'Toca para abrir el mapa'}
+          </Text>
+        </View>
+        <Icons2 name="chevron-forward" size={20} color="rgba(255,255,255,0.5)" />
+      </TouchableOpacity>
+
+      <View
+        style={{
+          marginTop: 4,
+        }}>
+        <TextInputs
+          title="Dirección del Negocio"
+          placeHolder="Describe la dirección lo más claro posible"
+          value={Direccion}
+          multiline={true}
+          numberOfLines={4}
+          height={120}
+          onChangeText={text => {
+            setDireccion(text);
+            setDireccionTyping(true);
+            if (text?.trim() === '') {
+              setDireccionError('Direccion es requerido');
+            } else {
+              setDireccionError('');
+            }
+          }}
+          onBlur={() => {
+            setDireccionTyping(false);
+          }}
+          icon={<Icons name="map-marker" size={20} color="#9BA6B8" />}
+          style={{
+            backgroundColor: '#F3F4F6',
+            borderRadius: 10,
+          }}
+        />
+      </View>
       {DireccionError !== '' && (
         <Text style={styles.errorStyle}>{DireccionError}</Text>
       )}
@@ -1344,10 +1649,33 @@ const SignUp = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={stepStyles.stepContainer}>
-      <View style={stepStyles.stepHeader}>
-        <Text style={stepStyles.stepTitle}>Información de Contacto</Text>
-        <Text style={stepStyles.stepSubtitle}>
-          Proporciona tus números de teléfono para que los clientes puedan contactarte
+      <View
+        style={{
+          marginBottom: 18,
+          paddingVertical: 12,
+          paddingHorizontal: 14,
+          borderRadius: 18,
+          backgroundColor: '#F9FAFF',
+          borderWidth: 1,
+          borderColor: 'rgba(37, 99, 235, 0.16)',
+        }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: '800',
+            color: '#1F2937',
+            textAlign: 'left',
+            marginBottom: 6,
+          }}>
+          Información de contacto
+        </Text>
+        <Text
+          style={{
+            fontSize: 13,
+            color: '#4B5563',
+            lineHeight: 18,
+          }}>
+          Agrega los números de teléfono y WhatsApp para que puedan comunicarse contigo.
         </Text>
       </View>
 
@@ -1457,10 +1785,33 @@ const SignUp = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={stepStyles.stepContainer}>
-      <View style={stepStyles.stepHeader}>
-        <Text style={stepStyles.stepTitle}>Información del Taller</Text>
-        <Text style={stepStyles.stepSubtitle}>
-          Cuéntanos más sobre tu taller y tu experiencia
+      <View
+        style={{
+          marginBottom: 18,
+          paddingVertical: 12,
+          paddingHorizontal: 14,
+          borderRadius: 18,
+          backgroundColor: '#F9FAFF',
+          borderWidth: 1,
+          borderColor: 'rgba(37, 99, 235, 0.16)',
+        }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: '800',
+            color: '#1F2937',
+            textAlign: 'left',
+            marginBottom: 6,
+          }}>
+          Información del negocio
+        </Text>
+        <Text
+          style={{
+            fontSize: 13,
+            color: '#4B5563',
+            lineHeight: 18,
+          }}>
+          Cuéntanos sobre tu experiencia, registro comercial y métodos de pago disponibles.
         </Text>
       </View>
 
@@ -1484,7 +1835,7 @@ const SignUp = ({ navigation }) => {
           setRegComercialTyping(false);
         }}
         keyboardType="numeric"
-        icon={<Icons name="id-card" size={20} color="#9BA6B8" />}
+        icon={<Icons name="id-card" size={20} color="#9BA6B8"/>}
       />
       {RegComercialError !== '' && (
         <Text style={styles.errorStyle}>{RegComercialError}</Text>
@@ -1516,9 +1867,9 @@ const SignUp = ({ navigation }) => {
       </View>
 
       <TextInputs
-        title="Caracteristicas del taller"
+        title="Caracteristicas del negocio"
         value={Caracteristicas}
-        placeHolder="Característica del taller (tipo de piso, si posee fosa, rampla, entre otras condiciones, gatos elevadores)"
+        placeHolder="Característica del negocio (tipo de piso, si posee fosa, rampla, entre otras condiciones, gatos elevadores)"
         multiline={true}
         numberOfLines={4}
         height={150}
@@ -1620,10 +1971,33 @@ const SignUp = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={stepStyles.stepContainer}>
-      <View style={stepStyles.stepHeader}>
-        <Text style={stepStyles.stepTitle}>Redes Sociales y Seguro</Text>
-        <Text style={stepStyles.stepSubtitle}>
-          Conecta tus redes sociales y proporciona información sobre tu seguro
+      <View
+        style={{
+          marginBottom: 18,
+          paddingVertical: 12,
+          paddingHorizontal: 14,
+          borderRadius: 18,
+          backgroundColor: '#F9FAFF',
+          borderWidth: 1,
+          borderColor: 'rgba(37, 99, 235, 0.16)',
+        }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: '800',
+            color: '#1F2937',
+            textAlign: 'left',
+            marginBottom: 6,
+          }}>
+          Redes y seguro
+        </Text>
+        <Text
+          style={{
+            fontSize: 13,
+            color: '#4B5563',
+            lineHeight: 18,
+          }}>
+          Conecta tus redes sociales y agrega la información del seguro de tu negocio.
         </Text>
       </View>
 
@@ -1663,14 +2037,15 @@ const SignUp = ({ navigation }) => {
           setLinkTiktok(text);
         }}
         onBlur={() => {}}
-        icon={<Icons2 name="tiktok" size={20} color="#9BA6B8" />}
+        icon={<Icons name="rss-square" size={20} color="#9BA6B8" />}
+        
       />
       {LinkTiktokError !== '' && (
         <Text style={styles.errorStyle}>{LinkTiktokError}</Text>
       )}
 
       <TextInputs
-        title="Seguro del taller"
+        title="Seguro del negocio"
         placeHolder="Ingrese su seguro"
         value={seguro}
         height={150}
@@ -1709,23 +2084,61 @@ const SignUp = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={stepStyles.stepContainer}>
-          <View style={stepStyles.stepHeader}>
-            <Text style={stepStyles.stepTitle}>Servicio</Text>
-            <Text style={stepStyles.stepSubtitle}>
-              Sube los documentos necesarios para verificar tu taller
+          <View
+            style={{
+              marginBottom: 18,
+              paddingVertical: 12,
+              paddingHorizontal: 14,
+              borderRadius: 18,
+              backgroundColor: '#F9FAFF',
+              borderWidth: 1,
+              borderColor: 'rgba(37, 99, 235, 0.16)',
+            }}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: '800',
+                color: '#1F2937',
+                textAlign: 'left',
+                marginBottom: 6,
+              }}>
+              Documentos del servicio
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                color: '#4B5563',
+                lineHeight: 18,
+              }}>
+              Sube los documentos necesarios para validar y proteger tu negocio.
             </Text>
           </View>
 
           {/* RIF/ID Fiscal */}
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ marginBottom: 10, color: 'black', fontWeight: 'bold' }}>
-              Cargar RIF/ID Fiscal
+          <View
+            style={{
+              marginBottom: 16,
+              paddingVertical: 14,
+              paddingHorizontal: 14,
+              borderRadius: 18,
+              backgroundColor: '#F9FAFB',
+              borderWidth: 1,
+              borderColor: 'rgba(15,23,42,0.06)',
+            }}>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: '700',
+                color: '#1F2937',
+                marginBottom: 10,
+              }}>
+              RIF / ID Fiscal
             </Text>
             {rifIdFiscalUri && (
-              <View style={stylesImage.imageContainer}>
+              <View style={[stylesImage.imageContainer, { marginBottom: 10 }]}>
                 <Image
                   source={{ uri: rifIdFiscalUri }}
-                  style={{ width: 200, height: 200 }}
+                  style={{ width: 160, height: 160, borderRadius: 12 }}
                 />
                 <TouchableOpacity
                   style={stylesImage.closeButton}
@@ -1739,22 +2152,22 @@ const SignUp = ({ navigation }) => {
                 stylesImage.button,
                 {
                   borderWidth: 1,
-                  borderColor: rifIdFiscalError !== '' ? '#ff0000' : '#2D3261',
+                  borderColor: rifIdFiscalError !== '' ? '#dc2626' : '#2D3261',
                   borderStyle: 'dotted',
-                  borderRadius: 5,
+                  borderRadius: 999,
                   backgroundColor: '#FFF',
                   flexDirection: 'row',
                   alignItems: 'center',
-                  padding: 10,
-                  marginTop: 10,
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
                 },
               ]}
               onPress={selectRifIdFiscal}>
-              <Icons name="dollar" size={15} color="#2D3261" />
+              <Icons name="file-text-o" size={16} color="#2D3261" />
               <Text
                 style={[
                   stylesImage.buttonText,
-                  { marginLeft: 10, color: '#2D3261' },
+                  { marginLeft: 8, color: '#2D3261', fontSize: 13, fontWeight: '600' },
                 ]}>
                 Cargar RIF/ID Fiscal
               </Text>
@@ -1765,15 +2178,30 @@ const SignUp = ({ navigation }) => {
           </View>
 
           {/* Permiso de Operación */}
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ marginBottom: 10, color: 'black', fontWeight: 'bold' }}>
-              Cargar Permiso de Operación
+          <View
+            style={{
+              marginBottom: 16,
+              paddingVertical: 14,
+              paddingHorizontal: 14,
+              borderRadius: 18,
+              backgroundColor: '#F9FAFB',
+              borderWidth: 1,
+              borderColor: 'rgba(15,23,42,0.06)',
+            }}>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: '700',
+                color: '#1F2937',
+                marginBottom: 10,
+              }}>
+              Permiso de Operación
             </Text>
             {permisoOperacionUri && (
-              <View style={stylesImage.imageContainer}>
+              <View style={[stylesImage.imageContainer, { marginBottom: 10 }]}>
                 <Image
                   source={{ uri: permisoOperacionUri }}
-                  style={{ width: 200, height: 200 }}
+                  style={{ width: 160, height: 160, borderRadius: 12 }}
                 />
                 <TouchableOpacity
                   style={stylesImage.closeButton}
@@ -1789,20 +2217,20 @@ const SignUp = ({ navigation }) => {
                   borderWidth: 1,
                   borderColor: '#2D3261',
                   borderStyle: 'dotted',
-                  borderRadius: 5,
+                  borderRadius: 999,
                   backgroundColor: '#FFF',
                   flexDirection: 'row',
                   alignItems: 'center',
-                  padding: 10,
-                  marginTop: 10,
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
                 },
               ]}
               onPress={selectPermisoOperacion}>
-              <Icons name="dollar" size={15} color="#2D3261" />
+              <Icons name="file-text-o" size={16} color="#2D3261" />
               <Text
                 style={[
                   stylesImage.buttonText,
-                  { marginLeft: 10, color: '#2D3261' },
+                  { marginLeft: 8, color: '#2D3261', fontSize: 13, fontWeight: '600' },
                 ]}>
                 Cargar Permiso de Operación
               </Text>
@@ -1810,15 +2238,33 @@ const SignUp = ({ navigation }) => {
           </View>
 
           {/* Logotipo del Negocio (Opcional) */}
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ marginBottom: 10, color: 'black', fontWeight: 'bold' }}>
-              Cargar Logotipo del Negocio (Opcional)
+          <View
+            style={{
+              marginBottom: 16,
+              paddingVertical: 14,
+              paddingHorizontal: 14,
+              borderRadius: 18,
+              backgroundColor: '#F9FAFB',
+              borderWidth: 1,
+              borderColor: 'rgba(15,23,42,0.06)',
+            }}>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: '700',
+                color: '#1F2937',
+                marginBottom: 4,
+              }}>
+              Logotipo del Negocio
+            </Text>
+            <Text style={{ fontSize: 12, color: '#6B7280', marginBottom: 10 }}>
+              Opcional
             </Text>
             {logotipoNegocioUri && (
-              <View style={stylesImage.imageContainer}>
+              <View style={[stylesImage.imageContainer, { marginBottom: 10 }]}>
                 <Image
                   source={{ uri: logotipoNegocioUri }}
-                  style={{ width: 200, height: 200 }}
+                  style={{ width: 160, height: 160, borderRadius: 12 }}
                 />
                 <TouchableOpacity
                   style={stylesImage.closeButton}
@@ -1834,36 +2280,51 @@ const SignUp = ({ navigation }) => {
                   borderWidth: 1,
                   borderColor: '#2D3261',
                   borderStyle: 'dotted',
-                  borderRadius: 5,
+                  borderRadius: 999,
                   backgroundColor: '#FFF',
                   flexDirection: 'row',
                   alignItems: 'center',
-                  padding: 10,
-                  marginTop: 10,
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
                 },
               ]}
               onPress={selectLogotipoNegocio}>
-              <Icons name="dollar" size={15} color="#2D3261" />
+              <Icons name="image" size={16} color="#2D3261" />
               <Text
                 style={[
                   stylesImage.buttonText,
-                  { marginLeft: 10, color: '#2D3261' },
+                  { marginLeft: 8, color: '#2D3261', fontSize: 13, fontWeight: '600' },
                 ]}>
-                Cargar Logotipo del Negocio (Opcional)
+                Cargar logotipo
               </Text>
             </TouchableOpacity>
           </View>
 
-          {/* Foto del Frente del Taller */}
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ marginBottom: 10, color: 'black', fontWeight: 'bold' }}>
-              Foto del Frente del Taller
+          {/* Foto del Frente del Negocio */}
+          <View
+            style={{
+              marginBottom: 16,
+              paddingVertical: 14,
+              paddingHorizontal: 14,
+              borderRadius: 18,
+              backgroundColor: '#F9FAFB',
+              borderWidth: 1,
+              borderColor: 'rgba(15,23,42,0.06)',
+            }}>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: '700',
+                color: '#1F2937',
+                marginBottom: 10,
+              }}>
+              Foto del Frente del Negocio
             </Text>
             {fotoFrenteTallerUri && (
-              <View style={stylesImage.imageContainer}>
+              <View style={[stylesImage.imageContainer, { marginBottom: 10 }]}>
                 <Image
                   source={{ uri: fotoFrenteTallerUri }}
-                  style={{ width: 200, height: 200 }}
+                  style={{ width: 160, height: 160, borderRadius: 12 }}
                 />
                 <TouchableOpacity
                   style={stylesImage.closeButton}
@@ -1877,24 +2338,24 @@ const SignUp = ({ navigation }) => {
                 stylesImage.button,
                 {
                   borderWidth: 1,
-                  borderColor: fotoFrenteTallerError !== '' ? '#ff0000' : '#2D3261',
+                  borderColor: fotoFrenteTallerError !== '' ? '#dc2626' : '#2D3261',
                   borderStyle: 'dotted',
-                  borderRadius: 5,
+                  borderRadius: 999,
                   backgroundColor: '#FFF',
                   flexDirection: 'row',
                   alignItems: 'center',
-                  padding: 10,
-                  marginTop: 10,
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
                 },
               ]}
               onPress={selectFotoFrenteTaller}>
-              <Icons name="file-image-o" size={15} color="#2D3261" />
+              <Icons name="camera" size={16} color="#2D3261" />
               <Text
                 style={[
                   stylesImage.buttonText,
-                  { marginLeft: 10, color: '#2D3261' },
+                  { marginLeft: 8, color: '#2D3261', fontSize: 13, fontWeight: '600' },
                 ]}>
-                Foto del Frente del Taller
+                Cargar foto del frente del negocio
               </Text>
             </TouchableOpacity>
             {fotoFrenteTallerError !== '' && (
@@ -1902,16 +2363,31 @@ const SignUp = ({ navigation }) => {
             )}
           </View>
 
-          {/* Foto Interna del Taller */}
-          <View style={{ marginBottom: 20 }}>
-            <Text style={{ marginBottom: 10, color: 'black', fontWeight: 'bold' }}>
-              Foto Interna del Taller
+          {/* Foto Interna del Negocio */}
+          <View
+            style={{
+              marginBottom: 16,
+              paddingVertical: 14,
+              paddingHorizontal: 14,
+              borderRadius: 18,
+              backgroundColor: '#F9FAFB',
+              borderWidth: 1,
+              borderColor: 'rgba(15,23,42,0.06)',
+            }}>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: '700',
+                color: '#1F2937',
+                marginBottom: 10,
+              }}>
+              Foto Interna del Negocio
             </Text>
             {fotoInternaTallerUri && (
-              <View style={stylesImage.imageContainer}>
+              <View style={[stylesImage.imageContainer, { marginBottom: 10 }]}>
                 <Image
                   source={{ uri: fotoInternaTallerUri }}
-                  style={{ width: 200, height: 200 }}
+                  style={{ width: 160, height: 160, borderRadius: 12 }}
                 />
                 <TouchableOpacity
                   style={stylesImage.closeButton}
@@ -1925,24 +2401,24 @@ const SignUp = ({ navigation }) => {
                 stylesImage.button,
                 {
                   borderWidth: 1,
-                  borderColor: fotoInternaTallerError !== '' ? '#ff0000' : '#2D3261',
+                  borderColor: fotoInternaTallerError !== '' ? '#dc2626' : '#2D3261',
                   borderStyle: 'dotted',
-                  borderRadius: 5,
+                  borderRadius: 999,
                   backgroundColor: '#FFF',
                   flexDirection: 'row',
                   alignItems: 'center',
-                  padding: 10,
-                  marginTop: 10,
+                  paddingVertical: 10,
+                  paddingHorizontal: 14,
                 },
               ]}
               onPress={selectFotoInternaTaller}>
-              <Icons name="file-image-o" size={15} color="#2D3261" />
+              <Icons name="camera" size={16} color="#2D3261" />
               <Text
                 style={[
                   stylesImage.buttonText,
-                  { marginLeft: 10, color: '#2D3261' },
+                  { marginLeft: 8, color: '#2D3261', fontSize: 13, fontWeight: '600' },
                 ]}>
-                Foto Interna del Taller
+                Cargar foto interna
               </Text>
             </TouchableOpacity>
             {fotoInternaTallerError !== '' && (
@@ -1960,6 +2436,214 @@ const SignUp = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
     >
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 50 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={stepStyles.stepContainer}>
+          <View
+            style={{
+              marginBottom: 18,
+              paddingVertical: 12,
+              paddingHorizontal: 14,
+              borderRadius: 18,
+              backgroundColor: '#F9FAFF',
+              borderWidth: 1,
+              borderColor: 'rgba(37, 99, 235, 0.16)',
+            }}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontWeight: '800',
+                color: '#1F2937',
+                textAlign: 'left',
+                marginBottom: 6,
+              }}>
+              Horarios de atención
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
+                color: '#4B5563',
+                lineHeight: 18,
+              }}>
+              Selecciona los días que atiendes y define tu hora de apertura y
+              cierre para cada uno.
+            </Text>
+          </View>
+
+          {BUSINESS_DAYS.map(day => {
+            const dayData = businessHours[day.key] || {};
+            return (
+              <View
+                key={day.key}
+                style={{
+                  marginBottom: 12,
+                  paddingVertical: 12,
+                  paddingHorizontal: 12,
+                  borderRadius: 14,
+                  borderWidth: 1,
+                  borderColor: 'rgba(15,23,42,0.08)',
+                  backgroundColor: '#FFFFFF',
+                }}>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: dayData.enabled ? 10 : 0,
+                  }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: '#1F2937' }}>
+                    {day.label}
+                  </Text>
+                  <TouchableOpacity
+                    onPress={() => {
+                      setBusinessHours(prev => ({
+                        ...prev,
+                        [day.key]: {
+                          ...prev[day.key],
+                          enabled: !prev[day.key]?.enabled,
+                        },
+                      }));
+                      setBusinessHoursError('');
+                    }}
+                    activeOpacity={0.85}
+                    style={{
+                      backgroundColor: dayData.enabled ? '#DCFCE7' : '#F3F4F6',
+                      borderColor: dayData.enabled ? '#22C55E' : '#D1D5DB',
+                      borderWidth: 1,
+                      borderRadius: 999,
+                      paddingVertical: 5,
+                      paddingHorizontal: 12,
+                    }}>
+                    <Text
+                      style={{
+                        color: dayData.enabled ? '#166534' : '#4B5563',
+                        fontSize: 12,
+                        fontWeight: '700',
+                      }}>
+                      {dayData.enabled ? 'Activo' : 'Inactivo'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                {dayData.enabled ? (
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: '#6B7280',
+                          marginBottom: 6,
+                          fontWeight: '600',
+                        }}>
+                        Apertura
+                      </Text>
+                      <View
+                        style={{
+                          borderWidth: 1,
+                          borderColor: '#D1D5DB',
+                          borderRadius: 10,
+                          backgroundColor: '#F9FAFB',
+                          height: 44,
+                          justifyContent: 'center',
+                          paddingHorizontal: 8,
+                        }}>
+                        <Dropdown
+                          style={{
+                            width: '100%',
+                            borderWidth: 0,
+                            backgroundColor: 'transparent',
+                            height: 38,
+                          }}
+                          placeholderStyle={{ color: '#6B7280', fontSize: 13 }}
+                          selectedTextStyle={{ color: '#111827', fontSize: 13 }}
+                          data={TIME_OPTIONS}
+                          labelField="label"
+                          valueField="value"
+                          value={dayData.open}
+                          onChange={item => {
+                            setBusinessHours(prev => ({
+                              ...prev,
+                              [day.key]: {
+                                ...prev[day.key],
+                                open: item.value,
+                              },
+                            }));
+                            setBusinessHoursError('');
+                          }}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          fontSize: 12,
+                          color: '#6B7280',
+                          marginBottom: 6,
+                          fontWeight: '600',
+                        }}>
+                        Cierre
+                      </Text>
+                      <View
+                        style={{
+                          borderWidth: 1,
+                          borderColor: '#D1D5DB',
+                          borderRadius: 10,
+                          backgroundColor: '#F9FAFB',
+                          height: 44,
+                          justifyContent: 'center',
+                          paddingHorizontal: 8,
+                        }}>
+                        <Dropdown
+                          style={{
+                            width: '100%',
+                            borderWidth: 0,
+                            backgroundColor: 'transparent',
+                            height: 38,
+                          }}
+                          placeholderStyle={{ color: '#6B7280', fontSize: 13 }}
+                          selectedTextStyle={{ color: '#111827', fontSize: 13 }}
+                          data={TIME_OPTIONS}
+                          labelField="label"
+                          valueField="value"
+                          value={dayData.close}
+                          onChange={item => {
+                            setBusinessHours(prev => ({
+                              ...prev,
+                              [day.key]: {
+                                ...prev[day.key],
+                                close: item.value,
+                              },
+                            }));
+                            setBusinessHoursError('');
+                          }}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                ) : null}
+              </View>
+            );
+          })}
+
+          {businessHoursError ? (
+            <Text style={styles.errorStyle}>{businessHoursError}</Text>
+          ) : null}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+
+  const renderStep8 = () => (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
       <ScrollView 
         style={{ flex: 1 }}
         contentContainerStyle={{ flexGrow: 1, paddingBottom: 50 }}
@@ -1967,10 +2651,33 @@ const SignUp = ({ navigation }) => {
         showsVerticalScrollIndicator={false}
       >
         <View style={stepStyles.stepContainer}>
-      <View style={stepStyles.stepHeader}>
-        <Text style={stepStyles.stepTitle}>Seguridad</Text>
-        <Text style={stepStyles.stepSubtitle}>
-          Crea una contraseña segura para proteger tu cuenta
+      <View
+        style={{
+          marginBottom: 18,
+          paddingVertical: 12,
+          paddingHorizontal: 14,
+          borderRadius: 18,
+          backgroundColor: '#F9FAFF',
+          borderWidth: 1,
+          borderColor: 'rgba(37, 99, 235, 0.16)',
+        }}>
+        <Text
+          style={{
+            fontSize: 20,
+            fontWeight: '800',
+            color: '#1F2937',
+            textAlign: 'left',
+            marginBottom: 6,
+          }}>
+          Seguridad de la cuenta
+        </Text>
+        <Text
+          style={{
+            fontSize: 13,
+            color: '#4B5563',
+            lineHeight: 18,
+          }}>
+          Crea una contraseña segura para proteger el acceso a tu taller.
         </Text>
       </View>
 
@@ -2045,6 +2752,8 @@ const SignUp = ({ navigation }) => {
         return renderStep6();
       case 7:
         return renderStep7();
+      case 8:
+        return renderStep8();
       default:
         return renderStep1();
     }
@@ -2188,6 +2897,30 @@ const SignUp = ({ navigation }) => {
     setLogotipoNegocioBase64(null);
   };
 
+  // Progreso visual para el registro de Cliente
+  const totalStepsCliente = 8;
+  let completedStepsCliente = 0;
+  if (imageUri) completedStepsCliente += 1;
+  if ((Nombre || '').trim() !== '') completedStepsCliente += 1;
+  if ((String(cedula) || '').trim() !== '') completedStepsCliente += 1;
+  if ((email || '').trim() !== '') completedStepsCliente += 1;
+  if ((estadoSelected || '').trim() !== '') completedStepsCliente += 1;
+  if ((phone || '').trim() !== '') completedStepsCliente += 1;
+  if ((password || '').trim() !== '') completedStepsCliente += 1;
+  if ((confirmPassword || '').trim() !== '') completedStepsCliente += 1;
+  const progressCliente = Math.round(
+    (completedStepsCliente / totalStepsCliente) * 100,
+  );
+  const progressTaller = Math.round((currentStep / totalSteps) * 100);
+  let progressClienteText = 'Comienza completando tus datos básicos.';
+  if (progressCliente >= 30 && progressCliente < 60) {
+    progressClienteText = '¡Vas muy bien! Sigue completando tu registro.';
+  } else if (progressCliente >= 60 && progressCliente < 90) {
+    progressClienteText = '¡Ya casi terminas! Solo faltan algunos campos.';
+  } else if (progressCliente >= 90) {
+    progressClienteText = '¡Excelente! Tu registro está casi completo.';
+  }
+
   const selectFotoFrenteTaller = () => {
     launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
       if (response.didCancel) {
@@ -2208,7 +2941,7 @@ const SignUp = ({ navigation }) => {
     setFotoFrenteTallerUri(null);
     setFotoFrenteTallerBase64(null);
     if (currentStep === 6) {
-      setFotoFrenteTallerError('Foto del Frente del Taller es requerida');
+      setFotoFrenteTallerError('Foto del Frente del Negocio es requerida');
     }
   };
 
@@ -2232,7 +2965,7 @@ const SignUp = ({ navigation }) => {
     setFotoInternaTallerUri(null);
     setFotoInternaTallerBase64(null);
     if (currentStep === 6) {
-      setFotoInternaTallerError('Foto Interna del Taller es requerida');
+      setFotoInternaTallerError('Foto Interna del Negocio es requerida');
     }
   };
 
@@ -2290,388 +3023,693 @@ const SignUp = ({ navigation }) => {
 
 
 
+  const DARK_BLUE = '#1F2344';
+  const YELLOW = '#FFD60A';
+
   return (
     <View
       style={[styles.container, { backgroundColor: bgFullStyle, padding: 30 }]}>
-      <Text
-        style={{
-          fontSize: 20,
-          fontWeight: 'bold',
-          marginTop: 15,
-          color: 'black',
-        }}>
-        Regístrate ahora {typeOfView != '' ? '(' + typeOfView + ')' : null}
-      </Text>
-      <Text style={{ fontSize: 13, color: 'gray', marginBottom: 10 }}>
-        Regístrate ya sea como cliente o taller
-      </Text>
-
-      {typeOfView === 'Cliente' ? (
-        // ****************************** FOMRULARIO PARA CLIENTES ***********************************************
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        >
-
-          <ScrollView style={{ marginBottom: 65 }}>
-            <View>
+      {typeOfView === '' ? (
+        <View
+          style={{
+            marginHorizontal: -30,
+            marginTop: -30,
+            marginBottom: 16,
+            backgroundColor: DARK_BLUE,
+            borderBottomLeftRadius: 100,
+            borderBottomRightRadius: 100,
+            borderBottomWidth: 10,
+            borderBottomColor: YELLOW,
+            borderLeftWidth: 3,
+            borderRightWidth: 3,
+            borderLeftColor: YELLOW,
+            borderRightColor: YELLOW,
+            overflow: 'hidden',
+            paddingTop: 44,
+            paddingBottom: 52,
+            paddingHorizontal: 30,
+            alignItems: 'center',
+          }}>
+          <Text
+            style={{
+              fontSize: 35,
+              fontWeight: '800',
+              color: '#FFFFFF',
+              letterSpacing: 0.3,
+              marginBottom: 10,
+              textAlign: 'center',
+            }}>
+            ¡Bienvenido!
+          </Text>
+          <Text
+            style={{
+              fontSize: 20,
+              color: '#E5E7EB',
+              lineHeight: 28,
+              marginBottom: 4,
+              textAlign: 'center',
+            }}>
+            Selecciona la opción que mejor te describa: uso personal o para tu negocio.
+          </Text>
+        </View>
+      ) : (
+        <View
+          style={{
+            marginHorizontal: -30,
+            marginTop: -30,
+            marginBottom: 16,
+            backgroundColor: DARK_BLUE,
+            borderBottomLeftRadius: 50,
+            borderBottomRightRadius: 50,
+            overflow: 'hidden',
+            paddingTop: 44,
+            paddingBottom: typeOfView === 'Cliente' || typeOfView === 'Taller' ? 0 : 36,
+            paddingHorizontal: 30,
+            alignItems: 'center',
+            borderLeftWidth: 2,
+            borderRightWidth: 2,
+            borderLeftColor: YELLOW,
+            borderRightColor: YELLOW,
+            ...(typeOfView !== 'Cliente' &&
+              typeOfView !== 'Taller' && {
+              borderBottomWidth: 10,
+              borderBottomColor: YELLOW,
+            }),
+          }}>
+          <Text
+            style={{
+              fontSize: 30,
+              fontWeight: '800',
+              color: '#FFFFFF',
+              letterSpacing: 0.3,
+              marginBottom: 8,
+              textAlign: 'center',
+            }}>
+            Completa tu registro
+            <Text style={{ fontWeight: '600', opacity: 0.9 }}> ({typeOfView})</Text>
+          </Text>
+          <Text
+            style={{
+              fontSize: 20,
+              color: '#E5E7EB',
+              lineHeight: 28,
+              marginBottom:
+                typeOfView === 'Cliente' || typeOfView === 'Taller' ? 12 : 4,
+              textAlign: 'center',
+            }}>
+            Un último paso y estarás listo.
+          </Text>
+          {typeOfView === 'Cliente' && (
+            <View
+              style={{
+                width: '100%',
+                marginHorizontal: -30,
+                height: 10,
+                backgroundColor: DARK_BLUE,
+                overflow: 'hidden',
+              }}>
               <View
                 style={{
-                  flex: 1,
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  marginTop: 10,
-                }}>
-                {imageUri && (
-                  <View style={stylesImage.imageContainer}>
-                    <Image
-                      source={{ uri: imageUri }}
-                      style={{ width: 200, height: 200 }}
-                    />
-                    <TouchableOpacity
-                      style={stylesImage.closeButton}
-                      onPress={clearImage}>
-                      <Text style={stylesImage.closeButtonText}>X</Text>
-                    </TouchableOpacity>
-                  </View>
-                )}
-
-                <TouchableOpacity
-                  style={[
-                    stylesImage.button,
-                    {
-                      borderWidth: 1,
-                      borderColor: '#2D3261',
-                      borderStyle: 'dotted', // Establecer el borde como interlineal
-                      borderRadius: 5, // Opcional: Añadir esquinas redondeadas
-                      backgroundColor: '#FFF',
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      padding: 10,
-                      marginTop: 10,
-                    },
-                  ]}
-                  onPress={selectImage}>
-                  <Icons name="user" size={15} color="#2D3261" />
-                  <Text
-                    style={[
-                      stylesImage.buttonText,
-                      { marginLeft: 10, color: '#2D3261' },
-                    ]}>
-                    Foto de perfil
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              <TextInputs
-                keyboardType="default"
-                autoCapitalize="words"
-                title="Nombre y Apellido"
-                placeHolder="Ingrese su nombre y apellido"
-                value={Nombre}
-                onChangeText={text => {
-                  console.log(text);
-                  setNombre(text);
-                  setNombreTyping(true);
-                  if (text?.trim() === '') {
-                    setNombreError('Nombre es requerido');
-                  } else {
-                    setNombreError('');
-                  }
+                  width: `${progressCliente}%`,
+                  height: '100%',
+                  backgroundColor: YELLOW,
                 }}
-                onBlur={() => {
-                  setNombreTyping(false);
-                }}
-                icon={<Icons name="user" size={20} color="#9BA6B8" />}
               />
-              {NombreError !== '' && (
-                <Text style={styles.errorStyle}>{NombreError}</Text>
-              )}
+            </View>
+          )}
 
-              <View style={{ marginTop: 5 }}>
+          {typeOfView === 'Taller' && (
+            <View
+              style={{
+                width: '100%',
+                marginHorizontal: -30,
+                height: 10,
+                backgroundColor: DARK_BLUE,
+                overflow: 'hidden',
+              }}>
+              <View
+                style={{
+                  width: `${progressTaller}%`,
+                  height: '100%',
+                  backgroundColor: YELLOW,
+                }}
+              />
+            </View>
+          )}
+        </View>
+      )}
+
+      {typeOfView === 'Cliente' ? (
+        // ****************************** FORMULARIO PARA CLIENTES ***********************************************
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 0,
+              marginTop: 0,
+              paddingHorizontal: 4,
+            }}>
+            <Text style={{ fontSize: 13, color: DARK_BLUE }}>
+              {/* Progreso del registro */}
+              {progressClienteText}
+            </Text>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: DARK_BLUE }}>
+              {progressCliente}%
+            </Text>
+          </View>
+
+          <ScrollView style={{ marginBottom: 60 }}>
+            <View
+              style={{
+                paddingHorizontal: 4,
+                paddingBottom: 16,
+              }}>
+              {/* Bloque: foto de perfil */}
+              <View
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 18,
+                  paddingVertical: 16,
+                  paddingHorizontal: 16,
+                  marginTop: 10,
+                  marginBottom: 14,
+                  borderWidth: 1,
+                  borderColor: 'rgba(15, 23, 42, 0.08)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 8,
+                  elevation: 3,
+                }}>
                 <Text
-                  style={[
-                    styles.headingContainer,
-                    { color: textColorStyle },
-                    { textAlign: textRTLStyle },
-                  ]}>
-                  Documento de Identidad
-                </Text>
-
-                <View style={{ flexDirection: 'row', marginTop: 10, marginBottom: 10, alignItems: 'center' }}>
-                  <View style={{
-                    width: '25%',
-                    paddingRight: 0,
-                    borderWidth: 1,
-                    borderColor: '#ccc',
-                    borderRadius: 5,
-                    backgroundColor: '#fff',
-                    height: 50,
-                    justifyContent: 'center',
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    color: '#111827',
+                    marginBottom: 4,
                   }}>
-                    <Dropdown
-                      style={{
-                        width: '100%', // Usa todo el ancho disponible en el contenedor
-                        borderWidth: 1, // Borde alrededor del Dropdown
-                        borderColor: '#ccc', // Color del borde
-                        borderRadius: 5, // Bordes redondeados
-                        paddingHorizontal: 10, // Espaciado interno
-                        backgroundColor: '#fff', // Fondo blanco
-                        height: 50, // Altura del Dropdown
-                      }}
-                      placeholderStyle={{
-                        color: 'gray', // Color del texto del placeholder
-                        fontSize: 14, // Tamaño del texto del placeholder
-                      }}
-                      selectedTextStyle={{
-                        color: 'black', // Color del texto seleccionado
-                        fontSize: 14, // Tamaño del texto seleccionado
-                      }}
-                      data={[
-                        { label: 'C-', value: 'C-' },
-                        { label: 'E-', value: 'E-' },
-                        { label: 'G-', value: 'G-' },
-                        { label: 'J-', value: 'J-' },
-                        { label: 'P-', value: 'P-' },
-                        { label: 'V-', value: 'V-' },
-                      ]} // Datos para el Dropdown
-                      labelField="label" // Campo que se mostrará como etiqueta
-                      valueField="value" // Campo que se usará como valor
-                      placeholder="Seleccione un prefijo" // Placeholder del Dropdown
-                      value={selectedPrefix} // Valor seleccionado
-                      onChange={item => setSelectedPrefix(item.value)} // Maneja el cambio de selección
-                    />
-
-                  </View>
-
-                  <View style={{ width: '100%', paddingLeft: 0, marginTop: -40 }}>
-                    <TextInputs
-                      title=""
-                      value={cedula}
-                      placeHolder="Ingrese el número de cédula"
-                      onChangeText={text => {
-                        const numericText = text.replace(/[^0-9]/g, '');
-                        if (numericText.length <= 10) {
-                          // Limitar a 10 caracteres
-                          setcedula(numericText);
-                          setcedulaTyping(true);
-                          if (numericText?.trim() === '') {
-                            setcedulaError('Documento es requerido');
-                          } else {
-                            setcedulaError('');
-                          }
-                        }
-                      }}
-                      onBlur={() => {
-                        setcedulaTyping(false);
-                      }}
-                      keyboardType="numeric"
-                      icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                      style={{
-                        height: 50, // Altura para el TextInput
-                        borderWidth: 1, // Borde alrededor del TextInput
-                        borderColor: '#ccc', // Color del borde
-                        borderRadius: 5, // Bordes redondeados
-                        paddingHorizontal: 10, // Espaciado interno
-                        backgroundColor: '#fff', // Fondo blanco
-                        width: '100%',
-                      }}
-                    />
-
-                    {/* TextInput para el número de cédula */}
-                    {cedulaError !== '' && (
-                      <Text style={styles.errorStyle}>{cedulaError}</Text>
+                  Tu identidad
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: '#6B7280',
+                    marginBottom: 12,
+                  }}>
+                  Agrega una foto y tus datos básicos para personalizar tu experiencia.
+                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}>
+                  <View
+                    style={{
+                      flex: 1,
+                      alignItems: 'center',
+                      marginRight: 12,
+                    }}>
+                    {imageUri ? (
+                      <View style={stylesImage.imageContainer}>
+                        <Image
+                          source={{ uri: imageUri }}
+                          style={{ width: 90, height: 90, borderRadius: 45 }}
+                        />
+                        <TouchableOpacity
+                          style={stylesImage.closeButton}
+                          onPress={clearImage}>
+                          <Text style={stylesImage.closeButtonText}>X</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <View
+                        style={{
+                          width: 90,
+                          height: 90,
+                          borderRadius: 45,
+                          backgroundColor: '#EEF2FF',
+                          borderWidth: 1,
+                          borderColor: 'rgba(45, 50, 97, 0.25)',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
+                        <Icons name="user" size={34} color="#2D3261" />
+                      </View>
                     )}
                   </View>
-                </View>
-
-              </View>
-
-              <TextInputs
-                title="Correo Electrónico"
-                keyboardType={'email-address'}
-                value={email}
-                placeHolder="Ingrese su email"
-                onChangeText={text => {
-                  setEmail(text);
-                  setEmailTyping(true);
-                  if (text?.trim() === '') {
-                    setEmailError('Email es requerido');
-                  } else {
-                    setEmailError('');
-                  }
-                }}
-                onBlur={() => {
-                  validateEmail();
-                  setEmailTyping(false);
-                }}
-                icon={
-                  <Email color={isEmailTyping ? '#051E47' : appColors.subtitle} />
-                }
-              />
-              {emailError !== '' && (
-                <Text style={styles.errorStyle}>{emailError}</Text>
-              )}
-
-              <View style={{ marginTop: 5 }}>
-                {/* Texto "RIF" arriba de los inputs */}
-                <Text
-                  style={[
-                    styles.headingContainer,
-                    { color: textColorStyle },
-                    { textAlign: textRTLStyle },
-                  ]}>
-                  Estado
-                </Text>
-
-                {/* Contenedor para el Picker y el TextInput */}
-
-                <View style={{ flexDirection: 'row', marginTop: 10, marginBottom: 10, alignItems: 'center' }}>
-                  {/* Picker con borde */}
-                  <View style={{
-                    width: '100%',
-                    paddingRight: 0,
-                    borderWidth: 1,
-                    borderColor: '#ccc',
-                    borderRadius: 5,
-                    backgroundColor: '#fff',
-                    height: 50, // para que el borde envuelva el Picker apropiadamente
-                    justifyContent: 'center', // centra el Picker verticalmente
-                  }}>
-
-                    <Dropdown
+                  <View style={{ flex: 2 }}>
+                    <TouchableOpacity
+                      style={[
+                        stylesImage.button,
+                        {
+                          borderWidth: 1,
+                          borderColor: '#2D3261',
+                          borderStyle: 'dotted',
+                          borderRadius: 999,
+                          backgroundColor: '#FFF',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          paddingVertical: 10,
+                          paddingHorizontal: 14,
+                        },
+                      ]}
+                      onPress={selectImage}>
+                      <Icons name="camera" size={16} color="#2D3261" />
+                      <Text
+                        style={[
+                          stylesImage.buttonText,
+                          {
+                            marginLeft: 8,
+                            color: '#2D3261',
+                            fontSize: 13,
+                            fontWeight: '600',
+                          },
+                        ]}>
+                        Subir foto de perfil
+                      </Text>
+                    </TouchableOpacity>
+                    <Text
                       style={{
-                        width: '100%',
-                        borderWidth: 1,
-                        borderColor: '#ccc',
-                        borderRadius: 5,
-                        paddingHorizontal: 10,
-                        backgroundColor: '#fff',
-                        height: 50,
-                      }}
-                      placeholderStyle={{
-                        color: 'gray',
-                        fontSize: 14,
-                      }}
-                      selectedTextStyle={{
-                        color: 'black',
-                        fontSize: 14,
-                        backgroundColor: '#fff',
-                      }}
-                      data={estadosVenezuela}
-                      labelField="label"
-                      valueField="value"
-                      placeholder="Seleccione un estado"
-                      value={estadoSelected}
-                      search={true}
-                      onChange={item => setestadoSelected(item.value)} // Maneja el cambio de selección
-                    />
-
-
-
+                        marginTop: 6,
+                        fontSize: 11,
+                        color: '#9CA3AF',
+                      }}>
+                      JPG o PNG, máximo 5MB.
+                    </Text>
                   </View>
                 </View>
-
-
               </View>
 
-              <TextInputs
-                title="Número Telefónico"
-                value={phone}
-                placeHolder="Ejem (414) 261-79-66"
-                keyboardType="numeric"
-                onChangeText={text => {
-                  let numericText = text.replace(/[^0-9]/g, '').slice(0, 10); // Limitar a 10 dígitos
+              {/* Bloque: datos personales */}
+              <View
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 18,
+                  paddingVertical: 18,
+                  paddingHorizontal: 16,
+                  marginBottom: 14,
+                  borderWidth: 1,
+                  borderColor: 'rgba(15, 23, 42, 0.06)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 5 },
+                  shadowOpacity: 0.06,
+                  shadowRadius: 7,
+                  elevation: 2,
+                }}>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    color: '#111827',
+                    marginBottom: 4,
+                  }}>
+                  Datos personales
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: '#6B7280',
+                    marginBottom: 12,
+                  }}>
+                  Completa tu información básica para poder crear tu cuenta.
+                </Text>
 
-                  let formattedText = '';
-                  if (numericText.length > 0 && numericText.length <= 3) {
-                    formattedText = `${numericText}`;
-                  } else if (numericText.length > 3 && numericText.length <= 6) {
-                    formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3)}`;
-                  } else if (numericText.length > 6 && numericText.length <= 8) {
-                    formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6)}`;
-                  } else if (numericText.length > 8) {
-                    formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6, 8)} ${numericText.slice(8)}`;
+                <TextInputs
+                  keyboardType="default"
+                  autoCapitalize="words"
+                  title="Nombre y Apellido"
+                  placeHolder="Ingrese su nombre y apellido"
+                  value={Nombre}
+                  onChangeText={text => {
+                    console.log(text);
+                    setNombre(text);
+                    setNombreTyping(true);
+                    if (text?.trim() === '') {
+                      setNombreError('Nombre es requerido');
+                    } else {
+                      setNombreError('');
+                    }
+                  }}
+                  onBlur={() => {
+                    setNombreTyping(false);
+                  }}
+                  icon={<Icons name="user" size={20} color="#9BA6B8" />}
+                />
+                {NombreError !== '' && (
+                  <Text style={styles.errorStyle}>{NombreError}</Text>
+                )}
+
+                <View style={{ marginTop: 10 }}>
+                  <Text
+                    style={[
+                      styles.headingContainer,
+                      { color: textColorStyle },
+                      { textAlign: textRTLStyle },
+                    ]}>
+                    Documento de Identidad
+                  </Text>
+
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      marginTop: 0,
+                      marginBottom: 0,
+                      alignItems: 'center',
+                    }}>
+                    <View
+                      style={{
+                        width: '26%',
+                        paddingRight: 6,
+                      }}>
+                      <View
+                        style={{
+                          borderWidth: 1,
+                          borderColor: '#D1D5DB',
+                          borderRadius: 10,
+                          backgroundColor: '#F9FAFB',
+                          height: 50,
+                          justifyContent: 'center',
+                          paddingHorizontal: 6,
+                        }}>
+                        <Dropdown
+                          style={{
+                            width: '100%',
+                            borderWidth: 0,
+                            paddingHorizontal: 4,
+                            backgroundColor: 'transparent',
+                            height: 42,
+                          }}
+                          placeholderStyle={{
+                            color: '#6B7280',
+                            fontSize: 13,
+                          }}
+                          selectedTextStyle={{
+                            color: '#111827',
+                            fontSize: 13,
+                          }}
+                          data={[
+                            { label: 'C-', value: 'C-' },
+                            { label: 'E-', value: 'E-' },
+                            { label: 'G-', value: 'G-' },
+                            { label: 'J-', value: 'J-' },
+                            { label: 'P-', value: 'P-' },
+                            { label: 'V-', value: 'V-' },
+                          ]}
+                          labelField="label"
+                          valueField="value"
+                          placeholder="Prefijo"
+                          value={selectedPrefix}
+                          onChange={item => setSelectedPrefix(item.value)}
+                        />
+                      </View>
+                    </View>
+
+                    <View style={{ flex: 1, marginTop: -40 }}>
+                      <TextInputs
+                        title=""
+                        value={cedula}
+                        placeHolder="Ingrese el número de cédula"
+                        onChangeText={text => {
+                          const numericText = text.replace(/[^0-9]/g, '');
+                          if (numericText.length <= 10) {
+                            setcedula(numericText);
+                            setcedulaTyping(true);
+                            if (numericText?.trim() === '') {
+                              setcedulaError('Documento es requerido');
+                            } else {
+                              setcedulaError('');
+                            }
+                          }
+                        }}
+                        onBlur={() => {
+                          setcedulaTyping(false);
+                        }}
+                        keyboardType="numeric"
+                        icon={
+                          <Icons name="id-card-o" size={20} color="#9BA6B8" />
+                        }
+                        style={{
+                          height: 50,
+                          borderWidth: 1,
+                          borderColor: '#D1D5DB',
+                          borderRadius: 10,
+                          paddingHorizontal: 10,
+                          backgroundColor: '#FFFFFF',
+                          width: '100%',
+                        }}
+                      />
+
+                      {cedulaError !== '' && (
+                        <Text style={styles.errorStyle}>{cedulaError}</Text>
+                      )}
+                    </View>
+                  </View>
+
+                  <TextInputs
+                    title="Correo Electrónico"
+                    keyboardType={'email-address'}
+                    value={email}
+                    placeHolder="Ingrese su email"
+                    onChangeText={text => {
+                      setEmail(text);
+                      setEmailTyping(true);
+                      if (text?.trim() === '') {
+                        setEmailError('Email es requerido');
+                      } else {
+                        setEmailError('');
+                      }
+                    }}
+                    onBlur={() => {
+                      validateEmail();
+                      setEmailTyping(false);
+                    }}
+                    icon={
+                      <Email
+                        color={isEmailTyping ? '#051E47' : appColors.subtitle}
+                      />
+                    }
+                  />
+                  {emailError !== '' && (
+                    <Text style={styles.errorStyle}>{emailError}</Text>
+                  )}
+
+                  <View style={{ marginTop: 8 }}>
+                    <Text
+                      style={[
+                        styles.headingContainer,
+                        { color: textColorStyle },
+                        { textAlign: textRTLStyle },
+                      ]}>
+                      Estado
+                    </Text>
+
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        marginTop: 10,
+                        marginBottom: 10,
+                        alignItems: 'center',
+                      }}>
+                      <View
+                        style={{
+                          width: '100%',
+                          borderWidth: 1,
+                          borderColor: '#D1D5DB',
+                          borderRadius: 10,
+                          backgroundColor: '#F9FAFB',
+                          height: 50,
+                          justifyContent: 'center',
+                          paddingHorizontal: 8,
+                        }}>
+                        <Dropdown
+                          style={{
+                            width: '100%',
+                            borderWidth: 0,
+                            paddingHorizontal: 4,
+                            backgroundColor: 'transparent',
+                            height: 42,
+                          }}
+                          placeholderStyle={{
+                            color: '#6B7280',
+                            fontSize: 13,
+                          }}
+                          selectedTextStyle={{
+                            color: '#111827',
+                            fontSize: 13,
+                          }}
+                          data={estadosVenezuela}
+                          labelField="label"
+                          valueField="value"
+                          placeholder="Seleccione un estado"
+                          value={estadoSelected}
+                          search={true}
+                          onChange={item => setestadoSelected(item.value)}
+                        />
+                      </View>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Bloque: contacto y seguridad */}
+              <View
+                style={{
+                  backgroundColor: '#FFFFFF',
+                  borderRadius: 18,
+                  paddingVertical: 18,
+                  paddingHorizontal: 16,
+                  marginBottom: 10,
+                  borderWidth: 1,
+                  borderColor: 'rgba(15, 23, 42, 0.05)',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 6,
+                  elevation: 1,
+                }}>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    color: '#111827',
+                    marginBottom: 4,
+                  }}>
+                  Contacto y seguridad
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: '#6B7280',
+                    marginBottom: 12,
+                  }}>
+                  Usa un número al que tengas acceso y una contraseña segura.
+                </Text>
+
+                <TextInputs
+                  title="Número Telefónico"
+                  value={phone}
+                  placeHolder="Ejem (414) 261-79-66"
+                  keyboardType="numeric"
+                  onChangeText={text => {
+                    let numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
+
+                    let formattedText = '';
+                    if (numericText.length > 0 && numericText.length <= 3) {
+                      formattedText = `${numericText}`;
+                    } else if (
+                      numericText.length > 3 &&
+                      numericText.length <= 6
+                    ) {
+                      formattedText = `${numericText.slice(
+                        0,
+                        3,
+                      )} ${numericText.slice(3)}`;
+                    } else if (
+                      numericText.length > 6 &&
+                      numericText.length <= 8
+                    ) {
+                      formattedText = `${numericText.slice(
+                        0,
+                        3,
+                      )} ${numericText.slice(3, 6)} ${numericText.slice(6)}`;
+                    } else if (numericText.length > 8) {
+                      formattedText = `${numericText.slice(
+                        0,
+                        3,
+                      )} ${numericText.slice(3, 6)} ${numericText.slice(
+                        6,
+                        8,
+                      )} ${numericText.slice(8)}`;
+                    }
+
+                    formattedText = `${formattedText}`;
+
+                    setPhone(formattedText);
+                    setCallTyping(true);
+
+                    if (numericText?.trim() === '') {
+                      setPhoneError('Número telefónico requerido');
+                    } else {
+                      setPhoneError('');
+                    }
+                  }}
+                  onBlur={() => {
+                    validatePhone();
+                    setCallTyping(false);
+                  }}
+                  icon={
+                    <Call color={isCallTyping ? '#051E47' : appColors.subtitle} />
                   }
+                />
 
-                  formattedText = `${formattedText}`;
+                {phoneError !== '' && (
+                  <Text style={styles.errorStyle}>{phoneError}</Text>
+                )}
 
-                  setPhone(formattedText);
-                  setCallTyping(true);
+                <TextInputs
+                  title="Contraseña"
+                  value={password}
+                  placeHolder="Ingrese su contraseña"
+                  secureTextEntry={showPass}
+                  showPass={true}
+                  changePassValue={changePassValue}
+                  onChangeText={text => {
+                    setPassword(text);
+                    setPwdTyping(true);
 
-                  if (numericText?.trim() === '') {
-                    setPhoneError('Número telefónico requerido');
-                  } else {
-                    setPhoneError('');
+                    if (text.length < 6) {
+                      setPasswordError(
+                        'Contraseña debe tener mínimo 6 dígitos',
+                      );
+                    } else {
+                      setPasswordError('');
+                    }
+                  }}
+                  onBlur={() => {
+                    validatePassword();
+                    setPwdTyping(false);
+                  }}
+                  icon={
+                    <Key color={isPwdTyping ? '#051E47' : appColors.subtitle} />
                   }
-                }}
-                onBlur={() => {
-                  validatePhone();
-                  setCallTyping(false);
-                }}
-                icon={
-                  <Call color={isCallTyping ? '#051E47' : appColors.subtitle} />
-                }
-              />
+                />
 
-              {phoneError !== '' && (
-                <Text style={styles.errorStyle}>{phoneError}</Text>
-              )}
-
-              <TextInputs
-                title="Contraseña"
-                value={password}
-                placeHolder="Ingrese su contraseña"
-                secureTextEntry={showPass}
-                showPass={true}
-                changePassValue={changePassValue}
-                onChangeText={text => {
-                  setPassword(text);
-                  setPwdTyping(true);
-
-                  if (text.length < 6) {
-                    setPasswordError('Contraseña debe tener mínimo 6 dígitos');
-                  } else {
-                    setPasswordError('');
+                <TextInputs
+                  title="Confirmar Contraseña"
+                  value={confirmPassword}
+                  placeHolder="Ingrese otra vez la contraseña"
+                  secureTextEntry={showPass2}
+                  showPass={true}
+                  changePassValue={changePassValue2}
+                  onChangeText={text => {
+                    setConfirmPassword(text);
+                    setConfPwdTyping(true);
+                    if (text !== password) {
+                      setConfirmPasswordError('Contraseña no coincide');
+                    } else {
+                      setConfirmPasswordError('');
+                    }
+                  }}
+                  onBlur={() => {
+                    validateConfirmPassword();
+                    setConfPwdTyping(false);
+                  }}
+                  icon={
+                    <Key
+                      color={isConfTyping ? '#051E47' : appColors.subtitle}
+                    />
                   }
-                }}
-                onBlur={() => {
-                  validatePassword();
-                  setPwdTyping(false);
-                }}
-                icon={
-                  <Key color={isPwdTyping ? '#051E47' : appColors.subtitle} />
-                }
-              />
+                />
 
-              <TextInputs
-                title="Confirmar Contraseña"
-                value={confirmPassword}
-                placeHolder="Ingrese otra vez la contraseña"
-                secureTextEntry={showPass2}
-                showPass={true}
-                changePassValue={changePassValue2}
-                onChangeText={text => {
-                  setConfirmPassword(text);
-                  setConfPwdTyping(true);
-                  if (text !== password) {
-                    setConfirmPasswordError('Contraseña no coincide');
-                  } else {
-                    setConfirmPasswordError('');
-                  }
-                }}
-                onBlur={() => {
-                  validateConfirmPassword();
-                  setConfPwdTyping(false);
-                }}
-                icon={
-                  <Key color={isConfTyping ? '#051E47' : appColors.subtitle} />
-                }
-              />
-
-              {confirmPasswordError !== '' && (
-                <Text style={styles.errorStyle}>{confirmPasswordError}</Text>
-              )}
+                {confirmPasswordError !== '' && (
+                  <Text style={styles.errorStyle}>{confirmPasswordError}</Text>
+                )}
+              </View>
             </View>
           </ScrollView>
 
@@ -2689,35 +3727,43 @@ const SignUp = ({ navigation }) => {
       ) : null}
 
       {typeOfView == '' ? (
-        <View style={{ flex: 1, marginTop: '5%' }}>
-          <TouchableOpacity
-            onPress={() => handleClientePress()}
-            style={stylesCard.boxContainer}>
-            <Image source={UserImage} style={stylesCard.iconImage} />
-            <Text
-              style={[
-                commonStyles.titleText19,
-                external.ph_5,
-                { color: textColorStyle },
-              ]}>
-              Cliente
-            </Text>
-          </TouchableOpacity>
+        <ScrollView
+          style={{ flex: 1, marginTop: '6%' }}
+          contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: 28 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+          <View style={stylesCard.cardOuter}>
+            <TouchableOpacity
+              onPress={() => handleClientePress()}
+              style={[stylesCard.boxContainer, stylesCard.boxContainerCliente]}
+              activeOpacity={0.82}>
+              <View style={stylesCard.cardIconWrap}>
+                <Image source={UserImage} style={stylesCard.iconImage} />
+              </View>
+              <Text style={stylesCard.cardLabel}>USO PERSONAL</Text>
+              <Text style={stylesCard.cardTitle}>Soy cliente</Text>
+              <Text style={stylesCard.cardSubtitle}>
+                Solicita servicios, agenda citas y lleva el control de tus vehículos desde un solo lugar.
+              </Text>
+            </TouchableOpacity>
+          </View>
 
-          <TouchableOpacity
-            onPress={() => handleTallerPress()}
-            style={stylesCard.boxContainer}>
-            <Image source={KeyImage} style={stylesCard.iconImage} />
-            <Text
-              style={[
-                commonStyles.titleText19,
-                external.ph_5,
-                { color: textColorStyle },
-              ]}>
-              Negocio
-            </Text>
-          </TouchableOpacity>
-        </View>
+          <View style={stylesCard.cardOuter}>
+            <TouchableOpacity
+              onPress={() => handleTallerPress()}
+              style={[stylesCard.boxContainer, stylesCard.boxContainerNegocio]}
+              activeOpacity={0.82}>
+              <View style={stylesCard.cardIconWrap}>
+                <Image source={KeyImage} style={stylesCard.iconImage} />
+              </View>
+              <Text style={stylesCard.cardLabel}>PARA TU NEGOCIO</Text>
+              <Text style={stylesCard.cardTitle}>Tengo un negocio</Text>
+              <Text style={stylesCard.cardSubtitle}>
+                Registra tu negocio y comienza a ofrecer tus servicios a más clientes.
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
 
       ) : null}
 
@@ -2731,21 +3777,53 @@ const SignUp = ({ navigation }) => {
         />
       ) : null}
 
-      <View style={styles.singUpView}>
-        <Text style={[commonStyles.subtitleText]}>
-          ¿Ya se encuentra registrado?
+      <View style={[styles.singUpView, { marginTop: 15, marginBottom: 0 }]}>
+        <Text
+          style={{
+            fontSize: 14,
+            color: appColors.subtitle || '#9BA6B8',
+            marginRight: 6,
+          }}>
+          ¿Ya tienes cuenta?
         </Text>
-        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+        <TouchableOpacity
+          onPress={() => navigation.navigate('Login')}
+          style={{
+            paddingVertical: 6,
+            paddingHorizontal: 14,
+            borderRadius: 20,
+            backgroundColor: appColors.primaryLight || '#EFEAff',
+            borderWidth: 1,
+            borderColor: 'rgba(45, 50, 97, 0.15)',
+          }}
+          activeOpacity={0.8}>
           <Text
-            style={[
-              commonStyles.titleText19,
-              external.ph_5,
-              { color: textColorStyle },
-            ]}>
-            Ingresar
+            style={{
+              fontSize: 15,
+              fontWeight: '700',
+              color: appColors.primary || '#2D3261',
+            }}>
+            Iniciar sesión
           </Text>
         </TouchableOpacity>
       </View>
+
+
+      <Modal
+        visible={showMapboxTestModal}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={() => setShowMapboxTestModal(false)}>
+        <MapboxTestModalContent
+          onClose={() => setShowMapboxTestModal(false)}
+          onConfirm={coords => {
+            GetCoordenadas(coords);
+            setShowMapboxTestModal(false);
+          }}
+        />
+      </Modal>
+
+
     </View>
   );
 };
@@ -2756,29 +3834,80 @@ const stylesMap = StyleSheet.create({
   container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });
 
+const PRIMARY = appColors.primary || '#2D3261';
+const PRIMARY_LIGHT = appColors.primaryLight || '#EFEAff';
+const BG_LAYER = appColors.bgLayer || '#F5F6F8';
+const SUBTITLE = appColors.subtitle || '#9BA6B8';
+
 const stylesCard = StyleSheet.create({
   containerBox: {
     marginTop: '100px !important',
   },
+  cardOuter: {
+    marginBottom: 16,
+    borderRadius: 20,
+    overflow: 'hidden',
+    elevation: 6,
+    shadowColor: '#1A1D26',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+  },
   boxContainer: {
     alignItems: 'center',
-    padding: 20,
-    borderRadius: 10,
-    backgroundColor: '#f0f0f0', // Fondo para cada caja
+    justifyContent: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#ddd', // Color del borde
-    marginBottom: 20, // Espaciado entre las cajas
-    elevation: 3, // Sombra para Android
-    shadowColor: '#000', // Sombra para iOS
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
+    borderColor: 'rgba(45, 50, 97, 0.06)',
+    backgroundColor: '#FFFFFF',
+  },
+  boxContainerCliente: {
+    borderLeftWidth: 12,
+    borderLeftColor: PRIMARY,
+  },
+  boxContainerNegocio: {
+    borderLeftWidth: 12,
+    borderLeftColor: PRIMARY,
+  },
+  cardIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: PRIMARY_LIGHT,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(45, 50, 97, 0.1)',
   },
   iconImage: {
-    width: 40,
-    height: 40,
-    resizeMode: 'contain', // Ajusta el tamaño de la imagen para que quepa bien
-    marginBottom: 10, // Espacio entre la imagen y el texto
+    width: 32,
+    height: 32,
+    resizeMode: 'contain',
+  },
+  cardLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    letterSpacing: 1.5,
+    color: SUBTITLE,
+    marginBottom: 4,
+  },
+  cardTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: PRIMARY,
+    letterSpacing: 0.2,
+    marginBottom: 6,
+  },
+  cardSubtitle: {
+    fontSize: 16,
+    color: SUBTITLE,
+    lineHeight: 22,
+    textAlign: 'center',
+    paddingHorizontal: 4,
   },
 });
 

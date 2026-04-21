@@ -138,9 +138,13 @@ const RatingScreen = data => {
               {alignItems: 'center', justifyContent: 'center'},
             ]}>
             <View style={styles.viewContainer}>
-             
+              <Text
+                style={[
+                  styles.fourPointOne,
+                  {alignItems: 'center', justifyContent: 'center'},
+                ]}>
                 {dataAverage} <Star size={15} color={'#D3D3D3'} fill={'none'} />
-    
+              </Text>
               <Text style={styles.outOfFive}>de 5</Text>
             </View>
           </View>

@@ -1,37 +1,24 @@
-import { Pressable, ScrollView, Text, ToastAndroid, View, Alert } from 'react-native';
+import {ScrollView, Text, View, Alert, TouchableOpacity} from 'react-native';
 import React, { useEffect, useState } from 'react';
-import HeaderContainer from '../../commonComponents/headingContainer';
-import {
-  allReview,
-  basedReviews,
-  otherReviews,
-  reviews,
-  writeYourReview,
-} from '../../constant';
 import { external } from '../../style/external.css';
 import { commonStyles } from '../../style/commonStyle.css';
 import styles from './style.css';
-import CustomRatingBars from '../../commonComponents/customRating';
-import { ratingScreen } from '../../data/ratingScreen';
-import { fontSizes } from '../../themes/appConstant';
-import { DownArrow } from '../../utils/icon';
 import RatingScreenContainer from '../../components/ratingScreenContainer';
 import { useValues } from '../../../App';
 import LinearGradient from 'react-native-linear-gradient';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { TouchableOpacity } from 'react-native';
-import { Modal } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../../axiosInstance';
 import BeautifulModal from './components/modal';
 import { Star, UnCheckedStar } from '../../utils/icon';
+import { ArrowLeft } from 'lucide-react-native';
 
 const RatingScreen = () => {
   const route = useRoute();
   const navigate = useNavigation();
   const [modalVisible, setModalVisible] = useState(false);
   const [dataCommentsNew, setdataCommentsNew] = useState([]);
-  const [dataAverageNew, setdataAverageNew] = useState([]);
+  const [dataAverageNew, setdataAverageNew] = useState(0);
 
   const handleCloseModal = () => {
     setModalVisible(false);
@@ -155,47 +142,82 @@ const RatingScreen = () => {
   const {
     bgFullStyle,
     textColorStyle,
-    linearColorStyle,
     linearColorStyleTwo,
-    iconColorStyle,
   } = useValues();
   return (
     <View
       style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle }]}>
+      <View style={styles.headerBlock}>
+        <View style={styles.circle1} />
+        <View style={styles.circle2} />
+
+        <View style={styles.headerTopRow}>
+          <TouchableOpacity
+            onPress={() => navigate.goBack()}
+            activeOpacity={0.85}
+            style={styles.topNavBackBtn}>
+            <ArrowLeft size={20} color="#FFD60A" />
+          </TouchableOpacity>
+          <View style={styles.pill}>
+            <Text style={styles.pillText}>Comentarios</Text>
+          </View>
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>{dataCommentsNew?.length || 0} opiniones</Text>
+          </View>
+        </View>
+
+        <Text style={styles.headerTitle}>
+          {'Conoce lo que dicen '}
+          <Text style={styles.headerAccent}>nuestros usuarios</Text>
+        </Text>
+
+        <Text style={styles.headerSubtitle}>
+          Mira experiencias reales y comparte tu opinion de forma rapida y sencilla
+        </Text>
+      </View>
       <ScrollView
         showsVerticalScrollIndicator={false}
         style={[external.mh_20]}
         contentContainerStyle={[external.Pb_30]}>
 
-        <HeaderContainer value={'Comentarios'} />
+        <View style={styles.summaryCard}>
+          <View style={styles.summaryTopRow}>
+            <Text style={styles.summaryTitle}>Puntuacion general</Text>
+            <View style={styles.summaryCountChip}>
+              <Text style={styles.summaryCountChipText}>{dataCommentsNew?.length || 0} opiniones</Text>
+            </View>
+          </View>
 
-        <View style={[external.mt_12, external.as_center]}>
-          <View style={{ alignItems: 'center', justifyContent: 'center' }}>
-            {/* <Text style={[styles.textContext, { color: textColorStyle, marginBottom: 5 }]}>
-              {dataAverageNew}
-            </Text> */}
-            <View style={{ flexDirection: 'row', justifyContent: 'center' }}>
+          <View style={styles.summaryScoreRow}>
+            <Text style={styles.summaryScoreValue}>{Number(dataAverageNew || 0).toFixed(1)}</Text>
+            <View style={styles.summaryStarsRow}>
               {Array.from({ length: 5 }).map((_, index) => (
                 index < dataAverageNew ? <Star size={30} key={index} /> : <UnCheckedStar size={30} key={index} />
               ))}
             </View>
           </View>
-          <Text style={[commonStyles.subtitleText, external.pt_10]}>
-            Basado en {dataCommentsNew?.length} comentarios
+
+          <Text style={styles.summarySubtitle}>
+            Basado en {dataCommentsNew?.length || 0} comentarios reales de usuarios
           </Text>
         </View>
-        <LinearGradient
-          colors={linearColorStyleTwo}
-          style={styles.ratingScreenView}></LinearGradient>
+
         <TouchableOpacity
-          style={{ alignSelf: 'flex-end' }}
+          style={styles.writeReviewBtn}
           onPress={() => {
             setModalVisible(true);
           }}>
-          <Text style={styles.writeReview}>Dejanos saber que piensas</Text>
+          <Text style={styles.writeReviewBtnText}>Calificar mi experiencia</Text>
         </TouchableOpacity>
 
-        <RatingScreenContainer data={dataCommentsNew} />
+        {dataCommentsNew?.length > 0 ? (
+          <RatingScreenContainer data={dataCommentsNew} />
+        ) : (
+          <View style={styles.emptyCard}>
+            <Text style={styles.emptyTitle}>Aun no hay comentarios</Text>
+            <Text style={styles.emptySubtitle}>Se el primero en compartir tu experiencia.</Text>
+          </View>
+        )}
 
       </ScrollView>
 

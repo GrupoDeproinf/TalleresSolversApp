@@ -5,11 +5,18 @@ import appColors from '../../themes/appColors';
 import {useValues} from '../../../App';
 import LinearGradient from 'react-native-linear-gradient';
 
-const BottomContainer = ({value, leftValue}) => {
+const BottomContainer = ({
+  value,
+  leftValue,
+  valueContainerStyle,
+  backgroundColors,
+  contentColors,
+}) => {
   const {isDark, linearColorStyle} = useValues('');
-  const colors = isDark
+  const colors = backgroundColors || (isDark
     ? ['#3D3F45', '#45474B', '#2A2C32']
-    : [appColors.screenBg, appColors.screenBg];
+    : [appColors.screenBg, appColors.screenBg]);
+  const innerColors = contentColors || linearColorStyle;
   return (
     <>
       <LinearGradient
@@ -20,13 +27,15 @@ const BottomContainer = ({value, leftValue}) => {
         <LinearGradient
           start={{x: 0.0, y: 0.0}}
           end={{x: 0.0, y: 1.0}}
-          colors={linearColorStyle}
+          colors={innerColors}
           style={[
             styles.menuItemContent,
             {shadowColor: appColors.shadowColor},
           ]}>
           <View>{leftValue}</View>
-          <View style={styles.valueContainer}>{value}</View>
+          <View style={[styles.valueContainer, valueContainerStyle]}>
+            {value}
+          </View>
         </LinearGradient>
       </LinearGradient>
     </>

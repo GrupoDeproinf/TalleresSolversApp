@@ -14,8 +14,12 @@ import { commonStyles } from '../../style/commonStyle.css';
 import Icons from 'react-native-vector-icons/FontAwesome';
 
 import MapboxGL from '@rnmapbox/maps';
+import {getMapboxPublicToken} from '../../config/mapboxPublicToken';
 
-MapboxGL.setAccessToken('TU_MAPBOX_ACCESS_TOKEN');
+const mapboxToken = getMapboxPublicToken();
+if (mapboxToken) {
+  MapboxGL.setAccessToken(mapboxToken);
+}
 
 const MapTalleres = ({
   talleres = [],

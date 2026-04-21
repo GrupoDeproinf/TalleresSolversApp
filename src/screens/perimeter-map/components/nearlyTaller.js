@@ -24,31 +24,37 @@ const NearlyTallerItem = ({ key, item, onPress, navigation, onRoutePress }) => {
       <View style={styles.gradientBackground}>
         <View style={styles.content}>
           <View style={styles.iconContainer}>
-            <Wrench size={18} color="#FFFFFF" />
+            <Wrench size={18} color="#FFD60A" />
           </View>
           
           <View style={styles.leftContent}>
             <View style={styles.header}>
               <Text style={styles.name} numberOfLines={1}>
-                {item?.nombre || 'AutoFix Pro'}
+                {String(item?.nombre || 'AutoFix Pro').toUpperCase()}
               </Text>
-              <View style={styles.distanceBadge}>
-                <Navigation size={10} color="#3A4A85" />
-                <Text style={styles.distance}>{item?.distancia || 'N/A'}</Text>
-              </View>
             </View>
             
             <View style={styles.addressContainer}>
               <MapPin size={12} color="#64748B" />
               <Text style={styles.address} numberOfLines={1}>
-                {item?.direccion || 'Dirección no disponible'}
+                {(() => {
+                  const value = String(item?.direccion || 'Dirección no disponible');
+                  const lower = value.toLowerCase();
+                  return lower.charAt(0).toUpperCase() + lower.slice(1);
+                })()}
               </Text>
             </View>
             
             {item?.estado && (
               <View style={styles.statusContainer}>
                 <View style={styles.statusDot} />
-                <Text style={styles.statusText}>{item.estado}</Text>
+                <Text style={styles.statusText}>
+                  {(() => {
+                    const value = String(item.estado || '');
+                    const lower = value.toLowerCase();
+                    return lower.charAt(0).toUpperCase() + lower.slice(1);
+                  })()}
+                </Text>
               </View>
             )}
             
@@ -56,7 +62,11 @@ const NearlyTallerItem = ({ key, item, onPress, navigation, onRoutePress }) => {
               <View style={styles.paymentMethodsContainer}>
                 <DollarSign size={10} color="#64748B" />
                 <Text style={styles.paymentMethodsText}>
-                  {Object.values(item.metodosPago).filter(Boolean).length} métodos de pago
+                  {(() => {
+                    const value = `${Object.values(item.metodosPago).filter(Boolean).length} métodos de pago`;
+                    const lower = value.toLowerCase();
+                    return lower.charAt(0).toUpperCase() + lower.slice(1);
+                  })()}
                 </Text>
               </View>
             )}
@@ -70,7 +80,10 @@ const NearlyTallerItem = ({ key, item, onPress, navigation, onRoutePress }) => {
             >
               <MapPin size={16} color="#162556" />
             </TouchableOpacity>
-            
+            <View style={styles.distanceBadge}>
+              <Navigation size={10} color="#3A4A85" />
+              <Text style={styles.distance}>{item?.distancia || 'N/A'}</Text>
+            </View>
           </View>
         </View>
       </View>
@@ -101,14 +114,14 @@ const styles = StyleSheet.create({
   },
   content: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     padding: 14,
   },
   iconContainer: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#3A4A85',
+    backgroundColor: '#1F2344',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -128,7 +141,6 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     marginBottom: 6,
   },
   name: {
@@ -196,9 +208,9 @@ const styles = StyleSheet.create({
   },
   rightContent: {
     marginLeft: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    minHeight: 72,
   },
   routeButton: {
     width: 28,

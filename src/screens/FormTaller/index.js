@@ -1,1184 +1,1404 @@
 import {
-  ImageBackground,
   Text,
+  TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
-  useWindowDimensions,
-  ScrollView,
-  StyleSheet,
-  Image,
-  ToastAndroid,
   Modal,
-  Alert
+  Alert,
+  ScrollView,
+  Image,
+  Switch,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
-import ErrorContainer from '../../commonComponents/errorContainer';
-import {
-  addNow,
-  myWishlist,
-  whishlistEmpty,
-  whishlistEmptyDesc,
-} from '../../constant';
-import images from '../../utils/images';
-import { commonStyles } from '../../style/commonStyle.css';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { useValues } from '../../../App';
-import HeaderContainer from '../../commonComponents/headingContainer';
-import CheckBox from 'react-native-check-box';
-
-import { external } from '../../style/external.css';
-import { Call, Edit, Profile, Key, BackLeft } from '../../utils/icon';
+import React, {useState, useCallback} from 'react';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import Icons from 'react-native-vector-icons/FontAwesome';
+import Icons5 from 'react-native-vector-icons/FontAwesome5';
+import {useNavigation, useRoute, useFocusEffect} from '@react-navigation/native';
+import {useValues} from '../../../App';
+import api from '../../../axiosInstance';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import styles from './style.css';
 import TextInputs from '../../commonComponents/textInputs';
-import { Email } from '../../assets/icons/email';
-import appColors from '../../themes/appColors';
-import { RadioButton, Button } from 'react-native-paper';
-import { windowHeight } from '../../themes/appConstant';
-import NavigationButton from '../../commonComponents/navigationButton';
-import api from '../../../axiosInstance';
-
-import notImageFound from '../../assets/noimageold.jpeg';
 import MapComponent from '../map';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import notImageFound from '../../assets/noimageNew.png';
+import {Dropdown} from 'react-native-element-dropdown';
+import {launchImageLibrary} from 'react-native-image-picker';
 
+const DARK_BLUE = '#1F2344';
+const YELLOW = '#FFD60A';
+
+const TIME_OPTIONS = Array.from({length: 24}, (_, hour) => {
+  const value = `${String(hour).padStart(2, '0')}:00`;
+  return {label: value, value};
+});
+
+const BUSINESS_DAYS = [
+  {key: 'lunes', label: 'Lunes'},
+  {key: 'martes', label: 'Martes'},
+  {key: 'miercoles', label: 'Miércoles'},
+  {key: 'jueves', label: 'Jueves'},
+  {key: 'viernes', label: 'Viernes'},
+  {key: 'sabado', label: 'Sábado'},
+  {key: 'domingo', label: 'Domingo'},
+];
+
+const METODOS_PAGO_DEF = [
+  {label: 'Efectivo', value: 'efectivo'},
+  {label: 'Pago Móvil', value: 'pagoMovil'},
+  {label: 'Punto de venta', value: 'puntoVenta'},
+  {label: 'Crédito internacional', value: 'tarjetaCreditoI'},
+  {label: 'Crédito nacional', value: 'tarjetaCreditoN'},
+  {label: 'Transferencia', value: 'transferencia'},
+  {label: 'Zelle', value: 'zelle'},
+  {label: 'Zinli', value: 'zinli'},
+];
+
+const ESTADOS_VZ = [
+  {label: 'Seleccione un estado', value: ''},
+  {label: 'Amazonas', value: 'Amazonas'},
+  {label: 'Anzoátegui', value: 'Anzoátegui'},
+  {label: 'Apure', value: 'Apure'},
+  {label: 'Aragua', value: 'Aragua'},
+  {label: 'Barinas', value: 'Barinas'},
+  {label: 'Bolívar', value: 'Bolívar'},
+  {label: 'Carabobo', value: 'Carabobo'},
+  {label: 'Cojedes', value: 'Cojedes'},
+  {label: 'Delta Amacuro', value: 'Delta Amacuro'},
+  {label: 'Distrito Capital', value: 'Distrito Capital'},
+  {label: 'Falcón', value: 'Falcón'},
+  {label: 'Guárico', value: 'Guárico'},
+  {label: 'Lara', value: 'Lara'},
+  {label: 'La Guaira', value: 'La Guaira'},
+  {label: 'Mérida', value: 'Mérida'},
+  {label: 'Miranda', value: 'Miranda'},
+  {label: 'Monagas', value: 'Monagas'},
+  {label: 'Nueva Esparta', value: 'Nueva Esparta'},
+  {label: 'Portuguesa', value: 'Portuguesa'},
+  {label: 'Sucre', value: 'Sucre'},
+  {label: 'Táchira', value: 'Táchira'},
+  {label: 'Trujillo', value: 'Trujillo'},
+  {label: 'Yaracuy', value: 'Yaracuy'},
+  {label: 'Zulia', value: 'Zulia'},
+];
+
+const PREFIX_RIF = [
+  {label: 'C-', value: 'C-'},
+  {label: 'E-', value: 'E-'},
+  {label: 'G-', value: 'G-'},
+  {label: 'J-', value: 'J-'},
+  {label: 'P-', value: 'P-'},
+  {label: 'V-', value: 'V-'},
+];
+
+const buildDefaultBusinessHours = () =>
+  BUSINESS_DAYS.reduce((acc, day) => {
+    acc[day.key] = {enabled: false, open: '08:00', close: '17:00'};
+    return acc;
+  }, {});
+
+const mergeHorariosFromApi = raw => {
+  const base = buildDefaultBusinessHours();
+  if (!raw || typeof raw !== 'object') return base;
+  BUSINESS_DAYS.forEach(({key}) => {
+    const item = raw[key];
+    if (item && typeof item === 'object') {
+      base[key] = {
+        enabled: !!item.enabled,
+        open: item.open || base[key].open,
+        close: item.close || base[key].close,
+      };
+    }
+  });
+  return base;
+};
+
+const docUrlFromApi = v => {
+  if (v == null || v === '') return '';
+  const s = typeof v === 'string' ? v.trim() : String(v).trim();
+  if (!/^https?:\/\//i.test(s)) return '';
+  // Strip previous cache-buster before adding a fresh one
+  const base = s.replace(/([?&])t=\d+(&|$)/, '$2').replace(/[?&]$/, '');
+  return `${base}${base.includes('?') ? '&' : '?'}t=${Date.now()}`;
+};
+
+// ── Section header: ALL CAPS + horizontal line ──────────────────────────────
+const SectionHeader = ({title}) => (
+  <View style={styles.sectionHeaderRow}>
+    <Text style={styles.sectionHeaderText}>{title.toUpperCase()}</Text>
+    <View style={styles.sectionHeaderLine} />
+  </View>
+);
+
+// ── Field row: text in view mode, input in edit mode ───────────────────────
+// Pass `value` for text-based fields. Omit `value` for complex fields
+// (Dropdown, Map, RadioButton) — they always render children.
+const FieldBlock = ({label, value, children, isEditing = false, vertical = false}) => {
+  // Complex field (no value prop) — always render children (no border wrapper)
+  if (value === undefined) {
+    if (vertical) {
+      return (
+        <View style={styles.fieldWrap}>
+          <Text style={[styles.fieldLabelTop, isEditing && styles.fieldLabelActive]}>
+            {label}
+          </Text>
+          {children}
+        </View>
+      );
+    }
+    return (
+      <View style={[styles.fieldRow, isEditing ? styles.fieldRowEditing : styles.fieldRowReadonly]}>
+        <Text style={[styles.fieldLabelInline, isEditing && styles.fieldLabelActive]} numberOfLines={2}>
+          {label}
+        </Text>
+        <View style={styles.fieldInputCell}>{children}</View>
+      </View>
+    );
+  }
+
+  // Text field — view mode: label + value display
+  if (!isEditing) {
+    return (
+      <View style={styles.fieldDisplayRow}>
+        <Text style={styles.fieldDisplayLabel}>{label}</Text>
+        <Text style={styles.fieldDisplayValue} numberOfLines={4}>
+          {String(value).trim() || '—'}
+        </Text>
+      </View>
+    );
+  }
+
+  // Text field — edit mode: input wrapped with border
+  if (vertical) {
+    return (
+      <View style={styles.fieldWrap}>
+        <Text style={[styles.fieldLabelTop, styles.fieldLabelActive]}>{label}</Text>
+        <View style={styles.fieldInputEditing}>{children}</View>
+      </View>
+    );
+  }
+  return (
+    <View style={styles.fieldRowEditing}>
+      <Text style={[styles.fieldLabelInline, styles.fieldLabelActive]} numberOfLines={2}>
+        {label}
+      </Text>
+      <View style={styles.fieldInputEditing}>{children}</View>
+    </View>
+  );
+};
+
+// ── Edit input: simple bordered TextInput ───────────────────────────────────
+const EditInput = ({value, onChangeText, keyboardType, multiline, height, placeholder, autoCapitalize, editable = true}) => (
+  <TextInput
+    value={value}
+    onChangeText={onChangeText}
+    keyboardType={keyboardType}
+    multiline={multiline}
+    textAlignVertical={multiline ? 'top' : 'center'}
+    placeholder={placeholder || ''}
+    placeholderTextColor="#9CA3AF"
+    autoCapitalize={autoCapitalize || 'sentences'}
+    editable={editable}
+    style={[
+      styles.editInput,
+      !editable && styles.editInputDisabled,
+      multiline && {height: height || 100, paddingTop: 10},
+    ]}
+  />
+);
+
+// ── Payment chip ────────────────────────────────────────────────────────────
+const PagoChip = ({method, index, toggleMetodoPago, isEditing}) => (
+  <TouchableOpacity
+    style={[styles.pagoChip, method.checked && styles.pagoChipActive]}
+    onPress={() => toggleMetodoPago(index)}
+    disabled={!isEditing}
+    activeOpacity={0.75}>
+    {method.checked ? (
+      <Icons name="check" size={11} color="#FFFFFF" style={{marginRight: 5}} />
+    ) : null}
+    <Text style={[styles.pagoChipText, method.checked && styles.pagoChipTextActive]}>
+      {method.label}
+    </Text>
+  </TouchableOpacity>
+);
+
+// ─────────────────────────────────────────────────────────────────────────────
 const FormTaller = () => {
-  const [NameTaller, setNameTaller] = useState('');
-  const [isSelected, setSelection] = useState(false);
-  const [email, setEmail] = useState('');
-  const [cedula, setcedula] = useState(0);
-  const [Nombre, setNombre] = useState('');
-  const [phone, setPhone] = useState(0);
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [emailError, setEmailError] = useState('');
-  const [cedulaError, setcedulaError] = useState('');
-  const [NombreError, setNombreError] = useState('');
-  const [phoneError, setPhoneError] = useState('');
-  const [passwordError, setPasswordError] = useState('');
-  const [confirmPasswordError, setConfirmPasswordError] = useState('');
-  const [isGetOtpDisabled, setGetOtpDisabled] = useState(true);
-  const [isEmailTyping, setEmailTyping] = useState(false);
-  const [iscedulaTyping, setcedulaTyping] = useState(false);
-  const [NombreTyping, setNombreTyping] = useState(false);
-  const [isCallTyping, setCallTyping] = useState(false);
-  const [isPwdTyping, setPwdTyping] = useState(false);
-  const [isConfTyping, setConfPwdTyping] = useState(false);
-
-  const [Direccion, setDireccion] = useState('');
-  const [DireccionError, setDireccionError] = useState('');
-  const [DireccionTyping, setDireccionTyping] = useState(false);
-
-  const [RegComercial, setRegComercial] = useState('');
-  const [RegComercialError, setRegComercialError] = useState('');
-  const [RegComercialTyping, setRegComercialTyping] = useState(false);
-
-  const [Caracteristicas, setCaracteristicas] = useState('');
-  const [CaracteristicasError, setCaracteristicasError] = useState('');
-  const [CaracteristicasTyping, setCaracteristicasTyping] = useState(false);
-
-  const [Tarifa, setTarifa] = useState('');
-  const [TarifaError, setTarifaError] = useState('');
-  const [TarifaTyping, setTarifaTyping] = useState(false);
-
-  const [Experiencia, setExperiencia] = useState('');
-  const [ExperienciaError, setExperienciaError] = useState('');
-  const [ExperienciaTyping, setExperienciaTyping] = useState(false);
-
-  const [LinkFacebook, setLinkFacebook] = useState('');
-  const [LinkFacebookError, setLinkFacebookError] = useState('');
-  const [LinkFacebookTyping, setLinkFacebookTyping] = useState(false);
-
-  const [LinkInstagram, setLinkInstagram] = useState('');
-  const [LinkInstagramError, setLinkInstagramError] = useState('');
-  const [LinkInstagramTyping, setLinkInstagramTyping] = useState(false);
-
-  const [LinkTiktok, setLinkTiktok] = useState('');
-  const [LinkTiktokError, setLinkTiktokError] = useState('');
-  const [LinkTiktokTyping, setLinkTiktokTyping] = useState(false);
-
-  const [Garantia, setGarantia] = useState('');
-  const [GarantiaError, setGarantiaError] = useState('');
-  const [GarantiaTyping, setGarantiaTyping] = useState(false);
-
-  const [seguro, setseguro] = useState('');
-  const [seguroError, setseguroError] = useState('');
-  const [seguroTyping, setseguroTyping] = useState(false);
-
-  // *******************************************
-
-  const [checked, setChecked] = useState('no'); // Valor i
-
-  const [buttonColor, setButtonColor] = useState('#848688');
-  const [disabledInput, setdisabledInput] = useState(false);
-
+  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const route = useRoute();
+  const [isEditing, setIsEditing] = useState(false);
+  const [isMounted, setIsMounted] = useState(true);
 
-  const [isCheckedName, setisCheckedName] = useState(false);
-  const [isRif, setisRif] = useState(false);
-
-  const [isCheckedDireccion, setisCheckedDireccion] = useState(false);
-  const [isCheckedRegistroComercial, setisCheckedRegistroComercial] =
-    useState(false);
-  const [isCheckedTelefono, setisCheckedTelefono] = useState(false);
-  const [isCheckedEmail, setisCheckedEmail] = useState(false);
-  const [isCheckedCaracteristicas, setisCheckedCaracteristicas] =
-    useState(false);
-  const [isCheckedExperiencia, setisCheckedExperiencia] = useState(false);
-  const [isCheckedFacebook, setisCheckedFacebook] = useState(false);
-  const [isCheckedInstagram, setisCheckedInstagram] = useState(false);
-  const [isCheckedTiktok, setisCheckedTiktok] = useState(false);
-  const [isCheckedSeguro, setisCheckedSeguro] = useState(false);
-
-  const [isCheckedAgente, setisCheckedAgente] = useState(false);
-
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const [tipoAccion, settipoAccion] = useState('');
-  const [uidTaller, setuidTaller] = useState('');
-
-  const [isCheckedWhats, setisCheckedWhats] = useState(false);
-
-  const [whats, setwhats] = useState(0);
-  const [whatsError, setwhatsError] = useState('');
-
-  const [lat, setlat] = useState('');
-  const [lng, setlng] = useState('');
-
-  const [metodosPago, setMetodosPago] = useState([
-    { label: 'Efectivo', value: 'efectivo', checked: false },
-    { label: 'Pago Móvil', value: 'pagoMovil', checked: false },
-    { label: 'Punto de venta', value: 'puntoVenta', checked: false },
-    { label: 'Credito internacional', value: 'tarjetaCreditoI', checked: false },
-    { label: 'Credito nacional', value: 'tarjetaCreditoN', checked: false },
-    { label: 'Transferencia', value: 'transferencia', checked: false },
-    { label: 'Zelle', value: 'zelle', checked: false },
-    { label: 'Zinli', value: 'zinli', checked: false },
-  ]);
-
-  const [isEstado, setisEstado] = useState(false);
+  const [NameTaller, setNameTaller] = useState('');
+  const [email, setEmail] = useState('');
+  const [cedula, setcedula] = useState('');
+  const [Nombre, setNombre] = useState('');
+  const [phone, setPhone] = useState('');
+  const [Direccion, setDireccion] = useState('');
+  const [RegComercial, setRegComercial] = useState('');
+  const [Caracteristicas, setCaracteristicas] = useState('');
+  const [Tarifa, setTarifa] = useState('');
+  const [Experiencia, setExperiencia] = useState('');
+  const [LinkFacebook, setLinkFacebook] = useState('');
+  const [LinkInstagram, setLinkInstagram] = useState('');
+  const [LinkTiktok, setLinkTiktok] = useState('');
+  const [Garantia, setGarantia] = useState('');
+  const [seguro, setseguro] = useState('');
+  const [checked, setChecked] = useState('no');
+  const [selectedPrefix, setSelectedPrefix] = useState('J-');
+  const [whats, setwhats] = useState('');
+  const [metodosPago, setMetodosPago] = useState(
+    METODOS_PAGO_DEF.map(m => ({...m, checked: false})),
+  );
+  const [estadoSelected, setestadoSelected] = useState('');
   const [imagePerfil, setimagePerfil] = useState('');
+  const [rifIdFiscalUrl, setRifIdFiscalUrl] = useState('');
+  const [rifIdFiscalBase64, setRifIdFiscalBase64] = useState('');
+  const [rifIdFiscalLocalUri, setRifIdFiscalLocalUri] = useState('');
+
+  const [permisoOperacionUrl, setPermisoOperacionUrl] = useState('');
+  const [permisoOperacionBase64, setPermisoOperacionBase64] = useState('');
+  const [permisoOperacionLocalUri, setPermisoOperacionLocalUri] = useState('');
+
+  const [logotipoNegocioUrl, setLogotipoNegocioUrl] = useState('');
+  const [logotipoNegocioBase64, setLogotipoNegocioBase64] = useState('');
+  const [logotipoNegocioLocalUri, setLogotipoNegocioLocalUri] = useState('');
+
+  const [fotoFrenteTallerUrl, setFotoFrenteTallerUrl] = useState('');
+  const [fotoFrenteTallerBase64, setFotoFrenteTallerBase64] = useState('');
+  const [fotoFrenteTallerLocalUri, setFotoFrenteTallerLocalUri] = useState('');
+
+  const [fotoInternaTallerUrl, setFotoInternaTallerUrl] = useState('');
+  const [fotoInternaTallerBase64, setFotoInternaTallerBase64] = useState('');
+  const [fotoInternaTallerLocalUri, setFotoInternaTallerLocalUri] = useState('');
+  const [lat, setlat] = useState(10.4806);
+  const [lng, setlng] = useState(-66.9036);
+  const [businessHours, setBusinessHours] = useState(buildDefaultBusinessHours);
+
+  const [profileLoaded, setProfileLoaded] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [accionesModalVisible, setAccionesModalVisible] = useState(false);
+  const [tipoAccion, settipoAccion] = useState('');
+  const [motivoRechazo, setMotivoRechazo] = useState('');
+  const [successModalType, setSuccessModalType] = useState(null); // null | 'aprobado' | 'rechazado'
+  const [uidTaller, setuidTaller] = useState('');
   const [dataTaller, setdataTaller] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [imgFullscreen, setImgFullscreen] = useState(null);
 
-  const [estadoSelected, setestadoSelected] = useState(''); // Default value 'J'
+  const {bgFullStyle} = useValues();
 
-  const stackNavigation = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'MyTabs' }],
-    });
-  };
-
-  useEffect(() => {
-    const { uid } = route.params;
-    setModalVisible(false);
-    setuidTaller(uid);
-    getData(uid);
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const uid = route.params?.uid;
+      if (!uid) return;
+      setModalVisible(false);
+      setAccionesModalVisible(false);
+      setIsEditing(false);
+      setuidTaller(uid);
+      getData(uid);
+    }, [route.params?.uid]),
+  );
 
   const getData = async uid => {
+    setProfileLoaded(false);
     try {
-      // Hacer la solicitud POST utilizando Axios
-      const response = await api.post('/usuarios/getUserByUid', {
-        uid: uid,
-      });
-
-      // Verificar la respuesta del servidor
+      const response = await api.post('/usuarios/getUserByUid', {uid});
       const result = response.data;
+      if (response.status !== 200 || !result?.userData) {
+        console.warn('Usuario no encontrado');
+        return;
+      }
+      const ud = result.userData;
+      const pickDocUrl = key => docUrlFromApi(ud[key] ?? result[key]);
 
-      if (result.message === 'Usuario encontrado') {
-        console.log('Este es el usuario encontrado:', result.userData);
+      setdataTaller(ud);
+      setNameTaller(ud.nombre || '');
+      setNombre(ud.nombre || '');
+      setEmail(ud.email || '');
+      setPhone(ud.phone != null ? String(ud.phone) : '');
+      setDireccion(ud.Direccion || '');
+      setRegComercial(ud.RegComercial != null ? String(ud.RegComercial) : '');
+      setCaracteristicas(ud.Caracteristicas || '');
+      setTarifa(ud.Tarifa || '');
+      setExperiencia(ud.Experiencia || '');
+      setLinkFacebook(ud.LinkFacebook || '');
+      setLinkInstagram(ud.LinkInstagram || '');
+      setLinkTiktok(ud.LinkTiktok || '');
+      setGarantia(ud.Garantia || '');
+      setseguro(ud.seguro || '');
+      setimagePerfil(ud.image_perfil ? docUrlFromApi(ud.image_perfil) : '');
+      setestadoSelected(ud.estado || '');
+      setwhats(ud.whatsapp != null && ud.whatsapp !== '' ? String(ud.whatsapp) : '');
 
-        setNameTaller(result.userData.nombre);
-        setChecked(result.userData.agenteAutorizado);
+      if (ud.ubicacion?.lat != null && ud.ubicacion?.lng != null) {
+        setlat(Number(ud.ubicacion.lat));
+        setlng(Number(ud.ubicacion.lng));
+      }
 
-        setdataTaller(result.userData);
-
-        // Manejar y asignar los valores con validación de undefined
-        setNombre(result.userData.nombre || '');
-        setcedula(result.userData.rif || '');
-        setEmail(result.userData.email || '');
-        setPhone(result.userData.phone || '');
-        setDireccion(result.userData.Direccion || '');
-        setRegComercial(result.userData.RegComercial || '');
-        setCaracteristicas(result.userData.Caracteristicas || '');
-        setTarifa(result.userData.Tarifa || '');
-        setExperiencia(result.userData.Experiencia || '');
-        setLinkFacebook(result.userData.LinkFacebook || '');
-        setLinkInstagram(result.userData.LinkInstagram || '');
-        setLinkTiktok(result.userData.LinkTiktok || '');
-        setGarantia(result.userData.Garantia || '');
-        setseguro(result.userData.seguro || '');
-        setestadoSelected(result.userData.estado || '');
-
-        setimagePerfil(result.userData.image_perfil);
-
-        setwhats(result.userData.whatsapp);
-
-        console.log(
-          'aquiiiiiiiiiiiiiiiiiiiiiiiii1234',
-          result.userData.ubicacion,
+      if (ud.metodos_pago && typeof ud.metodos_pago === 'object') {
+        setMetodosPago(
+          METODOS_PAGO_DEF.map(m => ({...m, checked: !!ud.metodos_pago[m.value]})),
         );
-        if (result.userData.ubicacion != undefined) {
-          setlat(result.userData.ubicacion.lat);
-          setlng(result.userData.ubicacion.lng);
+      }
+
+      let horariosRaw = ud.horarios_atencion;
+      if (typeof horariosRaw === 'string' && horariosRaw.trim()) {
+        try {
+          horariosRaw = JSON.parse(horariosRaw);
+        } catch {
+          horariosRaw = null;
         }
-
-        const updatedMetodosPago = metodosPago.map(method => ({
-          ...method,
-          checked: result.userData.metodos_pago[method.value] || false,
-        }));
-
-        setMetodosPago(updatedMetodosPago);
-      } else {
-        console.log('Usuario no encontrado');
       }
+      setBusinessHours(mergeHorariosFromApi(horariosRaw));
+
+      const ag = ud.agenteAutorizado;
+      setChecked(
+        ag === true || ag === 'si' || ag === 'Sí' || ag === 'SI' ? 'si' : 'no',
+      );
+
+      if (ud.rif && String(ud.rif).includes('-')) {
+        const parts = String(ud.rif).split('-');
+        setcedula(parts[1] || '');
+        setSelectedPrefix(`${parts[0]}-`);
+      } else if (ud.rif != null && ud.rif !== '') {
+        setcedula(String(ud.rif));
+      }
+
+      setRifIdFiscalUrl(pickDocUrl('rifIdFiscal'));
+      setPermisoOperacionUrl(pickDocUrl('permisoOperacion'));
+      setLogotipoNegocioUrl(pickDocUrl('logotipoNegocio'));
+      setFotoFrenteTallerUrl(pickDocUrl('fotoFrenteTaller'));
+      setFotoInternaTallerUrl(pickDocUrl('fotoInternaTaller'));
+
+      setProfileLoaded(true);
     } catch (error) {
-      if (error.response) {
-        console.error('Error en la solicitufdgdgd:', error.response.statusText);
-      } else {
-        console.error('Error en la solicituddfgdfgf:', error.message);
-      }
+      setProfileLoaded(false);
+      console.error('Error getUserByUid:', error.response?.data?.message || error.message);
     }
   };
 
-  const {
-    imageRTLStyle,
-    viewRTLStyle,
-    bgFullStyle,
-    textColorStyle,
-    iconColorStyle,
-    textRTLStyle,
-    isDark,
-    t,
-  } = useValues();
+  const getImageName = url =>
+    typeof url === 'string' && url ? url.split('/').pop() : '';
+
+  const docImageTodelete = (storedUrl, newBase64) =>
+    storedUrl && newBase64 ? getImageName(storedUrl) : '';
+
+  const documentValueForApi = (payloadField, urlStored) => {
+    if (payloadField != null && String(payloadField).trim() !== '')
+      return String(payloadField).trim();
+    return urlStored != null && urlStored !== '' ? String(urlStored) : '';
+  };
+
+  const showToast = text => Alert.alert('Solvers Informa', text);
+
+  const GetCoordenadas = useCallback(location => {
+    setlat(location.latitude);
+    setlng(location.longitude);
+    setIsMounted(false);
+    setTimeout(() => setIsMounted(true), 100);
+  }, []);
+
+  const selectDocument = (setBase64, setLocalUri) => {
+    launchImageLibrary({mediaType: 'photo', includeBase64: true}, response => {
+      if (!response.didCancel && !response.errorCode && response.assets?.[0]) {
+        const asset = response.assets[0];
+        if (asset.base64) setBase64(asset.base64);
+        if (asset.uri) setLocalUri(asset.uri);
+      }
+    });
+  };
+
+  const toggleMetodoPago = index => {
+    if (!isEditing) return;
+    setMetodosPago(prev => {
+      const next = [...prev];
+      next[index] = {...next[index], checked: !next[index].checked};
+      return next;
+    });
+  };
+
+  const buildPayload = useCallback(
+    () => ({
+      nombre: Nombre ?? '',
+      rif: `${selectedPrefix}${cedula}`,
+      phone: String(phone ?? '').replace(/\s+/g, ''),
+      email: email ?? '',
+      Direccion: Direccion ?? '',
+      RegComercial: RegComercial ?? '',
+      Caracteristicas: Caracteristicas ?? '',
+      Experiencia: Experiencia ?? '',
+      LinkFacebook: LinkFacebook ?? '',
+      LinkInstagram: LinkInstagram ?? '',
+      LinkTiktok: LinkTiktok ?? '',
+      seguro: seguro ?? '',
+      agenteAutorizado: checked === 'si',
+      whatsapp: String(whats ?? '').replace(/\s+/g, ''),
+      metodos_pago: metodosPago.reduce((acc, m) => {
+        acc[m.value] = m.checked;
+        return acc;
+      }, {}),
+      estado: estadoSelected ?? '',
+      horarios_atencion: businessHours,
+      lat,
+      lng,
+      ubicacion: {lat, lng},
+    }),
+    [
+      Nombre, selectedPrefix, cedula, phone, email, Direccion, RegComercial,
+      Caracteristicas, Experiencia, LinkFacebook, LinkInstagram, LinkTiktok,
+      seguro, checked, whats, metodosPago, estadoSelected, businessHours, lat, lng,
+    ],
+  );
+
+  const handleSave = async () => {
+    if (!uidTaller || saving) return;
+    const payload = buildPayload();
+    setSaving(true);
+    try {
+      const [phoneRes, emailRes] = await Promise.all([
+        api.post('/home/validatePhone', {phone: payload.phone, uid: uidTaller}),
+        api.post('/home/validateEmail', {email: payload.email, uid: uidTaller}),
+      ]);
+      if (
+        phoneRes.status !== 200 || phoneRes.data.valid !== true ||
+        emailRes.status !== 200 || emailRes.data.valid !== true
+      ) {
+        showToast('El teléfono o correo ya está registrado.');
+        return;
+      }
+      const body = {
+        uid: uidTaller,
+        ...payload,
+        Tarifa: Tarifa ?? '',
+        Garantia: Garantia ?? '',
+        base64: '',
+        imageTodelete: '',
+        rifIdFiscal: documentValueForApi(rifIdFiscalBase64, rifIdFiscalUrl),
+        permisoOperacion: documentValueForApi(permisoOperacionBase64, permisoOperacionUrl),
+        logotipoNegocio: documentValueForApi(logotipoNegocioBase64, logotipoNegocioUrl),
+        fotoFrenteTaller: documentValueForApi(fotoFrenteTallerBase64, fotoFrenteTallerUrl),
+        fotoInternaTaller: documentValueForApi(fotoInternaTallerBase64, fotoInternaTallerUrl),
+        rifIdFiscalTodelete: docImageTodelete(rifIdFiscalUrl, rifIdFiscalBase64),
+        permisoOperacionTodelete: docImageTodelete(permisoOperacionUrl, permisoOperacionBase64),
+        logotipoNegocioTodelete: docImageTodelete(logotipoNegocioUrl, logotipoNegocioBase64),
+        fotoFrenteTallerTodelete: docImageTodelete(fotoFrenteTallerUrl, fotoFrenteTallerBase64),
+        fotoInternaTallerTodelete: docImageTodelete(fotoInternaTallerUrl, fotoInternaTallerBase64),
+      };
+      const response = await api.post('/usuarios/UpdateTallerUsuarioDocs', body);
+      if (response.status === 200 || response.status === 201) {
+        showToast('Negocio actualizado exitosamente');
+        setIsEditing(false);
+      } else {
+        showToast(response.data?.message || 'Error inesperado');
+      }
+    } catch (error) {
+      showToast(error.response?.data?.message || 'Error en la solicitud');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const onHandleChange = type => {
     settipoAccion(type);
     setModalVisible(true);
   };
 
-  const onCancel = () => {
-    setModalVisible(false);
+  const onAccionEditarUsuario = () => {
+    setAccionesModalVisible(false);
+    setIsEditing(v => !v);
   };
 
-  const onConfirm = async () => {
-    console.log(tipoAccion);
-    console.log(uidTaller);
-    console.log(dataTaller);
+  const onAccionAprobar = () => {
+    setAccionesModalVisible(false);
+    onHandleChange('Aprobar');
+  };
 
+  const onAccionRechazar = () => {
+    setAccionesModalVisible(false);
+    onHandleChange('Rechazar');
+  };
+
+  const onCancel = () => {
+    setModalVisible(false);
+    setMotivoRechazo('');
+  };
+  const onCerrarMenuAcciones = () => setAccionesModalVisible(false);
+
+  const onConfirm = async () => {
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const userLogged = jsonValue != null ? JSON.parse(jsonValue) : null;
-
-      console.log("Este es el userrr ", userLogged.nombre);
-      console.log("este es el idd", userLogged.uid);
-      console.log(uidTaller)
-      console.log("dataTaller.token5151561", dataTaller.token)
-
-      if (tipoAccion == 'Aprobar') {
-        console.log('Aprobar');
-
+      if (!userLogged?.uid || !uidTaller || !dataTaller) {
+        Alert.alert('Solvers Informa', 'No se pudo completar la acción.');
+        return;
+      }
+      const nuevoStatus = tipoAccion === 'Aprobar' ? 'Aprobado' : 'Rechazado';
+      const response = await api.post('/usuarios/actualizarStatusUsuario', {
+        uid: uidTaller,
+        nuevoStatus,
+        certificador_nombre: userLogged.nombre,
+        certificador_key: userLogged.uid,
+        ...(tipoAccion === 'Rechazar' && motivoRechazo.trim()
+          ? {motivoRechazo: motivoRechazo.trim()}
+          : {}),
+      });
+      if (
+        response.data?.message ===
+        'El estado del usuario ha sido actualizado exitosamente'
+      ) {
+        setModalVisible(false);
+        setMotivoRechazo('');
         try {
-          // Hacer la solicitud POST utilizando Axios
-          const response = await api.post('/usuarios/actualizarStatusUsuario', {
-            uid: uidTaller,
-            nuevoStatus: 'Aprobado',
-            certificador_nombre: userLogged.nombre,
-            certificador_key: userLogged.uid,
+          await api.post('/usuarios/sendNotification', {
+            token: dataTaller.token,
+            title: tipoAccion === 'Aprobar'
+              ? 'Notificación de Aprobación de Taller'
+              : 'Notificación de Rechazo de Taller',
+            body: tipoAccion === 'Aprobar'
+              ? '¡Felicitaciones! Su taller ha sido aprobado con éxito.'
+              : 'Su taller no fue aprobado. Revise los requisitos e inténtelo nuevamente.',
+            secretCode: tipoAccion === 'Aprobar' ? 'Aprovado Taller' : 'Rechazo Taller',
           });
-
-          // Verificar la respuesta del servidor
-          const result = response.data;
-
-          if (
-            result.message ===
-            'El estado del usuario ha sido actualizado exitosamente'
-          ) {
-            showToast('Se ha aprobado el taller exitosamente');
-            setModalVisible(false);
-            try {
-              const response = await api.post('/usuarios/sendNotification', {
-                token: dataTaller.token,
-                title: 'Notificación de Aprobación de Taller',
-                body: '¡Felicitaciones! Su taller ha sido aprobado con éxito. Gracias por ser una parte valiosa de nuestra comunidad.',
-                secretCode: 'Aprovado Taller',
-              });
-            } catch (error) {
-              console.log(error);
-            }
-            navigation.goBack();
-          } else {
-            showToast('Ha ocurrido un error');
-            setModalVisible(false);
-            navigation.goBack();
-          }
-        } catch (error) {
-          // Manejo de errores
-          if (error.response) {
-            console.error('Error en la solicituddf12323133626:', error.response.statusText);
-          } else {
-            console.error('Error en la solicitudesto es test:', error.message);
-          }
-          showToast('Ha ocurrido un error');
-          setModalVisible(false);
-          navigation.goBack();
+        } catch (e) {
+          console.log(e);
         }
+        setSuccessModalType(tipoAccion === 'Aprobar' ? 'aprobado' : 'rechazado');
       } else {
-        try {
-          // Hacer la solicitud POST utilizando Axios
-          console.log("Entra aquiiiii12323")
-          console.log(uidTaller)
-          console.log(userLogged.nombre)
-          console.log(userLogged.uid)
-
-          const response = await api.post('/usuarios/actualizarStatusUsuario', {
-            uid: uidTaller,
-            nuevoStatus: 'Rechazado',
-            certificador_nombre: userLogged.nombre,
-            certificador_key: userLogged.uid,
-          });
-
-          // Verificar la respuesta del servidor
-          const result = response.data;
-          console.log(response.data)
-          if (
-            result.message ===
-            'El estado del usuario ha sido actualizado exitosamente'
-          ) {
-            showToast('Se ha rechazado el taller');
-            setModalVisible(false);
-
-            try {
-              const response = await api.post('/usuarios/sendNotification', {
-                token: dataTaller.token,
-                title: 'Notificación de Rechazo de Taller',
-                body: 'Lamentamos informarle que su taller no ha sido aprobado. Por favor, revise los requisitos y vuelva a intentarlo. Gracias por su comprensión.',
-                secretCode: 'Rechazo Taller',
-              });
-            } catch (error) {
-              console.log(error);
-            }
-
-            navigation.goBack();
-          } else {
-            showToast('Ha ocurrido un error');
-            setModalVisible(false);
-            navigation.goBack();
-          }
-        } catch (error) {
-          // Manejo de errores
-          if (error.response) {
-            console.error('Error en la solicitud234234:', error.response.statusText);
-          } else {
-            console.error('Error en la solicitud111:', error.message);
-          }
-          showToast('Ha ocurrido un error');
-          setModalVisible(false);
-          navigation.goBack();
-        }
+        showToast('Ha ocurrido un error');
+        setModalVisible(false);
+        navigation.goBack();
       }
     } catch (e) {
-      // error reading value
-      console.log(e);
+      console.error(e);
+      showToast('Ha ocurrido un error');
+      setModalVisible(false);
+      navigation.goBack();
     }
   };
 
-  const showToast = text => {
-    // ToastAndroid.show(text, ToastAndroid.SHORT);
-    Alert.alert('Solvers Informa', text);
-  };
+  const mapLat = typeof lat === 'number' ? lat : Number(lat);
+  const mapLng = typeof lng === 'number' ? lng : Number(lng);
+  const showMap = Number.isFinite(mapLat) && Number.isFinite(mapLng);
 
-  const [isMounted, setIsMounted] = useState(true);
+  const statusColor =
+    dataTaller?.status === 'Aprobado' ? '#22C55E'
+    : dataTaller?.status === 'Rechazado' ? '#EF4444'
+    : YELLOW;
+  const statusTextColor =
+    dataTaller?.status === 'Aprobado' || dataTaller?.status === 'Rechazado'
+      ? '#FFFFFF'
+      : DARK_BLUE;
 
-  const GetCoordenadas = location => {
-    setlat(location.latitude);
-    setlng(location.longitude);
-    setIsMounted(false); // Desmonta el componente
-    setTimeout(() => setIsMounted(true), 100);
+  const docThumb = ({label, url, localUri, onSelect}) => {
+    // Preview: prefer newly selected local image, else the stored URL
+    const previewUri = localUri || url;
+    const hasNew = !!localUri;
+
+    if (previewUri) {
+      return (
+        <View key={label} style={styles.docThumbBtn}>
+          <TouchableOpacity
+            activeOpacity={0.85}
+            onPress={() => setImgFullscreen(previewUri)}
+            style={{flex: 1}}>
+            <Image source={{uri: previewUri}} style={styles.docThumbImg} resizeMode="cover" />
+            {hasNew && (
+              <View style={styles.docNewBadge}>
+                <Text style={styles.docNewBadgeText}>NUEVO</Text>
+              </View>
+            )}
+            {!isEditing && (
+              <View style={styles.docThumbOverlay}>
+                <Icons5 name="expand" size={12} color="#FFFFFF" />
+              </View>
+            )}
+          </TouchableOpacity>
+          {isEditing && (
+            <TouchableOpacity style={styles.docEditBtn} onPress={onSelect} activeOpacity={0.8}>
+              <Icons5 name="camera" size={12} color="#FFFFFF" />
+              <Text style={styles.docEditBtnText}>  Cambiar</Text>
+            </TouchableOpacity>
+          )}
+          <Text style={styles.docThumbLabel} numberOfLines={1}>{label}</Text>
+        </View>
+      );
+    }
+
+    // Empty cell
+    if (isEditing) {
+      return (
+        <TouchableOpacity
+          key={label}
+          style={styles.docEmptyCell}
+          onPress={onSelect}
+          activeOpacity={0.8}>
+          <View style={styles.docUploadIcon}>
+            <Icons5 name="cloud-upload-alt" size={22} color={DARK_BLUE} />
+          </View>
+          <Text style={styles.docEmptyCellLabel} numberOfLines={1}>{label}</Text>
+          <Text style={styles.docEmptyCellSub}>Toca para subir</Text>
+        </TouchableOpacity>
+      );
+    }
+
+    return (
+      <View key={label} style={styles.docEmptyCell}>
+        <Icons5 name="file-alt" size={20} color="#D1D5DB" />
+        <Text style={styles.docEmptyCellLabel} numberOfLines={1}>{label}</Text>
+        <Text style={styles.docEmptyCellSub}>Sin archivo</Text>
+      </View>
+    );
   };
 
   return (
-    <View
-      style={[
-        commonStyles.commonContainer,
-        external.ph_20,
-        { backgroundColor: bgFullStyle },
-      ]}>
-      {/* <HeaderContainer value="Perfil" /> */}
+    <View style={{flex: 1, backgroundColor: '#F4F5F9'}}>
 
-      <View
-        style={[
-          external.fd_row,
-          external.ai_center,
-          external.pt_15,
-          { justifyContent: 'center' }, // Cambiado a 'center' para centrar el contenido
-          { flexDirection: viewRTLStyle },
-        ]}>
-        {/* Botón de retroceso */}
-        <TouchableOpacity
-          onPress={() => navigation.goBack('')}
-          style={{ position: 'absolute', left: 0 }} // Posiciona el botón de retroceso en la esquina izquierda
-        >
-          <View style={{ transform: [{ scale: imageRTLStyle }] }}>
-            <BackLeft />
-          </View>
-        </TouchableOpacity>
+      {/* ── Profile Header ──────────────────────────────────────────────── */}
+      <View style={[styles.profileHeader, {paddingTop: insets.top + 4}]}>
+        {/* Decorative circles */}
+        <View style={styles.headerCircle1} pointerEvents="none" />
+        <View style={styles.headerCircle2} pointerEvents="none" />
 
-        <Text
-          style={[
-            commonStyles.hederH2,
-            external.as_center,
-            { color: textColorStyle },
-          ]}>
-          {NameTaller}
-        </Text>
-      </View>
-
-      {imagePerfil == '' ? (
-        <View
-          style={[
-            stylesImage.imageContainer,
-            { justifyContent: 'center', alignItems: 'center' },
-          ]}>
-          <Image source={notImageFound} style={{ width: 100, height: 100 }} />
-        </View>
-      ) : (
-        <View
-          style={[
-            stylesImage.imageContainer,
-            { justifyContent: 'center', alignItems: 'center' },
-          ]}>
-          <Image
-            source={{ uri: imagePerfil }}
-            style={{ width: 100, height: 100 }}
-          />
-        </View>
-      )}
-
-      <ScrollView style={{ marginBottom: 15 }}>
-        <View>
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedName}
-              style={{
-                marginTop: 30,
-                color: '#2D3261',
-                marginRight: 10,
-                marginRight: 10,
-              }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedName(!isCheckedName);
-              }}
-            />
-
-            <TextInputs
-              fullWidth={270}
-              title="Nombre y Apellido"
-              editable={false}
-              value={Nombre}
-              textDecorationLine={isCheckedName ? 'line-through' : 'none'}
-              onChangeText={text => {
-                setNombre(text);
-                setNombreError(text.trim() === '' ? 'Nombre es requerido' : '');
-              }}
-              onBlur={() => { }}
-            />
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isRif}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisRif(!isRif);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Registro de Información Fiscal (RIF)"
-              value={cedula}
-              editable={false}
-              textDecorationLine={isRif ? 'line-through' : 'none'}
-              placeHolder="Ingrese su RIF"
-              onChangeText={text => {
-                const numericText = text.replace(/[^0-9]/g, '');
-                setcedula(numericText);
-                setcedulaError(
-                  numericText.trim() === '' ? 'Cedula es requerida' : '',
-                );
-              }}
-              onBlur={() => { }}
-              keyboardType="numeric"
-            />
-          </View>
-
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedDireccion}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedDireccion(!isCheckedDireccion);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Dirección del Taller"
-              placeHolder="Ingrese su direccion"
-              textDecorationLine={isCheckedDireccion ? 'line-through' : 'none'}
-              editable={false}
-              value={Direccion}
-              onChangeText={text => {
-                setDireccion(text);
-                setDireccionError(
-                  text.trim() === '' ? 'Direccion es requerida' : '',
-                );
-              }}
-              onBlur={() => { }}
-            />
-            {DireccionError !== '' && (
-              <Text style={styles.errorStyle}>{DireccionError}</Text>
-            )}
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedRegistroComercial}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedRegistroComercial(!isCheckedRegistroComercial);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Registro Comercial"
-              value={RegComercial}
-              textDecorationLine={
-                isCheckedRegistroComercial ? 'line-through' : 'none'
-              }
-              editable={false}
-              placeHolder="Ingrese su Registro Comercial"
-              onChangeText={text => {
-                const numericText = text.replace(/[^0-9]/g, '');
-                setRegComercial(numericText);
-                setRegComercialError(
-                  numericText.trim() === ''
-                    ? 'Registro comercial es requerido'
-                    : '',
-                );
-              }}
-              onBlur={() => { }}
-              keyboardType="numeric"
-            />
-            {RegComercialError !== '' && (
-              <Text style={styles.errorStyle}>{RegComercialError}</Text>
-            )}
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isEstado}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                console.log('Aquiii');
-                setisEstado(!isEstado);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Estado"
-              value={estadoSelected}
-              textDecorationLine={isEstado ? 'line-through' : 'none'}
-              editable={false}
-              keyboardType="default"
-              onBlur={() => { }}
-            />
-          </View>
-
-
-          {lat != undefined && lat != '' && lng != undefined && lng != '' ? (
-            <View
-              style={[stylesMap.container, { marginTop: 5, marginBottom: 15 }]}>
-              {isMounted && (
-                <MapComponent
-                  initialRegion={{
-                    latitude: lat,
-                    longitude: lng,
-                    latitudeDelta: 0.015,
-                    longitudeDelta: 0.015,
-                  }}
-                  edit={false}
-                  returnFunction={GetCoordenadas}
-                  useThisCoo={true}
-                />
-              )}
+        {/* Top row: back + status */}
+        <View style={styles.headerTopRow}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.backBtn}
+            activeOpacity={0.85}>
+            <Icons name="angle-left" size={22} color={YELLOW} />
+          </TouchableOpacity>
+          <View style={{flex: 1}} />
+          {dataTaller?.status ? (
+            <View style={[styles.statusBadge, {backgroundColor: statusColor}]}>
+              <Text style={[styles.statusBadgeText, {color: statusTextColor}]}>
+                {dataTaller.status.toUpperCase()}
+              </Text>
             </View>
           ) : null}
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedTelefono}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedTelefono(!isCheckedTelefono);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Número Telefónico"
-              value={phone}
-              textDecorationLine={isCheckedTelefono ? 'line-through' : 'none'}
-              editable={false}
-              placeholder="Ingrese su número"
-              keyboardType="numeric"
-              onChangeText={text => {
-                const numericText = text.replace(/[^0-9]/g, '');
-                setPhone(numericText);
-                setPhoneError(
-                  numericText.trim() === ''
-                    ? 'Número telefónico requerido'
-                    : '',
-                );
-              }}
-              onBlur={() => { }}
-            />
-            {phoneError !== '' && (
-              <Text style={styles.errorStyle}>{phoneError}</Text>
-            )}
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedWhats}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedWhats(!isCheckedWhats);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Whatsapp"
-              value={whats}
-              textDecorationLine={isCheckedWhats ? 'line-through' : 'none'}
-              editable={false}
-              placeholder="Ingrese su número"
-              keyboardType="numeric"
-              onBlur={() => { }}
-            />
-          </View>
-
-          <View style={{ marginTop: 5 }}>
-            <Text
-              style={[
-                styles.headingContainer,
-                { color: textColorStyle },
-                { textAlign: textRTLStyle },
-              ]}>
-              Metodos de Pago
-            </Text>
-
-            <View style={{ padding: 10 }}>
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  justifyContent: 'space-between',
-                }}>
-                {metodosPago.map((method, index) => (
-                  <View
-                    key={method.value}
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      marginVertical: 5,
-                      width: '45%',
-                    }}>
-                    <CheckBox
-                      isChecked={method.checked}
-                      onClick={() => toggleCheckBox(index)}
-                      checkBoxColor="#2D3261"
-                      disabled={true}
-                    />
-                    <Text style={{ marginLeft: 10, color: 'black' }}>
-                      {method.label}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </View>
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedEmail}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedEmail(!isCheckedEmail);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Correo Electrónico"
-              keyboardType={'email-address'}
-              value={email}
-              editable={false}
-              textDecorationLine={isCheckedEmail ? 'line-through' : 'none'}
-              placeHolder="Ingrese su email"
-              onChangeText={text => {
-                setEmail(text);
-                setEmailError(text.trim() === '' ? 'Email es requerido' : '');
-              }}
-              onBlur={() => { }}
-            />
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedCaracteristicas}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedCaracteristicas(!isCheckedCaracteristicas);
-              }}
-            />
-
-            <TextInputs
-              fullWidth={270}
-              title="Caracteristicas del taller12"
-              editable={false}
-              textDecorationLine={
-                isCheckedCaracteristicas ? 'line-through' : 'none'
-              }
-              value={Caracteristicas}
-              placeHolder="Característica del taller (tipo de piso, si posee fosa, rampla, entre otras condiciones, gatos elevadores)"
-              multiline={true}
-              numberOfLines={4}
-              height={150}
-              onChangeText={text => {
-                setCaracteristicas(text);
-                setCaracteristicasError(
-                  text.trim() === '' ? 'Caracteristicas es requerido' : '',
-                );
-              }}
-              onBlur={() => { }}
-            />
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-              marginTop: -15,
-            }}>
-            <CheckBox
-              isChecked={isCheckedAgente}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedAgente(!isCheckedAgente);
-              }}
-            />
-
-            <Text
-              style={{
-                marginBottom: 10,
-                color: 'black',
-                marginTop: 35,
-                textDecorationLine: isCheckedAgente ? 'line-through' : 'none',
-              }}>
-              ¿Es un Agente Autorizado?
-            </Text>
-
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginTop: 25,
-              }}>
-              <RadioButton
-                value="si"
-                disabled={true}
-                status={checked === 'si' ? 'checked' : 'unchecked'}
-                onPress={() => setChecked('si')}
-              />
-              <Text style={{ color: 'black' }}>Sí</Text>
-
-              <RadioButton
-                value="no"
-                disabled={true}
-                status={checked === 'no' ? 'checked' : 'unchecked'}
-                onPress={() => setChecked('no')}
-              />
-              <Text style={{ color: 'black' }}>No</Text>
-            </View>
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedExperiencia}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedExperiencia(!isCheckedExperiencia);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Tiempo de experiencia"
-              editable={false}
-              textDecorationLine={
-                isCheckedExperiencia ? 'line-through' : 'none'
-              }
-              value={Experiencia}
-              placeHolder="Ingrese su tiempo de experiencia"
-              onChangeText={text => {
-                setExperiencia(text);
-                setExperienciaError(
-                  text.trim() === '' ? 'Experiencia es requerido' : '',
-                );
-              }}
-              onBlur={() => { }}
-            />
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedFacebook}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedFacebook(!isCheckedFacebook);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Link de Facebook"
-              textDecorationLine={isCheckedFacebook ? 'line-through' : 'none'}
-              editable={false}
-              value={LinkFacebook}
-              placeHolder="Ingrese el enlace a su Facebook"
-              onChangeText={text => {
-                setLinkFacebook(text);
-                setLinkFacebookError(
-                  text.trim() === '' ? 'Link de Facebook es requerido' : '',
-                );
-              }}
-              onBlur={() => { }}
-            />
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedInstagram}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedInstagram(!isCheckedInstagram);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Link de Instagram"
-              editable={false}
-              textDecorationLine={isCheckedInstagram ? 'line-through' : 'none'}
-              value={LinkInstagram}
-              placeHolder="Ingrese el enlace a su Instagram"
-              onChangeText={text => {
-                setLinkInstagram(text);
-                setLinkInstagramError(
-                  text.trim() === '' ? 'Link de Instagram es requerido' : '',
-                );
-              }}
-              onBlur={() => { }}
-            />
-            {LinkInstagramError !== '' && (
-              <Text style={styles.errorStyle}>{LinkInstagramError}</Text>
-            )}
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedTiktok}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedTiktok(!isCheckedTiktok);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Link de TikTok"
-              editable={false}
-              value={LinkTiktok}
-              textDecorationLine={isCheckedTiktok ? 'line-through' : 'none'}
-              placeHolder="Ingrese el enlace a su TikTok"
-              onChangeText={text => {
-                setLinkTiktok(text);
-                setLinkTiktokError(
-                  text.trim() === '' ? 'Link de TikTok es requerido' : '',
-                );
-              }}
-              onBlur={() => { }}
-            />
-          </View>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginVertical: 10,
-            }}>
-            <CheckBox
-              isChecked={isCheckedSeguro}
-              style={{ marginTop: 30, color: '#2D3261', marginRight: 10 }}
-              checkedCheckBoxColor="#2D3261"
-              onClick={() => {
-                setisCheckedSeguro(!isCheckedSeguro);
-              }}
-            />
-            <TextInputs
-              fullWidth={270}
-              title="Seguro"
-              editable={false}
-              value={seguro}
-              height={150}
-              placeHolder="Ingrese su seguro"
-              textDecorationLine={isCheckedSeguro ? 'line-through' : 'none'}
-              onChangeText={text => {
-                setseguro(text);
-                setseguroError(text.trim() === '' ? 'Seguro es requerido' : '');
-              }}
-              onBlur={() => { }}
-            />
-            {seguroError !== '' && (
-              <Text style={styles.errorStyle}>{seguroError}</Text>
-            )}
-          </View>
-
         </View>
 
-      </ScrollView>
-
-      <View style={{ marginBottom: 15 }}>
-        <View
-          style={{
-            backgroundColor: buttonColor,
-            borderRadius: windowHeight(20),
-            marginBottom: 15,
-          }}>
-          <NavigationButton
-            title="Aprobar solicitud"
-            onPress={() => onHandleChange('Aprobar')}
-            backgroundColor={'#2D3261'}
-            color={appColors.screenBg}
+        {/* Avatar */}
+        <View style={styles.avatarWrap}>
+          <Image
+            source={imagePerfil ? {uri: imagePerfil} : notImageFound}
+            style={styles.avatarImg}
+            resizeMode="cover"
           />
         </View>
 
-        <View
-          style={{
-            backgroundColor: buttonColor,
-            borderRadius: windowHeight(20),
-          }}>
-          <NavigationButton
-            title="Rechazar solicitud"
-            onPress={() => onHandleChange('Rechazar')}
-            backgroundColor={'#848688'}
-            color={appColors.screenBg}
-          />
+        {/* Name & estado */}
+        <Text style={styles.profileName} numberOfLines={2}>
+          {NameTaller || 'Negocio'}
+        </Text>
+        {estadoSelected ? (
+          <View style={styles.profileLocationRow}>
+            <Icons5 name="map-marker-alt" size={10} color="rgba(255,255,255,0.5)" />
+            <Text style={styles.profileSubtitle}> {estadoSelected}</Text>
+          </View>
+        ) : null}
+
+        {/* Divider */}
+        <View style={styles.headerDivider} />
+
+        {/* Buttons */}
+        <View style={styles.profileBtnsRow}>
+          <TouchableOpacity
+            style={styles.profileBtnPrimary}
+            onPress={() => setAccionesModalVisible(true)}
+            activeOpacity={0.85}>
+            <Icons5 name="ellipsis-h" size={13} color={DARK_BLUE} />
+            <Text style={styles.profileBtnPrimaryText}>  Acciones</Text>
+          </TouchableOpacity>
+          {isEditing && (
+            <>
+              <TouchableOpacity
+                style={styles.profileBtnCancel}
+                onPress={() => setIsEditing(false)}
+                activeOpacity={0.85}>
+                <Icons name="times" size={13} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.profileBtnCancelText}>  Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.profileBtnSave}
+                onPress={handleSave}
+                disabled={saving}
+                activeOpacity={0.85}>
+                <Icons5 name="save" size={13} color="#FFFFFF" />
+                <Text style={styles.profileBtnSaveText}>
+                  {saving ? '  Guardando…' : '  Guardar'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
 
+      {/* ── Content ─────────────────────────────────────────────────────── */}
+      {profileLoaded && uidTaller ? (
+        <ScrollView
+          style={{flex: 1}}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled">
+
+          {/* ── Información general ─────────────────────────────────────── */}
+          <View style={styles.section}>
+            <SectionHeader title="Información general" />
+            <FieldBlock
+              label="Nombre del negocio"
+              value={Nombre}
+              isEditing={isEditing}>
+              <EditInput value={Nombre} onChangeText={setNombre} />
+            </FieldBlock>
+            <FieldBlock
+              label="RIF"
+              value={`${selectedPrefix}${cedula}`}
+              isEditing={isEditing}
+              vertical>
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 8}}>
+                <View style={{width: '32%'}}>
+                  <Dropdown
+                    disable={!isEditing}
+                    style={[styles.dropdownField, {minHeight: 46}]}
+                    data={PREFIX_RIF}
+                    labelField="label"
+                    valueField="value"
+                    value={selectedPrefix}
+                    onChange={item => setSelectedPrefix(item.value)}
+                  />
+                </View>
+                <View style={[styles.rifInput, !isEditing && styles.rifInputReadonly]}>
+                  <TextInput
+                    value={cedula}
+                    onChangeText={setcedula}
+                    keyboardType="numeric"
+                    editable={isEditing}
+                    placeholder="Número"
+                    placeholderTextColor="#9CA3AF"
+                    style={styles.rifInputText}
+                  />
+                </View>
+              </View>
+            </FieldBlock>
+            <FieldBlock
+              label="Correo electrónico"
+              value={email}
+              isEditing={isEditing}>
+              <EditInput value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" editable={false} />
+            </FieldBlock>
+            <FieldBlock
+              label="Registro comercial"
+              value={RegComercial}
+              isEditing={isEditing}>
+              <EditInput value={RegComercial} onChangeText={setRegComercial} keyboardType="numeric" />
+            </FieldBlock>
+            <FieldBlock
+              label="Agente autorizado"
+              value={checked === 'si' ? 'Sí' : 'No'}
+              isEditing={isEditing}
+              vertical>
+              <View style={styles.segmentedWrap}>
+                <TouchableOpacity
+                  style={[styles.segmentedBtn, checked === 'si' && styles.segmentedBtnActive]}
+                  onPress={() => isEditing && setChecked('si')}
+                  activeOpacity={isEditing ? 0.8 : 1}>
+                  <Icons5 name="check" size={13} color={checked === 'si' ? '#FFFFFF' : '#9CA3AF'} style={{marginRight: 6}} />
+                  <Text style={[styles.segmentedBtnText, checked === 'si' && styles.segmentedBtnTextActive]}>Sí</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.segmentedBtn, checked === 'no' && styles.segmentedBtnNo]}
+                  onPress={() => isEditing && setChecked('no')}
+                  activeOpacity={isEditing ? 0.8 : 1}>
+                  <Icons name="times" size={13} color={checked === 'no' ? '#FFFFFF' : '#9CA3AF'} style={{marginRight: 6}} />
+                  <Text style={[styles.segmentedBtnText, checked === 'no' && styles.segmentedBtnTextActive]}>No</Text>
+                </TouchableOpacity>
+              </View>
+            </FieldBlock>
+          </View>
+
+          {/* ── Ubicación ───────────────────────────────────────────────── */}
+          <View style={styles.section}>
+            <SectionHeader title="Ubicación" />
+            <FieldBlock
+              label="Estado"
+              isEditing={isEditing}
+              vertical>
+              <Dropdown
+                disable={!isEditing}
+                style={[
+                  styles.dropdownField,
+                  !isEditing && styles.dropdownFieldReadonly,
+                ]}
+                placeholderStyle={{color: '#6B7280', fontSize: 14}}
+                selectedTextStyle={{color: isEditing ? '#111827' : '#374151', fontSize: 14}}
+                data={ESTADOS_VZ}
+                labelField="label"
+                valueField="value"
+                value={estadoSelected}
+                onChange={item => setestadoSelected(item.value)}
+                search
+              />
+            </FieldBlock>
+            {showMap && (
+              <FieldBlock
+                label="Mapa"
+                isEditing={isEditing}
+                vertical>
+                <View style={styles.mapBox}>
+                  {isMounted ? (
+                    <MapComponent
+                      initialRegion={{
+                        latitude: mapLat,
+                        longitude: mapLng,
+                        latitudeDelta: 0.015,
+                        longitudeDelta: 0.015,
+                      }}
+                      edit={isEditing}
+                      returnFunction={GetCoordenadas}
+                      useThisCoo={true}
+                    />
+                  ) : null}
+                </View>
+              </FieldBlock>
+            )}
+            <FieldBlock
+              label="Dirección"
+              value={Direccion}
+              isEditing={isEditing}
+              vertical>
+              <EditInput value={Direccion} onChangeText={setDireccion} multiline height={100} />
+            </FieldBlock>
+          </View>
+
+          {/* ── Contacto ────────────────────────────────────────────────── */}
+          <View style={styles.section}>
+            <SectionHeader title="Contacto" />
+            <FieldBlock
+              label="Teléfono"
+              value={phone}
+              isEditing={isEditing}>
+              <EditInput value={phone} onChangeText={setPhone} keyboardType="numeric" />
+            </FieldBlock>
+            <FieldBlock
+              label="WhatsApp"
+              value={whats}
+              isEditing={isEditing}>
+              <EditInput value={whats} onChangeText={setwhats} keyboardType="numeric" />
+            </FieldBlock>
+          </View>
+
+          {/* ── Presence / Redes ────────────────────────────────────────── */}
+          <View style={styles.section}>
+            <SectionHeader title="Redes sociales" />
+            <FieldBlock
+              label="Facebook"
+              value={LinkFacebook}
+              isEditing={isEditing}>
+              <EditInput value={LinkFacebook} onChangeText={setLinkFacebook} autoCapitalize="none" />
+            </FieldBlock>
+            <FieldBlock
+              label="Instagram"
+              value={LinkInstagram}
+              isEditing={isEditing}>
+              <EditInput value={LinkInstagram} onChangeText={setLinkInstagram} autoCapitalize="none" />
+            </FieldBlock>
+            <FieldBlock
+              label="TikTok"
+              value={LinkTiktok}
+              isEditing={isEditing}>
+              <EditInput value={LinkTiktok} onChangeText={setLinkTiktok} autoCapitalize="none" />
+            </FieldBlock>
+          </View>
+
+          {/* ── Detalles ────────────────────────────────────────────────── */}
+          <View style={styles.section}>
+            <SectionHeader title="Detalles del negocio" />
+            <FieldBlock
+              label="Características"
+              value={Caracteristicas}
+              isEditing={isEditing}
+              vertical>
+              <EditInput value={Caracteristicas} onChangeText={setCaracteristicas} multiline height={120} />
+            </FieldBlock>
+            <FieldBlock
+              label="Experiencia"
+              value={Experiencia}
+              isEditing={isEditing}>
+              <EditInput value={Experiencia} onChangeText={setExperiencia} />
+            </FieldBlock>
+            <FieldBlock
+              label="Seguro"
+              value={seguro}
+              isEditing={isEditing}>
+              <EditInput value={seguro} onChangeText={setseguro} />
+            </FieldBlock>
+          </View>
+
+          {/* ── Métodos de pago ─────────────────────────────────────────── */}
+          <View style={styles.section}>
+            <SectionHeader title="Métodos de pago" />
+            {!isEditing && (
+              <Text style={styles.pagoHint}>
+                {metodosPago.filter(m => m.checked).map(m => m.label).join(' · ') || '—'}
+              </Text>
+            )}
+            {isEditing && (
+              <View style={styles.pagoChipsWrap}>
+                {metodosPago.map((method, index) => (
+                  <PagoChip
+                    key={method.value}
+                    method={method}
+                    index={index}
+                    toggleMetodoPago={toggleMetodoPago}
+                    isEditing={isEditing}
+                  />
+                ))}
+              </View>
+            )}
+          </View>
+
+          {/* ── Horarios ────────────────────────────────────────────────── */}
+          <View style={styles.section}>
+            <SectionHeader title="Horarios de atención" />
+            {BUSINESS_DAYS.map(day => {
+              const dayData = businessHours[day.key] || {};
+              return (
+                <View
+                  key={day.key}
+                  style={[
+                    styles.horarioDayCard,
+                    isEditing && styles.horarioDayCardEditing,
+                  ]}>
+                  <View style={styles.horarioDayRow}>
+                    <Text
+                      style={[
+                        styles.horarioDayLabel,
+                        dayData.enabled && styles.horarioDayLabelActive,
+                      ]}>
+                      {day.label}
+                    </Text>
+                    {isEditing ? (
+                      <Switch
+                        value={!!dayData.enabled}
+                        trackColor={{false: '#E5E7EB', true: YELLOW}}
+                        thumbColor={dayData.enabled ? DARK_BLUE : '#9CA3AF'}
+                        onValueChange={v =>
+                          setBusinessHours(prev => ({
+                            ...prev,
+                            [day.key]: {...prev[day.key], enabled: v},
+                          }))
+                        }
+                      />
+                    ) : (
+                      <View
+                        style={[
+                          styles.horarioStatusPill,
+                          dayData.enabled && styles.horarioStatusPillActive,
+                        ]}>
+                        <Text
+                          style={[
+                            styles.horarioStatusText,
+                            dayData.enabled && styles.horarioStatusTextActive,
+                          ]}>
+                          {dayData.enabled ? 'Abierto' : 'Cerrado'}
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+                  {dayData.enabled && (
+                    <View style={styles.horarioTimeRow}>
+                      <View style={[styles.horarioTimeCol, {marginRight: 6}]}>
+                        <Text style={styles.horarioTimeLabel}>Apertura</Text>
+                        <Dropdown
+                          disable={!isEditing}
+                          style={[styles.dropdownField, {minHeight: 40}]}
+                          data={TIME_OPTIONS}
+                          labelField="label"
+                          valueField="value"
+                          value={dayData.open}
+                          onChange={item =>
+                            setBusinessHours(prev => ({
+                              ...prev,
+                              [day.key]: {...prev[day.key], open: item.value},
+                            }))
+                          }
+                        />
+                      </View>
+                      <View style={[styles.horarioTimeCol, {marginLeft: 6}]}>
+                        <Text style={styles.horarioTimeLabel}>Cierre</Text>
+                        <Dropdown
+                          disable={!isEditing}
+                          style={[styles.dropdownField, {minHeight: 40}]}
+                          data={TIME_OPTIONS}
+                          labelField="label"
+                          valueField="value"
+                          value={dayData.close}
+                          onChange={item =>
+                            setBusinessHours(prev => ({
+                              ...prev,
+                              [day.key]: {...prev[day.key], close: item.value},
+                            }))
+                          }
+                        />
+                      </View>
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </View>
+
+          {/* ── Documentos ──────────────────────────────────────────────── */}
+          <View style={styles.section}>
+            <SectionHeader title="Documentos" />
+            <View style={styles.docGrid}>
+              {docThumb({label: 'RIF / ID Fiscal',        url: rifIdFiscalUrl,       localUri: rifIdFiscalLocalUri,       onSelect: () => selectDocument(setRifIdFiscalBase64,       setRifIdFiscalLocalUri)})}
+              {docThumb({label: 'Permiso de operación',   url: permisoOperacionUrl,  localUri: permisoOperacionLocalUri,  onSelect: () => selectDocument(setPermisoOperacionBase64,  setPermisoOperacionLocalUri)})}
+              {docThumb({label: 'Logotipo',               url: logotipoNegocioUrl,   localUri: logotipoNegocioLocalUri,   onSelect: () => selectDocument(setLogotipoNegocioBase64,   setLogotipoNegocioLocalUri)})}
+              {docThumb({label: 'Foto frente',            url: fotoFrenteTallerUrl,  localUri: fotoFrenteTallerLocalUri,  onSelect: () => selectDocument(setFotoFrenteTallerBase64,  setFotoFrenteTallerLocalUri)})}
+              {docThumb({label: 'Foto interna',           url: fotoInternaTallerUrl, localUri: fotoInternaTallerLocalUri, onSelect: () => selectDocument(setFotoInternaTallerBase64, setFotoInternaTallerLocalUri)})}
+            </View>
+          </View>
+
+          <View style={{height: 40}} />
+        </ScrollView>
+      ) : null}
+
+      {/* ── Modal: imagen fullscreen ────────────────────────────────────── */}
       <Modal
-        transparent={true}
+        transparent
+        animationType="fade"
+        visible={!!imgFullscreen}
+        onRequestClose={() => setImgFullscreen(null)}
+        statusBarTranslucent>
+        <View style={styles.imgFullBackdrop}>
+          <TouchableOpacity
+            style={styles.imgFullClose}
+            onPress={() => setImgFullscreen(null)}
+            activeOpacity={0.8}>
+            <Icons name="times" size={20} color="#FFFFFF" />
+          </TouchableOpacity>
+          {imgFullscreen ? (
+            <Image
+              source={{uri: imgFullscreen}}
+              style={styles.imgFullImage}
+              resizeMode="contain"
+            />
+          ) : null}
+        </View>
+      </Modal>
+
+      {/* ── Modal: menú acciones ─────────────────────────────────────────── */}
+      <Modal
+        transparent
         animationType="slide"
+        visible={accionesModalVisible}
+        onRequestClose={onCerrarMenuAcciones}>
+        <TouchableWithoutFeedback onPress={onCerrarMenuAcciones}>
+          <View style={styles.menuBackdrop}>
+            <TouchableWithoutFeedback>
+              <View style={styles.menuCard}>
+                {/* Handle bar */}
+                <View style={styles.menuHandle} />
+
+                {/* Header */}
+                <View style={styles.menuHeader}>
+                  <View style={styles.menuHeaderIcon}>
+                    <Icons5 name="cogs" size={18} color={YELLOW} />
+                  </View>
+                  <View>
+                    <Text style={styles.menuTitle}>Acciones</Text>
+                    <Text style={styles.menuSubtitle}>{NameTaller || 'Negocio'}</Text>
+                  </View>
+                </View>
+
+                {/* Editar negocio */}
+                <TouchableOpacity
+                  style={styles.menuOptionBtn}
+                  onPress={onAccionEditarUsuario}
+                  activeOpacity={0.8}>
+                  <View style={[styles.menuOptionIcon, {backgroundColor: DARK_BLUE}]}>
+                    <Icons5 name={isEditing ? 'eye' : 'pen'} size={14} color={YELLOW} />
+                  </View>
+                  <View style={styles.menuOptionBody}>
+                    <Text style={styles.menuOptionTitle}>
+                      {isEditing ? 'Modo visualización' : 'Editar negocio'}
+                    </Text>
+                    <Text style={styles.menuOptionDesc}>
+                      {isEditing ? 'Salir del modo edición' : 'Modificar información del negocio'}
+                    </Text>
+                  </View>
+                  <Icons name="angle-right" size={16} color={DARK_BLUE} />
+                </TouchableOpacity>
+
+                {/* Cargar servicio */}
+                <TouchableOpacity
+                  style={styles.menuOptionBtn}
+                  onPress={() => {
+                    setAccionesModalVisible(false);
+                    navigation.navigate('FormService', {uid: '', uid_taller: uidTaller, nombre_taller: NameTaller});
+                  }}
+                  activeOpacity={0.8}>
+                  <View style={[styles.menuOptionIcon, {backgroundColor: YELLOW}]}>
+                    <Icons5 name="plus" size={14} color={DARK_BLUE} />
+                  </View>
+                  <View style={styles.menuOptionBody}>
+                    <Text style={styles.menuOptionTitle}>Cargar servicio</Text>
+                    <Text style={styles.menuOptionDesc}>
+                      Agregar un nuevo servicio a este negocio
+                    </Text>
+                  </View>
+                  <Icons name="angle-right" size={16} color={DARK_BLUE} />
+                </TouchableOpacity>
+
+                {/* Ver servicios */}
+                <TouchableOpacity
+                  style={styles.menuOptionBtn}
+                  onPress={() => {
+                    setAccionesModalVisible(false);
+                    navigation.navigate('ServiciosContainer', {uid_taller: uidTaller, nombre_taller: NameTaller});
+                  }}
+                  activeOpacity={0.8}>
+                  <View style={[styles.menuOptionIcon, {backgroundColor: DARK_BLUE}]}>
+                    <Icons5 name="th-large" size={13} color={YELLOW} />
+                  </View>
+                  <View style={styles.menuOptionBody}>
+                    <Text style={styles.menuOptionTitle}>Ver servicios</Text>
+                    <Text style={styles.menuOptionDesc}>
+                      Ver todos los servicios publicados de este negocio
+                    </Text>
+                  </View>
+                  <Icons name="angle-right" size={16} color={DARK_BLUE} />
+                </TouchableOpacity>
+
+                {/* Aprobar */}
+                <TouchableOpacity
+                  style={styles.menuOptionBtn}
+                  onPress={onAccionAprobar}
+                  activeOpacity={0.8}>
+                  <View style={[styles.menuOptionIcon, {backgroundColor: '#22C55E'}]}>
+                    <Icons5 name="check" size={14} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.menuOptionBody}>
+                    <Text style={styles.menuOptionTitle}>Aprobar solicitud</Text>
+                    <Text style={styles.menuOptionDesc}>
+                      Activar este negocio en la plataforma
+                    </Text>
+                  </View>
+                  <Icons name="angle-right" size={16} color={DARK_BLUE} />
+                </TouchableOpacity>
+
+                {/* Rechazar */}
+                <TouchableOpacity
+                  style={styles.menuOptionBtn}
+                  onPress={onAccionRechazar}
+                  activeOpacity={0.8}>
+                  <View style={[styles.menuOptionIcon, {backgroundColor: '#EF4444'}]}>
+                    <Icons5 name="times" size={14} color="#FFFFFF" />
+                  </View>
+                  <View style={styles.menuOptionBody}>
+                    <Text style={styles.menuOptionTitle}>Rechazar solicitud</Text>
+                    <Text style={styles.menuOptionDesc}>
+                      Denegar el acceso a la plataforma
+                    </Text>
+                  </View>
+                  <Icons name="angle-right" size={16} color={DARK_BLUE} />
+                </TouchableOpacity>
+
+                {/* Close */}
+                <TouchableOpacity
+                  style={styles.menuCloseBtn}
+                  onPress={onCerrarMenuAcciones}
+                  activeOpacity={0.8}>
+                  <Text style={styles.menuCloseBtnText}>Cerrar</Text>
+                </TouchableOpacity>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
+
+      {/* ── Modal: confirmación ──────────────────────────────────────────── */}
+      <Modal
+        transparent
+        animationType="fade"
         visible={modalVisible}
         onRequestClose={onCancel}>
-        <View style={stylesModal.container}>
-          <View style={stylesModal.modalView}>
-            <Text style={stylesModal.modalText}>
-              ¿Estás seguro de que quieres {tipoAccion} este taller?
+        <KeyboardAvoidingView
+          style={{flex: 1}}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={styles.confirmBackdrop}>
+          <TouchableWithoutFeedback>
+          <View style={styles.confirmCard}>
+            <View
+              style={[
+                styles.confirmIconWrap,
+                {backgroundColor: tipoAccion === 'Aprobar' ? '#E8F5E9' : '#FFEBEE'},
+              ]}>
+              <Icons5
+                name={tipoAccion === 'Aprobar' ? 'check-circle' : 'times-circle'}
+                size={32}
+                color={tipoAccion === 'Aprobar' ? '#2E7D32' : '#C62828'}
+              />
+            </View>
+            <Text style={styles.confirmTitle}>
+              {tipoAccion === 'Aprobar' ? '¿Aprobar negocio?' : '¿Rechazar negocio?'}
             </Text>
-            <View style={stylesModal.buttonContainer}>
+            <Text style={styles.confirmBody}>
+              {tipoAccion === 'Aprobar'
+                ? 'El negocio será aprobado y se notificará al propietario.'
+                : 'El negocio será rechazado y se notificará al propietario.'}
+            </Text>
+
+            {tipoAccion === 'Rechazar' && (
+              <View style={styles.confirmInputWrap}>
+                <View style={styles.confirmInputLabelRow}>
+                  <Text style={styles.confirmInputLabel}>Motivo del rechazo</Text>
+                  <Text style={styles.confirmInputRequired}> *</Text>
+                </View>
+                <TextInput
+                  style={styles.confirmInput}
+                  placeholder="Describe detalladamente el motivo del rechazo..."
+                  placeholderTextColor="#9BA6B8"
+                  value={motivoRechazo}
+                  onChangeText={setMotivoRechazo}
+                  multiline
+                  textAlignVertical="top"
+                  scrollEnabled
+                  blurOnSubmit={false}
+                />
+                {!motivoRechazo.trim() && (
+                  <Text style={styles.confirmInputHint}>Este campo es obligatorio para rechazar.</Text>
+                )}
+              </View>
+            )}
+
+            <View style={styles.confirmBtns}>
               <TouchableOpacity
-                style={stylesModal.buttonYes}
-                onPress={onConfirm}>
-                <Text style={stylesModal.buttonText}>Sí</Text>
+                style={styles.confirmBtnCancel}
+                onPress={onCancel}
+                activeOpacity={0.8}>
+                <Text style={styles.confirmBtnCancelText}>Cancelar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={stylesModal.buttonNo} onPress={onCancel}>
-                <Text style={stylesModal.buttonText}>No</Text>
+              <TouchableOpacity
+                style={[
+                  styles.confirmBtnConfirm,
+                  {backgroundColor: tipoAccion === 'Aprobar' ? '#2E7D32' : '#C62828'},
+                  tipoAccion === 'Rechazar' && !motivoRechazo.trim() && styles.confirmBtnDisabled,
+                ]}
+                onPress={onConfirm}
+                disabled={tipoAccion === 'Rechazar' && !motivoRechazo.trim()}
+                activeOpacity={0.8}>
+                <Text style={styles.confirmBtnConfirmText}>Confirmar</Text>
               </TouchableOpacity>
             </View>
+          </View>
+          </TouchableWithoutFeedback>
+            </View>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* ── Modal: negocio APROBADO ──────────────────────────────────────── */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={successModalType === 'aprobado'}
+        onRequestClose={() => { setSuccessModalType(null); navigation.goBack(); }}>
+        <View style={styles.successBackdrop}>
+          <View style={styles.successCard}>
+            {/* Icono */}
+            <View style={styles.successIconRing}>
+              <View style={[styles.successIconInner, {backgroundColor: '#22C55E'}]}>
+                <Icons5 name="check" size={28} color="#FFFFFF" />
+              </View>
+            </View>
+
+            <Text style={styles.successTitle}>¡Negocio aprobado!</Text>
+            <Text style={styles.successSubtitle}>
+              <Text style={{fontWeight: '700', color: '#1A1F36'}}>{NameTaller}</Text>
+              {' '}ya forma parte de la red de negocios verificados de Solvers.{'\n'}
+              El propietario ha sido notificado.
+            </Text>
+
+            <View style={styles.successDivider} />
+
+            <Text style={styles.successPromptTitle}>¿Deseas cargar servicios ahora?</Text>
+            <Text style={styles.successPromptBody}>
+              Puedes agregar los servicios de este negocio en este momento o hacerlo más tarde desde su perfil.
+            </Text>
+
+            {/* Botón principal: Cargar servicios */}
+            <TouchableOpacity
+              style={styles.successBtnPrimary}
+              activeOpacity={0.88}
+              onPress={() => {
+                setSuccessModalType(null);
+                navigation.navigate('FormService', {
+                  uid: '',
+                  uid_taller: uidTaller,
+                  nombre_taller: NameTaller,
+                });
+              }}>
+              <Icons5 name="plus-circle" size={16} color="#1D1E56" />
+              <Text style={styles.successBtnPrimaryText}>  Cargar servicios ahora</Text>
+            </TouchableOpacity>
+
+            {/* Botón secundario: Continuar */}
+            <TouchableOpacity
+              style={styles.successBtnSecondary}
+              activeOpacity={0.85}
+              onPress={() => { setSuccessModalType(null); navigation.goBack(); }}>
+              <Text style={styles.successBtnSecondaryText}>Continuar más tarde</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
+      {/* ── Modal: negocio RECHAZADO ─────────────────────────────────────── */}
+      <Modal
+        transparent
+        animationType="fade"
+        visible={successModalType === 'rechazado'}
+        onRequestClose={() => { setSuccessModalType(null); navigation.goBack(); }}>
+        <View style={styles.successBackdrop}>
+          <View style={styles.successCard}>
+            {/* Icono */}
+            <View style={styles.successIconRing}>
+              <View style={[styles.successIconInner, {backgroundColor: '#EF4444'}]}>
+                <Icons5 name="times" size={28} color="#FFFFFF" />
+              </View>
+            </View>
+
+            <Text style={styles.successTitle}>Solicitud rechazada</Text>
+            <Text style={styles.successSubtitle}>
+              La solicitud de{' '}
+              <Text style={{fontWeight: '700', color: '#1A1F36'}}>{NameTaller}</Text>
+              {' '}ha sido rechazada correctamente.{'\n'}
+              El propietario ha sido informado con el motivo indicado.
+            </Text>
+
+            <TouchableOpacity
+              style={[styles.successBtnPrimary, {backgroundColor: '#FEE2E2', borderColor: '#FECACA'}]}
+              activeOpacity={0.88}
+              onPress={() => { setSuccessModalType(null); navigation.goBack(); }}>
+              <Icons5 name="arrow-left" size={14} color="#C62828" />
+              <Text style={[styles.successBtnPrimaryText, {color: '#C62828'}]}>  Volver al listado</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
     </View>
   );
 };
-
-const stylesMap = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-});
-
-const stylesImage = StyleSheet.create({
-  button: {
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  imageContainer: {
-    position: 'relative',
-    marginTop: 20,
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  closeButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-});
-
-const stylesModal = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
-    color: '#333',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  buttonYes: {
-    backgroundColor: 'green', // Color del botón "Sí"
-    borderRadius: 5,
-    padding: 10,
-    width: '48%', // Ajustar ancho para espacio entre botones
-    alignItems: 'center',
-  },
-  buttonNo: {
-    backgroundColor: 'red', // Color del botón "No"
-    borderRadius: 5,
-    padding: 10,
-    width: '48%', // Ajustar ancho para espacio entre botones
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: 'white', // Color del texto del botón
-    fontWeight: 'bold',
-  },
-});
 
 export default FormTaller;

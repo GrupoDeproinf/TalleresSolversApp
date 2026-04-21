@@ -7,26 +7,26 @@ import {
   View,
   TouchableWithoutFeedback,
 } from 'react-native';
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import H3HeadingCategory from '../../../commonComponents/headingCategory/H3HeadingCategory';
-import {seeAll} from '../../../constant';
-import {YellowStar} from '../../../assets/icons/yellowStar';
+import { seeAll } from '../../../constant';
+import { YellowStar } from '../../../assets/icons/yellowStar';
 import styles from './styles.css';
 import LinearGradient from 'react-native-linear-gradient';
-import {MinusIcon, Plus, PlusRadial} from '../../../utils/icon';
-import {external} from '../../../style/external.css';
-import {commonStyles} from '../../../style/commonStyle.css';
+import { MinusIcon, Plus, PlusRadial } from '../../../utils/icon';
+import { external } from '../../../style/external.css';
+import { commonStyles } from '../../../style/commonStyle.css';
 import appFonts from '../../../themes/appFonts';
-import {windowHeight} from '../../../themes/appConstant';
-import {useValues} from '../../../../App';
+import { windowHeight } from '../../../themes/appConstant';
+import { useValues } from '../../../../App';
 import appColors from '../../../themes/appColors';
-import {useNavigation} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import Icons from 'react-native-vector-icons/FontAwesome';
-import {Snackbar} from 'react-native-paper';
+import { Snackbar } from 'react-native-paper';
 
 import notImageFound from '../../../assets/noimageold.jpeg';
 
-const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
+const NewArrivalContainer = ({ data, value, show, showPlus, marginTop, showcity }) => {
   const {
     linearColorStyle,
     textColorStyle,
@@ -52,7 +52,7 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
   const goToDetail = item => {
     console.log(item);
 
-    navigation.navigate('FormTaller', {uid: item.uid});
+    navigation.navigate('FormTaller', { uid: item.uid });
   };
 
   const onLongPressHandler = (itemId, status) => {
@@ -67,28 +67,33 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
     setVisibleHint(null); // Oculta el Snackbar cuando se presiona para cerrar
   };
 
-  const renderItem = ({item}) => (
+  const renderItem = ({ item }) => (
     <TouchableOpacity onPress={() => goToDetail(item)} activeOpacity={0.9}>
       <LinearGradient
-        start={{x: 0.0, y: 0.0}}
-        end={{x: 0.0, y: 1.0}}
+        start={{ x: 0.0, y: 0.0 }}
+        end={{ x: 0.0, y: 1.0 }}
         colors={colors}
         style={[
           styles.container,
-          {shadowColor: appColors.shadowColor},
-          {flexDirection: viewRTLStyle},
+          { shadowColor: appColors.shadowColor },
+          { flexDirection: viewRTLStyle },
         ]}>
         <LinearGradient
-          start={{x: 0.0, y: 0.0}}
-          end={{x: 0.0, y: 1.0}}
+          start={{ x: 0.0, y: 0.0 }}
+          end={{ x: 0.0, y: 1.0 }}
           colors={linearColorStyle}
           style={[
             styles.menuItemContent,
-            {shadowColor: appColors.shadowColor},
-            {flexDirection: viewRTLStyle},
+            { shadowColor: appColors.shadowColor },
+            { flexDirection: viewRTLStyle },
+            showcity && { paddingVertical: windowHeight(2), minHeight: windowHeight(90) }
           ]}>
           <View
-            style={[styles.imageContainer, {backgroundColor: imageContainer}]}>
+            style={[
+              styles.imageContainer, 
+              { backgroundColor: imageContainer },
+              showcity && { height: windowHeight(90) }
+            ]}>
             {item.image_perfil == null || item.image_perfil == '' ? (
               <Image style={styles.image} source={notImageFound} />
             ) : (
@@ -97,12 +102,12 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
           </View>
           <View style={styles.textContainer}>
             <View
-              style={[styles.ratingContainer, {flexDirection: viewRTLStyle}]}>
+              style={[styles.ratingContainer, { flexDirection: viewRTLStyle }]}>
               <Text
                 style={[
                   styles.title,
-                  {color: textColorStyle},
-                  {textAlign: textRTLStyle},
+                  { color: textColorStyle },
+                  { textAlign: textRTLStyle },
                 ]}>
                 {t(item.nombre)}
               </Text>
@@ -116,23 +121,42 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
             <Text
               style={[
                 styles.datoSub,
-                {textAlign: textRTLStyle, marginBottom: -10},
+                { textAlign: textRTLStyle, marginBottom: -10 },
               ]}>
               Rif: {t(item.rif)}
             </Text>
             <View
-              style={[styles.priceContainer, {flexDirection: viewRTLStyle}]}>
+              style={[
+                styles.priceContainer, 
+                { flexDirection: viewRTLStyle },
+                showcity && { flexDirection: 'column', alignItems: 'flex-start', flexWrap: 'wrap' }
+              ]}>
               <View
                 style={[
                   external.fd_row,
                   external.ai_center,
-                  {width: '75%'},
-                  {flexDirection: viewRTLStyle},
+                  { width: showcity ? '100%' : '75%' },
+                  { flexDirection: viewRTLStyle },
+                  showcity && { marginBottom: 10 }
                 ]}>
-                <Text style={[styles.status, {color: textColorStyle}]}>
+                <Text style={[styles.status, { color: textColorStyle, flexShrink: 1 }]}>
                   Telefono: {t(item.phone)}
                 </Text>
               </View>
+
+              {showcity && (
+                <View
+                  style={[
+                    external.fd_row,
+                    external.ai_center,
+                    { width: '100%' },
+                    { flexDirection: viewRTLStyle },
+                  ]}>
+                  <Text style={[styles.status, { color: textColorStyle, flexShrink: 1 }]}>
+                    Estado: {t(item.estado)}
+                  </Text>
+                </View>
+              )}
 
               {
                 item.status === "Pendiente" ? (
@@ -154,7 +178,7 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
               }
 
 
-{
+              {
                 item.status === "Aprobado" ? (
                   <TouchableOpacity
                     onPress={() => onLongPressHandler(item.uid, item.status)}>
@@ -191,7 +215,7 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
 
   return (
     <View style={styles.newArrivalContainer}>
-      <View style={{marginTop: marginTop || windowHeight(14)}}>
+      <View style={{ marginTop: marginTop || windowHeight(14) }}>
         {show && (
           <H3HeadingCategory value={value} seeall={t('transData.seeAll')} />
         )}

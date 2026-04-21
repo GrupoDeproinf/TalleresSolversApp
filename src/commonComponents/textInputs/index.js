@@ -32,7 +32,14 @@ const TextInputs = ({
   textAlignVertical,
   showPass,
   changePassValue,
-  autoCapitalize
+  autoCapitalize,
+  formCardMode,
+  /** Texto breve junto al título (solo formCardMode), p. ej. ayuda al usuario */
+  titleHint,
+  onFocus: onFocusProp,
+  onBlur: onBlurProp,
+  /** Si es false, no se cierra el teclado al tocar el contenedor (solo login u otros casos). */
+  dismissKeyboardOnPressOutside = true,
 }) => {
   const [error, setError] = useState('');
 
@@ -52,8 +59,109 @@ const TextInputs = ({
   const colors = isDark
     ? ['#808184', '#2E3036']
     : [appColors.screenBg, appColors.screenBg];
-  return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+
+  if (formCardMode) {
+    const isMultiline = !!multiline;
+    const formCardBody = (
+        <View style={styles.formCardFieldWrap}>
+          <View
+            style={[
+              styles.formCardLabelRow,
+              { flexDirection: viewRTLStyle },
+            ]}>
+            <Text
+              style={[
+                styles.formCardFieldLabel,
+                !titleHint && styles.formCardFieldLabelAlone,
+                { color: textColorStyle },
+                { textAlign: textRTLStyle },
+              ]}>
+              {title}
+            </Text>
+            {titleHint ? (
+              <Text
+                style={[
+                  styles.formCardFieldLabelHint,
+                  { textAlign: textRTLStyle },
+                ]}
+                numberOfLines={2}>
+                {titleHint}
+              </Text>
+            ) : null}
+          </View>
+          <View
+            style={[
+              styles.formCardFieldInner,
+              isMultiline && styles.formCardFieldInnerMultiline,
+              { flexDirection: viewRTLStyle },
+            ]}>
+            <View
+              style={[
+                styles.formCardIconWrap,
+                isMultiline && { alignSelf: 'flex-start', paddingTop: 8 },
+              ]}>
+              {icon}
+            </View>
+            <TextInput
+              autoCapitalize={autoCapitalize}
+              keyboardType={keyboardType}
+              secureTextEntry={secureTextEntry}
+              multiline={multiline}
+              numberOfLines={numberOfLines}
+              textAlignVertical={
+                textAlignVertical ?? (isMultiline ? 'top' : 'center')
+              }
+              value={value}
+              editable={editable}
+              style={[
+                styles.formCardTextInput,
+                {
+                  width: width == undefined || width == '' ? '100%' : width,
+                  height:
+                    height == undefined || height == ''
+                      ? isMultiline
+                        ? undefined
+                        : 44
+                      : height,
+                  color: textColorStyle,
+                  textAlign: textRTLStyle,
+                  minHeight: minHeight,
+                  textDecorationLine:
+                    textDecorationLine == undefined
+                      ? 'none'
+                      : textDecorationLine,
+                },
+              ]}
+              placeholder={placeHolder}
+              placeholderTextColor={color || appColors.subtitle}
+              onChangeText={text => {
+                onChangeText(text);
+                if (text !== false) {
+                  setError('');
+                }
+              }}
+              onFocus={onFocusProp}
+              onBlur={e => {
+                onBlurProp?.(e);
+                handleValidation();
+              }}
+            />
+          </View>
+          {error !== '' && (
+            <Text style={{ color: 'red', marginTop: 5 }}>{error}</Text>
+          )}
+        </View>
+    );
+    return dismissKeyboardOnPressOutside ? (
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        {formCardBody}
+      </TouchableWithoutFeedback>
+    ) : (
+      formCardBody
+    );
+  }
+
+  const defaultBody = (
       <View style={[external.mt_10]}>
         <View style={[external.mb_5]}>
           <Text
@@ -121,7 +229,11 @@ const TextInputs = ({
                       setError('');
                     }
                   }}
-                  onBlur={handleValidation}
+                  onFocus={onFocusProp}
+                  onBlur={e => {
+                    onBlurProp?.(e);
+                    handleValidation();
+                  }}
                 />
 
                 {show && <Pressable style={[external.mh_10]}>{value}</Pressable>}
@@ -144,7 +256,13 @@ const TextInputs = ({
           )}
         </View>
       </View>
+  );
+  return dismissKeyboardOnPressOutside ? (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      {defaultBody}
     </TouchableWithoutFeedback>
+  ) : (
+    defaultBody
   );
 };
 

@@ -7,7 +7,7 @@ import {commonStyles} from '../../style/commonStyle.css';
 import LocationContainer from '../../components/locationContainer';
 import {RightArrow} from '../../assets/icons/rightArrow';
 import appColors from '../../themes/appColors';
-import NewArrivalContainer from '../../components/homeScreen/newArrivalContainer';
+import NewArrivalBigContainer from '../../components/homeScreenTwo/newArrivalTwoContainer';
 import {newArrivalBigData} from '../../data/homeScreenTwo/newArrivalData';
 import {fontSizes, windowHeight} from '../../themes/appConstant';
 import BottomContainer from '../../commonComponents/bottomContainer';
@@ -81,9 +81,10 @@ const AddToCartTwo = () => {
         </LinearGradient>
       </View>
 
-      <NewArrivalContainer
+      <NewArrivalBigContainer
         data={newArrivalBigData}
         value={t('transData.newArrival')}
+        horizontal={true}
         show={true}
       />
       <View style={styles.viewStyle}>

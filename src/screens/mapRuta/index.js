@@ -11,8 +11,12 @@ import {
 } from 'react-native';
 import MapboxGL from '@rnmapbox/maps';
 import Icons from 'react-native-vector-icons/FontAwesome';
+import {getMapboxPublicToken} from '../../config/mapboxPublicToken';
 
-MapboxGL.setAccessToken('pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ');
+const mapboxToken = getMapboxPublicToken();
+if (mapboxToken) {
+  MapboxGL.setAccessToken(mapboxToken);
+}
 
 const MapRutaComponent = ({ initialRegion, edit, returnFunction, location }) => {
   const secondLocation = initialRegion;
@@ -24,10 +28,19 @@ const MapRutaComponent = ({ initialRegion, edit, returnFunction, location }) => 
 
   const fetchRoute = async () => {
     if (!location || !secondLocation) return;
+    if (!mapboxToken) {
+      Alert.alert(
+        'Mapbox',
+        'Falta el token público de Mapbox. Configura src/config/mapboxPublicToken.local.js (ver mapbox.properties.example en la raíz).',
+      );
+      return;
+    }
     setLoadingRoute(true);
     try {
       console.log("AQUIIIIIIII")
-      const url = `${MAPBOX_DIRECTIONS_API}/${location.longitude},${location.latitude};${secondLocation.longitude},${secondLocation.latitude}?geometries=geojson&access_token=pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ`;
+      const url = `${MAPBOX_DIRECTIONS_API}/${location.longitude},${location.latitude};${secondLocation.longitude},${secondLocation.latitude}?geometries=geojson&access_token=${encodeURIComponent(
+        mapboxToken,
+      )}`;
       const response = await fetch(url);
       console.log(response)
       const data = await response.json();

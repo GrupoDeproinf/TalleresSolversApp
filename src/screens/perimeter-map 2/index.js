@@ -165,7 +165,7 @@ const PerimeterMapScreen = () => {
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
           {
             title: 'Permiso de ubicación',
-            message: 'Esta app necesita acceder a tu ubicación para mostrar talleres cercanos',
+            message: 'Esta app necesita acceder a tu ubicación para mostrar negocios cercanos',
             buttonNeutral: 'Pregúntame después',
             buttonNegative: 'Cancelar',
             buttonPositive: 'OK',
@@ -208,7 +208,7 @@ const PerimeterMapScreen = () => {
       setIsLoadingTalleres(true);
 
       try {
-        console.log('🔍 Buscando talleres cercanos...');
+        console.log('🔍 Buscando negocios cercanos...');
         console.log('📍 Ubicación:', location);
         console.log('🏢 Estado:', userInfo.estado);
         console.log('📏 Radio:', searchRadius);
@@ -223,14 +223,14 @@ const PerimeterMapScreen = () => {
         // console.log('✅ Respuesta de talleres:', response.data.talleres);
         setTalleres(response.data.talleres || response.data || []);
       } catch (error) {
-        console.error('❌ Error al obtener talleres cercanos:', error);
+        console.error('❌ Error al obtener negocios cercanos:', error);
 
         // Mostrar mensaje de error más específico
         if (error.response) {
           console.error('Error del servidor:', error.response.data);
           Alert.alert(
             'Error del servidor',
-            'No se pudieron obtener los talleres cercanos. Inténtalo de nuevo más tarde.',
+            'No se pudieron obtener los negocios cercanos. Inténtalo de nuevo más tarde.',
             [{ text: 'OK' }]
           );
         } else if (error.request) {
@@ -279,7 +279,7 @@ const PerimeterMapScreen = () => {
           marginBottom: 10
         }}>
           <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#eeeeee' }}>
-            Talleres cercanos
+            negocios cercanos
           </Text>
           <TouchableOpacity
             style={{
@@ -309,7 +309,7 @@ const PerimeterMapScreen = () => {
           </TouchableOpacity>
         </View>
         <Text style={{ fontSize: 14, color: '#e8eaf6', marginBottom: 20 }}>
-          Aquí se mostrarán los talleres cercanos a tu ubicación.
+          Aquí se mostrarán los negocios cercanos a tu ubicación.
         </Text>
 
       </View>
@@ -360,7 +360,7 @@ const PerimeterMapScreen = () => {
             }}>
               <ActivityIndicator size="small" color="#2D3261" style={{ marginRight: 10 }} />
               <Text style={{ color: '#2D3261', fontSize: 14 }}>
-                Buscando talleres cercanos...
+                Buscando negocios cercanos...
               </Text>
             </View>
           ) : talleres.length > 0 ? (
@@ -428,7 +428,7 @@ const PerimeterMapScreen = () => {
               padding: 20
             }}>
               <Text style={{ color: '#94A3B8', fontSize: 16, textAlign: 'center' }}>
-                {!location ? 'Obtén tu ubicación para ver talleres cercanos' : 'Selecciona un estado para buscar talleres'}
+                {!location ? 'Obtén tu ubicación para ver negocios cercanos' : 'Selecciona un estado para buscar talleres'}
               </Text>
             </View>
           )}

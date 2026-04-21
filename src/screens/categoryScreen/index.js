@@ -12,9 +12,9 @@ const CategoryScreen = () => {
   return (
     <View
       style={[commonStyles.commonContainer, {backgroundColor: bgFullStyle}]}>
-      <View style={[external.pt_10, external.ph_20]}>
+      {/* <View style={[external.pt_10, external.ph_20]}>
         <HeaderContainer />
-      </View>
+      </View> */}
       <ProductContainer />
     </View>
   );

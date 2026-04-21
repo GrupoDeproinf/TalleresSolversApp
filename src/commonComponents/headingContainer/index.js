@@ -6,11 +6,19 @@ import {external} from '../../style/external.css';
 import IconBackground from '../iconBackGround';
 import {useNavigation} from '@react-navigation/native';
 import {useValues} from '../../../App';
+import styles from './style.css';
 
-const HeaderContainer = ({value, show, icon, iconTwo, onPress}) => {
+const HeaderContainer = ({
+  value,
+  show,
+  icon,
+  iconTwo,
+  onPress,
+  decorCircles = true,
+}) => {
   const navigation = useNavigation('');
   const {viewRTLStyle, textColorStyle, imageRTLStyle} = useValues();
-  return (
+  const rowContent = (
     <View
       style={[
         external.fd_row,
@@ -18,6 +26,7 @@ const HeaderContainer = ({value, show, icon, iconTwo, onPress}) => {
         external.pt_15,
         {justifyContent: show ? 'space-between' : null},
         {flexDirection: viewRTLStyle},
+        decorCircles && styles.rowElevated,
       ]}>
       <TouchableOpacity
         onPress={() => navigation.goBack('')}
@@ -42,6 +51,18 @@ const HeaderContainer = ({value, show, icon, iconTwo, onPress}) => {
           <IconBackground value={iconTwo} />
         </View>
       )}
+    </View>
+  );
+
+  if (!decorCircles) {
+    return rowContent;
+  }
+
+  return (
+    <View style={styles.decorOuter}>
+      <View style={styles.decorCircle1} pointerEvents="none" />
+      <View style={styles.decorCircle2} pointerEvents="none" />
+      {rowContent}
     </View>
   );
 };

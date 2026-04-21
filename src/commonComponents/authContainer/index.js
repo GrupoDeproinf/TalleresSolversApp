@@ -1,62 +1,75 @@
-import {SafeAreaView, Text, TouchableOpacity, View, Image} from 'react-native';
+import {
+  Text,
+  TouchableOpacity,
+  View,
+  Image,
+  Platform,
+  StatusBar,
+} from 'react-native';
 import React from 'react';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {BackLeft} from '../../utils/icon';
-import {commonStyles} from '../../style/commonStyle.css';
-import {external} from '../../style/external.css';
 import styles from './style.css';
 import {useValues} from '../../../App';
 import {useNavigation} from '@react-navigation/native';
 
-const AuthContainer = ({subtitle, title, value, onPress, showBack, AlignItemTitle}) => {
-  const {bgFullStyle, textColorStyle, textRTLStyle, imageRTLStyle} =
-    useValues();
-  const navigation = useNavigation('');
-
-  console.log(commonStyles.container);
+const AuthContainer = ({
+  subtitle,
+  title,
+  value,
+  onPress,
+  showBack,
+  AlignItemTitle,
+  /** Si true (p. ej. login dentro de ScrollView), quita flex:1 para que el alto sea el del contenido y el scroll funcione. */
+  scrollEmbedded,
+}) => {
+  const {textRTLStyle, imageRTLStyle} = useValues();
+  const navigation = useNavigation();
+  const insets = useSafeAreaInsets();
+  const statusBarH =
+    Platform.OS === 'android' ? StatusBar.currentHeight ?? 0 : 0;
+  const heroPaddingTop = Math.max(insets.top || 0, statusBarH) + 16;
+  const scrollLayout = scrollEmbedded ? {flex: 0} : {};
 
   return (
-    <SafeAreaView style={[styles.container, {backgroundColor: bgFullStyle}]}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-        }}>
-        {showBack && (
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={{
-              position: 'absolute',
-              left: 10,
-              transform: [{scale: imageRTLStyle}],
-            }} // Posiciona el botón a la izquierda
-          >
-            <BackLeft />
-          </TouchableOpacity>
-        )}
-
-        <Image
-          source={require('../../assets/solverslogo.png')} // Asegúrate de que la ruta sea correcta
-          style={{width: 70, height: 70}} // Ajusta el tamaño de la imagen aquí
-          resizeMode="contain" // Esto asegura que la imagen mantenga sus proporciones
-        />
+    <View style={[styles.container, scrollLayout]}>
+      <View style={[styles.hero, {paddingTop: heroPaddingTop}]}>
+        <View style={styles.heroInner}>
+          <View style={styles.heroRow}>
+            {showBack && (
+              <TouchableOpacity
+                onPress={() => navigation.goBack()}
+                style={[styles.backBtn, {transform: [{scale: imageRTLStyle}]}]}>
+                <BackLeft />
+              </TouchableOpacity>
+            )}
+            <Image
+              source={require('../../assets/solverslogo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+          </View>
+          <Text
+            style={[
+              styles.heroTitle,
+              {textAlign: AlignItemTitle != undefined ? AlignItemTitle : textRTLStyle},
+            ]}>
+            {title}
+          </Text>
+          <Text
+            style={[
+              styles.subtitleText,
+              {textAlign: AlignItemTitle != undefined ? AlignItemTitle : textRTLStyle},
+            ]}>
+            {subtitle}
+          </Text>
+        </View>
       </View>
-
-      <Text
-        style={[
-          commonStyles.container,
-          external.mt_20,
-          {color: textColorStyle},
-          {textAlign: AlignItemTitle != undefined ? AlignItemTitle : textRTLStyle },
-        ]}>
-        {title}
-      </Text>
-      <Text style={[styles.subtitleText, {textAlign: AlignItemTitle != undefined ? AlignItemTitle : textRTLStyle}]}>
-        {subtitle}
-      </Text>
-      <View>{value}</View>
-    </SafeAreaView>
+      {/* Zona blanca: inputs / formulario */}
+      <View style={[styles.formZone, scrollLayout]}>
+        {value}
+      </View>
+    </View>
   );
 };
 

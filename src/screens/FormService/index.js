@@ -1,9 +1,7 @@
 import {
-  ImageBackground,
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
   ScrollView,
   StyleSheet,
   Image,
@@ -12,10 +10,22 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Dimensions,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import ErrorContainer from '../../commonComponents/errorContainer';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+
+const capitalizeSentence = raw => {
+  const s = String(raw ?? '').trim();
+  if (!s) {
+    return '';
+  }
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+};
+
 import {
   addNow,
   myWishlist,
@@ -30,14 +40,12 @@ import HeaderContainer from '../../commonComponents/headingContainer';
 import CheckBox from 'react-native-check-box';
 
 import { external } from '../../style/external.css';
-import { Call, Edit, Profile, Key, BackLeft } from '../../utils/icon';
 import styles from './style.css';
 import TextInputs from '../../commonComponents/textInputs';
 import { Email } from '../../assets/icons/email';
-import appColors from '../../themes/appColors';
-import { RadioButton, Button } from 'react-native-paper';
+import { RadioButton } from 'react-native-paper';
 import { windowHeight } from '../../themes/appConstant';
-import NavigationButton from '../../commonComponents/navigationButton';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '../../../axiosInstance';
 import { Picker } from '@react-native-picker/picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -115,6 +123,7 @@ const FormTaller = () => {
 
   const navigation = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
 
   const [isCheckedName, setisCheckedName] = useState(false);
   const [isRif, setisRif] = useState(false);
@@ -134,6 +143,10 @@ const FormTaller = () => {
 
   const [tipoAccion, settipoAccion] = useState('');
   const [uidTaller, setuidTaller] = useState('');
+
+  // uid_taller recibido desde FormTaller (agente cargando servicio para otro taller)
+  const [uidTallerOverride, setUidTallerOverride] = useState('');
+  const [nombreTallerOverride, setNombreTallerOverride] = useState('');
 
   // Nuevo
 
@@ -186,10 +199,18 @@ const FormTaller = () => {
   };
 
   useEffect(() => {
-    const { uid } = route.params;
+    const { uid, uid_taller, nombre_taller } = route.params;
     setModalVisible(false);
     getUserActive();
     getDataServiceActivos();
+
+    // Si viene desde FormTaller (agente cargando servicio para un taller)
+    if (uid_taller) {
+      setUidTallerOverride(uid_taller);
+    }
+    if (nombre_taller) {
+      setNombreTallerOverride(nombre_taller);
+    }
 
     if (uid != undefined && uid != '') {
       setuidTaller(uid);
@@ -491,6 +512,13 @@ const FormTaller = () => {
         }
 
 
+        // Si viene desde FormTaller usa el uid/nombre del taller destino,
+        // si no usa el del usuario logueado.
+        const resolvedUidTaller = uidTallerOverride || userStorage.uid;
+        const resolvedNombreTaller = uidTallerOverride
+          ? (nombreTallerOverride || userStorage.nombre)
+          : userStorage.nombre;
+
         const dataFinal = {
           id: uidService == undefined || uidService == '' ? '' : uidService,
           precio: precio.replace('$', ''),
@@ -498,8 +526,8 @@ const FormTaller = () => {
             uidService == undefined || uidService == '' ? '' : uidService,
           categoria: categoria,
           uid_categoria: caracteristicaSelected,
-          taller: userStorage.nombre,
-          uid_taller: userStorage.uid,
+          taller: resolvedNombreTaller,
+          uid_taller: resolvedUidTaller,
           nombre_servicio: Nombre,
           descripcion: Description,
           subcategoria: subcategoria,
@@ -608,7 +636,7 @@ const FormTaller = () => {
 
   const gotoPlans = () => {
     setModalVisible2(false);
-    navigationScreen.navigate('Planscreen');
+    navigationScreen.navigate('PlanesRegistro', {fromPlanesTaller: true});
   };
 
   const showToast = text => {
@@ -650,482 +678,622 @@ const FormTaller = () => {
     setImages(newImages);
   };
 
-  return (
+  const dropdownCommon = {
+    placeholderStyle: { color: '#64748B', fontSize: 13 },
+    selectedTextStyle: { color: '#1F2344', fontSize: 13, fontWeight: '600' },
+    itemTextStyle: { fontSize: 13 },
+  };
 
+  return (
     <View
       style={[
         commonStyles.commonContainer,
-        external.ph_20,
-        { backgroundColor: bgFullStyle },
-      ]}
-    >
+        { flex: 1, backgroundColor: bgFullStyle },
+      ]}>
+      <View
+        style={[
+          styles.formHeaderWrapper,
+          { paddingTop: insets.top + windowHeight(3.8) },
+        ]}>
+        <View style={styles.formHeaderCircle1} />
+        <View style={styles.formHeaderCircle2} />
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.85}
+          style={[
+            styles.formHeaderBackBtn,
+            { top: insets.top + windowHeight(2) },
+          ]}>
+          <View style={{ transform: [{ scale: imageRTLStyle }] }}>
+            <Icons name="angle-left" size={22} color="#FFD60A" />
+          </View>
+        </TouchableOpacity>
+        <View style={{ width: '100%', alignItems: 'center' }}>
+          <Text style={styles.formHeaderTitle} numberOfLines={2}>
+            {capitalizeSentence(NameServicio)}
+          </Text>
+          <Text style={styles.formHeaderSubtitle}>
+            {capitalizeSentence('Completa la información de tu servicio')}
+          </Text>
+        </View>
+      </View>
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0} // Ajusta según tu header
-      >
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }} // paddingBottom asegura que último campo quede visible
+          contentContainerStyle={{
+            flexGrow: 1,
+            paddingHorizontal: 20,
+            paddingBottom: 16,
+            paddingTop: 16,
+          }}
           keyboardShouldPersistTaps="handled"
-        >
-    
+          showsVerticalScrollIndicator={false}>
           <View
             style={[
-              external.fd_row,
-              external.ai_center,
-              external.pt_15,
-              { justifyContent: 'center' },
-              { flexDirection: viewRTLStyle },
-            ]}
-          >
-            {/* Botón de retroceso */}
-            <TouchableOpacity
-              onPress={() => navigation.goBack('')}
-              style={{ position: 'absolute', left: 0 }}
-            >
-              <View style={{ transform: [{ scale: imageRTLStyle }] }}>
-                <BackLeft />
-              </View>
-            </TouchableOpacity>
-    
-            {/* Nombre del taller centrado */}
-            <Text
-              style={[
-                commonStyles.hederH2,
-                external.as_center,
-                { color: textColorStyle },
-              ]}
-            >
-              {NameServicio}
-            </Text>
-          </View>
-    
-          <View style={[external.as_center, { flexDirection: 'row' }]}>
-            <ScrollView horizontal={true} style={{ width: '100%', maxHeight: 150 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 35 }}>
-                <View style={{ alignItems: 'center', marginRight: 10 }}>
-                  <TouchableOpacity
-                    onPress={selectImage}
-                    style={{
-                      height: 60,
-                      width: 60,
-                      borderColor: '#2D3261',
-                      borderWidth: 2,
-                      borderRadius: 10,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <Icons name="plus" size={30} color="#2D3261" />
-                  </TouchableOpacity>
-                  <Text style={{ marginBottom: 5, color: '#2D3261', fontSize: 13 }}>
-                    Agregar imagen
-                  </Text>
-                </View>
-                {images.length === 0 && loading ? (
-                  <View style={[styles.loadingContainer, { marginLeft: 50 }]}>
+              styles.formPhotoHeroOuter,
+              { width: SCREEN_WIDTH, marginHorizontal: -20 },
+            ]}>
+            <View style={styles.formPhotoHero}>
+              <Text
+                style={[
+                  styles.formPhotoHeroTitle,
+                  { textAlign: textRTLStyle },
+                ]}>
+                Galería del servicio
+              </Text>
+              <Text
+                style={[
+                  styles.formPhotoHeroHint,
+                  { textAlign: textRTLStyle },
+                ]}>
+                Desliza el carrusel horizontal para ver todas · abajo puedes agregar más
+              </Text>
+
+              <View style={styles.formPhotoStripWrap}>
+                {loading && images.length === 0 ? (
+                  <View style={styles.formPhotoLoadingBox}>
                     <ActivityIndicator size="large" color="#2D3261" />
+                    <Text style={styles.formPhotoLoadingText}>
+                      Cargando imágenes…
+                    </Text>
                   </View>
+                ) : images.length === 0 ? (
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={selectImage}
+                    style={styles.formPhotoPlaceholderSlide}>
+                    <Image
+                      source={require('../../assets/Imagen1.png')}
+                      style={styles.formPhotoPlaceholderLogo}
+                      resizeMode="contain"
+                    />
+                    <View style={styles.formPhotoPlaceholderIconWrap}>
+                      <Icons name="camera" size={36} color="#1F2344" />
+                    </View>
+                    <Text style={styles.formPhotoPlaceholderTitle}>
+                      Aún no hay fotos
+                    </Text>
+                    <Text style={styles.formPhotoPlaceholderSub}>
+                      Toca aquí para elegir imágenes desde tu galería
+                    </Text>
+                  </TouchableOpacity>
                 ) : (
-                  images.map((image, index) => (
-                    <View key={index} style={{ position: 'relative', marginRight: 5 }}>
-                      <ImageBackground
-                        resizeMode="contain"
-                        style={{ height: 130, width: 130 }}
-                        source={{ uri: image.uri }}
-                      >
+                  <ScrollView
+                    horizontal
+                    nestedScrollEnabled
+                    showsHorizontalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    style={styles.formPhotoStrip}
+                    contentContainerStyle={[
+                      styles.formPhotoStripContent,
+                      { flexDirection: viewRTLStyle },
+                    ]}>
+                    {images.map((image, index) => (
+                      <View
+                        key={`${image.uri}-${index}`}
+                        style={styles.formPhotoCell}>
+                        <Image
+                          source={{ uri: image.uri }}
+                          style={styles.formPhotoCellImage}
+                          resizeMode="cover"
+                        />
                         <TouchableOpacity
                           onPress={() => removeImage(index)}
-                          style={{
-                            position: 'absolute',
-                            top: 0,
-                            left: '50%',
-                            transform: [{ translateX: -15 }],
-                            backgroundColor: '#2D3261',
-                            borderRadius: 50,
-                            padding: 5,
-                          }}
-                        >
-                          <Icons name="times" size={15} color="#fff" />
+                          style={styles.formPhotoCellRemove}
+                          activeOpacity={0.85}
+                          hitSlop={{
+                            top: 6,
+                            bottom: 6,
+                            left: 6,
+                            right: 6,
+                          }}>
+                          <Icons name="trash-o" size={14} color="#FFD60A" />
                         </TouchableOpacity>
-                      </ImageBackground>
-                    </View>
-                  ))
+                        <View style={styles.formPhotoCellBadge}>
+                          <Text style={styles.formPhotoCellBadgeText}>
+                            {index + 1}/{images.length}
+                          </Text>
+                        </View>
+                      </View>
+                    ))}
+                  </ScrollView>
                 )}
               </View>
-            </ScrollView>
-          </View>
-    
-          <View style={{ padding: 10 }}>
-            {/* Caracteristicas */}
-            <Text
-              style={[
-                styles.headingContainer,
-                { color: textColorStyle },
-                { textAlign: textRTLStyle },
-              ]}>
-              Caracteristicas
-            </Text>
-            <View
-              style={{
-                marginTop: 20,
-                marginBottom: 20,
-                width: '100%',
-                paddingRight: 0,
-                borderWidth: 1,
-                borderColor: '#ccc',
-                borderRadius: 5,
-                backgroundColor: '#fff',
-                height: 50,
-                justifyContent: 'center',
-              }}>
-              <Dropdown
-                style={{
-                  width: '100%',
-                  borderWidth: 1,
-                  borderColor: '#ccc',
-                  borderRadius: 5,
-                  paddingHorizontal: 10,
-                  backgroundColor: '#fff',
-                  height: 50,
-                }}
-                placeholderStyle={{
-                  color: 'gray',
-                  fontSize: 14,
-                }}
-                selectedTextStyle={{
-                  color: 'black',
-                  fontSize: 14,
-                }}
-                data={caracteristicas.map(option => ({
-                  label: option.nombre,
-                  value: option.id,
-                }))}
-                labelField="label"
-                valueField="value"
-                placeholder="Seleccione una característica"
-                value={caracteristicaSelected}
-                search={true}
-                onChange={item => {
-                  getSubcaracteristicas(item.value, false);
-                  setcaracteristicaSelected(item.value);
-                }}
-                keyboardAvoiding={true}
-              />
             </View>
-    
-            {/* Subcaracteristicas */}
-            <Text
-              style={[
-                styles.headingContainer,
-                { color: textColorStyle },
-                { textAlign: textRTLStyle },
-              ]}>
-              Subcaracteristicas
-            </Text>
-            <View
-              style={{
-                marginTop: 20,
-                marginBottom: 20,
-                width: '100%',
-                paddingRight: 0,
-                borderWidth: 1,
-                borderColor: '#ccc',
-                borderRadius: 5,
-                backgroundColor: '#fff',
-                height: 50,
-                justifyContent: 'center',
-              }}>
-              <Dropdown
-                style={{
-                  width: '100%',
-                  borderWidth: 1,
-                  borderColor: '#ccc',
-                  borderRadius: 5,
-                  paddingHorizontal: 10,
-                  backgroundColor: '#fff',
-                  height: 50,
-                }}
-                placeholderStyle={{
-                  color: 'gray',
-                  fontSize: 14,
-                }}
-                selectedTextStyle={{
-                  color: 'black',
-                  fontSize: 14,
-                }}
-                data={Subcaracteristicas.map(option => ({
-                  label: option.nombre,
-                  value: option.id,
-                }))}
-                labelField="label"
-                valueField="value"
-                placeholder="Seleccione una subcaracterística"
-                value={SubcaracteristicaSelected}
-                search={true}
-                onChange={item => {
-                  console.log("Estoy en el select");
-                  setSubcaracteristicaSelected(item.value);
-                }}
-                dropdownPosition="top"
-                keyboardAvoiding={true}
-              />
-            </View>
-    
-            {/* Nombre del servicio */}
-           
-              <TextInputs
-                fullWidth={"100%"}
-                title="Nombre del servicio"
-                value={Nombre}
-                placeHolder="Nombre del servicio"
-                onChangeText={text => {
-                  setNombre(text);
-                  setNombreError(text.trim() === '' ? 'Nombre es requerido' : '');
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="gears" size={20} color="#9BA6B8" />}
-              />
-    
-            {/* precio del servicio */}
-              <TextInputs
-                fullWidth={"100%"}
-                title="Precio"
-                value={precio}
-                placeHolder="Precio del servicio"
-                onChangeText={text => {
-                  const numericText = text.replace(/[^0-9]/g, '');
-                  const formattedText = numericText ? `$${numericText}` : '';
-                  setprecio(formattedText);
-                  setsetprecioError(
-                    numericText.trim() === '' ? 'Precio es requerido' : ''
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="money" size={20} color="#9BA6B8" />}
-                keyboardType="numeric"
-              />
-            
-    
-            {/*Descripcion del servicio  */}
-            
-              <TextInputs
-                fullWidth={"100%"}
-                title="Descripción del servicio"
-                value={Description}
-                placeHolder="Descripción del servicio"
-                // multiline={true}
-                // numberOfLines={10}
-                // height={150}
-                onChangeText={text => {
-                  setDescription(text);
-                  setsetDescriptionError(
-                    text.trim() === '' ? 'Descripción es requerida' : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="file-text" size={20} color="#9BA6B8" />}
-              />
-    
-            {/* Garantia del servicio */}
-            
-              <TextInputs
-                fullWidth={"100%"}
-                title="Garantía del servicio"
-                value={Garantia}
-                placeHolder="Garantía del servicio"
-                // multiline={true}
-                // numberOfLines={10}
-                // height={150}
-                onChangeText={text => {
-                  setGarantia(text);
-                  setsetGarantiaError(
-                    text.trim() === '' ? 'Garantía es requerida' : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="file-text-o" size={20} color="#9BA6B8" />}
-              />
-    
-            {/* Estado del servicio */}
 
-            {
-              userStorage?.status == "En espera por aprobación" || userStorage?.subscripcion_actual?.status != 'Aprobado' ? null : (
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    marginVertical: 10,
-                    marginTop: -15,
-                  }}>
-                  <Text
-                    style={{
-                      marginBottom: 10,
-                      color: 'black',
-                      marginTop: 35,
-                    }}>
-                    ¿Publicado?
+            <View style={styles.formPhotoFormCard}>
+              <TouchableOpacity
+                style={[
+                  styles.formPhotoAddBar,
+                  { flexDirection: viewRTLStyle },
+                ]}
+                onPress={selectImage}
+                activeOpacity={0.88}>
+                <View style={styles.formPhotoAddBarIcon}>
+                  <Icons name="plus-circle" size={22} color="#1F2344" />
+                </View>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text style={styles.formPhotoAddBarTitle}>
+                    Agregar o cambiar fotos
                   </Text>
-        
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      marginTop: 25,
-                    }}>
+                  <Text style={styles.formPhotoAddBarSub}>
+                    JPG o PNG · varias a la vez
+                  </Text>
+                </View>
+                <Icons name="chevron-right" size={18} color="#64748B" />
+              </TouchableOpacity>
+            </View>
+          </View>
+
+
+          <View style={styles.formServiceFieldsCard}>
+            <View
+              style={[
+                styles.formRowDropdowns,
+                styles.formRowDropdownsInCard,
+                { flexDirection: viewRTLStyle },
+              ]}>
+              <View style={styles.formDropdownCol}>
+                <Text
+                  style={[
+                    styles.formDropdownLabel,
+                    { color: textColorStyle, textAlign: textRTLStyle },
+                  ]}>
+                  {capitalizeSentence('categoría')}
+                </Text>
+                <View style={styles.formDropdownBox}>
+                  <Dropdown
+                    style={{ width: '100%', minHeight: 48 }}
+                    {...dropdownCommon}
+                    data={caracteristicas.map(option => ({
+                      label: capitalizeSentence(option.nombre),
+                      value: option.id,
+                    }))}
+                    labelField="label"
+                    valueField="value"
+                    placeholder={capitalizeSentence('categoría')}
+                    value={caracteristicaSelected}
+                    search
+                    onChange={item => {
+                      getSubcaracteristicas(item.value, false);
+                      setcaracteristicaSelected(item.value);
+                    }}
+                    keyboardAvoiding
+                  />
+                </View>
+              </View>
+              <View style={styles.formDropdownCol}>
+                <Text
+                  style={[
+                    styles.formDropdownLabel,
+                    { color: textColorStyle, textAlign: textRTLStyle },
+                  ]}>
+                  {capitalizeSentence('subcategoría')}
+                </Text>
+                <View style={styles.formDropdownBox}>
+                  <Dropdown
+                    style={{ width: '100%', minHeight: 48 }}
+                    {...dropdownCommon}
+                    data={Subcaracteristicas.map(option => ({
+                      label: capitalizeSentence(option.nombre),
+                      value: option.id,
+                    }))}
+                    labelField="label"
+                    valueField="value"
+                    placeholder={capitalizeSentence('subcategoría')}
+                    value={SubcaracteristicaSelected}
+                    search
+                    onChange={item => {
+                      setSubcaracteristicaSelected(item.value);
+                    }}
+                    dropdownPosition="top"
+                    keyboardAvoiding
+                  />
+                </View>
+              </View>
+            </View>
+
+            <TextInputs
+              formCardMode
+              fullWidth={'100%'}
+              title="Nombre del servicio"
+              value={Nombre}
+              placeHolder="Nombre del servicio"
+              onChangeText={text => {
+                setNombre(text);
+                setNombreError(text.trim() === '' ? 'Nombre es requerido' : '');
+              }}
+              onBlur={() => {}}
+              icon={<Icons name="gears" size={20} color="#64748B" />}
+            />
+
+            <TextInputs
+              formCardMode
+              fullWidth={'100%'}
+              title="Precio"
+              titleHint="Desde aquí partes al cotizar (Referencia minima)"
+              value={precio}
+              placeHolder="Precio del servicio"
+              onChangeText={text => {
+                const numericText = text.replace(/[^0-9]/g, '');
+                const formattedText = numericText ? `$${numericText}` : '';
+                setprecio(formattedText);
+                setsetprecioError(
+                  numericText.trim() === '' ? 'Precio es requerido' : '',
+                );
+              }}
+              onBlur={() => {}}
+              icon={<Icons name="money" size={20} color="#64748B" />}
+              keyboardType="numeric"
+            />
+
+            <TextInputs
+              formCardMode
+              fullWidth={'100%'}
+              title="Descripción del servicio"
+              value={Description}
+              placeHolder="Describe brevemente tu servicio"
+              multiline
+              numberOfLines={5}
+              height={128}
+              onChangeText={text => {
+                setDescription(text);
+                setsetDescriptionError(
+                  text.trim() === '' ? 'Descripción es requerida' : '',
+                );
+              }}
+              onBlur={() => {}}
+              icon={<Icons name="file-text" size={20} color="#64748B" />}
+            />
+
+            <TextInputs
+              formCardMode
+              fullWidth={'100%'}
+              title="Garantía del servicio"
+              value={Garantia}
+              placeHolder="Ej. 30 días, 1 año en repuestos…"
+              onChangeText={text => {
+                setGarantia(text);
+                setsetGarantiaError(
+                  text.trim() === '' ? 'Garantía es requerida' : '',
+                );
+              }}
+              onBlur={() => {}}
+              icon={<Icons name="file-text-o" size={20} color="#64748B" />}
+            />
+
+            {userStorage?.status == 'En espera por aprobación' ||
+            userStorage?.subscripcion_actual?.status != 'Aprobado' ? null : (
+              <View
+                style={[
+                  styles.formRadioBlock,
+                  styles.formRadioBlockInCard,
+                  styles.formPublishWrap,
+                ]}>
+                <View
+                  style={[
+                    styles.formPublishHeader,
+                    { flexDirection: viewRTLStyle },
+                  ]}>
+                  <View style={styles.formPublishIconCircle}>
+                    <Icons name="eye" size={18} color="#1F2344" />
+                  </View>
+                  <View style={styles.formPublishHeaderText}>
+                    <Text
+                      style={[
+                        styles.formPublishTitle,
+                        { color: textColorStyle, textAlign: textRTLStyle },
+                      ]}>
+                      Visibilidad en el catálogo
+                    </Text>
+                    <Text
+                      style={[
+                        styles.formPublishHint,
+                        { textAlign: textRTLStyle },
+                      ]}>
+                      Elige si los clientes pueden encontrar y ver este servicio
+                    </Text>
+                  </View>
+                </View>
+                <View
+                  style={[
+                    styles.formPublishChipsRow,
+                    { flexDirection: viewRTLStyle },
+                  ]}>
+                  <TouchableOpacity
+                    activeOpacity={0.88}
+                    onPress={() => setChecked('si')}
+                    style={[
+                      styles.formPublishChip,
+                      checked === 'si' && styles.formPublishChipSelected,
+                    ]}>
                     <RadioButton
                       value="si"
                       status={checked === 'si' ? 'checked' : 'unchecked'}
                       onPress={() => setChecked('si')}
+                      color="#1F2344"
                     />
-                    <Text style={{ color: 'black' }}>Sí</Text>
-        
+                    <View style={styles.formPublishChipTextCol}>
+                      <Text
+                        style={[
+                          styles.formPublishChipTitle,
+                          { color: textColorStyle },
+                        ]}>
+                        Visible
+                      </Text>
+                      <Text style={styles.formPublishChipSub}>
+                        Aparece en búsquedas
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    activeOpacity={0.88}
+                    onPress={() => setChecked('no')}
+                    style={[
+                      styles.formPublishChip,
+                      checked === 'no' && styles.formPublishChipSelected,
+                    ]}>
                     <RadioButton
                       value="no"
                       status={checked === 'no' ? 'checked' : 'unchecked'}
                       onPress={() => setChecked('no')}
+                      color="#1F2344"
                     />
-                    <Text style={{ color: 'black' }}>No</Text>
-                  </View>
-                </View>
-              )
-            }
-
-
-            
-          </View>
-    
-          <View style={{ marginBottom: 15 }}>
-            <View
-              style={{
-                backgroundColor: buttonColor,
-                borderRadius: windowHeight(20),
-                marginBottom: 15,
-              }}>
-              <NavigationButton
-                title="Guardar Cambios"
-                onPress={() => onHandleChange('Aprobar')}
-                backgroundColor={'#2D3261'}
-                color={appColors.screenBg}
-              />
-            </View>
-          </View>
-    
-    
-          <Modal
-            transparent={true}
-            animationType="slide"
-            visible={modalVisible}
-            onRequestClose={onCancel}>
-            <View style={stylesModal.container}>
-              <View style={stylesModal.modalView}>
-                <Text style={stylesModal.modalText}>
-                  ¿Estás seguro de que quieres aplicar estos cambios?
-                </Text>
-                <View style={stylesModal.buttonContainer}>
-                  <TouchableOpacity
-                    style={[
-                      stylesModal.buttonYes,
-                      { opacity: isButtonDisabled ? 0.5 : 1 },
-                    ]}
-                    onPress={onConfirm}
-                    disabled={isButtonDisabled}
-                  >
-                    <Text style={stylesModal.buttonText}>Sí</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={stylesModal.buttonNo} onPress={onCancel}>
-                    <Text style={stylesModal.buttonText}>No</Text>
+                    <View style={styles.formPublishChipTextCol}>
+                      <Text
+                        style={[
+                          styles.formPublishChipTitle,
+                          { color: textColorStyle },
+                        ]}>
+                        Oculto
+                      </Text>
+                      <Text style={styles.formPublishChipSub}>
+                        Solo tú lo ves
+                      </Text>
+                    </View>
                   </TouchableOpacity>
                 </View>
               </View>
-            </View>
-          </Modal>
-    
-          <Modal
-            transparent={true}
-            animationType="slide"
-            visible={modalVisible2}
-            onRequestClose={onCancel2}>
-            <View style={stylesModal.container}>
-              <View style={stylesModal.modalView}>
-                <Text style={stylesModal.modalText}>
-                  Usted ha alcanzado la cantidad máxima de servicios permitidos en
-                  su plan. Para crear nuevos servicios, debe actualizar su plan.
-                </Text>
-                <View style={stylesModal.buttonContainer}>
-                  <TouchableOpacity
-                    style={stylesModal.buttonYes}
-                    onPress={gotoPlans}>
-                    <Text style={stylesModal.buttonText}>Ir a planes</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={stylesModal.buttonNo}
-                    onPress={onCancel2}>
-                    <Text style={stylesModal.buttonText}>Cancelar</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            </View>
-          </Modal>
+            )}
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <View
+        style={[
+          styles.formFooter,
+          {
+            paddingBottom: insets.bottom + 12,
+            backgroundColor: bgFullStyle,
+          },
+        ]}>
+        <TouchableOpacity
+          style={[styles.formFooterBtn, { opacity: isButtonDisabled ? 0.55 : 1 }]}
+          onPress={() => onHandleChange('Aprobar')}
+          activeOpacity={0.88}
+          disabled={isButtonDisabled}>
+          <Icons name="save" size={20} color="#FFD60A" />
+          <Text style={styles.formFooterBtnText}>Guardar cambios</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={modalVisible}
+        onRequestClose={onCancel}>
+        <View style={stylesModal.overlay}>
+          <View style={stylesModal.modalView}>
+            <View style={stylesModal.headerChip}>
+              <Text style={stylesModal.headerChipText}>CONFIRMACIÓN</Text>
+            </View>
+            <View style={stylesModal.modalIconCircle}>
+              <Icons name="save" size={24} color="#1F2344" />
+            </View>
+            <Text style={stylesModal.modalTitle}>¿Guardar cambios?</Text>
+            <Text style={stylesModal.modalSubtitle}>
+              ¿Estás seguro de que quieres aplicar estos cambios al servicio?
+            </Text>
+            <View style={stylesModal.buttonContainer}>
+              <TouchableOpacity
+                style={[
+                  stylesModal.buttonSecondary,
+                  { flex: 1 },
+                ]}
+                onPress={onCancel}
+                activeOpacity={0.88}>
+                <Text style={stylesModal.buttonTextSecondary}>No, volver</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  stylesModal.buttonPrimary,
+                  { flex: 1, opacity: isButtonDisabled ? 0.5 : 1 },
+                ]}
+                onPress={onConfirm}
+                disabled={isButtonDisabled}
+                activeOpacity={0.88}>
+                <Icons name="check" size={18} color="#FFD60A" />
+                <Text style={stylesModal.buttonTextPrimary}>Sí, guardar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        transparent={true}
+        animationType="fade"
+        visible={modalVisible2}
+        onRequestClose={onCancel2}>
+        <View style={stylesModal.overlay}>
+          <View style={stylesModal.modalView}>
+            <View style={stylesModal.headerChip}>
+              <Text style={stylesModal.headerChipText}>TU PLAN</Text>
+            </View>
+            <View style={stylesModal.modalIconCircle}>
+              <Icons name="exclamation-triangle" size={24} color="#1F2344" />
+            </View>
+            <Text style={stylesModal.modalTitle}>Límite de servicios</Text>
+            <Text style={stylesModal.modalBody}>
+              Has alcanzado la cantidad máxima de servicios de tu plan actual.
+              Para crear más servicios, actualiza tu plan.
+            </Text>
+            <View style={stylesModal.buttonContainer}>
+              <TouchableOpacity
+                style={[stylesModal.buttonSecondary, { flex: 1 }]}
+                onPress={onCancel2}
+                activeOpacity={0.88}>
+                <Text style={stylesModal.buttonTextSecondary}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[stylesModal.buttonPrimary, { flex: 1 }]}
+                onPress={gotoPlans}
+                activeOpacity={0.88}>
+                <Icons name="arrow-right" size={16} color="#FFD60A" />
+                <Text style={stylesModal.buttonTextPrimary}>Ir a planes</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
-
-
   );
 };
 
 const stylesModal = StyleSheet.create({
-  container: {
+  overlay: {
     flex: 1,
+    backgroundColor: 'rgba(9,13,46,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 20,
   },
   modalView: {
-    margin: 20,
-    backgroundColor: 'white',
-    borderRadius: 10,
-    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    paddingHorizontal: 22,
+    paddingTop: 22,
+    paddingBottom: 20,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
+    width: '100%',
+    maxWidth: 400,
+    borderWidth: 1,
+    borderColor: '#D9E2F3',
+    shadowColor: '#1F2344',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  headerChip: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#1F2344',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginBottom: 14,
+  },
+  headerChipText: {
+    color: '#FFD60A',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.6,
+  },
+  modalIconCircle: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFFBF0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FFE6A8',
+    marginBottom: 14,
+  },
+  modalTitle: {
+    marginBottom: 8,
+    textAlign: 'center',
+    fontSize: 21,
+    fontWeight: '900',
+    color: '#1F2344',
+    lineHeight: 28,
+  },
+  modalSubtitle: {
+    textAlign: 'center',
+    color: '#5B6383',
+    fontSize: 14,
+    lineHeight: 21,
+    marginBottom: 22,
+    paddingHorizontal: 4,
+  },
+  modalBody: {
+    textAlign: 'center',
+    color: '#5B6383',
+    fontSize: 14,
+    lineHeight: 22,
+    marginBottom: 22,
+    paddingHorizontal: 2,
   },
   buttonContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     width: '100%',
+    gap: 10,
+    marginTop: 4,
   },
-  modalText: {
-    marginBottom: 15,
-    textAlign: 'center',
-    color: '#333',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  buttonYes: {
-    backgroundColor: '#2D3261', // Color del botón "Sí"
-    borderRadius: 5,
-    padding: 10,
-    width: '48%', // Ajustar ancho para espacio entre botones
+  buttonPrimary: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#1F2344',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#FFD60A',
   },
-  buttonNo: {
-    backgroundColor: '#bdbdbd', // Color del botón "No"
-    borderRadius: 5,
-    color: '#2D3261',
-    padding: 10,
-    width: '48%', // Ajustar ancho para espacio entre botones
+  buttonTextPrimary: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 15,
+  },
+  buttonSecondary: {
     alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  buttonText: {
-    color: 'white', // Color del texto del botón
-    fontWeight: 'bold',
+  buttonTextSecondary: {
+    color: '#475569',
+    fontWeight: '700',
+    fontSize: 15,
   },
 });
 

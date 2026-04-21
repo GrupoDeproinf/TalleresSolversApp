@@ -7,7 +7,8 @@ const styles = StyleSheet.create({
   headingContainer: {
     flex: 1,
     backgroundColor: '#FDFDFD',
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
+    paddingTop: 0,
     paddingBottom: 50,
   },
   errorStyle: {

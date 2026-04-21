@@ -1,52 +1,36 @@
 import {
-  ImageBackground,
   Text,
   TouchableOpacity,
   View,
-  useWindowDimensions,
   ScrollView,
   StyleSheet,
   Image,
-  ToastAndroid,
-  Alert
+  Alert,
+  Platform,
+  KeyboardAvoidingView,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
-import HeaderContainer from '../../../commonComponents/headingContainer';
 import { phoneMo, smithaWilliams, smithaWilliamsMail } from '../../../constant';
 import { commonStyles } from '../../../style/commonStyle.css';
 import { external } from '../../../style/external.css';
 import styles from './style.css';
-import images from '../../../utils/images';
 import TextInputs from '../../../commonComponents/textInputs';
 import appColors from '../../../themes/appColors';
-import { Call, Edit, Profile, Key } from '../../../utils/icon';
+import { Call } from '../../../utils/icon';
 import { Email } from '../../../assets/icons/email';
-import NavigationButton from '../../../commonComponents/navigationButton';
 import { windowHeight } from '../../../themes/appConstant';
 import { useValues } from '../../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import CheckBox from 'react-native-check-box';
-import { Picker } from '@react-native-picker/picker';
-import Icons from 'react-native-vector-icons/FontAwesome'
-import Icons2 from 'react-native-vector-icons/FontAwesome5'
-
-import Icons3 from 'react-native-vector-icons/Fontisto'
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Icons from 'react-native-vector-icons/FontAwesome';
 import api from '../../../../axiosInstance';
 
-import notImageFound from '../../../assets/noimageold.jpeg';
-import Icons4 from 'react-native-vector-icons/Entypo';
-
-
-
-
-import { RadioButton, Button } from 'react-native-paper';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { Buffer } from 'buffer';
 import { Dropdown } from 'react-native-element-dropdown';
 
-
-
+const DARK_BLUE = '#1F2344';
+const YELLOW = '#FFD60A';
 
 const EditProfile = ({ navigation }) => {
   const [nameValue, setNameValue] = useState(smithaWilliams);
@@ -120,6 +104,7 @@ const EditProfile = ({ navigation }) => {
 
   const navigation2 = useNavigation();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
 
   const [isCheckedName, setisCheckedName] = useState(false);
   const [isRif, setisRif] = useState(false);
@@ -153,7 +138,6 @@ const EditProfile = ({ navigation }) => {
   const [imageFirts, setimageFirts] = useState("");
 
   const [estadoSelected, setestadoSelected] = useState('');
-
 
   const [estadosVenezuela, setEstadosVenezuela] = useState([
     { label: 'Seleccione un estado', value: '' },
@@ -192,6 +176,9 @@ const EditProfile = ({ navigation }) => {
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+      if (!user?.uid) {
+        return;
+      }
       console.log('valor del storage1234', user.cedula);
 
       setuidprofile(user.uid);
@@ -200,6 +187,7 @@ const EditProfile = ({ navigation }) => {
       try {
         // Hacer la solicitud POST utilizando Axios
         const response = await api.post('/usuarios/getUserByUid', {
+          // uid: "U4pZah0wgbMuuGBU5dVCdiolNmr2",
           uid: user.uid,
         });
 
@@ -241,7 +229,7 @@ const EditProfile = ({ navigation }) => {
 
           setimageFirts(result.userData.image_perfil || '')
 
-          setestadoSelected(result.userData.estado || '')
+          setestadoSelected(result.userData.estado || '');
 
         } else {
           console.warn('Usuario no encontrado');
@@ -267,26 +255,30 @@ const EditProfile = ({ navigation }) => {
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setEmailError('Invalid email address');
+      setEmailError('Dirección de correo incorrecta');
       return false;
-    } else {
-      setEmailError('');
-      return true;
     }
+    setEmailError('');
+    return true;
   };
 
   const validatePhone = () => {
-    // Eliminar la máscara para validar solo los números
-    const numericPhone = phone.replace(/[^0-9]/g, ''); // Remueve paréntesis, espacios y guiones
-    const phoneRegex = /^\d{10}$/; // Validar exactamente 10 dígitos
-
-    if (!phoneRegex.test(numericPhone)) {
+    const phoneStr = phone == null ? '' : String(phone);
+    if (!phoneStr || phoneStr === '') {
+      setPhoneError('Teléfono es requerido');
+      return false;
+    }
+    const numericPhone = phoneStr.replace(/[^0-9]/g, '');
+    if (numericPhone.length > 0 && numericPhone[0] === '0') {
+      setPhoneError('El número no puede empezar con 0');
+      return false;
+    }
+    if (!/^\d{10}$/.test(numericPhone)) {
       setPhoneError('Teléfono debe contener exactamente 10 dígitos');
       return false;
-    } else {
-      setPhoneError('');
-      return true;
     }
+    setPhoneError('');
+    return true;
   };
 
   const onHandleChange = async () => {
@@ -297,8 +289,16 @@ const EditProfile = ({ navigation }) => {
 
     if (typeUser == "Cliente") {
       const isPhoneValid = validatePhone();
+      const isEmailValid = validateEmail();
 
-      if (isPhoneValid == true && Nombre != '' && cedula != 0 && cedula != '') {
+      if (
+        isPhoneValid === true &&
+        isEmailValid === true &&
+        Nombre != '' &&
+        cedula != 0 &&
+        cedula != '' &&
+        estadoSelected !== ''
+      ) {
         try {
           // Validar si el número de teléfono ya existe en el servidor
           const phoneValidationResponse = await api.post('/home/validatePhone', {
@@ -343,9 +343,18 @@ const EditProfile = ({ navigation }) => {
                 console.log(result);
 
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
-                  console.log(jsonValue);
-                  await AsyncStorage.setItem('@userInfo', jsonValue);
+                  const existing = await AsyncStorage.getItem('@userInfo');
+                  const prev = existing ? JSON.parse(existing) : {};
+                  const merged = {
+                    ...prev,
+                    ...infoUserCreated,
+                    uid: uidprofile,
+                    typeUser: 'Cliente',
+                  };
+                  await AsyncStorage.setItem(
+                    '@userInfo',
+                    JSON.stringify(merged),
+                  );
                 } catch (e) {
                   console.error('Error al guardar en AsyncStorage:', e);
                 }
@@ -396,108 +405,10 @@ const EditProfile = ({ navigation }) => {
         setGetOtpDisabled(false);
         showToast('Error al crear al usuario, por favor validar formulario');
       }
-    } else if (typeUser == "Taller") {
-      if (Nombre != '' && cedula != 0) {
-        try {
-          // Validar si el número de teléfono ya existe en el servidor
-          const phoneValidationResponse = await api.post('/home/validatePhone', {
-            phone,
-            uid: uidprofile,
-          });
-
-          const emailValidationResponse = await api.post('/home/validateEmail', {
-            email,
-            uid: uidprofile,
-          });
-
-          if (
-            phoneValidationResponse.status === 200 &&
-            phoneValidationResponse.data.valid === true &&
-            emailValidationResponse.status === 200 &&
-            emailValidationResponse.data.valid === true
-          ) {
-            const infoUserCreated = {
-              uid: uidprofile,
-              nombre: Nombre == undefined ? '' : Nombre,
-              rif: cedula == undefined ? '' : selectedPrefix + '' + cedula,
-              phone: phone == undefined ? '' : phone,
-              typeUser: 'Taller',
-              email: email == undefined ? '' : email,
-              Direccion: Direccion == undefined ? '' : Direccion,
-              RegComercial: RegComercial == undefined ? '' : RegComercial,
-              Caracteristicas: Caracteristicas == undefined ? '' : Caracteristicas,
-              Tarifa: Tarifa == undefined ? '' : Tarifa,
-              Experiencia: Experiencia == undefined ? '' : Experiencia,
-              LinkFacebook: LinkFacebook == undefined ? '' : LinkFacebook,
-              LinkInstagram: LinkInstagram == undefined ? '' : LinkInstagram,
-              LinkTiktok: LinkTiktok == undefined ? '' : LinkTiktok,
-              Garantia: Garantia == undefined ? '' : Garantia,
-              seguro: seguro == undefined ? '' : seguro,
-              agenteAutorizado: checked == undefined ? false : checked
-            };
-
-            console.log(infoUserCreated);
-            console.log('Aquiiii1234');
-
-            try {
-              // Hacer la solicitud POST utilizando Axios
-              const response = await api.post('/usuarios/UpdateTaller', infoUserCreated);
-
-              if (response.status === 200) {
-                const result = response.data;
-                console.log(result);
-
-                try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
-                  console.log(jsonValue);
-                  await AsyncStorage.setItem('@userInfo', jsonValue);
-                } catch (e) {
-                  console.error('Error al guardar en AsyncStorage:', e);
-                }
-
-                showToast('Taller actualizado exitosamente');
-                setGetOtpDisabled(false);
-                navigation.goBack('');
-              } else {
-                const errorText = response.data;
-                console.error('Error al guardar el taller:', errorText.message || errorText);
-                setGetOtpDisabled(false);
-                showToast(errorText.message || 'Error inesperado en la actualización');
-              }
-            } catch (error) {
-              setGetOtpDisabled(false);
-              if (error.response) {
-                console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
-                showToast(error.response.data.message || 'Error inesperado en la actualización');
-              } else {
-                console.error('Error en la solicitud:', error.message);
-              }
-            }
-          } else {
-            setGetOtpDisabled(false);
-            showToast('El número de teléfono o el correo electrónico ya está registrado.');
-          }
-        } catch (error) {
-          setGetOtpDisabled(false);
-          if (error.response) {
-            console.error(
-              'Error en la solicitud:',
-              error.response.data.message || error.response.statusText
-            );
-            showToast(error.response.data.message || 'Error en la solicitud');
-          } else {
-            console.error('Error en la solicitud:', error.message);
-            showToast('Error en la solicitud');
-          }
-        }
-      } else {
-        setGetOtpDisabled(false);
-        showToast('Error al actualizar el usuario, por favor validar formulario');
-      }
+    } else {
+      setGetOtpDisabled(false);
     }
   };
-
-
 
   const { bgFullStyle, textColorStyle, iconColorStyle, isDark, t, textRTLStyle } = useValues();
 
@@ -521,769 +432,612 @@ const EditProfile = ({ navigation }) => {
     });
   };
 
+  const clearImage = () => {
+    setimagePerfil('');
+    setBase64(null);
+  };
+
+  const isCliente = typeUser === 'Cliente';
+  const showEditForm = isCliente;
+
+  const totalStepsClienteEdit = 6;
+  let completedStepsCliente = 0;
+  if (imagePerfil) completedStepsCliente += 1;
+  if ((Nombre || '').trim() !== '') completedStepsCliente += 1;
+  if (
+    (String(cedula) || '').trim() !== '' &&
+    cedula !== 0 &&
+    cedula !== ''
+  ) {
+    completedStepsCliente += 1;
+  }
+  if ((email || '').trim() !== '') completedStepsCliente += 1;
+  if ((estadoSelected || '').trim() !== '') completedStepsCliente += 1;
+  if ((phone || '').toString().trim() !== '' && phone !== 0) {
+    completedStepsCliente += 1;
+  }
+  const progressCliente = Math.round(
+    (completedStepsCliente / totalStepsClienteEdit) * 100,
+  );
+
+  let progressClienteText = 'Comienza completando tus datos básicos.';
+  if (progressCliente >= 30 && progressCliente < 60) {
+    progressClienteText = '¡Vas muy bien! Sigue completando tu registro.';
+  } else if (progressCliente >= 60 && progressCliente < 90) {
+    progressClienteText = '¡Ya casi terminas! Solo faltan algunos campos.';
+  } else if (progressCliente >= 90) {
+    progressClienteText = '¡Excelente! Tu perfil está casi completo.';
+  }
 
   return (
     <View
-      style={[
-        commonStyles.commonContainer,
-        external.ph_20,
-        { backgroundColor: bgFullStyle },
-      ]}>
-      <HeaderContainer value="Mi cuenta" />
-
-      <View style={[external.as_center]}>
-        {imagePerfil == null || imagePerfil == "" ? (
-          <TouchableOpacity onPress={selectImage}>
-            <Image
-              resizeMode="contain"
-              style={styles.imgStyle}
-              source={notImageFound} // Reemplaza esto con la variable que contiene tu imagen
-            />
+      style={[styles.signUpLikeRoot, { backgroundColor: bgFullStyle, padding: 30 }]}>
+      <View
+        style={{
+          marginHorizontal: -30,
+          marginTop: -30,
+          marginBottom: 16,
+          backgroundColor: DARK_BLUE,
+          borderBottomLeftRadius: 50,
+          borderBottomRightRadius: 50,
+          overflow: 'hidden',
+          paddingTop: 0,
+          paddingBottom: 0,
+          paddingHorizontal: 30,
+          alignItems: 'center',
+          borderLeftWidth: 2,
+          borderRightWidth: 2,
+          borderLeftColor: YELLOW,
+          borderRightColor: YELLOW,
+        }}>
+        <View
+          style={{
+            width: '100%',
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingTop: insets.top + 8,
+            paddingBottom: 8,
+            paddingHorizontal: 0,
+          }}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            activeOpacity={0.85}
+            style={styles.signUpLikeHeaderBackBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Volver">
+            <Icons name="angle-left" size={22} color={YELLOW} />
+          </TouchableOpacity>
+          <View style={styles.signUpLikeHeaderTitleSlot} pointerEvents="box-none">
+            <Text
+              style={styles.signUpLikeHeaderTitleText}
+              numberOfLines={2}>
+              Mi cuenta
+              <Text style={styles.signUpLikeHeaderTitleType}>
+                {' '}
+                ({typeUser || '…'})
+              </Text>
+            </Text>
+          </View>
+          <View style={{ width: 42 }} />
+        </View>
+        <Text
+          style={{
+            fontSize: 20,
+            color: '#E5E7EB',
+            lineHeight: 28,
+            marginBottom: 12,
+            marginTop: 4,
+            textAlign: 'center',
+            paddingHorizontal: 8,
+          }}>
+          Actualiza tus datos cuando lo necesites.
+        </Text>
+        {isCliente ? (
+          <View
+            style={{
+              width: '100%',
+              marginHorizontal: -30,
+              height: 10,
+              backgroundColor: DARK_BLUE,
+              overflow: 'hidden',
+            }}>
             <View
-              style={[
-                styles.editIconStyle,
-                { backgroundColor: '#F3F5FB' },
-                { borderRadius: 100 },
-                { position: 'absolute', top: 0, right: 20, margin: 0 },
-              ]}
-            >
-              <Edit />
-            </View>
-          </TouchableOpacity>
-
-        ) : (
-          <TouchableOpacity onPress={selectImage}>
-            <ImageBackground
-              resizeMode="contain"
-              style={[styles.imgStyle, { height: 150, width: 150 }]} // Ajusta los valores según tus necesidades
-              source={{ uri: imagePerfil }} // Cambia esto a tu enlace de imagen
-            >
-              <View
-                style={[
-                  styles.editIconStyle,
-                  {
-                    backgroundColor: '#F3F5FB',
-                    borderRadius: 100,
-                    position: 'absolute', // Posicionar absolutamente
-                    top: 0, // Ajustar al fondo
-                    right: 20, // Ajustar a la derecha
-                    margin: 0 // Agregar margen si es necesario
-                  },
-                ]}
-              >
-                <Edit />
-              </View>
-            </ImageBackground>
-          </TouchableOpacity>
-        )}
+              style={{
+                width: `${progressCliente}%`,
+                height: '100%',
+                backgroundColor: YELLOW,
+              }}
+            />
+          </View>
+        ) : null}
       </View>
 
-
-      {/* Formulario para editar un taller */}
-      {typeUser == 'Taller' ? (
-        <ScrollView style={{ marginBottom: 15 }}>
-          <View>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Nombre y Apellido"
-                editable={true}
-                value={Nombre}
-                textDecorationLine={isCheckedName ? 'line-through' : 'none'}
-                onChangeText={text => {
-                  setNombre(text);
-                  setNombreError(
-                    text.trim() === '' ? 'Nombre es requerido' : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="user" size={20} color="#9BA6B8" />}
-              />
-            </View>
-
-            {/* Registro de Información Fiscal (RIF) */}
-            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              {/* Select para elegir "J-" o "G-" */}
-              <View
-                style={{
-                  overflow: 'hidden',
-                  height: 50, // Asegurar que ambos tengan el mismo height
-                  marginRight: 5, // Espaciado entre el Picker y el TextInput
-                }}>
-                <Picker
-                  selectedValue={selectedPrefix}
-                  onValueChange={itemValue => setSelectedPrefix(itemValue)}
-                  style={{
-                    width: 100,
-                    height: 0, // Altura para el Picker
-                    color: 'black',
-                  }}>
-                  <Picker.Item color='black' label="C-" value="C-" />
-                  <Picker.Item color='black' label="E-" value="E-" />
-                  <Picker.Item color='black' label="G-" value="G-" />
-                  <Picker.Item color='black' label="J-" value="J-" />
-                  <Picker.Item color='black' label="P-" value="P-" />
-                  <Picker.Item color='black' label="V-" value="V-" />
-                </Picker>
-              </View>
-
-              {/* TextInput para el número de RIF */}
-              <View style={{ flex: 1, marginTop: -22, marginLeft: -50 }}>
-                <TextInputs
-                  title=""
-                  value={cedula}
-                  placeHolder="Ingrese su cedula"
-                  onChangeText={text => {
-                    const numericText = text.replace(/[^0-9]/g, '');
-                    setcedula(numericText);
-                    setcedulaTyping(true);
-                    if (numericText.trim() === '') {
-                      setcedulaError('RIF es requerido');
-                    } else {
-                      setcedulaError('');
-                    }
-                  }}
-                  onBlur={() => {
-                    setcedulaTyping(false);
-                  }}
-                  keyboardType="numeric"
-                  icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                  style={{ height: 50 }} // Altura para el TextInput
-                />
-              </View>
-            </View>
-
-            {/* Dirección del Taller */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Dirección del Taller"
-                placeHolder="Ingrese su direccion"
-                textDecorationLine={
-                  isCheckedDireccion ? 'line-through' : 'none'
-                }
-                editable={true}
-                value={Direccion}
-                onChangeText={text => {
-                  setDireccion(text);
-                  setDireccionError(
-                    text.trim() === '' ? 'Direccion es requerida' : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="map-marker" size={20} color="#9BA6B8" />}
-              />
-              {DireccionError !== '' && (
-                <Text style={styles.errorStyle}>{DireccionError}</Text>
-              )}
-            </View>
-
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Registro Comercial"
-                value={RegComercial}
-                textDecorationLine={
-                  isCheckedRegistroComercial ? 'line-through' : 'none'
-                }
-                editable={true}
-                placeHolder="Ingrese su Registro Comercial"
-                onChangeText={text => {
-                  const numericText = text.replace(/[^0-9]/g, '');
-                  setRegComercial(numericText);
-                  setRegComercialError(
-                    numericText.trim() === ''
-                      ? 'Registro comercial es requerido'
-                      : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="id-card" size={20} color="#9BA6B8" />}
-                keyboardType="numeric"
-              />
-              {RegComercialError !== '' && (
-                <Text style={styles.errorStyle}>{RegComercialError}</Text>
-              )}
-            </View>
-
-            {/* Número Telefónico */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Número Telefónico"
-                value={phone}
-                textDecorationLine={isCheckedTelefono ? 'line-through' : 'none'}
-                editable={true}
-                placeholder="Ingrese su número"
-                keyboardType="numeric"
-                onChangeText={text => {
-                  const numericText = text.replace(/[^0-9]/g, '');
-                  setPhone(numericText);
-                  setPhoneError(
-                    numericText.trim() === ''
-                      ? 'Número telefónico requerido'
-                      : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="phone" size={20} color="#9BA6B8" />}
-              />
-              {phoneError !== '' && (
-                <Text style={styles.errorStyle}>{phoneError}</Text>
-              )}
-            </View>
-
-            {/* Email */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Email"
-                value={email}
-                editable={false}
-                textDecorationLine={isCheckedEmail ? 'line-through' : 'none'}
-                placeHolder="Ingrese su email"
-                onChangeText={text => {
-                  setEmail(text);
-                  setEmailError(text.trim() === '' ? 'Email es requerido' : '');
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="file" size={20} color="#9BA6B8" />}
-              />
-            </View>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Caracteristicas del taller"
-                editable={true}
-                textDecorationLine={
-                  isCheckedCaracteristicas ? 'line-through' : 'none'
-                }
-                value={Caracteristicas}
-                placeHolder="Característica del taller (tipo de piso, si posee fosa, rampla, entre otras condiciones, gatos elevadores)"
-                multiline={true}
-                numberOfLines={4}
-                onChangeText={text => {
-                  setCaracteristicas(text);
-                  setCaracteristicasError(
-                    text.trim() === '' ? 'Caracteristicas es requerido' : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="wrench" size={20} color="#9BA6B8" />}
-              />
-            </View>
-
-
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-                marginTop: -15,
-              }}>
-
-              <Text
-                style={{
-                  marginBottom: 10,
-                  color: 'black',
-                  marginTop: 35,
-                }}>
-                ¿Es un Agente Autorizado?
-              </Text>
-
-              <View
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  marginTop: 25,
-                }}>
-                <RadioButton
-                  value="si"
-                  status={checked === 'si' ? 'checked' : 'unchecked'}
-                  onPress={() => setChecked('si')}
-                />
-                <Text style={{ color: 'black' }}>Sí</Text>
-
-                <RadioButton
-                  value="no"
-                  status={checked === 'no' ? 'checked' : 'unchecked'}
-                  onPress={() => setChecked('no')}
-                />
-                <Text style={{ color: 'black' }}>No</Text>
-              </View>
-            </View>
-
-
-
-            {/* Tiempo de experiencia */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Tiempo de experiencia"
-                editable={true}
-                textDecorationLine={
-                  isCheckedExperiencia ? 'line-through' : 'none'
-                }
-                value={Experiencia}
-                placeHolder="Ingrese su tiempo de experiencia"
-                onChangeText={text => {
-                  setExperiencia(text);
-                  setExperienciaError(
-                    text.trim() === '' ? 'Experiencia es requerido' : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="star" size={20} color="#9BA6B8" />}
-              />
-            </View>
-
-            {/* Enlaces a Redes Sociales */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Link de Facebook"
-                textDecorationLine={isCheckedFacebook ? 'line-through' : 'none'}
-                editable={true}
-                value={LinkFacebook}
-                placeHolder="Ingrese el enlace a su Facebook"
-                onChangeText={text => {
-                  setLinkFacebook(text);
-                  setLinkFacebookError(
-                    text.trim() === '' ? 'Link de Facebook es requerido' : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="facebook-square" size={20} color="#9BA6B8" />}
-              />
-            </View>
-
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Link de Instagram"
-                editable={true}
-                textDecorationLine={
-                  isCheckedInstagram ? 'line-through' : 'none'
-                }
-                value={LinkInstagram}
-                placeHolder="Ingrese el enlace a su Instagram"
-                onChangeText={text => {
-                  setLinkInstagram(text);
-                  setLinkInstagramError(
-                    text.trim() === '' ? 'Link de Instagram es requerido' : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="instagram" size={20} color="#9BA6B8" />}
-              />
-              {LinkInstagramError !== '' && (
-                <Text style={styles.errorStyle}>{LinkInstagramError}</Text>
-              )}
-            </View>
-
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Link de TikTok"
-                editable={true}
-                value={LinkTiktok}
-                textDecorationLine={isCheckedTiktok ? 'line-through' : 'none'}
-                placeHolder="Ingrese el enlace a su TikTok"
-                onChangeText={text => {
-                  setLinkTiktok(text);
-                  setLinkTiktokError(
-                    text.trim() === '' ? 'Link de TikTok es requerido' : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons2 name="tiktok" size={20} color="#9BA6B8" />}
-              />
-            </View>
-
-            {/* Seguro */}
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                fullWidth={350}
-                title="Seguro"
-                editable={true}
-                value={seguro}
-                placeHolder="Ingrese su seguro"
-                textDecorationLine={isCheckedSeguro ? 'line-through' : 'none'}
-                onChangeText={text => {
-                  setseguro(text);
-                  setseguroError(
-                    text.trim() === '' ? 'Seguro es requerido' : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="heart" size={20} color="#9BA6B8" />}
-              />
-              {seguroError !== '' && (
-                <Text style={styles.errorStyle}>{seguroError}</Text>
-              )}
-            </View>
+      {showEditForm && isCliente ? (
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: 0,
+              marginTop: 0,
+              paddingHorizontal: 4,
+            }}>
+            <Text style={{ fontSize: 13, color: DARK_BLUE }}>
+              {progressClienteText}
+            </Text>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: DARK_BLUE }}>
+              {progressCliente}%
+            </Text>
           </View>
-        </ScrollView>
-      ) : null}
-
-      {/* Formulario para editar un cliente */}
-      {typeUser == 'Cliente' ? (
-        <ScrollView style={{ marginBottom: 15 }}>
-          <View>
-            <View
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                marginVertical: 10,
-              }}>
-              <TextInputs
-                keyboardType="default"
-                autoCapitalize="words"
-                fullWidth={350}
-                title="Nombre y Apellido"
-                editable={true}
-                value={Nombre}
-                textDecorationLine={isCheckedName ? 'line-through' : 'none'}
-                onChangeText={text => {
-                  setNombre(text);
-                  setNombreError(
-                    text.trim() === '' ? 'Nombre es requerido' : '',
-                  );
-                }}
-                onBlur={() => { }}
-                icon={<Icons name="user" size={20} color="#9BA6B8" />}
-              />
-            </View>
-
-            <View style={{ marginTop: 5 }}>
-              {/* Texto "RIF" arriba de los inputs */}
-              <Text
-                style={[
-                  styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
-                ]}>
-                Documento de Identidad
-              </Text>
-            </View>
-
-            <View style={{ flexDirection: 'row', marginTop: 10, marginBottom: 10, alignItems: 'center' }}>
-              {/* Picker con borde */}
-              <View style={{
-                width: '25%',
-                paddingRight: 0,
-                borderWidth: 1,
-                borderColor: '#ccc',
-                borderRadius: 5,
-                backgroundColor: '#fff',
-                height: 50, // para que el borde envuelva el Picker apropiadamente
-                justifyContent: 'center', // centra el Picker verticalmente
-              }}>
-                <Dropdown
+          <ScrollView
+            style={{ flex: 1 }}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: Math.max(insets.bottom, 8) + 72,
+            }}>
+            <View style={{ paddingHorizontal: 4, paddingBottom: 0 }}>
+              <View
+                style={[styles.signUpLikeCard, styles.signUpLikeCardFirst]}>
+                <Text
                   style={{
-                    width: '100%', // Usa todo el ancho disponible en el contenedor
-                    borderWidth: 1, // Borde alrededor del Dropdown
-                    borderColor: '#ccc', // Color del borde
-                    borderRadius: 5, // Bordes redondeados
-                    paddingHorizontal: 10, // Espaciado interno
-                    backgroundColor: '#fff', // Fondo blanco
-                    height: 50, // Altura del Dropdown
-                  }}
-                  placeholderStyle={{
-                    color: 'gray', // Color del texto del placeholder
-                    fontSize: 14, // Tamaño del texto del placeholder
-                  }}
-                  selectedTextStyle={{
-                    color: 'black', // Color del texto seleccionado
-                    fontSize: 14, // Tamaño del texto seleccionado
-                  }}
-                  data={[
-                    { label: 'C-', value: 'C-' },
-                    { label: 'E-', value: 'E-' },
-                    { label: 'G-', value: 'G-' },
-                    { label: 'J-', value: 'J-' },
-                    { label: 'P-', value: 'P-' },
-                    { label: 'V-', value: 'V-' },
-                  ]} // Datos para el Dropdown
-                  labelField="label" // Campo que se mostrará como etiqueta
-                  valueField="value" // Campo que se usará como valor
-                  placeholder="Seleccione un prefijo" // Placeholder del Dropdown
-                  value={selectedPrefix} // Valor seleccionado
-                  onChange={item => setSelectedPrefix(item.value)} // Maneja el cambio de selección
-                />
-
-                {/* <Picker
-                  selectedValue={selectedPrefix}
-                  onValueChange={itemValue => setSelectedPrefix(itemValue)}
+                    fontSize: 13,
+                    fontWeight: '600',
+                    color: '#111827',
+                    marginBottom: 4,
+                  }}>
+                  Tu identidad
+                </Text>
+                <Text
                   style={{
-                    width: '100%', // usa todo el ancho disponible en el contenedor
-                    color: 'black',
-                  }}
-                >
-                  <Picker.Item color='black' label="C-" value="C-" />
-                  <Picker.Item color='black' label="E-" value="E-" />
-                  <Picker.Item color='black' label="G-" value="G-" />
-                  <Picker.Item color='black' label="J-" value="J-" />
-                  <Picker.Item color='black' label="P-" value="P-" />
-                  <Picker.Item color='black' label="V-" value="V-" />
-                </Picker> */}
+                    fontSize: 12,
+                    color: '#6B7280',
+                    marginBottom: 12,
+                  }}>
+                  Actualiza tu foto y datos básicos.
+                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                  }}>
+                  <View
+                    style={{
+                      flex: 1,
+                      alignItems: 'center',
+                      marginRight: 12,
+                    }}>
+                    
+                    {imagePerfil != null && String(imagePerfil).trim() !== '' ? (
+                      <View style={stylesImage.imageContainer}>
+                        <Image
+                          source={{ uri: imagePerfil }}
+                          style={{ width: 90, height: 90, borderRadius: 45 }}
+                        />
+                        <TouchableOpacity
+                          style={stylesImage.closeButton}
+                          onPress={clearImage}>
+                          <Text style={stylesImage.closeButtonText}>X</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <View
+                        style={{
+                          width: 90,
+                          height: 90,
+                          borderRadius: 45,
+                          backgroundColor: '#EEF2FF',
+                          borderWidth: 1,
+                          borderColor: 'rgba(45, 50, 97, 0.25)',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}>
+                        <Icons name="user" size={34} color="#2D3261" />
+                      </View>
+                    )}
+                  </View>
+                  <View style={{ flex: 2 }}>
+                    <TouchableOpacity
+                      style={[
+                        stylesImage.button,
+                        {
+                          borderWidth: 1,
+                          borderColor: '#2D3261',
+                          borderStyle: 'dotted',
+                          borderRadius: 999,
+                          backgroundColor: '#FFF',
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          paddingVertical: 10,
+                          paddingHorizontal: 14,
+                        },
+                      ]}
+                      onPress={selectImage}>
+                      <Icons name="camera" size={16} color="#2D3261" />
+                      <Text
+                        style={[
+                          stylesImage.buttonText,
+                          {
+                            marginLeft: 8,
+                            color: '#2D3261',
+                            fontSize: 13,
+                            fontWeight: '600',
+                          },
+                        ]}>
+                        Subir foto de perfil
+                      </Text>
+                    </TouchableOpacity>
+                    <Text
+                      style={{
+                        marginTop: 6,
+                        fontSize: 11,
+                        color: '#9CA3AF',
+                      }}>
+                      JPG o PNG, máximo 5MB.
+                    </Text>
+                  </View>
+                </View>
               </View>
 
-              <View style={{ width: '100%', paddingLeft: 0, marginTop: -40 }}>
+              <View style={styles.signUpLikeCard}>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    color: '#111827',
+                    marginBottom: 4,
+                  }}>
+                  Datos personales
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: '#6B7280',
+                    marginBottom: 12,
+                  }}>
+                  Información básica de tu cuenta.
+                </Text>
                 <TextInputs
-                  title=""
-                  value={cedula}
-                  placeHolder="Ingrese el número de cédula"
+                  keyboardType="default"
+                  autoCapitalize="words"
+                  title="Nombre y Apellido"
+                  placeHolder="Ingrese su nombre y apellido"
+                  value={Nombre}
+                  textDecorationLine={isCheckedName ? 'line-through' : 'none'}
                   onChangeText={text => {
-                    const numericText = text.replace(/[^0-9]/g, '');
-                    if (numericText.length <= 10) {
-                      // Limitar a 10 caracteres
-                      setcedula(numericText);
-                      setcedulaTyping(true);
-                      if (numericText.trim() === '') {
-                        setcedulaError('Documento es requerido');
-                      } else {
-                        setcedulaError('');
-                      }
+                    setNombre(text);
+                    setNombreError(
+                      text.trim() === '' ? 'Nombre es requerido' : '',
+                    );
+                  }}
+                  onBlur={() => {}}
+                  icon={<Icons name="user" size={20} color="#9BA6B8" />}
+                />
+                {NombreError !== '' && (
+                  <Text style={styles.errorStyle}>{NombreError}</Text>
+                )}
+
+                <View style={{ marginTop: 10 }}>
+                  <Text
+                    style={[
+                      styles.headingContainer,
+                      { color: textColorStyle },
+                      { textAlign: textRTLStyle },
+                    ]}>
+                    Documento de Identidad
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      marginTop: 0,
+                      marginBottom: 0,
+                      alignItems: 'center',
+                    }}>
+                    <View
+                      style={{
+                        width: '26%',
+                        paddingRight: 6,
+                      }}>
+                      <View
+                        style={{
+                          borderWidth: 1,
+                          borderColor: '#D1D5DB',
+                          borderRadius: 10,
+                          backgroundColor: '#F9FAFB',
+                          height: 50,
+                          justifyContent: 'center',
+                          paddingHorizontal: 6,
+                        }}>
+                        <Dropdown
+                          style={{
+                            width: '100%',
+                            borderWidth: 0,
+                            paddingHorizontal: 4,
+                            backgroundColor: 'transparent',
+                            height: 42,
+                          }}
+                          placeholderStyle={{
+                            color: '#6B7280',
+                            fontSize: 13,
+                          }}
+                          selectedTextStyle={{
+                            color: '#111827',
+                            fontSize: 13,
+                          }}
+                          data={[
+                            { label: 'C-', value: 'C-' },
+                            { label: 'E-', value: 'E-' },
+                            { label: 'G-', value: 'G-' },
+                            { label: 'J-', value: 'J-' },
+                            { label: 'P-', value: 'P-' },
+                            { label: 'V-', value: 'V-' },
+                          ]}
+                          labelField="label"
+                          valueField="value"
+                          placeholder="Prefijo"
+                          value={selectedPrefix}
+                          onChange={item => setSelectedPrefix(item.value)}
+                        />
+                      </View>
+                    </View>
+                    <View style={{ flex: 1, marginTop: -40 }}>
+                      <TextInputs
+                        title=""
+                        value={cedula}
+                        placeHolder="Ingrese el número de cédula"
+                        onChangeText={text => {
+                          const numericText = text.replace(/[^0-9]/g, '');
+                          if (numericText.length <= 10) {
+                            setcedula(numericText);
+                            setcedulaTyping(true);
+                            if (numericText.trim() === '') {
+                              setcedulaError('Documento es requerido');
+                            } else {
+                              setcedulaError('');
+                            }
+                          }
+                        }}
+                        onBlur={() => setcedulaTyping(false)}
+                        keyboardType="numeric"
+                        icon={
+                          <Icons name="id-card-o" size={20} color="#9BA6B8" />
+                        }
+                        style={{
+                          height: 50,
+                          borderWidth: 1,
+                          borderColor: '#D1D5DB',
+                          borderRadius: 10,
+                          paddingHorizontal: 10,
+                          backgroundColor: '#FFFFFF',
+                          width: '100%',
+                        }}
+                      />
+                      {cedulaError !== '' && (
+                        <Text style={styles.errorStyle}>{cedulaError}</Text>
+                      )}
+                    </View>
+                  </View>
+                </View>
+
+                <TextInputs
+                  title="Correo Electrónico"
+                  keyboardType={'email-address'}
+                  value={email}
+                  editable={false}
+                  textDecorationLine={isCheckedEmail ? 'line-through' : 'none'}
+                  placeHolder="Ingrese su email"
+                  onChangeText={text => {
+                    setEmail(text);
+                    setEmailTyping(true);
+                    setEmailError(text.trim() === '' ? 'Email es requerido' : '');
+                  }}
+                  onBlur={() => setEmailTyping(false)}
+                  icon={
+                    <Email
+                      color={isEmailTyping ? '#051E47' : appColors.subtitle}
+                    />
+                  }
+                />
+
+                <View style={{ marginTop: 8 }}>
+                  <Text
+                    style={[
+                      styles.headingContainer,
+                      { color: textColorStyle },
+                      { textAlign: textRTLStyle },
+                    ]}>
+                    Estado
+                  </Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      marginTop: 10,
+                      marginBottom: 10,
+                      alignItems: 'center',
+                    }}>
+                    <View
+                      style={{
+                        width: '100%',
+                        borderWidth: 1,
+                        borderColor: '#D1D5DB',
+                        borderRadius: 10,
+                        backgroundColor: '#F9FAFB',
+                        height: 50,
+                        justifyContent: 'center',
+                        paddingHorizontal: 8,
+                      }}>
+                      <Dropdown
+                        style={{
+                          width: '100%',
+                          borderWidth: 0,
+                          paddingHorizontal: 4,
+                          backgroundColor: 'transparent',
+                          height: 42,
+                        }}
+                        placeholderStyle={{
+                          color: '#6B7280',
+                          fontSize: 13,
+                        }}
+                        selectedTextStyle={{
+                          color: '#111827',
+                          fontSize: 13,
+                        }}
+                        data={estadosVenezuela}
+                        labelField="label"
+                        valueField="value"
+                        placeholder="Seleccione un estado"
+                        value={estadoSelected}
+                        search={true}
+                        onChange={item => setestadoSelected(item.value)}
+                      />
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              <View
+                style={[styles.signUpLikeCard, styles.signUpLikeCardSoft]}>
+                <Text
+                  style={{
+                    fontSize: 13,
+                    fontWeight: '600',
+                    color: '#111827',
+                    marginBottom: 4,
+                  }}>
+                  Contacto
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: '#6B7280',
+                    marginBottom: 12,
+                  }}>
+                  Número al que podamos contactarte.
+                </Text>
+                <TextInputs
+                  title="Número Telefónico"
+                  value={phone}
+                  placeholder="Ejem 414 261 79 66"
+                  textDecorationLine={isCheckedTelefono ? 'line-through' : 'none'}
+                  editable={true}
+                  keyboardType="numeric"
+                  onChangeText={text => {
+                    let numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
+                    if (numericText.length > 0 && numericText[0] === '0') {
+                      setPhoneError('El número no puede empezar con 0');
+                      setPhone('');
+                      return;
+                    }
+                    let formattedText = '';
+                    if (numericText.length > 0 && numericText.length <= 3) {
+                      formattedText = `${numericText}`;
+                    } else if (numericText.length > 3 && numericText.length <= 6) {
+                      formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3)}`;
+                    } else if (numericText.length > 6 && numericText.length <= 8) {
+                      formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6)}`;
+                    } else if (numericText.length > 8) {
+                      formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6, 8)} ${numericText.slice(8)}`;
+                    }
+                    setPhone(formattedText);
+                    setCallTyping(true);
+                    if (numericText.trim() === '') {
+                      setPhoneError('Número telefónico requerido');
+                    } else {
+                      setPhoneError('');
                     }
                   }}
                   onBlur={() => {
-                    setcedulaTyping(false);
+                    validatePhone();
+                    setCallTyping(false);
                   }}
-                  keyboardType="numeric"
-                  icon={<Icons name="id-card-o" size={20} color="#9BA6B8" />}
-                  style={{
-                    height: 50, // Altura para el TextInput
-                    borderWidth: 1, // Borde alrededor del TextInput
-                    borderColor: '#ccc', // Color del borde
-                    borderRadius: 5, // Bordes redondeados
-                    paddingHorizontal: 10, // Espaciado interno
-                    backgroundColor: '#fff', // Fondo blanco
-                    width: '100%',
-                  }}
+                  icon={
+                    <Call
+                      color={isCallTyping ? '#051E47' : appColors.subtitle}
+                    />
+                  }
                 />
-
-                {/* TextInput para el número de cédula */}
-                {cedulaError !== '' && (
-                  <Text style={styles.errorStyle}>{cedulaError}</Text>
+                {phoneError !== '' && (
+                  <Text style={styles.errorStyle}>{phoneError}</Text>
                 )}
               </View>
             </View>
-
-            <View style={{ marginTop: 5 }}>
-              {/* Texto "RIF" arriba de los inputs */}
-              <Text
-                style={[
-                  styles.headingContainer,
-                  { color: textColorStyle },
-                  { textAlign: textRTLStyle },
-                ]}>
-                Estado
-              </Text>
-
-              {/* Contenedor para el Picker y el TextInput */}
-              <View style={{ flexDirection: 'row', marginTop: 10, marginBottom: 10, alignItems: 'center' }}>
-                {/* Picker con borde */}
-                <View style={{
-                  width: '100%',
-                  paddingRight: 0,
-                  borderWidth: 1,
-                  borderColor: '#ccc',
-                  borderRadius: 5,
-                  backgroundColor: '#fff',
-                  height: 50, // para que el borde envuelva el Picker apropiadamente
-                  justifyContent: 'center', // centra el Picker verticalmente
-                }}>
-
-                  <Dropdown
-                    style={{
-                      width: '100%',
-                      borderWidth: 1,
-                      borderColor: '#ccc',
-                      borderRadius: 5,
-                      paddingHorizontal: 10,
-                      backgroundColor: '#fff',
-                      height: 50,
-                    }}
-                    placeholderStyle={{
-                      color: 'gray',
-                      fontSize: 14,
-                    }}
-                    selectedTextStyle={{
-                      color: 'black',
-                      fontSize: 14,
-                      backgroundColor: '#fff',
-                    }}
-                    data={estadosVenezuela}
-                    labelField="label"
-                    valueField="value"
-                    placeholder="Seleccione un estado"
-                    value={estadoSelected}
-                    search={true}
-                    onChange={item => setestadoSelected(item.value)} // Maneja el cambio de selección
-                  />
-
-
-                  {/* <Picker
-                    selectedValue={estadoSelected}
-                    onValueChange={itemValue => setestadoSelected(itemValue)}
-                    style={{
-                      width: '100%', // usa todo el ancho disponible en el contenedor
-                      color: 'black',
-                    }}
-                  >
-                    {estadosVenezuela.map(estado => (
-                      <Picker.Item color='black'
-                        key={estado.value}
-                        label={estado.label}
-                        value={estado.value}
-                      />
-                    ))}
-                  </Picker> */}
-                </View>
-              </View>
-            </View>
-
-
-
-            <TextInputs
-              title="Número Telefónico"
-              value={phone}
-              textDecorationLine={isCheckedTelefono ? 'line-through' : 'none'}
-              editable={true}
-              placeholder="Ingrese su número"
-              keyboardType="numeric"
-              onChangeText={text => {
-                let numericText = text.replace(/[^0-9]/g, '').slice(0, 10); // Limitar a 10 dígitos
-
-                let formattedText = '';
-                if (numericText.length > 0 && numericText.length <= 3) {
-                  formattedText = `${numericText}`;
-                } else if (numericText.length > 3 && numericText.length <= 6) {
-                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3)}`;
-                } else if (numericText.length > 6 && numericText.length <= 8) {
-                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6)}`;
-                } else if (numericText.length > 8) {
-                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6, 8)} ${numericText.slice(8)}`;
-                }
-
-                formattedText = `${formattedText}`;
-
-                setPhone(formattedText);
-                setCallTyping(true);
-
-                if (numericText.trim() === '') {
-                  setPhoneError('Número telefónico requerido');
-                } else {
-                  setPhoneError('');
-                }
-              }}
-              onBlur={() => { }}
-              icon={<Icons name="phone" size={20} color="#9BA6B8" />}
-            />
-
-            {phoneError !== '' && (
-              <Text style={{color:'red'}}>{phoneError}</Text>
-            )}
-
-
-            <TextInputs
-              fullWidth={350}
-              title="Email"
-              value={email}
-              editable={false}
-              textDecorationLine={isCheckedEmail ? 'line-through' : 'none'}
-              placeHolder="Ingrese su email"
-              onChangeText={text => {
-                setEmail(text);
-                setEmailError(text.trim() === '' ? 'Email es requerido' : '');
-              }}
-              onBlur={() => { }}
-              icon={<Email size={20} color="#9BA6B8" />}
-            />
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       ) : null}
 
-      <View >
+      {showEditForm ? (
         <View
-          style={{
-            backgroundColor: buttonColor,
-            borderRadius: windowHeight(20),
-            marginBottom: 20
-          }}>
-          {/* <NavigationButton
-            title="Guardar Cambios"
-            color={buttonColor ? appColors.screenBg : appColors.subtitle}
-            onPress={() => onHandleChange()}
-            backgroundColor={'#2D3261'}
-          /> */}
-          <NavigationButton
-            title="Guardar Cambios"
-            onPress={onHandleChange}
+          style={[
+            styles.saveFooterCliente,
+            {paddingBottom: insets.bottom + 4, backgroundColor: bgFullStyle},
+          ]}>
+          <TouchableOpacity
+            activeOpacity={0.88}
             disabled={isGetOtpDisabled}
-            backgroundColor={isGetOtpDisabled ? '#848688' : '#2D3261'}
-            color={isGetOtpDisabled ? '#051E47' : appColors.screenBg}
-          />
+            onPress={onHandleChange}
+            style={[
+              styles.saveFooterBtn,
+              isGetOtpDisabled && styles.saveFooterBtnDisabled,
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel="Guardar cambios">
+            <Icons
+              name="floppy-o"
+              size={18}
+              color={isGetOtpDisabled ? '#051E47' : appColors.screenBg}
+            />
+            <Text
+              style={[
+                styles.saveFooterBtnText,
+                isGetOtpDisabled && styles.saveFooterBtnTextDisabled,
+              ]}>
+              Guardar cambios
+            </Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      ) : null}
     </View>
   );
 };
 
 export default EditProfile;
+
+const stylesImage = StyleSheet.create({
+  button: {
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontWeight: 'bold',
+  },
+  imageContainer: {
+    position: 'relative',
+    marginTop: 20,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    backgroundColor: 'red',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+});
+
+const stylesMap = StyleSheet.create({
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+});

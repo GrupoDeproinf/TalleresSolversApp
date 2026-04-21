@@ -4,8 +4,6 @@ import appColors from '../../../themes/appColors';
 import H3HeadingCategory from '../../../commonComponents/headingCategory/H3HeadingCategory';
 import {external} from '../../../style/external.css';
 import {commonStyles} from '../../../style/commonStyle.css';
-import {YellowStar} from '../../../assets/icons/yellowStar';
-import PlusIcon from '../../../commonComponents/plusIcon';
 import styles from './style.css';
 import {windowWidth} from '../../../themes/appConstant';
 import {useValues} from '../../../../App';
@@ -36,86 +34,117 @@ const NewCategoriesDetail = ({
   const color = isDark ? appColors.blackBg : appColors.bgLayout;
   const navigation = useNavigation();
 
-  console.log('Data:', data);
+  console.log('Data123123:', data);
 
-  const renderItem = ({item}) => (
+  const renderItem = ({item}) => {
+    const imageUri = Array.isArray(item?.service_image)
+      ? item?.service_image[0]
+      : item?.service_image;
+    const serviceUid = item?.uid_servicio === '' ? item?.id : item?.uid_servicio;
+    const precioFinal = Number(currPrice * Number(item?.precio || 0)).toFixed(2);
+    const toSentenceCase = value => {
+      const lower = String(value || '').toLowerCase();
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    };
+
+    return (
     <TouchableOpacity
-      // activeOpacity={0.9}
+      activeOpacity={0.9}
       onPress={() => {
         navigation.navigate('ProductDetailOne', {
-          uid: item.uid_servicio === '' ? item.id : item.uid_servicio,
+          uid: serviceUid,
         });
       }}>
-      <LinearGradient
-        start={{x: 0.0, y: 0.0}}
-        end={{x: 0.0, y: 1.0}}
-        colors={linearColorStyleTwo}
+      <View
         style={[
           styles.viewContainer,
           {backgroundColor: bgFullStyle},
           {width: width || windowWidth(200)},
         ]}>
-        <LinearGradient
-          start={{x: 0.0, y: 0.0}}
-          end={{x: 0.0, y: 1.0}}
-          colors={linearColorStyle}
-          style={styles.menuItemContent}>
-          <View style={[styles.imgContainer, {backgroundColor: color}]}>
+        <View style={styles.menuItemContent}>
+          <View style={styles.imgContainer}>
             <Image
               style={styles.img}
-              source={{
-                uri: Array.isArray(item?.service_image)
-                  ? item?.service_image[0]
-                  : item?.service_image,
-              }}
+              source={
+                imageUri
+                  ? {uri: imageUri}
+                  : require('../../../assets/noimageNew.png')
+              }
             />
           </View>
 
-          <View style={[external.ph_10, external.pt_10]}>
-            <Text
-              style={[
-                commonStyles.titleText19,
-                {color: textColorStyle},
-                {textAlign: textRTLStyle},
-              ]}>
-              {t(item?.nombre_servicio || '')}
-            </Text>
-            <Text
-              style={[commonStyles.subtitleText, {textAlign: textRTLStyle}]}>
-              {t(item?.taller?.nombre || '')}
-            </Text>
+          <View style={[external.ph_10, {paddingTop: 8}, styles.cardContentWrap]}>
+            <View style={styles.titleWrap}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[
+                  commonStyles.titleText19,
+                  styles.titleFixed,
+                  {color: textColorStyle},
+                  {textAlign: textRTLStyle},
+                ]}>
+                {String(t(item?.nombre_servicio || '')).toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.subtitleWrap}>
+              <Text
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                style={[
+                  commonStyles.subtitleText,
+                  styles.subtitleFixed,
+                  {textAlign: textRTLStyle},
+                ]}>
+                {toSentenceCase(t(item?.taller?.nombre || ''))}
+              </Text>
+            </View>
+            <View style={styles.metaRow}>
+              <View style={styles.metaChipStatus}>
+                <View style={styles.metaChipStatusDot} />
+                <Text style={styles.metaChipStatusText}>
+                  {toSentenceCase(item?.taller?.estado || '')}
+                </Text>
+              </View>
+              <View style={styles.metaChipKm}>
+                <Text style={styles.metaChipKmText}>
+                  {item?.km_distance != null && Number.isFinite(Number(item.km_distance))
+                    ? `${Number(item.km_distance).toFixed(2)} km`
+                    : '— km'}
+                </Text>
+              </View>
+            </View>
             <View
               style={[
                 external.fd_row,
                 external.ai_center,
+                {marginTop: 5},
                 {flexDirection: viewRTLStyle},
               ]}>
               <View style={[external.fg_1]}>
                 <Text
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
                   style={[
                     commonStyles.H1Banner,
+                    styles.priceFixed,
                     {color: textColorStyle},
                     {textAlign: textRTLStyle},
                   ]}>
                   {currSymbol}
-                  {(currPrice * item.precio).toFixed(2)}
+                  {precioFinal}
                 </Text>
               </View>
-              {/* <View
-                style={[
-                  external.fd_row,
-                  external.ai_center,
-                  {flexDirection: viewRTLStyle},
-                ]}>
-                <YellowStar />
-                <Text style={styles.ratingContainer}>{item.rating}</Text>
-              </View> */}
+              <View style={styles.arrowChip}>
+                <Text style={styles.arrowChipText}>›</Text>
+              </View>
             </View>
           </View>
-        </LinearGradient>
-      </LinearGradient>
+        </View>
+        </View>
     </TouchableOpacity>
-  );
+    );
+  };
   return (
     <View>
       {show && (

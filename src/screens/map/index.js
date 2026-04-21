@@ -13,8 +13,12 @@ import {
 import Mapbox from '@rnmapbox/maps';
 import Geolocation from '@react-native-community/geolocation';
 import Icons from 'react-native-vector-icons/FontAwesome';
+import {getMapboxPublicToken} from '../../config/mapboxPublicToken';
 
-Mapbox.setAccessToken("pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ");
+const mapboxToken = getMapboxPublicToken();
+if (mapboxToken) {
+  Mapbox.setAccessToken(mapboxToken);
+}
 
 const MapComponent = ({ initialRegion, edit, returnFunction, useThisCoo }) => {
 
