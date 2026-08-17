@@ -985,7 +985,7 @@ const ReportarPago = ({navigation}) => {
                             setSelectedBanco(itemValue)
                           }
                           style={{
-                            width: 400,
+                            width: '100%',
                             height: 50, // Altura para el Picker
                             color: 'black',
                           }}>
@@ -1028,7 +1028,7 @@ const ReportarPago = ({navigation}) => {
                             setSelectedBancoDestino(itemValue)
                           }
                           style={{
-                            width: 500,
+                            width: '100%',
                             height: 50, // Altura para el Picker
                             color: 'black',
                           }}>
@@ -1238,7 +1238,7 @@ const ReportarPago = ({navigation}) => {
                         selectedValue={SelectedBanco}
                         onValueChange={itemValue => setSelectedBanco(itemValue)}
                         style={{
-                          width: 400,
+                          width: '100%',
                           height: 50, // Altura para el Picker
                           color: 'black',
                         }}>
@@ -1277,7 +1277,7 @@ const ReportarPago = ({navigation}) => {
                           setSelectedBancoDestino(itemValue)
                         }
                         style={{
-                          width: 500,
+                          width: '100%',
                           height: 50, // Altura para el Picker
                           color: 'black',
                         }}>
@@ -1636,7 +1636,7 @@ const ReportarPago = ({navigation}) => {
                                   setSelectedBanco(itemValue)
                                 }
                                 style={{
-                                  width: 400,
+                                  width: '100%',
                                   height: 50, // Altura para el Picker
                                   color: 'black',
                                 }}>
@@ -1679,7 +1679,7 @@ const ReportarPago = ({navigation}) => {
                                   setSelectedBancoDestino(itemValue)
                                 }
                                 style={{
-                                  width: 500,
+                                  width: '100%',
                                   height: 50, // Altura para el Picker
                                   color: 'black',
                                 }}>
@@ -1821,7 +1821,7 @@ const ReportarPago = ({navigation}) => {
                                 setSelectedBanco(itemValue)
                               }
                               style={{
-                                width: 400,
+                                width: '100%',
                                 height: 50, // Altura para el Picker
                                 color: 'black',
                               }}>
@@ -1861,7 +1861,7 @@ const ReportarPago = ({navigation}) => {
                                 setSelectedBancoDestino(itemValue)
                               }
                               style={{
-                                width: 500,
+                                width: '100%',
                                 height: 50, // Altura para el Picker
                                 color: 'black',
                               }}>
