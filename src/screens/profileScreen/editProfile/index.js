@@ -330,7 +330,7 @@ const EditProfile = ({ navigation }) => {
               imageTodelete: imageFirts != "" && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == '' ? "" : getImageName(imageFirts) : ""
             };
   
-            console.log(infoUserCreated);
+            // console.log(infoUserCreated); // removido: datos sensibles
   
             try {
               // Hacer la solicitud POST utilizando Axios
@@ -437,7 +437,7 @@ const EditProfile = ({ navigation }) => {
               agenteAutorizado: checked == undefined ? false : checked
             };
   
-            console.log(infoUserCreated);
+            // console.log(infoUserCreated); // removido: datos sensibles
             console.log('Aquiiii1234');
   
             try {

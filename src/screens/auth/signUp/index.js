@@ -572,7 +572,7 @@ const SignUp = ({ navigation }) => {
                 token: token
               };
 
-              console.log(infoUserCreated);
+              // console.log(infoUserCreated); // removido: contenía datos sensibles (contraseña)
               console.log('Aquiiiiiiiiiiiii123');
 
               try {

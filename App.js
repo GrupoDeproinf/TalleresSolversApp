@@ -48,8 +48,6 @@ const firebaseConfig = {
 const App = () => {
 
   useEffect(() => {
-    LogBox.ignoreAllLogs();
-
     // Inicializar Firebase
     try {
       if (!firebase.apps.length) {

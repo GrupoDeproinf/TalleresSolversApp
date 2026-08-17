@@ -125,10 +125,6 @@ const SignIn = ({navigation}) => {
     setSignInDisabled(true);
 
     if (isEmailValid && isPasswordValid) {
-      console.log(email);
-      console.log(password);
-      console.log(JSON.stringify({email: email}));
-
       try {
         // Hacer la solicitud POST utilizando Axios
         const response = await api.post('/usuarios/authenticateUser', {
