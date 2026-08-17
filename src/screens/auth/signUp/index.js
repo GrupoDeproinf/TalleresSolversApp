@@ -9,7 +9,8 @@ import {
   ToastAndroid,
   Button,
   KeyboardAvoidingView,
-  Alert
+  Alert,
+  Platform
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 // import AuthContainer from '../../../commonComponents/authContainer';
