@@ -30,3 +30,9 @@ android/.gradle
 android/.idea
 ios/Pods
 android/local.properties
+
+# Bundles JS generados en build (no versionar: se regeneran al compilar y
+# pueden quedar desincronizados del código fuente). (APP-07)
+android/app/src/main/assets/index.android.bundle
+*.jsbundle
+ios/main.jsbundle
