@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {View, TouchableOpacity, Text, Image} from 'react-native';
 import HomeScreen from '../screens/homeScreen';
@@ -33,12 +33,6 @@ import PerimeterMapScreen from '../screens/perimeter-map';
 const Tab = createBottomTabNavigator();
 
 const CustomTabBar = ({state, descriptors, navigation}) => {
-  const [activeTab, setActiveTab] = useState(state.routes[0].name);
-
-  const handleTabPress = routeName => {
-    setActiveTab(routeName);
-    navigation.navigate(routeName);
-  };
   const {linearColorStyle, textColorStyle, linearColorStyleTwo, viewRTLStyle} =
     useValues();
   return (
@@ -64,7 +58,9 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
             : route.name;
         const IconComponent = options.tabBarIcon;
         const ActiveIcon = options.activeTabBarIcon;
-        const isFocused = activeTab === route.name;
+        // El foco se deriva del índice real del navegador, no de un estado
+        // local, para que se mantenga sincronizado con la navegación. (APP-13)
+        const isFocused = state.index === index;
 
         const onPress = () => {
           const event = navigation.emit({
@@ -74,7 +70,7 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
           });
 
           if (!isFocused && !event.defaultPrevented) {
-            handleTabPress(route.name);
+            navigation.navigate(route.name);
           }
         };
 
@@ -84,6 +80,18 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
             onPress={onPress}
             style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
             <View>{isFocused ? <ActiveIcon /> : <IconComponent />}</View>
+
+            {/* Etiqueta de la pestaña (antes no se renderizaba). (APP-13) */}
+            <Text
+              numberOfLines={1}
+              style={{
+                fontSize: windowHeight(11),
+                marginTop: 2,
+                color: isFocused ? '#2D3261' : '#9BA6B8',
+                fontWeight: isFocused ? '700' : '400',
+              }}>
+              {label}
+            </Text>
 
             {isFocused && (
               <View style={[external.ai_center]}>
@@ -130,7 +138,7 @@ const MyTabs = () => {
         name="HomeScreen"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: 'Inicio',
           tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8" />,
           activeTabBarIcon: () => (
             <Icons name="home" size={30} color="#2D3261" />
@@ -141,7 +149,7 @@ const MyTabs = () => {
         name="CategoryScreen"
         component={CategoryScreen}
         options={{
-          tabBarLabel: 'Category',
+          tabBarLabel: 'Categorías',
           tabBarIcon: () => <CategoryLight />,
           activeTabBarIcon: () => <Category />,
         }}
@@ -185,7 +193,7 @@ const MyTabs = () => {
         name="ProfileScreen"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: 'Perfil',
           tabBarIcon: () => <ProfileLight />,
           activeTabBarIcon: () => <ProfileTab />,
         }}
@@ -208,7 +216,7 @@ const MyTabsCliente = () => {
         name="HomeScreen"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: 'Inicio',
           tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8" />,
           activeTabBarIcon: () => (
             <Icons name="home" size={30} color="#2D3261" />
@@ -219,7 +227,7 @@ const MyTabsCliente = () => {
         name="CategoryScreen"
         component={CategoryScreen}
         options={{
-          tabBarLabel: 'Category',
+          tabBarLabel: 'Categorías',
           tabBarIcon: () => <CategoryLight />,
           activeTabBarIcon: () => <Category />,
         }}
@@ -283,7 +291,7 @@ const MyTabsCliente = () => {
         name="ProfileScreen"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: 'Perfil',
           tabBarIcon: () => <ProfileLight />,
           activeTabBarIcon: () => <ProfileTab />,
         }}
@@ -307,7 +315,7 @@ const MyTabsTaller = () => {
         name="HomeScreen"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: 'Inicio',
           tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8" />,
           activeTabBarIcon: () => (
             <Icons name="home" size={30} color="#2D3261" />
@@ -318,7 +326,7 @@ const MyTabsTaller = () => {
         name="CategoryScreen"
         component={CategoryScreen}
         options={{
-          tabBarLabel: 'Category',
+          tabBarLabel: 'Categorías',
           tabBarIcon: () => <CategoryLight />,
           activeTabBarIcon: () => <Category />,
         }}
@@ -350,7 +358,7 @@ const MyTabsTaller = () => {
         name="ProfileScreen"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: 'Perfil',
           tabBarIcon: () => <ProfileLight />,
           activeTabBarIcon: () => <ProfileTab />,
         }}
@@ -372,7 +380,7 @@ const MyTabsAdmin = () => {
         name="HomeScreen"
         component={HomeScreen}
         options={{
-          tabBarLabel: 'Home',
+          tabBarLabel: 'Inicio',
           tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8" />,
           activeTabBarIcon: () => (
             <Icons name="home" size={30} color="#2D3261" />
@@ -383,7 +391,7 @@ const MyTabsAdmin = () => {
         name="CategoryScreen"
         component={CategoryScreen}
         options={{
-          tabBarLabel: 'Category',
+          tabBarLabel: 'Categorías',
           tabBarIcon: () => <CategoryLight />,
           activeTabBarIcon: () => <Category />,
         }}
@@ -427,7 +435,7 @@ const MyTabsAdmin = () => {
         name="ProfileScreen"
         component={ProfileScreen}
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: 'Perfil',
           tabBarIcon: () => <ProfileLight />,
           activeTabBarIcon: () => <ProfileTab />,
         }}
