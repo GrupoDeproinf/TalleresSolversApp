@@ -36,3 +36,10 @@ android/local.properties
 android/app/src/main/assets/index.android.bundle
 *.jsbundle
 ios/main.jsbundle
+
+# Secretos de firma de la app: NUNCA versionar. (APP-08)
+android/app/key.properties
+android/app/solversapp.keystore
+*.keystore
+!android/app/debug.keystore
+*.jks
