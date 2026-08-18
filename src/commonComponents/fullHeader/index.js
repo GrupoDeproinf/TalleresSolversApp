@@ -94,6 +94,9 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
         showArrow ? (
           <TouchableOpacity
             onPress={onpressBack}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
             style={{ transform: [{ scale: imageRTLStyle }] }}>
             <BackLeft />
           </TouchableOpacity>
@@ -102,7 +105,11 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
 
       {
         showClose ? (
-          <TouchableOpacity onPress={confirmCloseSesion}>
+          <TouchableOpacity
+            onPress={confirmCloseSesion}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar sesión">
             <Text style={{ color: '#2D3261' }}>Cerrar Sesión</Text>
           </TouchableOpacity>
 
@@ -111,7 +118,12 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
 
 {
         showNewService ? (
-          <TouchableOpacity onPress={createorEditService} style={{marginRight:-55}}>
+          <TouchableOpacity
+            onPress={createorEditService}
+            accessible={true}
+            accessibilityRole="button"
+            accessibilityLabel="Agregar servicio"
+            style={{marginRight:-55}}>
             <Text style={{ color: '#2D3261' }}>Agregar</Text>
           </TouchableOpacity>
 

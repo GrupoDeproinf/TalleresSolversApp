@@ -78,6 +78,10 @@ const CustomTabBar = ({state, descriptors, navigation}) => {
           <TouchableOpacity
             key={route.key}
             onPress={onPress}
+            accessible={true}
+            accessibilityRole="tab"
+            accessibilityLabel={String(label)}
+            accessibilityState={{selected: isFocused}}
             style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
             <View>{isFocused ? <ActiveIcon /> : <IconComponent />}</View>
 
