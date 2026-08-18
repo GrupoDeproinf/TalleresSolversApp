@@ -8,6 +8,7 @@ import {
   PermissionsAndroid,
   KeyboardAvoidingView,
 } from 'react-native';
+import { toastMessage } from '../../../utils/showToast';
 import React, {useEffect, useState} from 'react';
 import AuthContainer from '../../../commonComponents/authContainer';
 import {apple, facebook} from '../../../constant';
@@ -207,7 +208,7 @@ const SignIn = ({navigation}) => {
   };
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    toastMessage(text);
   };
 
   const appVersion = DeviceInfo.getVersion(); // Versión como "1.0.0"

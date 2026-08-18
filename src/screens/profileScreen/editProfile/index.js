@@ -9,6 +9,7 @@ import {
   Image,
   ToastAndroid,
 } from 'react-native';
+import { toastMessage } from '../../../utils/showToast';
 import React, { useState, useEffect } from 'react';
 import HeaderContainer from '../../../commonComponents/headingContainer';
 import { phoneMo, smithaWilliams, smithaWilliamsMail } from '../../../constant';
@@ -514,7 +515,7 @@ const EditProfile = ({ navigation }) => {
   // };
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    toastMessage(text);
   };
 
   const selectImage = () => {

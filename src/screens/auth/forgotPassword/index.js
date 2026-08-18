@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, ToastAndroid} from 'react-native';
+import { toastMessage } from '../../../utils/showToast';
 import AuthContainer from '../../../commonComponents/authContainer';
 import {
   emailId,
@@ -89,7 +90,7 @@ const ForgetPassword = ({navigation}) => {
   };
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    toastMessage(text);
   };
 
 

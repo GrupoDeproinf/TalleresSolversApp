@@ -8,6 +8,7 @@ import {
   Pressable,
   StyleSheet,
 } from 'react-native';
+import { toastMessage } from '../../../utils/showToast';
 import React, {useEffect, useState} from 'react';
 import BottomContainer from '../../../commonComponents/bottomContainer';
 import {commonStyles} from '../../../style/commonStyle.css';
@@ -305,7 +306,7 @@ const ProductDetailOne = ({navigation}) => {
   };
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    toastMessage(text);
   };
 
   // Función para cerrar el modal

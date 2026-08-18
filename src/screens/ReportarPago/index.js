@@ -13,6 +13,7 @@ import {
   StyleSheet,
   Modal,
 } from 'react-native';
+import { toastMessage } from '../../utils/showToast';
 import React, {useEffect, useState, useRef} from 'react';
 import HeaderContainer from '../../commonComponents/headingContainer';
 import {successfullyReset} from '../../constant';
@@ -406,7 +407,7 @@ const ReportarPago = ({navigation}) => {
     : [appColors.screenBg, appColors.screenBg];
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    toastMessage(text);
   };
 
   const [imageUri, setImageUri] = useState(null);

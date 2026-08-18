@@ -10,6 +10,7 @@ import {
   ToastAndroid,
   Modal,
 } from 'react-native';
+import { toastMessage } from '../../utils/showToast';
 import React, {useEffect, useState} from 'react';
 import ErrorContainer from '../../commonComponents/errorContainer';
 import {
@@ -385,7 +386,7 @@ const FormTaller = () => {
   };
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    toastMessage(text);
   };
 
   const GetCoordenadas = () => {};

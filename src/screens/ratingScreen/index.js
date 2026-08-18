@@ -1,4 +1,5 @@
 import {Pressable, ScrollView, Text, ToastAndroid, View} from 'react-native';
+import { toastMessage } from '../../utils/showToast';
 import React, {useEffect, useState} from 'react';
 import HeaderContainer from '../../commonComponents/headingContainer';
 import {
@@ -37,7 +38,7 @@ const RatingScreen = () => {
   const {dataComments, dataAverage, id, dataTotal} = route.params;
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    toastMessage(text);
   };
 
   const addComment = async (rating, comment) => {
