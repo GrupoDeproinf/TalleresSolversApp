@@ -96,15 +96,13 @@ const TalleresContainer = ({navigation}) => {
           onpressBack={() => navigation.goBack('')}
         />
       </View>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[external.Pb_80]}>
-        <NewArrivalContainer
-          data={dataTalleres}
-          show={false}
-          showPlus={true}
-        />
-      </ScrollView>
+      <NewArrivalContainer
+        data={dataTalleres}
+        show={false}
+        showPlus={true}
+        scrollable
+        contentContainerStyle={[external.Pb_80]}
+      />
     </View>
   );
 };

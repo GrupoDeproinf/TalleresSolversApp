@@ -24,15 +24,13 @@ const WhishlitContainer = ({navigation}) => {
           onpressBack={() => navigation.goBack('')}
         />
       </View>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[external.Pb_80]}>
-        <NewArrivalContainer
-          data={newArrivalData}
-          show={false}
-          showPlus={true}
-        />
-      </ScrollView>
+      <NewArrivalContainer
+        data={newArrivalData}
+        show={false}
+        showPlus={true}
+        scrollable
+        contentContainerStyle={[external.Pb_80]}
+      />
     </View>
   );
 };
