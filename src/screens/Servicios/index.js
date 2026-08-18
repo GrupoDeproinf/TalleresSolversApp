@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, useFocusEffect, Image } from 'react-native';
+import { ScrollView, Text, View, useFocusEffect, Image, ActivityIndicator } from 'react-native';
 import React, { useEffect, useState } from 'react';
 import FullHeader from '../../commonComponents/fullHeader';
 import { external } from '../../style/external.css';
@@ -26,7 +26,11 @@ const ServiciosContainer = ({ navigation }) => {
   const [showPorAprobar, setshowPorAprobar] = useState(false); 
   const [showServices, setshowServices] = useState(false);
 
-  const [cantServices, setcantServices] = useState(0); 
+  const [cantServices, setcantServices] = useState(0);
+
+  // Estado de carga: evita que la pantalla quede en blanco mientras se
+  // resuelve el estado de la suscripción (antes retornaba undefined). (APP-12)
+  const [loading, setLoading] = useState(true);
 
 
   const navigationScreen = useNavigation();
@@ -95,6 +99,10 @@ const ServiciosContainer = ({ navigation }) => {
     } catch (e) {
       setdataServicios([])
       console.log(e)
+    } finally {
+      // Termina la carga inicial (haya éxito o error), para no dejar la
+      // pantalla en blanco de forma indefinida. (APP-12)
+      setLoading(false)
     }
   };
 
@@ -133,6 +141,23 @@ const ServiciosContainer = ({ navigation }) => {
   }
 
 
+
+  // Mientras se resuelve el estado inicial de la suscripción, mostrar un
+  // indicador de carga en lugar de una pantalla en blanco. (APP-12)
+  if (loading) {
+    return (
+      <View
+        style={[
+          commonStyles.commonContainer,
+          { backgroundColor: bgFullStyle, justifyContent: 'center', alignItems: 'center' },
+        ]}>
+        <ActivityIndicator size="large" color={'#2D3261'} />
+        <Text style={[styles.bagisEmptySomething, { textAlign: 'center', marginTop: 16 }]}>
+          Cargando sus servicios...
+        </Text>
+      </View>
+    );
+  }
 
   if (showPlanes) {
     return (
@@ -273,6 +298,28 @@ const ServiciosContainer = ({ navigation }) => {
       </View>
     );
   }
+
+  // Fallback: si ningún estado aplica (p. ej. tras un error de red), mostrar
+  // un mensaje claro en lugar de una pantalla en blanco. (APP-12)
+  return (
+    <View
+      style={[
+        commonStyles.commonContainer,
+        { backgroundColor: bgFullStyle, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+      ]}>
+      <Image
+        source={require('../../assets/solverslogo.png')}
+        style={{ width: 100, height: 100, marginBottom: 20 }}
+        resizeMode="contain"
+      />
+      <Text style={[styles.bagIsEmptyText, { color: textColorStyle, textAlign: 'center' }]}>
+        No pudimos cargar sus servicios.
+      </Text>
+      <Text style={[styles.bagisEmptySomething, { textAlign: 'center' }]}>
+        Revise su conexión e intente nuevamente.
+      </Text>
+    </View>
+  );
 
 };
 
