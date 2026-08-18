@@ -4,8 +4,6 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Login from '../screens/auth/login';
 import SignUp from '../screens/auth/signUp';
 import ForgetPassword from '../screens/auth/forgotPassword';
-import OtpVerfication from '../screens/auth/verificationCode';
-import ResetPassword from '../screens/auth/resetPassword';
 import HomeScreenTwo from '../screens/homeScreenTwo';
 import CategoryDetail from '../screens/categoryScreen/CategoryDetail';
 import LoaderScreen from '../screens/loaderScreen';
@@ -74,12 +72,10 @@ const MyStack = () => {
         <Stack.Screen name="Login" component={Login} />
         <Stack.Screen name="SignUp" component={SignUp} />
         <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
-        <Stack.Screen name="ResetPassword" component={ResetPassword} />
 
         <Stack.Screen name="Splash" component={Splash} />
         <Stack.Screen name="Onboarding" component={Onboarding} />
         <Stack.Screen name="OnboardingTwo" component={OnboardingTwo} />
-        <Stack.Screen name="OtpVerfication" component={OtpVerfication} />
         <Stack.Screen name="CategoryDetail" component={CategoryDetail} />
         <Stack.Screen name="LoaderScreen" component={LoaderScreen} />
         <Stack.Screen name="DrawerScreen" component={DrawerScreen} />
