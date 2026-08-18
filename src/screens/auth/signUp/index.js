@@ -456,8 +456,12 @@ const SignUp = ({ navigation }) => {
                     error?.response?.data?.message,
                   );
                   setGetOtpDisabled(false);
-                  console.log(error.response)
-                  showToast(error?.response?.data?.message == undefined ? error?.response?.data : error?.response?.data?.message); // Mostrar el mensaje de error del servidor
+                  // Mostrar solo un mensaje claro; nunca el objeto crudo del
+                  // servidor (podía filtrar detalles técnicos). (APP-10)
+                  showToast(
+                    error?.response?.data?.message ||
+                      'No se pudo crear el usuario. Verifique los datos e intente nuevamente.',
+                  );
                 } else {
                   // La solicitud fue hecha pero no se recibió respuesta
                   console.error('Error en la solicitud:', error);

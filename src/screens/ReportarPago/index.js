@@ -355,10 +355,14 @@ const ReportarPago = ({navigation}) => {
       if (error.response) {
         // La solicitud se hizo y el servidor respondió con un código de estado
         console.error(
-          'Error al guardar el usuario:',
+          'Error al reportar el pago:',
           error.response.data.message,
         );
-        showToast(error.response.data.message); // Mostrar el mensaje de error del servidor
+        // Mensaje claro con respaldo en español si el servidor no envía uno. (APP-10)
+        showToast(
+          error.response.data.message ||
+            'No se pudo registrar el reporte de pago. Intente nuevamente.',
+        );
         closeSecondModel();
       } else {
         // La solicitud fue hecha pero no se recibió respuesta
