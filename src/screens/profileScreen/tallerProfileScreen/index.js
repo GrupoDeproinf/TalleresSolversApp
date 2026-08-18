@@ -28,6 +28,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {RadioButton, Button} from 'react-native-paper';
 import {Picker} from '@react-native-picker/picker';
 import api from '../../../../axiosInstance';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 
 import Icons from 'react-native-vector-icons/FontAwesome';
 import Icons2 from 'react-native-vector-icons/FontAwesome5';
@@ -416,7 +417,7 @@ const TallerProfileScreen = ({navigation}) => {
           }
 
           try {
-            const jsonValue = JSON.stringify(infoUserCreated);
+            const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
             await AsyncStorage.setItem('@userInfo', jsonValue);
           } catch (e) {}
 

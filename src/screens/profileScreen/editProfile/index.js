@@ -32,6 +32,7 @@ import Icons2 from 'react-native-vector-icons/FontAwesome5'
 
 import Icons3 from 'react-native-vector-icons/Fontisto'
 import api from '../../../../axiosInstance';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 
 import notImageFound from '../../../assets/noimageold.jpeg';
 import Icons4 from 'react-native-vector-icons/Entypo';
@@ -344,7 +345,7 @@ const EditProfile = ({ navigation }) => {
                 console.log(result);
   
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {
@@ -449,7 +450,7 @@ const EditProfile = ({ navigation }) => {
                 console.log(result);
   
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {

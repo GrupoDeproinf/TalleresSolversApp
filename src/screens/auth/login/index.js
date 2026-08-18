@@ -26,6 +26,7 @@ import {fontSizes} from '../../../themes/appConstant';
 import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../../../axiosInstance';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 import DeviceInfo from 'react-native-device-info';
 
 import messaging from '@react-native-firebase/messaging';
@@ -167,7 +168,7 @@ const SignIn = ({navigation}) => {
                 }
               }
             }
-            const jsonValue = JSON.stringify(result.userData);
+            const jsonValue = JSON.stringify(sanitizeUserInfo(result.userData));
             console.log(jsonValue);
             await AsyncStorage.setItem('@userInfo', jsonValue);
           } catch (e) {

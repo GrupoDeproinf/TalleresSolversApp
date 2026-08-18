@@ -53,6 +53,7 @@ import Icons2 from 'react-native-vector-icons/FontAwesome5';
 import Icons3 from 'react-native-vector-icons/Fontisto';
 import Icons4 from 'react-native-vector-icons/Entypo';
 import api from '../../../../axiosInstance';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 import CheckBox from 'react-native-check-box';
 import { RadioButton } from 'react-native-paper';
 
@@ -428,7 +429,7 @@ const SignUp = ({ navigation }) => {
                 console.log(result); // Aquí puedes manejar la respuesta
 
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {
@@ -593,7 +594,7 @@ const SignUp = ({ navigation }) => {
                 console.log(result); // Aquí puedes manejar la respuesta
 
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {
