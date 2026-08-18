@@ -26,7 +26,19 @@ import {Snackbar} from 'react-native-paper';
 
 import notImageFound from '../../../assets/noimageold.jpeg';
 
-const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
+const NewArrivalContainer = ({
+  data,
+  value,
+  show,
+  showPlus,
+  marginTop,
+  // Cuando scrollable=true, este contenedor deja de necesitar un ScrollView
+  // externo: el propio FlatList hace scroll (evita el anti-patrón de anidar
+  // una VirtualizedList dentro de un ScrollView, que rompe la virtualización
+  // y la memoria con listas largas). (APP-17)
+  scrollable,
+  contentContainerStyle,
+}) => {
   const {
     linearColorStyle,
     textColorStyle,
@@ -190,13 +202,21 @@ const NewArrivalContainer = ({data, value, show, showPlus, marginTop}) => {
   );
 
   return (
-    <View style={styles.newArrivalContainer}>
+    <View style={[styles.newArrivalContainer, scrollable && {flex: 1}]}>
       <View style={{marginTop: marginTop || windowHeight(14)}}>
         {show && (
           <H3HeadingCategory value={value} seeall={t('transData.seeAll')} />
         )}
       </View>
-      <FlatList data={data} renderItem={renderItem} />
+      <FlatList
+        data={data}
+        renderItem={renderItem}
+        keyExtractor={(item, index) =>
+          item?.uid ? item.uid.toString() : String(index)
+        }
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={contentContainerStyle}
+      />
     </View>
   );
 };

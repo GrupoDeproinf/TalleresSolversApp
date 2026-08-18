@@ -9,7 +9,8 @@ import {
   ToastAndroid,
   Button,
   KeyboardAvoidingView,
-  Alert
+  Alert,
+  Platform
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
 // import AuthContainer from '../../../commonComponents/authContainer';
@@ -52,6 +53,7 @@ import Icons2 from 'react-native-vector-icons/FontAwesome5';
 import Icons3 from 'react-native-vector-icons/Fontisto';
 import Icons4 from 'react-native-vector-icons/Entypo';
 import api from '../../../../axiosInstance';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 import CheckBox from 'react-native-check-box';
 import { RadioButton } from 'react-native-paper';
 
@@ -427,7 +429,7 @@ const SignUp = ({ navigation }) => {
                 console.log(result); // Aquí puedes manejar la respuesta
 
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {
@@ -455,8 +457,12 @@ const SignUp = ({ navigation }) => {
                     error?.response?.data?.message,
                   );
                   setGetOtpDisabled(false);
-                  console.log(error.response)
-                  showToast(error?.response?.data?.message == undefined ? error?.response?.data : error?.response?.data?.message); // Mostrar el mensaje de error del servidor
+                  // Mostrar solo un mensaje claro; nunca el objeto crudo del
+                  // servidor (podía filtrar detalles técnicos). (APP-10)
+                  showToast(
+                    error?.response?.data?.message ||
+                      'No se pudo crear el usuario. Verifique los datos e intente nuevamente.',
+                  );
                 } else {
                   // La solicitud fue hecha pero no se recibió respuesta
                   console.error('Error en la solicitud:', error);
@@ -571,7 +577,7 @@ const SignUp = ({ navigation }) => {
                 token: token
               };
 
-              console.log(infoUserCreated);
+              // console.log(infoUserCreated); // removido: contenía datos sensibles (contraseña)
               console.log('Aquiiiiiiiiiiiii123');
 
               try {
@@ -588,7 +594,7 @@ const SignUp = ({ navigation }) => {
                 console.log(result); // Aquí puedes manejar la respuesta
 
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {

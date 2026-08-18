@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, ToastAndroid} from 'react-native';
+import { toastMessage } from '../../../utils/showToast';
 import AuthContainer from '../../../commonComponents/authContainer';
 import {
   emailId,
@@ -55,28 +56,31 @@ const ForgetPassword = ({navigation}) => {
         email: email.toLowerCase(), // Convertir el email a minúsculas
       });
     
-      // Verificar la respuesta del servidor
-      const result = response.data; // Los datos vienen directamente de response.data
-      console.log("Este es el resultado de la restauración****************: ", result); // Aquí puedes manejar la respuesta
-    
-      if (result.message === "Correo de restablecimiento enviado.") {
-        showToast('Correo de restablecimiento enviado!!');
+      // El backend responde 200 cuando el correo de restablecimiento se envió.
+      // Por seguridad usa un mensaje genérico (no revela si el email existe).
+      // Antes se comparaba un texto exacto que ya no coincide con el del
+      // servidor, por lo que en caso de ÉXITO se mostraba un falso error
+      // ("email no registrado") aunque el correo sí se enviaba. (APP-03)
+      if (response.status === 200) {
+        showToast(
+          'Si el correo está registrado, te enviamos un enlace para restablecer tu contraseña. Revisa tu bandeja de entrada.',
+        );
         setGetOtpDisabled(false);
         navigation.navigate('Login');
       } else {
-        showToast('El email dado no se encuentra registrado');
+        showToast('No se pudo procesar la solicitud. Intenta nuevamente.');
         setGetOtpDisabled(false);
       }
     } catch (error) {
       if (error.response) {
         // La solicitud se hizo y el servidor respondió con un código de estado
         console.error('Error en la solicitud:', error.response.statusText);
-        showToast('El email dado no se encuentra registrado');
+        showToast('No se pudo procesar la solicitud. Intenta nuevamente.');
         setGetOtpDisabled(false);
       } else {
         // La solicitud fue hecha pero no se recibió respuesta
         console.error('Error en la solicitud:', error);
-        showToast('Error al realizar la solicitud');
+        showToast('Error de conexión. Verifica tu internet e intenta de nuevo.');
         setGetOtpDisabled(false);
       }
     }
@@ -89,7 +93,7 @@ const ForgetPassword = ({navigation}) => {
   };
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    toastMessage(text);
   };
 
 

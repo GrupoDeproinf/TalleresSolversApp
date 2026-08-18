@@ -1,0 +1,12 @@
+# Plantilla de credenciales de firma de RELEASE. (APP-08)
+#
+# 1) Copia este archivo a: android/app/key.properties
+# 2) Rellena los valores con los de TU nueva clave de subida (upload key).
+# 3) NUNCA subas key.properties ni el .keystore al repositorio (están en .gitignore).
+#
+# storeFile: ruta al keystore RELATIVA a android/app/ (p. ej. upload.keystore)
+
+storeFile=upload.keystore
+storePassword=CAMBIA_ESTO
+keyAlias=upload
+keyPassword=CAMBIA_ESTO

@@ -8,6 +8,7 @@ import {
   PermissionsAndroid,
   KeyboardAvoidingView,
 } from 'react-native';
+import { toastMessage } from '../../../utils/showToast';
 import React, {useEffect, useState} from 'react';
 import AuthContainer from '../../../commonComponents/authContainer';
 import {apple, facebook} from '../../../constant';
@@ -26,6 +27,7 @@ import {fontSizes} from '../../../themes/appConstant';
 import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../../../axiosInstance';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 import DeviceInfo from 'react-native-device-info';
 
 import messaging from '@react-native-firebase/messaging';
@@ -125,10 +127,6 @@ const SignIn = ({navigation}) => {
     setSignInDisabled(true);
 
     if (isEmailValid && isPasswordValid) {
-      console.log(email);
-      console.log(password);
-      console.log(JSON.stringify({email: email}));
-
       try {
         // Hacer la solicitud POST utilizando Axios
         const response = await api.post('/usuarios/authenticateUser', {
@@ -171,7 +169,7 @@ const SignIn = ({navigation}) => {
                 }
               }
             }
-            const jsonValue = JSON.stringify(result.userData);
+            const jsonValue = JSON.stringify(sanitizeUserInfo(result.userData));
             console.log(jsonValue);
             await AsyncStorage.setItem('@userInfo', jsonValue);
           } catch (e) {
@@ -210,7 +208,7 @@ const SignIn = ({navigation}) => {
   };
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    toastMessage(text);
   };
 
   const appVersion = DeviceInfo.getVersion(); // Versión como "1.0.0"

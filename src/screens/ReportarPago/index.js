@@ -13,7 +13,8 @@ import {
   StyleSheet,
   Modal,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import { toastMessage } from '../../utils/showToast';
+import React, {useEffect, useState, useRef} from 'react';
 import HeaderContainer from '../../commonComponents/headingContainer';
 import {successfullyReset} from '../../constant';
 import {external} from '../../style/external.css';
@@ -53,6 +54,12 @@ import {windowHeight} from '../../themes/appConstant';
 const ReportarPago = ({navigation}) => {
   const [isModalVisible, setModalVisible] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
+
+  // Guard anti doble-envío: el ref bloquea de forma síncrona (evita pagos
+  // duplicados por doble toque antes del re-render); el estado deshabilita
+  // el botón visualmente. (APP-09)
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
   const [addItem, setAddItem] = useState(false);
 
   const [PrecioPago, setPrecioPago] = useState(null);
@@ -197,6 +204,10 @@ const ReportarPago = ({navigation}) => {
   };
 
   const ReportarPagoData = () => {
+    // Evita reprocesar mientras hay un envío en curso. (APP-09)
+    if (submittingRef.current) {
+      return;
+    }
     if (metodoSelected == 'Zelle') {
       if (
         emailZelle == '' ||
@@ -337,6 +348,12 @@ const ReportarPago = ({navigation}) => {
   };
 
   const SendInfo = async infoUserCreated => {
+    // Si ya hay un envío en curso, no dispares otro (evita pagos duplicados). (APP-09)
+    if (submittingRef.current) {
+      return;
+    }
+    submittingRef.current = true;
+    setIsSubmitting(true);
     try {
       // Hacer la solicitud POST utilizando Axios
       const response = await api.post(
@@ -355,16 +372,24 @@ const ReportarPago = ({navigation}) => {
       if (error.response) {
         // La solicitud se hizo y el servidor respondió con un código de estado
         console.error(
-          'Error al guardar el usuario:',
+          'Error al reportar el pago:',
           error.response.data.message,
         );
-        showToast(error.response.data.message); // Mostrar el mensaje de error del servidor
+        // Mensaje claro con respaldo en español si el servidor no envía uno. (APP-10)
+        showToast(
+          error.response.data.message ||
+            'No se pudo registrar el reporte de pago. Intente nuevamente.',
+        );
         closeSecondModel();
       } else {
         // La solicitud fue hecha pero no se recibió respuesta
         console.error('Error en la solicitud:', error);
         closeSecondModel();
       }
+    } finally {
+      // Libera el bloqueo pase lo que pase, para permitir un reintento. (APP-09)
+      submittingRef.current = false;
+      setIsSubmitting(false);
     }
   };
 
@@ -382,7 +407,7 @@ const ReportarPago = ({navigation}) => {
     : [appColors.screenBg, appColors.screenBg];
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    toastMessage(text);
   };
 
   const [imageUri, setImageUri] = useState(null);
@@ -863,6 +888,7 @@ const ReportarPago = ({navigation}) => {
                     <NavigationButton
                       title="Reportar Pago"
                       onPress={() => ReportarPagoData()}
+                      disabled={isSubmitting}
                       backgroundColor={'#2D3261'}
                       color={'white'}
                     />
@@ -985,7 +1011,7 @@ const ReportarPago = ({navigation}) => {
                             setSelectedBanco(itemValue)
                           }
                           style={{
-                            width: 400,
+                            width: '100%',
                             height: 50, // Altura para el Picker
                             color: 'black',
                           }}>
@@ -1028,7 +1054,7 @@ const ReportarPago = ({navigation}) => {
                             setSelectedBancoDestino(itemValue)
                           }
                           style={{
-                            width: 500,
+                            width: '100%',
                             height: 50, // Altura para el Picker
                             color: 'black',
                           }}>
@@ -1092,6 +1118,7 @@ const ReportarPago = ({navigation}) => {
                       <NavigationButton
                         title="Reportar Pago"
                         onPress={() => ReportarPagoData()}
+                        disabled={isSubmitting}
                         backgroundColor={'#2D3261'}
                         color={'white'}
                       />
@@ -1238,7 +1265,7 @@ const ReportarPago = ({navigation}) => {
                         selectedValue={SelectedBanco}
                         onValueChange={itemValue => setSelectedBanco(itemValue)}
                         style={{
-                          width: 400,
+                          width: '100%',
                           height: 50, // Altura para el Picker
                           color: 'black',
                         }}>
@@ -1277,7 +1304,7 @@ const ReportarPago = ({navigation}) => {
                           setSelectedBancoDestino(itemValue)
                         }
                         style={{
-                          width: 500,
+                          width: '100%',
                           height: 50, // Altura para el Picker
                           color: 'black',
                         }}>
@@ -1341,6 +1368,7 @@ const ReportarPago = ({navigation}) => {
                   <NavigationButton
                     title="Reportar Pago"
                     onPress={() => ReportarPagoData()}
+                    disabled={isSubmitting}
                     backgroundColor={'#2D3261'}
                     color={'white'}
                   />
@@ -1456,6 +1484,7 @@ const ReportarPago = ({navigation}) => {
                     title={'Reportar Pago'}
                     color={appColors.screenBg}
                     onPress={ReportarPagoData}
+                    disabled={isSubmitting}
                   />
                 </View>
               </View> */}
@@ -1469,6 +1498,7 @@ const ReportarPago = ({navigation}) => {
                   <NavigationButton
                     title="Reportar Pago"
                     onPress={() => ReportarPagoData()}
+                    disabled={isSubmitting}
                     backgroundColor={'#2D3261'}
                     color={'white'}
                   />
@@ -1576,6 +1606,7 @@ const ReportarPago = ({navigation}) => {
                                 title={'Reportar Pago'}
                                 color={appColors.screenBg}
                                 onPress={ReportarPagoData}
+                                disabled={isSubmitting}
                               />
                             </View>
                           </View>
@@ -1636,7 +1667,7 @@ const ReportarPago = ({navigation}) => {
                                   setSelectedBanco(itemValue)
                                 }
                                 style={{
-                                  width: 400,
+                                  width: '100%',
                                   height: 50, // Altura para el Picker
                                   color: 'black',
                                 }}>
@@ -1679,7 +1710,7 @@ const ReportarPago = ({navigation}) => {
                                   setSelectedBancoDestino(itemValue)
                                 }
                                 style={{
-                                  width: 500,
+                                  width: '100%',
                                   height: 50, // Altura para el Picker
                                   color: 'black',
                                 }}>
@@ -1754,6 +1785,7 @@ const ReportarPago = ({navigation}) => {
                               title={'Reportar Pago'}
                               color={appColors.screenBg}
                               onPress={ReportarPagoData}
+                              disabled={isSubmitting}
                             />
                           </View>
                         </View>
@@ -1821,7 +1853,7 @@ const ReportarPago = ({navigation}) => {
                                 setSelectedBanco(itemValue)
                               }
                               style={{
-                                width: 400,
+                                width: '100%',
                                 height: 50, // Altura para el Picker
                                 color: 'black',
                               }}>
@@ -1861,7 +1893,7 @@ const ReportarPago = ({navigation}) => {
                                 setSelectedBancoDestino(itemValue)
                               }
                               style={{
-                                width: 500,
+                                width: '100%',
                                 height: 50, // Altura para el Picker
                                 color: 'black',
                               }}>
@@ -1936,6 +1968,7 @@ const ReportarPago = ({navigation}) => {
                             title={'Reportar Pago'}
                             color={appColors.screenBg}
                             onPress={ReportarPagoData}
+                            disabled={isSubmitting}
                           />
                         </View>
                       </View>
@@ -2018,6 +2051,7 @@ const ReportarPago = ({navigation}) => {
                             title={'Reportar Pago'}
                             color={appColors.screenBg}
                             onPress={ReportarPagoData}
+                            disabled={isSubmitting}
                           />
                         </View>
                       </View>

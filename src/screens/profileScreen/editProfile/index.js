@@ -9,6 +9,7 @@ import {
   Image,
   ToastAndroid,
 } from 'react-native';
+import { toastMessage } from '../../../utils/showToast';
 import React, { useState, useEffect } from 'react';
 import HeaderContainer from '../../../commonComponents/headingContainer';
 import { phoneMo, smithaWilliams, smithaWilliamsMail } from '../../../constant';
@@ -32,6 +33,7 @@ import Icons2 from 'react-native-vector-icons/FontAwesome5'
 
 import Icons3 from 'react-native-vector-icons/Fontisto'
 import api from '../../../../axiosInstance';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 
 import notImageFound from '../../../assets/noimageold.jpeg';
 import Icons4 from 'react-native-vector-icons/Entypo';
@@ -330,7 +332,7 @@ const EditProfile = ({ navigation }) => {
               imageTodelete: imageFirts != "" && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == '' ? "" : getImageName(imageFirts) : ""
             };
   
-            console.log(infoUserCreated);
+            // console.log(infoUserCreated); // removido: datos sensibles
   
             try {
               // Hacer la solicitud POST utilizando Axios
@@ -344,7 +346,7 @@ const EditProfile = ({ navigation }) => {
                 console.log(result);
   
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {
@@ -437,7 +439,7 @@ const EditProfile = ({ navigation }) => {
               agenteAutorizado: checked == undefined ? false : checked
             };
   
-            console.log(infoUserCreated);
+            // console.log(infoUserCreated); // removido: datos sensibles
             console.log('Aquiiii1234');
   
             try {
@@ -449,7 +451,7 @@ const EditProfile = ({ navigation }) => {
                 console.log(result);
   
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {
@@ -513,7 +515,7 @@ const EditProfile = ({ navigation }) => {
   // };
 
   const showToast = text => {
-    ToastAndroid.show(text, ToastAndroid.SHORT);
+    toastMessage(text);
   };
 
   const selectImage = () => {

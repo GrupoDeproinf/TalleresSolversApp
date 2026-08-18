@@ -27,6 +27,7 @@ import DropdownAlert, {
   DropdownAlertType,
 } from 'react-native-dropdownalert';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import Toast from 'react-native-toast-message';
 // import * as Notifications from 'expo-notifications';
 
 LogBox.ignoreLogs(['Your specific warning here']);
@@ -48,8 +49,6 @@ const firebaseConfig = {
 const App = () => {
 
   useEffect(() => {
-    LogBox.ignoreAllLogs();
-
     // Inicializar Firebase
     try {
       if (!firebase.apps.length) {
@@ -199,6 +198,10 @@ const App = () => {
       />
 
     </CommonContext.Provider>
+
+    {/* Toast raíz cross-platform (Android e iOS). Debe montarse una sola vez,
+        por encima del resto del árbol, para que Toast.show() funcione. (APP-11) */}
+    <Toast />
     </GestureHandlerRootView>
   );
 };

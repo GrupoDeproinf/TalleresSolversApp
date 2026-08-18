@@ -16,7 +16,8 @@ const NavigationButton = ({
   borderWidth,
   borderColor,
   disabled,
-  marginTop
+  marginTop,
+  accessibilityLabel,
 }) => {
   const {isDark, linearColorStyleTwo, linearColorStyle} = useValues();
   return (
@@ -26,6 +27,10 @@ const NavigationButton = ({
           onPress={onPress}
           disabled={disabled}
           activeOpacity={0.7}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel || title}
+          accessibilityState={{disabled: !!disabled}}
           style={[
             styles.linearGradient,
             {
@@ -60,6 +65,10 @@ const NavigationButton = ({
           onPress={onPress}
           disabled={disabled}
           activeOpacity={0.7}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel || title}
+          accessibilityState={{disabled: !!disabled}}
           style={[
             styles.linearGradient,
             {
