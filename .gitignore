@@ -1,0 +1,62 @@
+# ---------------------------------------------------------------------------
+# .gitignore — SolversApp (React Native)
+# ---------------------------------------------------------------------------
+
+# Dependencias (se regeneran con: yarn install)
+node_modules/
+vendor/bundle/
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Metro / RN
+.expo/
+dist/
+*.jsbundle
+.metro-health-check*
+
+# ---------------- Android ----------------
+android/.gradle/
+android/build/
+android/app/build/
+android/app/.cxx/
+android/.cxx/
+android/app/release/
+android/local.properties
+*.iml
+.idea/
+.gradle/
+build/
+
+# ---------------- iOS ----------------
+ios/Pods/
+ios/build/
+ios/DerivedData/
+ios/*.xcworkspace/xcuserdata/
+ios/**/xcuserdata/
+*.hmap
+*.ipa
+*.xcuserstate
+
+# ---------------- SECRETOS (entregar aparte, NUNCA commitear) ----------------
+# Firma Android
+android/app/key.properties
+android/app/solversapp.keystore
+*.keystore.private
+# Firebase
+android/app/google-services.json
+ios/GoogleService-Info.plist
+# Variables de entorno / llaves
+.env
+.env.*
+*.env
+
+# Logs
+*.log
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# Testing / coverage
+coverage/

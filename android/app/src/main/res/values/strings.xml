@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Solvers</string>
+    <string name="mapbox_access_token">REEMPLAZAR_CON_MAPBOX_PUBLIC_TOKEN</string>
+</resources>

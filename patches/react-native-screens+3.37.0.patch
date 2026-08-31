@@ -1,0 +1,19 @@
+diff --git a/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt b/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt
+index 000c21c..3e088b9 100644
+--- a/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt
++++ b/node_modules/react-native-screens/android/src/main/jni/CMakeLists.txt
+@@ -82,3 +82,14 @@ target_include_directories(
+  PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}
+ )
++
++# 16 KB page size support (required by Google Play for Android 15+ / API 35+)
++# Sets PT_LOAD segment alignment to 16 KB so the .so can be mmap'd on
++# devices that use a 16 KB kernel page size.
++if(ANDROID)
++  target_link_options(
++    ${LIB_TARGET_NAME}
++    PRIVATE
++    "-Wl,-z,max-page-size=16384"
++  )
++endif()

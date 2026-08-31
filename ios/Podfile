@@ -1,0 +1,66 @@
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "react-native/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
+
+platform :ios, '17.0'
+
+install! 'cocoapods', :disable_input_output_paths => true
+
+prepare_react_native_project!
+
+# Navigation SDK nativo (v2 — CocoaPods, misma UI que la documentación de Mapbox)
+use_frameworks! :linkage => :static
+
+target 'MyReactNativeApp' do
+  pod 'MapboxNavigation', '~> 2.20'
+  config = use_native_modules!
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    :app_path => "#{Pod::Config.instance.installation_root}/..",
+    :hermes_enabled => false,
+    :fabric_enabled => true
+  )
+
+  pod 'Firebase/Core'
+  pod 'Firebase/Messaging'
+
+  pod 'FBSDKCoreKit'
+  pod 'FBSDKLoginKit'
+
+  post_install do |installer|
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false
+    )
+
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '17.0'
+        config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
+      end
+    end
+
+    # ── Fix: CocoaPods duplica recursos (xcfilelist) al combinar rnmapbox-maps +
+    #    RNVectorIcons con :linkage => :static → "Multiple commands produce" en Xcode.
+    #    Solución: deduplicar SOLO los xcfilelist (plain text, sin riesgo de syntax).
+    #    El .sh NO se toca — CocoaPods lo regenera bien y awk/ruby rompen su sintaxis.
+    resources_dir = File.join(File.dirname(__FILE__), 'Pods/Target Support Files/Pods-MyReactNativeApp')
+
+    %w[
+      Pods-MyReactNativeApp-resources-Debug-input-files.xcfilelist
+      Pods-MyReactNativeApp-resources-Debug-output-files.xcfilelist
+      Pods-MyReactNativeApp-resources-Release-input-files.xcfilelist
+      Pods-MyReactNativeApp-resources-Release-output-files.xcfilelist
+    ].each do |filename|
+      path = File.join(resources_dir, filename)
+      next unless File.exist?(path)
+      content = File.read(path)
+      deduped = content.each_line.uniq.join
+      File.write(path, deduped) if deduped != content
+    end
+  end
+end
