@@ -33,6 +33,8 @@ import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import Icons2 from 'react-native-vector-icons/Ionicons';
 import { Dropdown } from 'react-native-element-dropdown';
+import {splitDocumentId} from '../../../utils/documentId';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 
 const DARK_BLUE = '#1F2344';
 const YELLOW = '#FFD60A';
@@ -187,7 +189,7 @@ const EditProfile = ({ navigation }) => {
       if (!user?.uid) {
         return;
       }
-      console.log('valor del storage1234', user.cedula);
+      // console.log('valor del storage1234', user.cedula);  // removido: PII
 
       setuidprofile(user.uid);
       settypeUser(user.typeUser);
@@ -203,19 +205,19 @@ const EditProfile = ({ navigation }) => {
         const result = response.data;
 
         if (result.message === 'Usuario encontrado') {
-          console.log('Este es el usuario encontrado', result.userData);
+          // console.log('Este es el usuario encontrado', result.userData);  // removido: PII
 
           setNameTaller(result.userData.nombre);
 
           setNombre(result.userData.nombre || '');
 
           if (result.userData.typeUser === 'Taller') {
-            let typeID = result.userData.rif.split('-');
+            let typeID = splitDocumentId(result.userData.rif);
             setcedula(typeID[1] || '');
             setSelectedPrefix(typeID[0] + '-');
           } else if (result.userData.typeUser === 'Cliente') {
-            let typeID = result.userData.cedula.split('-');
-            console.log('typeID[1]', typeID[1]);
+            let typeID = splitDocumentId(result.userData.cedula);
+            // console.log('typeID[1]', typeID[1]);  // removido: PII
             setcedula(typeID[1] || '');
             setSelectedPrefix(typeID[0] + '-');
           }
@@ -337,7 +339,7 @@ const EditProfile = ({ navigation }) => {
               imageTodelete: imageFirts != "" && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == '' ? "" : getImageName(imageFirts) : ""
             };
 
-            console.log(infoUserCreated);
+            // console.log(infoUserCreated);  // removido: datos sensibles
 
             try {
               // Hacer la solicitud POST utilizando Axios
@@ -353,12 +355,14 @@ const EditProfile = ({ navigation }) => {
                 try {
                   const existing = await AsyncStorage.getItem('@userInfo');
                   const prev = existing ? JSON.parse(existing) : {};
-                  const merged = {
+                  // APP-05: se conserva la mezcla de la base nueva, pero pasa
+                  // por sanitizeUserInfo para no guardar la contrasena.
+                  const merged = sanitizeUserInfo({
                     ...prev,
                     ...infoUserCreated,
                     uid: uidprofile,
                     typeUser: 'Cliente',
-                  };
+                  });
                   await AsyncStorage.setItem(
                     '@userInfo',
                     JSON.stringify(merged),

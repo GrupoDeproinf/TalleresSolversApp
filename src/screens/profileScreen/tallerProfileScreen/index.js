@@ -48,6 +48,8 @@ import notImageFound from '../../../assets/noimageold.jpeg';
 import MapComponent from '../../map'
 
 import { Dropdown } from 'react-native-element-dropdown';
+import {splitDocumentId} from '../../../utils/documentId';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 
 
 const TallerProfileScreen = ({ navigation }) => {
@@ -248,7 +250,7 @@ const TallerProfileScreen = ({ navigation }) => {
           setMetodosPago(updatedMetodosPago);
 
           // Separar el prefijo del tipo de ID (rif) y asignarlo a los estados correspondientes
-          const typeID = result.userData.rif.split('-');
+          const typeID = splitDocumentId(result.userData.rif);
           setcedula(typeID[1] || '');
           setSelectedPrefix(`${typeID[0]}-`);
         } else {
@@ -411,7 +413,7 @@ const TallerProfileScreen = ({ navigation }) => {
           }
 
           try {
-            const jsonValue = JSON.stringify(infoUserCreated);
+            const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
             await AsyncStorage.setItem('@userInfo', jsonValue);
           } catch (e) {
           }

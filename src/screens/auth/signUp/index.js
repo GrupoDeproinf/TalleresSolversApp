@@ -70,10 +70,11 @@ import messaging from '@react-native-firebase/messaging';
 
 import Geolocation from '@react-native-community/geolocation';
 import { Dropdown } from 'react-native-element-dropdown';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 
 
 
-const MAPBOX_TOKEN = 'REEMPLAZAR_CON_MAPBOX_PUBLIC_TOKEN';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ';
 
 const buildLocationPickerHTML = (lat, lng) => `<!DOCTYPE html>
 <html>
@@ -591,7 +592,7 @@ const SignUp = ({ navigation }) => {
                 token: token
               };
 
-              console.log('infoUserCreated', infoUserCreated);
+              // console.log('infoUserCreated', infoUserCreated);  // removido: datos sensibles
 
               try {
                 // Hacer la solicitud POST utilizando Axios
@@ -607,7 +608,7 @@ const SignUp = ({ navigation }) => {
                 console.log(result); // Aquí puedes manejar la respuesta
 
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {
@@ -756,7 +757,7 @@ const SignUp = ({ navigation }) => {
                 token: token
               };
 
-              console.log(infoUserCreated);
+              // console.log(infoUserCreated);  // removido: datos sensibles
               console.log('Aquiiiiiiiiiiiii123');
 
               try {
@@ -775,7 +776,7 @@ const SignUp = ({ navigation }) => {
                 infoUserCreated.uid = result.uid;
 
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {

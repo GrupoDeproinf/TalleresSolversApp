@@ -36,6 +36,7 @@ import DeviceInfo from 'react-native-device-info';
 import messaging from '@react-native-firebase/messaging';
 import firebase from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -311,10 +312,6 @@ const SignIn = ({navigation}) => {
     setSignInDisabled(true);
 
     if (isEmailValid && isPasswordValid) {
-      console.log(email);
-      console.log(password);
-      console.log(JSON.stringify({email: email}));
-
       try {
         // Hacer la solicitud POST utilizando Axios
         const response = await api.post('/usuarios/authenticateUser', {
@@ -368,10 +365,14 @@ const SignIn = ({navigation}) => {
                 }
               }
             }
-            const jsonValue = JSON.stringify({
-              ...result.userData,
-              ...userData,
-            });
+            // APP-05: se conserva la mezcla de la base nueva, pero pasa por
+            // sanitizeUserInfo para no dejar la contrasena en el dispositivo.
+            const jsonValue = JSON.stringify(
+              sanitizeUserInfo({
+                ...result.userData,
+                ...userData,
+              }),
+            );
             console.log(jsonValue);
             await AsyncStorage.setItem('@userInfo', jsonValue);
           } catch (e) {

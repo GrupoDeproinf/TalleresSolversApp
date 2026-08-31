@@ -7,6 +7,7 @@ import api from '../../../../axiosInstance';
 import { useValues } from '../../../../App';
 import TallerEditStepper from '../editProfile/TallerEditStepper';
 import epStyles from '../editProfile/style.css';
+import {splitDocumentId} from '../../../utils/documentId';
 
 const DARK_BLUE = '#1F2344';
 const YELLOW = '#FFD60A';
@@ -193,7 +194,7 @@ const TallerEditProfileScreen = ({ navigation }) => {
         }
 
         if (ud.rif && String(ud.rif).includes('-')) {
-          const typeID = String(ud.rif).split('-');
+          const typeID = splitDocumentId(ud.rif);
           setcedula(typeID[1] || '');
           setSelectedPrefix(`${typeID[0]}-`);
         }

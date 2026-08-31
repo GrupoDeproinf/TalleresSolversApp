@@ -8,6 +8,7 @@ import {
   Alert,
   ScrollView,
   Image,
+  Linking,
   Switch,
   StyleSheet,
   KeyboardAvoidingView,
@@ -33,11 +34,12 @@ import {Dropdown} from 'react-native-element-dropdown';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import Icons2 from 'react-native-vector-icons/Ionicons';
+import {splitDocumentId, esPdf} from '../../utils/documentId';
 
 const DARK_BLUE = '#1F2344';
 const YELLOW = '#FFD60A';
 
-const MAPBOX_TOKEN = 'REEMPLAZAR_CON_MAPBOX_PUBLIC_TOKEN';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ';
 
 /** Picker interactivo con pin central (modo edición). */
 const buildLocationPickerHTML = (lat, lng) => `<!DOCTYPE html>
@@ -442,7 +444,7 @@ const FormTaller = () => {
       );
 
       if (ud.rif && String(ud.rif).includes('-')) {
-        const parts = String(ud.rif).split('-');
+        const parts = splitDocumentId(ud.rif);
         setcedula(parts[1] || '');
         setSelectedPrefix(`${parts[0]}-`);
       } else if (ud.rif != null && ud.rif !== '') {
@@ -781,19 +783,40 @@ const FormTaller = () => {
       ? '#FFFFFF'
       : DARK_BLUE;
 
+  // Requerimiento 001 punto 2: los documentos en PDF no se pueden pintar con
+  // <Image>. Antes se intentaba igual y la pantalla se quedaba sin responder.
+  // Ahora se detectan y se abren en el lector del sistema.
+  const abrirDocumentoExterno = uri => {
+    Linking.openURL(uri).catch(() => {
+      Alert.alert('Solvers Informa', 'No se pudo abrir el documento.');
+    });
+  };
+
   const docThumb = ({label, url, localUri, onSelect}) => {
     // Preview: prefer newly selected local image, else the stored URL
     const previewUri = localUri || url;
     const hasNew = !!localUri;
+    const esDocumentoPdf = esPdf(previewUri);
 
     if (previewUri) {
       return (
         <View key={label} style={styles.docThumbBtn}>
           <TouchableOpacity
             activeOpacity={0.85}
-            onPress={() => setImgFullscreen(previewUri)}
+            onPress={() =>
+              esDocumentoPdf
+                ? abrirDocumentoExterno(previewUri)
+                : setImgFullscreen(previewUri)
+            }
             style={{flex: 1}}>
-            <Image source={{uri: previewUri}} style={styles.docThumbImg} resizeMode="cover" />
+            {esDocumentoPdf ? (
+              <View style={[styles.docThumbImg, {alignItems: 'center', justifyContent: 'center', backgroundColor: '#F3F4F6'}]}>
+                <Icons5 name="file-pdf" size={26} color="#DC2626" />
+                <Text style={{fontSize: 10, color: '#6B7280', marginTop: 4}}>PDF</Text>
+              </View>
+            ) : (
+              <Image source={{uri: previewUri}} style={styles.docThumbImg} resizeMode="cover" />
+            )}
             {hasNew && (
               <View style={styles.docNewBadge}>
                 <Text style={styles.docNewBadgeText}>NUEVO</Text>
