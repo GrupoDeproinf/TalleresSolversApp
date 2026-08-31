@@ -6,14 +6,12 @@ import Login from '../screens/auth/login';
 
 import SignUp from '../screens/auth/signUp';
 import ForgetPassword from '../screens/auth/forgotPassword';
-import ResetPassword from '../screens/auth/resetPassword';
 
 
 
 
 
 import CategoryDetail from '../screens/categoryScreen/CategoryDetail';
-import OtpVerfication from '../screens/auth/verificationCode';
 
 
 import NotificationScreen from '../screens/notification';
@@ -119,7 +117,6 @@ const MyStack = () => {
         
         <Stack.Screen name="SignUp" component={SignUp} />
         <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
-        <Stack.Screen name="ResetPassword" component={ResetPassword} />
 
 
         {/* <Stack.Screen name="Onboarding" component={Onboarding} />
