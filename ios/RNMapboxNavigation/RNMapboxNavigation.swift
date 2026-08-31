@@ -27,7 +27,7 @@ class RNMapboxNavigation: NSObject {
   private var preloadedSpeechSynth: MapboxSpeechSynthesizer?
   private var isPreloadedMode       = false
 
-  private let accessToken = "REEMPLAZAR_CON_MAPBOX_PUBLIC_TOKEN"
+  private let accessToken = "pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ"
 
   @objc static func requiresMainQueueSetup() -> Bool { true }
 

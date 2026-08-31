@@ -67,7 +67,7 @@ const normalizeRemoteImageUri = s => {
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
-const MAPBOX_TOKEN = 'REEMPLAZAR_CON_MAPBOX_PUBLIC_TOKEN';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ';
 
 const buildLocationPickerHTML = (lat, lng) => `<!DOCTYPE html>
 <html>

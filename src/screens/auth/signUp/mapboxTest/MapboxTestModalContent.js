@@ -12,7 +12,7 @@ import Geolocation from '@react-native-community/geolocation';
 import Icons from 'react-native-vector-icons/MaterialCommunityIcons';
 
 const MAPBOX_TOKEN =
-  'REEMPLAZAR_CON_MAPBOX_PUBLIC_TOKEN';
+  'pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ';
 
 const FALLBACK_COORDS = { latitude: 10.4806, longitude: -66.9036 };
 
