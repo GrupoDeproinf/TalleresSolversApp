@@ -4,15 +4,20 @@ import hi from './hi.json';
 import en from './en.json';
 import fr from './fr.json';
 import ar from './ar.json';
+import es from './es.json';
 
 i18next.use(initReactI18next).init({
   compatibilityJSON: 'v3',
-  lng: 'en',
+  // Español por defecto. Si una clave no existe en es.json, cae a inglés
+  // (fallback) en lugar de mostrar la clave cruda. (APP-21)
+  lng: 'es',
+  fallbackLng: 'en',
   resources: {
     hi: hi,
     en: en,
     fr: fr,
     ar: ar,
+    es: es,
   },
 });
 
