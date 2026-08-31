@@ -1,0 +1,5 @@
+# Copiar a android/app/key.properties y rellenar. key.properties NO se versiona.
+storeFile=solversapp.keystore
+storePassword=
+keyAlias=solvers
+keyPassword=
