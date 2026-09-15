@@ -74,6 +74,7 @@ const handleOpened = async remoteMessage => {
 
 /** Llamar una vez al montar la navegación. Devuelve la función para desuscribir. */
 export const setupPushDeepLinks = () => {
+  if (__DEV__) messaging().getToken().then(t => console.log('FCM_TOKEN', t)).catch(() => {});
   const unsubscribe = messaging().onNotificationOpenedApp(handleOpened);
   messaging().getInitialNotification().then(handleOpened).catch(() => {});
   return unsubscribe;
