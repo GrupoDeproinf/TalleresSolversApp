@@ -42,6 +42,22 @@ import {
   shouldShowMaintenancePopupModal,
 } from '../../utils/homeMaintenanceDue';
 import LocationPermissionModal from '../../commonComponents/LocationPermissionModal';
+import {
+  shouldShowReminder,
+  markReminderShown,
+  snoozeReminder,
+  markKmUpdated,
+} from '../../utils/homeReminderPolicy';
+
+const readUidFromStorage = async () => {
+  try {
+    const j = await AsyncStorage.getItem('@userInfo');
+    const u = j ? JSON.parse(j) : null;
+    return String(u?.uid ?? u?.id ?? '');
+  } catch (_) {
+    return '';
+  }
+};
 
 const getVehicleReminderKey = v =>
   String(v?.id ?? v?.uid ?? v?.vehiculo_uid ?? '').trim();
@@ -196,6 +212,9 @@ const HomeScreen = () => {
 
   const closeMaintenanceDueModal = useCallback(() => {
     setMaintenanceDueModalVisible(false);
+    (async () => {
+      void snoozeReminder('maint', await readUidFromStorage());
+    })();
     if (!pendingKmReminderAfterMaintenanceCloseRef.current) {
       return;
     }
@@ -205,15 +224,14 @@ const HomeScreen = () => {
       try {
         const j = await AsyncStorage.getItem('@userInfo');
         const u = j ? JSON.parse(j) : null;
-        if (u?.showModalKm === false) {
+        const uid = String(u?.uid ?? u?.id ?? '');
+        if (u?.showModalKm === false || !(await shouldShowReminder('km', uid))) {
           return;
         }
         setVehiclePickerModalVisible(true);
+        void markReminderShown('km', uid);
         void loadUserVehiclesForReminder();
-      } catch (_) {
-        setVehiclePickerModalVisible(true);
-        void loadUserVehiclesForReminder();
-      }
+      } catch (_) {}
     })();
   }, [loadUserVehiclesForReminder]);
 
@@ -231,21 +249,16 @@ const HomeScreen = () => {
   const closeVehiclePickerModal = useCallback(() => {
     setVehiclePickerModalVisible(false);
     setSelectedVehicleKey('');
+    (async () => {
+      void snoozeReminder('km', await readUidFromStorage());
+    })();
   }, []);
 
   const dismissKmSuccessModal = useCallback(() => {
+    // Tras actualizar el km no se vuelve a abrir el selector: ya cumplió su objetivo.
     setKmSuccessModalVisible(false);
-    (async () => {
-      try {
-        const j = await AsyncStorage.getItem('@userInfo');
-        const u = j ? JSON.parse(j) : null;
-        if (u?.showModalKm !== false) {
-          setVehiclePickerModalVisible(true);
-        }
-      } catch (_) {
-        setVehiclePickerModalVisible(true);
-      }
-    })();
+    setVehiclePickerModalVisible(false);
+    setSelectedVehicleKey('');
   }, []);
 
   const handleOpenKmReminderStep = useCallback(() => {
@@ -288,6 +301,7 @@ const HomeScreen = () => {
         km: Math.round(kmNum),
       });
       const kmRounded = Math.round(kmNum);
+      void markKmUpdated(uiduser);
       setKmUpdateModalVisible(false);
       await loadUserVehiclesForReminder();
       setKmSuccessFormatted(kmRounded.toLocaleString('es-ES'));
@@ -366,11 +380,12 @@ const HomeScreen = () => {
             if (!active) return;
             setMaintenanceDueLoading(false);
             setMaintenanceDueRows(rows);
-            if (rows.length > 0) {
+            if (rows.length > 0 && (await shouldShowReminder('maint', uid))) {
               setMaintenanceDoNotShowAgain(false);
               deferKmReminderForMaintenance = true;
               pendingKmReminderAfterMaintenanceCloseRef.current = true;
               setMaintenanceDueModalVisible(true);
+              void markReminderShown('maint', uid);
             } else {
               setMaintenanceDueModalVisible(false);
             }
@@ -390,8 +405,13 @@ const HomeScreen = () => {
             setVehiclePickerModalVisible(false);
             return;
           }
+          if (!(await shouldShowReminder('km', uid))) {
+            setVehiclePickerModalVisible(false);
+            return;
+          }
           setReminderDoNotShowAgain(false);
           setVehiclePickerModalVisible(true);
+          void markReminderShown('km', uid);
           await loadUserVehiclesForReminder();
         } catch (_) {}
       })();
@@ -1116,10 +1136,7 @@ const HomeScreen = () => {
                 ) : null}
               </View>
               <Text style={vehicleReminderStyles.checkLabel}>
-                No mostrarme esto al volver al inicio{' '}
-                <Text style={vehicleReminderStyles.checkLabelHint}>
-                  (Guardado al tocar; el aviso no se cierra)
-                </Text>
+                No volver a mostrar este aviso
               </Text>
             </TouchableOpacity>
             <View style={vehicleReminderStyles.btnRow}>
@@ -1468,10 +1485,7 @@ const HomeScreen = () => {
                     ) : null}
                   </View>
                   <Text style={vehicleReminderStyles.checkLabel}>
-                    No mostrarme esto al volver al inicio{' '}
-                    <Text style={vehicleReminderStyles.checkLabelHint}>
-                      (Guardado al tocar; el aviso no se cierra)
-                    </Text>
+                    No volver a mostrar este aviso
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
