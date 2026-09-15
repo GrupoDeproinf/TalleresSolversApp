@@ -9,8 +9,24 @@ import {navigationRef} from '../navigation';
 const KNOWN_SCREENS = new Set([
   'HomeScreenTwo', 'NotificationScreen', 'VehiclesScreen', 'VehicleMaintenanceScreen',
   'VehicleNotificationsScreen', 'Planscreen', 'Planes', 'ReportarPago', 'MisSolicitudes',
-  'SolicitudesTaller', 'TallerProfileScreen', 'Settings',
+  'SolicitudesTaller', 'TallerProfileScreen', 'Settings', 'EditProfile',
 ]);
+
+// Códigos que el servidor ya envía hoy en data.secretCode → pantalla destino.
+const BY_SECRET_CODE = {
+  plantoexpire: 'Planscreen',
+  NuevaSolicitud: 'SolicitudesTaller',
+  PropuestaAceptada: 'SolicitudesTaller',
+  InspeccionAceptada: 'SolicitudesTaller',
+  NuevaPropuesta: 'MisSolicitudes',
+  ProximoKmSuperado: 'VehicleMaintenanceScreen',
+  ProximoKmAdvertenciaHasta3000: 'VehicleMaintenanceScreen',
+  ActualizarKmVehiculos: 'VehiclesScreen',
+  rcv_fecha_vencimiento: 'VehiclesScreen',
+  trimestres_fecha_vencimiento: 'VehiclesScreen',
+  licencia_fecha_vencimiento: 'EditProfile',
+  certificado_medico_fecha_vencimiento: 'EditProfile',
+};
 
 const BY_TYPE = {
   mantenimiento: 'VehicleMaintenanceScreen', maintenance: 'VehicleMaintenanceScreen',
@@ -27,8 +43,10 @@ const AUTH_ROUTES = new Set(['LoaderScreen', 'Splash', 'Login', 'SignUp', 'Onboa
 export const resolvePushTarget = (data = {}) => {
   const screen = String(data.screen ?? data.route ?? data.pantalla ?? '').trim();
   const type = String(data.type ?? data.tipo ?? '').trim().toLowerCase();
+  const code = String(data.secretCode ?? '').trim();
   let name = 'NotificationScreen';
   if (screen && KNOWN_SCREENS.has(screen)) name = screen;
+  else if (code && BY_SECRET_CODE[code]) name = BY_SECRET_CODE[code];
   else if (type && BY_TYPE[type]) name = BY_TYPE[type];
   const {screen: _s, route: _r, pantalla: _p, type: _t, tipo: _ti, ...rest} = data;
   return {name, params: {fromPush: true, ...rest}};
