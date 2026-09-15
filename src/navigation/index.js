@@ -1,5 +1,7 @@
 import React from 'react';
 import {NavigationContainer, createNavigationContainerRef} from '@react-navigation/native';
+import {useEffect as usePushEffect} from 'react';
+import {setupPushDeepLinks} from '../utils/pushDeepLink';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Login from '../screens/auth/login';
 
@@ -91,6 +93,7 @@ export const navigate = (name, params) => {
 };
 
 const MyStack = () => {
+  usePushEffect(() => setupPushDeepLinks(), []);
   // const [initialScreen, setInitialScreen] = useState();
   
   // const validator = () => {
