@@ -1,46 +1,40 @@
-// Frecuencia de los avisos del inicio (kilometraje y mantenimientos).
-// Reglas: máximo un aviso por día; "Cerrar" pospone 1 día; actualizar el
-// kilometraje apaga el aviso de km por 7 días. Se guarda por usuario en el
-// teléfono, así que funciona sin cambios en el servidor. (APP-UX-1)
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const DAY = 24 * 60 * 60 * 1000;
-const SHOW_MIN_INTERVAL_MS = DAY;
-const CLOSE_SNOOZE_DAYS = 1;
+// Frecuencia maxima de cada aviso del inicio, en dias (km = actualizar kilometraje, maint = mantenimiento vencido)
+const MIN_DAYS = { km: 7, maint: 3 };
+// Dias sin volver a pedir el km despues de que el usuario lo actualiza
 const KM_UPDATE_QUIET_DAYS = 7;
+const DAY = 24 * 60 * 60 * 1000;
 
-const key = (type, uid) => `@homeReminder:${type}:${uid || 'anon'}`;
+const keyFor = (type, uid) => `@homeReminder:${type}:${uid || 'anon'}`;
 
-const read = async (type, uid) => {
-  try {
-    const j = await AsyncStorage.getItem(key(type, uid));
-    return j ? JSON.parse(j) : {};
-  } catch (_) {
-    return {};
-  }
-};
+async function readState(type, uid) {
+  try { const raw = await AsyncStorage.getItem(keyFor(type, uid)); return raw ? JSON.parse(raw) : {}; } catch (_) { return {}; }
+}
+async function writeState(type, uid, patch) {
+  try { const cur = await readState(type, uid); await AsyncStorage.setItem(keyFor(type, uid), JSON.stringify({ ...cur, ...patch })); } catch (_) {}
+}
 
-const write = async (type, uid, patch) => {
-  const cur = await read(type, uid);
-  try {
-    await AsyncStorage.setItem(key(type, uid), JSON.stringify({...cur, ...patch}));
-  } catch (_) {}
-};
-
-/** type: 'km' | 'maint' */
-export const shouldShowReminder = async (type, uid) => {
-  const s = await read(type, uid);
+export async function shouldShowReminder(type, uid) {
+  const s = await readState(type, uid);
   const now = Date.now();
-  if (s.snoozedUntil && now < s.snoozedUntil) return false;
-  if (s.lastShownAt && now - s.lastShownAt < SHOW_MIN_INTERVAL_MS) return false;
+  if (s.snoozedUntil && s.snoozedUntil > now) return false;
+  const minMs = (MIN_DAYS[type] ?? 1) * DAY;
+  if (s.lastShownAt && now - s.lastShownAt < minMs) return false;
   if (type === 'km' && s.lastKmUpdateAt && now - s.lastKmUpdateAt < KM_UPDATE_QUIET_DAYS * DAY) return false;
   return true;
-};
+}
 
-export const markReminderShown = (type, uid) => write(type, uid, {lastShownAt: Date.now()});
+export async function markReminderShown(type, uid) {
+  await writeState(type, uid, { lastShownAt: Date.now() });
+}
 
-export const snoozeReminder = (type, uid, days = CLOSE_SNOOZE_DAYS) =>
-  write(type, uid, {snoozedUntil: Date.now() + days * DAY});
+export async function snoozeReminder(type, uid, days) {
+  const d = Math.max(Number(days) || 0, MIN_DAYS[type] ?? 1);
+  await writeState(type, uid, { snoozedUntil: Date.now() + d * DAY });
+}
 
-export const markKmUpdated = uid =>
-  write('km', uid, {lastKmUpdateAt: Date.now(), snoozedUntil: Date.now() + KM_UPDATE_QUIET_DAYS * DAY});
+export async function markKmUpdated(uid) {
+  const now = Date.now();
+  await writeState('km', uid, { lastKmUpdateAt: now, snoozedUntil: now + KM_UPDATE_QUIET_DAYS * DAY });
+}
