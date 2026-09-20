@@ -3,7 +3,6 @@
 // { type: 'mantenimiento' | 'documento' | 'pago' | 'plan' | 'km' | ... } más los ids
 // que la pantalla necesite (vehicleId, id, uid). Sin destino → bandeja de notificaciones.
 import messaging from '@react-native-firebase/messaging';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import {navigationRef} from '../navigation';
 
 const KNOWN_SCREENS = new Set([
@@ -58,17 +57,16 @@ const currentRoute = () => {
 
 const navigateWhenInside = (name, params, tries = 0) => {
   const ready = navigationRef.isReady() && !AUTH_ROUTES.has(currentRoute());
-  if (ready) { navigationRef.navigate(name, params); return; }
-  if (tries < 40) setTimeout(() => navigateWhenInside(name, params, tries + 1), 300);
+  if (ready) { if (__DEV__) console.log('[push] navegando a', name); navigationRef.navigate(name, params); return; }
+  if (tries < 100) setTimeout(() => navigateWhenInside(name, params, tries + 1), 300);
+  else if (__DEV__) console.log('[push] no se pudo navegar: la app no salio de', currentRoute());
 };
 
-const handleOpened = async remoteMessage => {
+const handleOpened = remoteMessage => {
   if (!remoteMessage) return;
-  try {
-    const j = await AsyncStorage.getItem('@userInfo');
-    if (!j) return; // sin sesión: que el flujo normal lleve al login
-  } catch (_) { return; }
   const {name, params} = resolvePushTarget(remoteMessage.data || {});
+  if (__DEV__) console.log('[push] abierta', JSON.stringify(remoteMessage.data || {}), '->', name);
+  // Si no hay sesión, navigateWhenInside espera hasta salir de las pantallas de login (o desiste a los 30 s).
   navigateWhenInside(name, params);
 };
 
