@@ -375,7 +375,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyReactNativeApp/MyReactNativeApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2026083101;
+				CURRENT_PROJECT_VERSION = 2026092301;
 				DEVELOPMENT_TEAM = HQ927CYR6D;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
@@ -485,7 +485,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.22;
+				MARKETING_VERSION = 1.3.23;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -510,7 +510,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyReactNativeApp/MyReactNativeAppRelease.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 2026083101;
+				CURRENT_PROJECT_VERSION = 2026092301;
 				DEVELOPMENT_TEAM = HQ927CYR6D;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				FRAMEWORK_SEARCH_PATHS = (
@@ -620,7 +620,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.22;
+				MARKETING_VERSION = 1.3.23;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
