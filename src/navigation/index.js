@@ -7,6 +7,8 @@ import Login from '../screens/auth/login';
 
 
 import SignUp from '../screens/auth/signUp';
+import SignUpCliente from '../screens/auth/signUpCliente';
+import SignUpTaller from '../screens/auth/signUpTaller';
 import ForgetPassword from '../screens/auth/forgotPassword';
 
 
@@ -119,6 +121,8 @@ const MyStack = () => {
 
         
         <Stack.Screen name="SignUp" component={SignUp} />
+        <Stack.Screen name="SignUpCliente" component={SignUpCliente} />
+        <Stack.Screen name="SignUpTaller" component={SignUpTaller} />
         <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
 
 

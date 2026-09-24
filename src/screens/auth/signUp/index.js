@@ -2982,16 +2982,15 @@ const SignUp = ({ navigation }) => {
   };
 
   // Funciones para manejar los clics
+  // Registro nuevo (documento de mejora, sección 6): el conductor entra en un
+  // minuto y el taller se registra en 4 pasos con guardado automático.
+  // Los formularios anteriores de esta pantalla quedan sin uso.
   const handleClientePress = () => {
-    console.log('Cliente Card Pressed2');
-    setSelectedPrefix('V-');
-    settypeOfView('Cliente');
+    navigation.navigate('SignUpCliente');
   };
 
   const handleTallerPress = () => {
-    console.log('Taller Card Pressed1');
-    setSelectedPrefix('J-');
-    settypeOfView('Taller');
+    navigation.navigate('SignUpTaller');
   };
 
   const toggleCheckBox = index => {

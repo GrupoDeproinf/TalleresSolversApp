@@ -17,6 +17,7 @@ import DatePicker from 'react-native-date-picker';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { windowHeight, windowWidth } from '../../themes/appConstant';
+import EstadoComercioCard, { estadoComercio } from '../../components/registro/EstadoComercioCard';
 
 const ServiciosContainer = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -480,6 +481,38 @@ const ServiciosContainer = ({ navigation }) => {
     </Modal>
   );
 
+  // Registro nuevo: si falta un documento o fue rechazado, antes esta vista
+  // quedaba en blanco. Ahora explica qué pasa y qué hacer.
+  const estadoRegistro = !uidTallerParam ? estadoComercio(userData) : null;
+  const irASubirDocumentos = () => navigationScreen.navigate('TallerEditProfileScreen');
+  if (
+    estadoRegistro &&
+    (estadoRegistro.tipo === 'rechazado' ||
+      (estadoRegistro.tipo === 'faltan' && !showServices && !showPlanes && !showPorAprobar))
+  ) {
+    return (
+      <View style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle, flex: 1 }]}>
+        <View style={[modalStyles.servicesHeaderWrapper, { paddingTop: insets.top + windowHeight(3.8) }]}>
+          <View style={modalStyles.servicesHeaderCircle1} />
+          <View style={modalStyles.servicesHeaderCircle2} />
+          <View style={modalStyles.servicesHeaderRow}>
+            <View style={modalStyles.servicesHeaderCenter}>
+              <Text style={modalStyles.servicesHeaderTitle}>Tu negocio</Text>
+              <Text style={modalStyles.servicesHeaderSubtitle}>Estado de tu registro en Solvers.</Text>
+            </View>
+          </View>
+        </View>
+        <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+          <EstadoComercioCard
+            user={userData}
+            onSubirDocumentos={irASubirDocumentos}
+            onCorregir={irASubirDocumentos}
+          />
+        </ScrollView>
+      </View>
+    );
+  }
+
   if (showPlanes) {
     return (
       <View
@@ -658,18 +691,13 @@ const ServiciosContainer = ({ navigation }) => {
           </View>
         </View>}
 
-        {/* ── Banner de cuenta en revisión ── */}
-        {bannerVisible && (
-          <View style={modalStyles.revisionBanner}>
-            <View style={modalStyles.revisionBannerAccent} />
-            <Icons5 name="hourglass-half" size={22} color="#92400E" style={{ marginRight: 12 }} />
-            <View style={{ flex: 1 }}>
-              <Text style={modalStyles.revisionBannerTitle}>Cuenta en revisión</Text>
-              <Text style={modalStyles.revisionBannerBody}>
-                Tu negocio está en lista de espera para aprobación. Pronto te contactaremos para activar tus publicaciones.
-              </Text>
-            </View>
-          </View>
+        {/* ── Estado del registro: en revisión / falta un documento / aprobado ── */}
+        {!uidTallerParam && (
+          <EstadoComercioCard
+            user={userData}
+            onSubirDocumentos={irASubirDocumentos}
+            onCorregir={irASubirDocumentos}
+          />
         )}
 
         {dataServicios.length > 0 ? (

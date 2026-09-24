@@ -37,7 +37,7 @@ const BY_TYPE = {
   solicitud: 'MisSolicitudes', cita: 'MisSolicitudes',
 };
 
-const AUTH_ROUTES = new Set(['LoaderScreen', 'Splash', 'Login', 'SignUp', 'Onboarding', 'OnboardingTwo', 'OtpVerfication', 'ForgetPassword']);
+const AUTH_ROUTES = new Set(['LoaderScreen', 'Splash', 'Login', 'SignUp', 'SignUpCliente', 'SignUpTaller', 'Onboarding', 'OnboardingTwo', 'OtpVerfication', 'ForgetPassword']);
 
 export const resolvePushTarget = (data = {}) => {
   const screen = String(data.screen ?? data.route ?? data.pantalla ?? '').trim();
