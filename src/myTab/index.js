@@ -2,7 +2,6 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, TouchableOpacity, Text, Image, Modal, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../axiosInstance';
 import HomeScreen from '../screens/homeScreen';
@@ -733,7 +732,8 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const centerIndex = emergencyIndex >= 0 ? emergencyIndex : (serviciosIndex >= 0 ? serviciosIndex : (serviciosScreenIndex >= 0 ? serviciosScreenIndex : -1));
   const hasCenteredButton = centerIndex >= 0;
 
-  const insets = useSafeAreaInsets();
+  // Márgenes del sistema: los aplica MainActivity (Android) y App.tsx (iOS).
+  const insets = {top: 0, bottom: 0};
 
   const renderNormalTab = (route) => {
     const { options } = descriptors[route.key];

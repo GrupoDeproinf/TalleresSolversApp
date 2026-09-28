@@ -20,7 +20,6 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import api from '../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Geolocation from '@react-native-community/geolocation';
 import {
   Car,
@@ -121,7 +120,8 @@ const flattenUserDataFromGetUserResponse = data => {
 
 const HomeScreen = () => {
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
+  // Márgenes del sistema: los aplica MainActivity (Android) y App.tsx (iOS).
+  const insets = {top: 0, bottom: 0};
   const [categories, setCategories] = useState([]);
   const [location, setLocation] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
