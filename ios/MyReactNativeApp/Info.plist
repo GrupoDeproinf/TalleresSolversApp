@@ -39,8 +39,10 @@
 	<string>Solvers</string>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<true/>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>LSApplicationCategoryType</key>
-	<string/>
+	<string></string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>MBXAccessToken</key>
@@ -52,12 +54,12 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Esta app necesita acceso a la cámara para que puedas tomar fotos de tus documentos.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Tu aplicación necesita acceso a la ubicación para proporcionar servicios basados en mapas.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Tu aplicación necesita acceso a la ubicación para mostrar mapas.</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Esta app necesita acceso a la cámara para que puedas tomar fotos de tus documentos.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Esta app necesita acceso a tu fototeca para que puedas seleccionar y subir imágenes.</string>
 	<key>NSPushNotificationUsageDescription</key>
