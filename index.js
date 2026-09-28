@@ -1,3 +1,4 @@
+import './src/utils/silenciarConsola';
 import crashlytics from "@react-native-firebase/crashlytics";
 import "./src/utils/storageGuard";
 /**

@@ -307,6 +307,13 @@ const TallerProfileScreen = ({ navigation }) => {
 
   const getImageName = (url) => url.split('/').pop();
 
+  // Faltaba: el campo "Características" la llamaba al salir y la app se cerraba.
+  const validateCaracteristicas = () => {
+    const ok = String(Caracteristicas ?? '').trim() !== '';
+    setCaracteristicasError(ok ? '' : 'Caracteristicas es requerido');
+    return ok;
+  };
+
   const validatePhone = () => {
     // Teléfono con país: Venezuela 10 dígitos sin 0; otros países según su largo.
     const msg = validarTelefonoPais(phone ? String(phone) : '');
@@ -557,14 +564,6 @@ const TallerProfileScreen = ({ navigation }) => {
     Alert.alert('Solvers Informa', text);
   };
 
-  // Funciones para manejar los clics
-  const handleClientePress = () => {
-    settypeOfView('Cliente');
-  };
-
-  const handleTallerPress = () => {
-    settypeOfView('Taller');
-  };
 
   const colors = isDark
     ? ['#3D3F45', '#45474B', '#2A2C32']
