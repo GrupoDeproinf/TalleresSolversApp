@@ -63,3 +63,6 @@ coverage/
 # Bundle generado: se ignora; las fuentes sí se versionan.
 android/app/src/main/assets/*
 !android/app/src/main/assets/fonts/
+
+# Configuracion local de cada Mac (ruta de node)
+ios/.xcode.env.local
