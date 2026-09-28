@@ -36,6 +36,7 @@ import DeviceInfo from 'react-native-device-info';
 import messaging from '@react-native-firebase/messaging';
 import firebase from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
+import {abrirSesionFirebase} from '../../../utils/sesionSegura';
 import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 
 // Initialize Firebase
@@ -321,6 +322,7 @@ const SignIn = ({navigation}) => {
 
         // Verificar la respuesta del servidor
         const result = response.data; // Los datos vienen directamente de response.data
+        await abrirSesionFirebase(result?.customToken);
         console.log('Este es el usuario nuevo ', result); // Aquí puedes manejar la respuesta
 
         if (

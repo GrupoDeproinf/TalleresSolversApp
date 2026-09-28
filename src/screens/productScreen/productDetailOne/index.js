@@ -680,16 +680,13 @@ const ProductDetailOne = ({ navigation }) => {
       showToast('Este taller no tiene WhatsApp registrado.');
       return;
     }
-    if (dataTaller?.token) {
-      api
-        .post('/usuarios/sendNotification', {
-          token: dataTaller.token,
-          title: 'Contacto de Usuario',
-          body: 'Hola, un usuario está interesado en contactarte para el servicio de ' + (DataService?.nombre_servicio || '') + '.',
-          secretCode: 'Usuario contacta a taller',
-        })
-        .catch(() => {});
-    }
+    // El servidor avisa al taller: su token push ya no viaja a la app.
+    api
+      .post('/home/notificarContactoTaller', {
+        uid_taller: DataService?.uid_taller,
+        nombre_servicio: DataService?.nombre_servicio || '',
+      })
+      .catch(() => {});
     handleContact('WhatsApp').catch(() => {});
     saveServiceContactView('Whatsapp');
     const servicio = String(DataService?.nombre_servicio || '').trim();
@@ -1029,11 +1026,9 @@ const ProductDetailOne = ({ navigation }) => {
                 }
 
                 try {
-                  await api.post('/usuarios/sendNotification', {
-                    token: dataTaller.token,
-                    title: 'Contacto de Usuario',
-                    body: "Hola, un usuario está interesado en contactarte para el servicio de " + DataService?.nombre_servicio + ".",
-                    secretCode: "Usuario contacta a taller",
+                  await api.post('/home/notificarContactoTaller', {
+                    uid_taller: DataService?.uid_taller,
+                    nombre_servicio: DataService?.nombre_servicio || '',
                   });
 
                   console.log("notificacion enviada con exito")

@@ -11,6 +11,7 @@ import api from '../../../axiosInstance';
 import Icons from 'react-native-vector-icons/FontAwesome5';
 import Icons2 from 'react-native-vector-icons/AntDesign';
 import { Banner } from '../../ui';
+import { cerrarSesionFirebase } from '../../utils/sesionSegura';
 
 const SOLVERS_WEB_SIGN_IN =
   'https://app.solversapp.com/sign-in?redirectUrl=/';
@@ -46,6 +47,7 @@ const ProfileScreen = () => {
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('userToken');
+      await cerrarSesionFirebase();
       navigation.replace('Login');
     } catch (error) {
       console.warn('Error logging out:', error);

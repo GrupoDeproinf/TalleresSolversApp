@@ -16,6 +16,7 @@ import {
   ScrollView,
 } from 'react-native';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
+import { cerrarSesionFirebase } from '../../utils/sesionSegura';
 import DatePicker from 'react-native-date-picker';
 import styles from './style.css.js';
 import {useValues} from '../../../App';
@@ -463,6 +464,7 @@ const TalleresContainer = ({navigation}) => {
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.headerLogoutBtn} onPress={async () => {
             try { await AsyncStorage.removeItem('@userInfo'); } catch {}
+            await cerrarSesionFirebase();
             try { await AsyncStorage.removeItem('userToken'); navigationScreen.replace('Login'); } catch {}
           }} activeOpacity={0.8}>
             <Icons name="sign-out" size={18} color="#FFFFFF" />
