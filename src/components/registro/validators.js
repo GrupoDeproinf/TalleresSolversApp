@@ -2,6 +2,8 @@
 // corregirlo (nada de "campo inválido"). Cada función devuelve '' si el valor
 // está bien, o el mensaje a mostrar debajo del campo.
 
+import {validarTelefonoPais} from '../../utils/telefono';
+
 export const onlyDigits = v => String(v ?? '').replace(/\D/g, '');
 
 export const validarNombre = (v, que = 'tu nombre') => {
@@ -21,22 +23,18 @@ export const validarCorreo = v => {
   return '';
 };
 
-// Teléfono venezolano sin el 0 inicial: 412 123 4567 (10 dígitos).
+// Teléfono con país (utils/telefono.js). Venezuela se guarda como siempre,
+// 10 dígitos sin el 0 (412 123 4567); otros países como +573001234567.
 export const normalizarTelefono = v => {
-  let d = onlyDigits(v);
+  const raw = String(v ?? '').trim();
+  if (raw.startsWith('+')) return `+${onlyDigits(raw)}`;
+  let d = onlyDigits(raw);
   if (d.startsWith('58') && d.length === 12) d = d.slice(2);
   if (d.startsWith('0') && d.length === 11) d = d.slice(1);
   return d;
 };
 
-export const validarTelefono = v => {
-  const d = normalizarTelefono(v);
-  if (!d) return 'Escribe tu número de teléfono.';
-  if (d.length < 10) return `Faltan ${10 - d.length} dígito(s). Ej: 412 123 4567.`;
-  if (d.length > 10) return 'Sobran dígitos. Escríbelo sin el 0 inicial: 412 123 4567.';
-  if (!/^(2|4)/.test(d)) return 'Debe empezar por 4 (celular) o 2 (fijo). Ej: 412 123 4567.';
-  return '';
-};
+export const validarTelefono = v => validarTelefonoPais(v);
 
 export const formatearTelefono = v => {
   const d = normalizarTelefono(v).slice(0, 10);

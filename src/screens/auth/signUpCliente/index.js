@@ -20,13 +20,13 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../../../axiosInstance';
 import {C, Field, PrimaryButton, Banner} from '../../../components/registro/ui';
 import TermsModal from '../../../components/registro/TermsModal';
+import PhoneInput from '../../../ui/PhoneInput';
 import {
   validarNombre,
   validarCorreo,
   validarTelefono,
   validarPassword,
   normalizarTelefono,
-  formatearTelefono,
   mensajeDeError,
 } from '../../../components/registro/validators';
 import {iniciarSesionTrasRegistro, obtenerTokenPushSeguro} from '../../../utils/authSession';
@@ -183,18 +183,14 @@ const SignUpCliente = ({navigation}) => {
             autoCorrect={false}
             textContentType="emailAddress"
           />
-          <Field
+          <PhoneInput
             label="Teléfono"
-            placeholder="412 123 4567"
-            value={formatearTelefono(form.phone)}
-            onChangeText={v => set('phone')(normalizarTelefono(v))}
+            value={form.phone}
+            onChange={set('phone')}
             onBlur={touch('phone')}
             error={show('phone')}
             ok={touched.phone && !errors.phone}
-            help="Sin el 0 inicial. Los talleres te contactarán por aquí."
-            keyboardType="phone-pad"
-            textContentType="telephoneNumber"
-            maxLength={12}
+            help="Los talleres te contactarán por aquí."
           />
           <Field
             label="Contraseña"

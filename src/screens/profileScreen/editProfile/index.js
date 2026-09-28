@@ -13,6 +13,8 @@ import {
   TextInput,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
+import PhoneInput from '../../../ui/PhoneInput';
+import {validarTelefonoPais} from '../../../utils/telefono';
 import { phoneMo, smithaWilliams, smithaWilliamsMail } from '../../../constant';
 import { commonStyles } from '../../../style/commonStyle.css';
 import { external } from '../../../style/external.css';
@@ -273,22 +275,10 @@ const EditProfile = ({ navigation }) => {
   };
 
   const validatePhone = () => {
-    const phoneStr = phone == null ? '' : String(phone);
-    if (!phoneStr || phoneStr === '') {
-      setPhoneError('Teléfono es requerido');
-      return false;
-    }
-    const numericPhone = phoneStr.replace(/[^0-9]/g, '');
-    if (numericPhone.length > 0 && numericPhone[0] === '0') {
-      setPhoneError('El número no puede empezar con 0');
-      return false;
-    }
-    if (!/^\d{10}$/.test(numericPhone)) {
-      setPhoneError('Teléfono debe contener exactamente 10 dígitos');
-      return false;
-    }
-    setPhoneError('');
-    return true;
+    // Teléfono con país: Venezuela 10 dígitos sin 0; otros países según su largo.
+    const msg = validarTelefonoPais(phone ? String(phone) : '');
+    setPhoneError(msg);
+    return !msg;
   };
 
   const onHandleChange = async () => {
@@ -980,52 +970,16 @@ const EditProfile = ({ navigation }) => {
                   }}>
                   Número al que podamos contactarte.
                 </Text>
-                <TextInputs
-                  title="Número Telefónico"
-                  formCardMode={true}
-                  value={phone}
-                  placeholder="Ejem 414 261 79 66"
-                  textDecorationLine={isCheckedTelefono ? 'line-through' : 'none'}
-                  editable={true}
-                  keyboardType="numeric"
-                  onChangeText={text => {
-                    let numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
-                    if (numericText.length > 0 && numericText[0] === '0') {
-                      setPhoneError('El número no puede empezar con 0');
-                      setPhone('');
-                      return;
-                    }
-                    let formattedText = '';
-                    if (numericText.length > 0 && numericText.length <= 3) {
-                      formattedText = `${numericText}`;
-                    } else if (numericText.length > 3 && numericText.length <= 6) {
-                      formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3)}`;
-                    } else if (numericText.length > 6 && numericText.length <= 8) {
-                      formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6)}`;
-                    } else if (numericText.length > 8) {
-                      formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6, 8)} ${numericText.slice(8)}`;
-                    }
-                    setPhone(formattedText);
-                    setCallTyping(true);
-                    if (numericText.trim() === '') {
-                      setPhoneError('Número telefónico requerido');
-                    } else {
-                      setPhoneError('');
-                    }
+                <PhoneInput
+                  label="Número telefónico"
+                  value={phone ? String(phone) : ''}
+                  onChange={v => {
+                    setPhone(v);
+                    setPhoneError('');
                   }}
-                  onBlur={() => {
-                    validatePhone();
-                    setCallTyping(false);
-                  }}
-                  icon={
-                    <Call
-                      color={isCallTyping ? '#051E47' : appColors.subtitle}
-                    />
-                  }
+                  onBlur={validatePhone}
+                  error={phoneError}
                 />
-                {phoneError !== '' && (
-                  <Text style={styles.errorStyle}>{phoneError}</Text>
-                )}
               </View>
             </View>
           </ScrollView>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { hora12 } from "../../utils/taller";
 import {
   View,
   Text,
@@ -207,7 +208,7 @@ function getHorarioAtencionDisplay(taller) {
       detailRows.push({
         key,
         label: HORARIO_DAY_LABELS[key] || key,
-        time: `${open} – ${close}`,
+        time: `${hora12(open)} – ${hora12(close)}`,
       });
     }
     if (detailRows.length > 0) {

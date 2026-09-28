@@ -18,6 +18,9 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import React, {useState, useCallback, useRef} from 'react';
+import PhoneInput from '../../ui/PhoneInput';
+import {mostrarTelefono} from '../../utils/telefono';
+import {OPCIONES_HORA} from '../../utils/taller';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icons from 'react-native-vector-icons/FontAwesome';
 import Icons5 from 'react-native-vector-icons/FontAwesome5';
@@ -103,10 +106,8 @@ var map=new mapboxgl.Map({container:'map',style:'mapbox://styles/mapbox/navigati
 new mapboxgl.Marker({color:'#E11D48'}).setLngLat([${lng},${lat}]).addTo(map);
 <\/script></body></html>`;
 
-const TIME_OPTIONS = Array.from({length: 24}, (_, hour) => {
-  const value = `${String(hour).padStart(2, '0')}:00`;
-  return {label: value, value};
-});
+// Etiqueta en 12 h, valor en 24 h (lo que guarda el servidor).
+const TIME_OPTIONS = OPCIONES_HORA;
 
 const BUSINESS_DAYS = [
   {key: 'lunes', label: 'Lunes'},
@@ -1130,15 +1131,15 @@ const FormTaller = () => {
             <SectionHeader title="Contacto" />
             <FieldBlock
               label="Teléfono"
-              value={phone}
+              value={mostrarTelefono(phone)}
               isEditing={isEditing}>
-              <EditInput value={phone} onChangeText={setPhone} keyboardType="numeric" />
+              <PhoneInput compact value={phone} onChange={setPhone} />
             </FieldBlock>
             <FieldBlock
               label="WhatsApp"
-              value={whats}
+              value={mostrarTelefono(whats)}
               isEditing={isEditing}>
-              <EditInput value={whats} onChangeText={setwhats} keyboardType="numeric" />
+              <PhoneInput compact value={whats} onChange={setwhats} />
             </FieldBlock>
           </View>
 

@@ -37,12 +37,15 @@ import {
   validarPassword,
   validarRif,
   normalizarTelefono,
-  formatearTelefono,
   formatearRif,
   onlyDigits,
   RIF_PREFIJOS,
   mensajeDeError,
 } from '../../../components/registro/validators';
+import {OPCIONES_HORA, hora12} from '../../../utils/taller';
+import {direccionDesdeCoordenadas} from '../../../utils/geocoding';
+import PhoneInput from '../../../ui/PhoneInput';
+import {mostrarTelefono} from '../../../utils/telefono';
 import {iniciarSesionTrasRegistro, obtenerTokenPushSeguro} from '../../../utils/authSession';
 
 const DRAFT_KEY = '@registroTallerDraft';
@@ -65,10 +68,7 @@ const DIAS = [
   {key: 'domingo', label: 'Dom'},
 ];
 
-const HORAS = Array.from({length: 24}, (_, h) => {
-  const v = `${String(h).padStart(2, '0')}:00`;
-  return {label: v, value: v};
-});
+const HORAS = OPCIONES_HORA;
 
 const METODOS_PAGO = [
   {value: 'efectivo', label: 'Efectivo'},
@@ -85,7 +85,6 @@ const DOCS = [
   {key: 'rifIdFiscal', label: 'RIF', help: 'Foto o PDF legible del RIF vigente.', required: true, pdf: true},
   {key: 'fotoFrenteTaller', label: 'Frente del taller', help: 'Que se vea la fachada o el letrero.', required: true},
   {key: 'fotoInternaTaller', label: 'Interior del taller', help: 'El área de trabajo.', required: true},
-  {key: 'permisoOperacion', label: 'Registro mercantil o permiso', help: 'Opcional, acelera la revisión.', pdf: true},
   {key: 'logotipoNegocio', label: 'Logo del negocio', help: 'Opcional. Se muestra a los conductores.'},
 ];
 
@@ -96,8 +95,8 @@ const horarioVacio = () =>
   }, {});
 
 const PRESETS = [
-  {label: 'Lun–Vie 8–17', dias: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'], open: '08:00', close: '17:00'},
-  {label: 'Sáb 8–12', dias: ['sabado'], open: '08:00', close: '12:00'},
+  {label: 'Lun–Vie 8 a. m.–5 p. m.', dias: ['lunes', 'martes', 'miercoles', 'jueves', 'viernes'], open: '08:00', close: '17:00'},
+  {label: 'Sáb 8 a. m.–12 p. m.', dias: ['sabado'], open: '08:00', close: '12:00'},
 ];
 
 const INICIAL = {
@@ -112,6 +111,7 @@ const INICIAL = {
   rifNumero: '',
   estado: '',
   direccion: '',
+  direccionMapa: '',
   lat: null,
   lng: null,
   horario: horarioVacio(),
@@ -124,7 +124,7 @@ const INICIAL = {
 const resumenHorario = h => {
   const on = DIAS.filter(d => h?.[d.key]?.enabled);
   if (!on.length) return 'Sin horario';
-  return on.map(d => `${d.label} ${h[d.key].open}–${h[d.key].close}`).join(' · ');
+  return on.map(d => `${d.label} ${hora12(h[d.key].open, {corto: true})}–${hora12(h[d.key].close, {corto: true})}`).join(' · ');
 };
 
 const SignUpTaller = ({navigation}) => {
@@ -194,6 +194,29 @@ const SignUpTaller = ({navigation}) => {
       })
       .catch(() => {});
   }, [cargarCategorias]);
+
+  // ── Dirección escrita del pin ────────────────────────────────────────────
+  const [buscandoDireccion, setBuscandoDireccion] = useState(false);
+  const buscarDireccion = useCallback(async (lat, lng) => {
+    setBuscandoDireccion(true);
+    const dir = await direccionDesdeCoordenadas(lat, lng);
+    setBuscandoDireccion(false);
+    if (!dir) return;
+    setF(prev => {
+      // Si el pin cambió mientras se buscaba, no pisar.
+      if (prev.lat !== lat || prev.lng !== lng) return prev;
+      // Si aún no escribió la dirección, se la sugerimos para que la complete.
+      const direccion = String(prev.direccion || '').trim() ? prev.direccion : dir;
+      return {...prev, direccionMapa: dir, direccion};
+    });
+  }, []);
+
+  // Borradores viejos con pin pero sin dirección escrita.
+  useEffect(() => {
+    if (loaded && Number.isFinite(f.lat) && Number.isFinite(f.lng) && !f.direccionMapa) {
+      buscarDireccion(f.lat, f.lng);
+    }
+  }, [loaded]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Helpers de estado ────────────────────────────────────────────────────
   const set = (k, v) => setF(prev => ({...prev, [k]: v}));
@@ -459,18 +482,16 @@ const SignUpTaller = ({navigation}) => {
         onBlur={touch('email')} error={show('email')} ok={touched.email && !errores.email}
         help="Lo usarás para entrar. Te avisamos aquí cuando revisemos tu negocio." keyboardType="email-address"
         autoCapitalize="none" autoCorrect={false} textContentType="emailAddress" />
-      <Field label="Teléfono" placeholder="412 123 4567" value={formatearTelefono(f.phone)}
-        onChangeText={v => set('phone', normalizarTelefono(v))} onBlur={touch('phone')} error={show('phone')}
-        ok={touched.phone && !errores.phone} help="Sin el 0 inicial." keyboardType="phone-pad" maxLength={12} />
+      <PhoneInput label="Teléfono" value={f.phone} onChange={v => set('phone', v)} onBlur={touch('phone')}
+        error={show('phone')} ok={touched.phone && !errores.phone} />
       <TouchableOpacity style={st.check} onPress={() => set('whatsappIgual', !f.whatsappIgual)} accessibilityRole="checkbox"
         accessibilityState={{checked: f.whatsappIgual}}>
         <Ionicons name={f.whatsappIgual ? 'checkbox' : 'square-outline'} size={24} color={C.navy} />
         <Text style={st.checkText}>Este número tiene WhatsApp</Text>
       </TouchableOpacity>
       {!f.whatsappIgual && (
-        <Field label="WhatsApp del taller" placeholder="414 765 4321" value={formatearTelefono(f.whatsapp)}
-          onChangeText={v => set('whatsapp', normalizarTelefono(v))} onBlur={touch('whatsapp')} error={show('whatsapp')}
-          ok={touched.whatsapp && !errores.whatsapp} keyboardType="phone-pad" maxLength={12} />
+        <PhoneInput label="WhatsApp del taller" value={f.whatsapp} onChange={v => set('whatsapp', v)}
+          onBlur={touch('whatsapp')} error={show('whatsapp')} ok={touched.whatsapp && !errores.whatsapp} />
       )}
       <Field label="Contraseña" placeholder="Mínimo 6 caracteres" value={password} onChangeText={setPassword}
         onBlur={touch('password')} error={show('password')} secure autoCapitalize="none" textContentType="newPassword"
@@ -526,7 +547,11 @@ const SignUpTaller = ({navigation}) => {
         <View style={{flex: 1, marginLeft: 10}}>
           <Text style={st.mapTitle}>{errores.ubicacion ? 'Marcar en el mapa' : 'Ubicación marcada'}</Text>
           <Text style={st.mapSub}>
-            {errores.ubicacion ? 'Toca para mover el pin hasta tu taller.' : `${f.lat.toFixed(5)}, ${f.lng.toFixed(5)} · Toca para ajustar`}
+            {errores.ubicacion
+              ? 'Toca para mover el pin hasta tu taller.'
+              : buscandoDireccion
+              ? 'Buscando la dirección…'
+              : `${f.direccionMapa || 'Pin colocado en el mapa'} · Toca para ajustar`}
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={20} color={C.muted} />
@@ -664,7 +689,7 @@ const SignUpTaller = ({navigation}) => {
           ['Taller', f.nombre],
           ['RIF', `${f.rifPrefijo}-${formatearRif(f.rifNumero)}`],
           ['Responsable', f.responsable],
-          ['Contacto', `${formatearTelefono(f.phone)} · ${f.email}`],
+          ['Contacto', `${mostrarTelefono(f.phone)} · ${f.email}`],
           ['Dirección', `${f.direccion}${f.estado ? `, ${f.estado}` : ''}`],
           ['Horario', resumenHorario(f.horario)],
           ['Servicios', catNombres.join(', ') || '—'],
@@ -740,9 +765,10 @@ const SignUpTaller = ({navigation}) => {
         lng={f.lng}
         onClose={() => setMapVisible(false)}
         onConfirm={({lat, lng}) => {
-          setF(prev => ({...prev, lat, lng}));
+          setF(prev => ({...prev, lat, lng, direccionMapa: ''}));
           touch('ubicacion')();
           setMapVisible(false);
+          buscarDireccion(lat, lng);
         }}
       />
 

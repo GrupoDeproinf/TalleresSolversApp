@@ -1,7 +1,10 @@
 package com.solvers.app
 
 import android.os.Bundle
+import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
@@ -23,6 +26,28 @@ class MainActivity : ReactActivity() {
    */
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(null)
+    ajustarContenidoAlTeclado()
+  }
+
+  /**
+   * Teclado sobre los formularios (1.4.0).
+   *
+   * Con targetSdk 35+ Android obliga el modo "edge-to-edge" e ignora
+   * android:windowSoftInputMode="adjustResize": la ventana ya no se achica al
+   * abrir el teclado y este tapa los campos. Aquí se devuelve ese
+   * comportamiento para TODA la app: el contenido recibe como margen inferior
+   * la altura del teclado, así el ScrollView de cada formulario se achica y el
+   * campo enfocado queda visible.
+   */
+  private fun ajustarContenidoAlTeclado() {
+    val content = findViewById<View>(android.R.id.content) ?: return
+    ViewCompat.setOnApplyWindowInsetsListener(content) { view, insets ->
+      val teclado = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
+      if (view.paddingBottom != teclado) {
+        view.setPadding(view.paddingLeft, view.paddingTop, view.paddingRight, teclado)
+      }
+      insets
+    }
   }
 
   /**

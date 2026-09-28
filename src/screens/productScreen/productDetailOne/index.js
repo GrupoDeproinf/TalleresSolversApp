@@ -14,6 +14,7 @@ import {
   AppState,
 } from 'react-native';
 import React, { useCallback, useEffect, useState } from 'react';
+import { hora12 } from '../../../utils/taller';
 import BottomContainer from '../../../commonComponents/bottomContainer';
 import { commonStyles } from '../../../style/commonStyle.css';
 import { external } from '../../../style/external.css';
@@ -174,7 +175,7 @@ function getHorarioAtencionDisplay(dataTaller) {
       detailRows.push({
         key,
         label: HORARIO_DAY_LABELS[key] || key,
-        time: `${open} – ${close}`,
+        time: `${hora12(open)} – ${hora12(close)}`,
       });
     }
     if (detailRows.length > 0) {

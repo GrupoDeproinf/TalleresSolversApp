@@ -17,6 +17,7 @@ import {
   TextInput,
 } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
+import {OPCIONES_HORA} from '../../../utils/taller';
 // import AuthContainer from '../../../commonComponents/authContainer';
 // import {
 //   confirmPasswords,
@@ -143,10 +144,8 @@ const BUSINESS_DAYS = [
   { key: 'domingo', label: 'Domingo' },
 ];
 
-const TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
-  const value = `${String(hour).padStart(2, '0')}:00`;
-  return { label: value, value };
-});
+// Etiqueta en 12 h, valor en 24 h (lo que guarda el servidor).
+const TIME_OPTIONS = OPCIONES_HORA;
 
 const buildDefaultBusinessHours = () =>
   BUSINESS_DAYS.reduce((acc, day) => {

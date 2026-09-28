@@ -72,20 +72,41 @@ export const openHint = (horariosRaw, now = new Date()) => {
   if (!h) return '';
   const today = h[KEYS_BY_JS_DOW[now.getDay()]];
   const state = openState(horariosRaw, now);
-  if (state === 'open' && today?.close) return `Cierra a las ${today.close}`;
+  if (state === 'open' && today?.close) return `Cierra a las ${hora12(today.close)}`;
   if (state !== 'closed') return '';
   const cur = now.getHours() * 60 + now.getMinutes();
   if (today?.enabled && timeStrToMinutes(today.open) > cur) {
-    return `Abre hoy a las ${today.open}`;
+    return `Abre hoy a las ${hora12(today.open)}`;
   }
   for (let i = 1; i <= 7; i += 1) {
     const d = h[KEYS_BY_JS_DOW[(now.getDay() + i) % 7]];
     if (d?.enabled && d.open) {
-      return i === 1 ? `Abre mañana a las ${d.open}` : `Abre el ${DAY_NAME[(now.getDay() + i) % 7]} a las ${d.open}`;
+      return i === 1 ? `Abre mañana a las ${hora12(d.open)}` : `Abre el ${DAY_NAME[(now.getDay() + i) % 7]} a las ${hora12(d.open)}`;
     }
   }
   return '';
 };
+
+/**
+ * Hora convencional (12 h) para mostrar. Se guarda siempre "HH:mm" (24 h),
+ * que es lo que usan el servidor, el panel y el cálculo de abierto/cerrado.
+ * "08:00" → "8:00 a. m." · "17:30" → "5:30 p. m." · corto: "8 a. m."
+ */
+export const hora12 = (hhmm, {corto = false} = {}) => {
+  const m = String(hhmm ?? '').trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return String(hhmm ?? '');
+  const h = parseInt(m[1], 10) % 24;
+  const min = m[2];
+  const sufijo = h < 12 ? 'a. m.' : 'p. m.';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return corto && min === '00' ? `${h12} ${sufijo}` : `${h12}:${min} ${sufijo}`;
+};
+
+/** Opciones de los selectores de hora: valor 24 h, etiqueta 12 h. */
+export const OPCIONES_HORA = Array.from({length: 24}, (_, h) => {
+  const value = `${String(h).padStart(2, '0')}:00`;
+  return {label: hora12(value), value};
+});
 
 const DAY_NAME = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
