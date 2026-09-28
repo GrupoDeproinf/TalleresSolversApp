@@ -111,7 +111,6 @@ const MyStack = () => {
         <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
 
 
-        <Stack.Screen name="OtpVerfication" component={OtpVerfication} /> */}
 
         <Stack.Screen name="CategoryDetail" component={CategoryDetail} />
         
