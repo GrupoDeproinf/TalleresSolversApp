@@ -10,7 +10,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Script"
-               scriptText = "# Type a script or drag a script file from your workspace to insert its path.&#10;export NVM_DIR=&quot;$HOME/.nvm&quot;&#10;source &quot;$NVM_DIR/nvm.sh&quot;&#10;nvm use 22&#10;"
+               scriptText = "# Type a script or drag a script file from your workspace to insert its path.&#10;# nvm es opcional: si no esta instalado se usa el node del sistema (NODE_BINARY en .xcode.env).&#10;export NVM_DIR=&quot;$HOME/.nvm&quot;&#10;if [ -s &quot;$NVM_DIR/nvm.sh&quot; ]; then . &quot;$NVM_DIR/nvm.sh&quot; &amp;&amp; nvm use 22 || true; fi&#10;"
                shellToInvoke = "/bin/sh">
                <EnvironmentBuildable>
                   <BuildableReference
