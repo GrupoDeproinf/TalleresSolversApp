@@ -85,7 +85,7 @@ android {
         applicationId "com.solvers.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 91
+        versionCode 92
         versionName "1.4.0"
         // Compilar librerías nativas propias (ej. react-native-screens) con
         // alineación de 16 KB. Requiere NDK 27+ (ya configurado).
