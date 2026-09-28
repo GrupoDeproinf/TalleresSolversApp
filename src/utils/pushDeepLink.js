@@ -9,6 +9,7 @@ const KNOWN_SCREENS = new Set([
   'HomeScreenTwo', 'NotificationScreen', 'VehiclesScreen', 'VehicleMaintenanceScreen',
   'VehicleNotificationsScreen', 'Planscreen', 'Planes', 'ReportarPago', 'MisSolicitudes',
   'SolicitudesTaller', 'TallerProfileScreen', 'Settings', 'EditProfile',
+  'MisCitas', 'AgendaTaller',
 ]);
 
 // Códigos que el servidor ya envía hoy en data.secretCode → pantalla destino.
@@ -25,6 +26,16 @@ const BY_SECRET_CODE = {
   trimestres_fecha_vencimiento: 'VehiclesScreen',
   licencia_fecha_vencimiento: 'EditProfile',
   certificado_medico_fecha_vencimiento: 'EditProfile',
+  // Citas (servidor: services/citas.services.js)
+  CitaNueva: 'AgendaTaller',
+  CitaCanceladaPorConductor: 'AgendaTaller',
+  CitaRecordatorioTaller: 'AgendaTaller',
+  CitaConfirmada: 'MisCitas',
+  CitaRechazada: 'MisCitas',
+  CitaReprogramada: 'MisCitas',
+  CitaCancelada: 'MisCitas',
+  CitaCompletada: 'MisCitas',
+  CitaRecordatorio: 'MisCitas',
 };
 
 const BY_TYPE = {
@@ -34,7 +45,7 @@ const BY_TYPE = {
   documento: 'VehicleNotificationsScreen', certificado: 'VehicleNotificationsScreen',
   vencimiento: 'VehicleNotificationsScreen', alerta: 'VehicleNotificationsScreen',
   pago: 'Planscreen', trimestre: 'Planscreen', plan: 'Planscreen', cuota: 'Planscreen',
-  solicitud: 'MisSolicitudes', cita: 'MisSolicitudes',
+  solicitud: 'MisSolicitudes', cita: 'MisCitas',
 };
 
 const AUTH_ROUTES = new Set(['LoaderScreen', 'Splash', 'Login', 'SignUp', 'SignUpCliente', 'SignUpTaller', 'Onboarding', 'OnboardingTwo', 'OtpVerfication', 'ForgetPassword']);

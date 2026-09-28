@@ -212,6 +212,7 @@ const ProfileScreen = () => {
     if (item.id === 0) iconName = 'user-circle';
     else if (item.id === 2) iconName = 'heart';
     else if (item.id === 10) iconName = 'car-side';
+    else if (item.id === 11) iconName = 'calendar-alt';
     else if (item.id === 3) iconName = 'tags';
     else if (item.id === 5) iconName = 'key';
     else if (item.id === 7) iconName = 'life-ring';

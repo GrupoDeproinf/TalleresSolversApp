@@ -20,7 +20,6 @@ import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import api from '../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Geolocation from '@react-native-community/geolocation';
 import {
   Car,
@@ -37,6 +36,7 @@ import {
 } from 'lucide-react-native';
 import {
   AppText,
+  useMargenesSistema,
   Banner,
   Card,
   Chip,
@@ -60,6 +60,7 @@ import {
   sentenceCase,
   serviceDistanceKm,
 } from '../../utils/taller';
+import {citasApi, cuandoCita, proximaCita} from '../citas/citasApi';
 import useServiciosCercanos, {
   MIN_RATING,
   NEAR_KM,
@@ -121,7 +122,7 @@ const flattenUserDataFromGetUserResponse = data => {
 
 const HomeScreen = () => {
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
+  const insets = useMargenesSistema();
   const [categories, setCategories] = useState([]);
   const [location, setLocation] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
@@ -457,6 +458,21 @@ const HomeScreen = () => {
 
   const [firstName, setFirstName] = useState('');
   const [solicitudActiva, setSolicitudActiva] = useState(null);
+  const [citaProxima, setCitaProxima] = useState(null);
+
+  // "Tu próxima cita" (propuesta, sección 4): la reserva activa más cercana.
+  useFocusEffect(
+    useCallback(() => {
+      let vivo = true;
+      citasApi
+        .misCitas()
+        .then(l => vivo && setCitaProxima(proximaCita(l)))
+        .catch(() => vivo && setCitaProxima(null));
+      return () => {
+        vivo = false;
+      };
+    }, []),
+  );
 
   useFocusEffect(
     useCallback(() => {
@@ -742,6 +758,28 @@ const HomeScreen = () => {
         onScroll={handleScrollViewScroll}
         scrollEventThrottle={200}
         keyboardShouldPersistTaps="handled">
+        {citaProxima ? (
+          <Card
+            style={homeStyles.activeCard}
+            onPress={() => navigation.navigate('MisCitas')}
+            accessibilityLabel="Ver tu próxima cita">
+            <View style={homeStyles.activeRow}>
+              <View style={{flex: 1}}>
+                <AppText variant="caption" color={colors.yellow}>
+                  Tu próxima cita · {citaProxima.estado === 'confirmada' ? 'confirmada' : 'por confirmar'}
+                </AppText>
+                <AppText variant="title" color={colors.yellow} numberOfLines={1}>
+                  {cuandoCita(citaProxima)}
+                </AppText>
+                <AppText variant="body" color={colors.onNavy} numberOfLines={1}>
+                  {[citaProxima.nombre_servicio, citaProxima.nombre_taller].filter(Boolean).join(' · ')}
+                </AppText>
+              </View>
+              <ChevronRight color={colors.yellow} size={22} strokeWidth={2.5} />
+            </View>
+          </Card>
+        ) : null}
+
         {solicitudActiva ? (
           <Card
             style={homeStyles.activeCard}

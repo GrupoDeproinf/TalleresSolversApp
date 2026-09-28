@@ -2,9 +2,8 @@
 // Llamar · WhatsApp · Cómo llegar + la acción principal en amarillo.
 import React from 'react';
 import {View, Text, Pressable, StyleSheet} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {Phone, MessageCircle, Navigation} from 'lucide-react-native';
-import {Button} from './index';
+import {Button, useMargenesSistema} from './index';
 import {colors, fonts, space, shadow, TOUCH, MAX_FONT_SCALE} from './tokens';
 
 const Action = ({icon: Icon, label, onPress, disabled, color}) => (
@@ -36,7 +35,7 @@ const ContactBar = ({
   primary,
   hint,
 }) => {
-  const insets = useSafeAreaInsets();
+  const insets = useMargenesSistema();
   return (
     <View style={[bar.wrap, {paddingBottom: Math.max(insets.bottom, space.s) + 4}]}>
       {hint ? (
