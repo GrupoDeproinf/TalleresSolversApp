@@ -23,23 +23,16 @@ import {
   CheckCircle2,
   Info,
 } from 'lucide-react-native';
-import {Platform} from 'react-native';
-import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {colors, space, radius, type, fonts, shadow, TOUCH, MAX_FONT_SCALE} from './tokens';
 
 export * from './tokens';
 
 /**
- * Márgenes del sistema (barra de estado arriba, barra de gestos abajo).
- * En iOS la app ya está dentro del SafeAreaView de React Native (App.tsx), que
- * aplica esos márgenes: sumarlos otra vez los duplicaría. En Android ese
- * SafeAreaView no hace nada y, con edge-to-edge (targetSdk 35+), hay que
- * aplicarlos a mano.
+ * Márgenes del sistema que la pantalla debe sumar. Hoy siempre 0: en iOS los
+ * pone el SafeAreaView de App.tsx y en Android MainActivity (edge-to-edge,
+ * targetSdk 35+). Se deja el hook para no tocar las pantallas si cambia.
  */
-export const useMargenesSistema = () => {
-  const insets = useSafeAreaInsets();
-  return Platform.OS === 'android' ? {top: insets.top, bottom: insets.bottom} : {top: 0, bottom: 0};
-};
+export const useMargenesSistema = () => ({top: 0, bottom: 0});
 
 // ── Texto ──────────────────────────────────────────────────────────────────
 

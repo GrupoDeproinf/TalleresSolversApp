@@ -3,7 +3,9 @@ package com.solvers.app
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.graphics.Color
 import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
@@ -30,21 +32,32 @@ class MainActivity : ReactActivity() {
   }
 
   /**
-   * Teclado sobre los formularios (1.4.0).
+   * Márgenes del sistema y teclado (1.4.0).
    *
-   * Con targetSdk 35+ Android obliga el modo "edge-to-edge" e ignora
-   * android:windowSoftInputMode="adjustResize": la ventana ya no se achica al
-   * abrir el teclado y este tapa los campos. Aquí se devuelve ese
-   * comportamiento para TODA la app: el contenido recibe como margen inferior
-   * la altura del teclado, así el ScrollView de cada formulario se achica y el
-   * campo enfocado queda visible.
+   * Con targetSdk 35+ Android obliga el modo "edge-to-edge": la app se dibuja
+   * debajo de la barra de estado (hora, batería) y de la barra de gestos, e
+   * ignora android:windowSoftInputMode="adjustResize", así que el teclado
+   * tapaba los campos y los encabezados quedaban debajo de la hora.
+   *
+   * Se devuelve el comportamiento anterior para TODA la app:
+   * - arriba, el alto de la barra de estado (con el azul marino de la marca
+   *   detrás e íconos claros);
+   * - abajo, el alto del teclado cuando está abierto o, si no, el de la barra
+   *   de gestos.
+   * Las pantallas no tienen que sumar estos márgenes (en iOS ya los aplica el
+   * SafeAreaView de App.tsx).
    */
   private fun ajustarContenidoAlTeclado() {
+    window.decorView.setBackgroundColor(Color.parseColor("#1F2344"))
+    WindowCompat.getInsetsController(window, window.decorView).isAppearanceLightStatusBars = false
     val content = findViewById<View>(android.R.id.content) ?: return
     ViewCompat.setOnApplyWindowInsetsListener(content) { view, insets ->
+      val barras = insets.getInsets(WindowInsetsCompat.Type.systemBars())
       val teclado = insets.getInsets(WindowInsetsCompat.Type.ime()).bottom
-      if (view.paddingBottom != teclado) {
-        view.setPadding(view.paddingLeft, view.paddingTop, view.paddingRight, teclado)
+      val abajo = maxOf(teclado, barras.bottom)
+      if (view.paddingTop != barras.top || view.paddingBottom != abajo ||
+          view.paddingLeft != barras.left || view.paddingRight != barras.right) {
+        view.setPadding(barras.left, barras.top, barras.right, abajo)
       }
       insets
     }
