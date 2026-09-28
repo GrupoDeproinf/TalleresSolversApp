@@ -11,22 +11,24 @@ import {
   StyleSheet,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import {colors, fonts} from '../../ui/tokens';
 
+// Alias del sistema visual único (src/ui/tokens.js).
 export const C = {
-  navy: '#1F2344',
-  blue: '#000B7E',
-  yellow: '#FFD60A',
-  bg: '#F5F6FA',
-  card: '#FFFFFF',
-  border: '#E3E5EE',
-  text: '#1F2344',
-  muted: '#5B6078',
-  ok: '#1E8E4E',
-  okBg: '#E7F6EE',
-  error: '#C62828',
-  errorBg: '#FDECEC',
-  warn: '#B26A00',
-  warnBg: '#FFF4E0',
+  navy: colors.navy,
+  blue: colors.blue,
+  yellow: colors.yellow,
+  bg: colors.bg,
+  card: colors.card,
+  border: colors.border,
+  text: colors.text,
+  muted: colors.muted,
+  ok: colors.ok,
+  okBg: colors.okBg,
+  error: colors.error,
+  errorBg: colors.errorBg,
+  warn: colors.warn,
+  warnBg: colors.warnBg,
 };
 
 /** Encabezado del paso: "Paso 2 de 4 · Se guarda automáticamente" + barra. */
@@ -176,13 +178,13 @@ export const Card = ({children, style}) => <View style={[s.card, style]}>{childr
 
 export const s = StyleSheet.create({
   stepHeader: {marginBottom: 18},
-  stepCounter: {fontSize: 14, color: C.muted, marginBottom: 8},
+  stepCounter: {fontFamily: fonts.regular, fontSize: 14, color: C.muted, marginBottom: 8},
   progressTrack: {height: 8, borderRadius: 4, backgroundColor: C.border, overflow: 'hidden'},
   progressFill: {height: '100%', backgroundColor: C.yellow, borderRadius: 4},
-  stepTitle: {fontSize: 28, fontWeight: '800', color: C.navy, marginTop: 18},
-  stepSubtitle: {fontSize: 16, color: C.muted, marginTop: 4, lineHeight: 22},
+  stepTitle: {fontSize: 28, fontFamily: fonts.extrabold, color: C.navy, marginTop: 18},
+  stepSubtitle: {fontFamily: fonts.regular, fontSize: 16, color: C.muted, marginTop: 4, lineHeight: 22},
   field: {marginBottom: 16},
-  label: {fontSize: 15, fontWeight: '700', color: C.navy, marginBottom: 6},
+  label: {fontSize: 15, fontFamily: fonts.bold, color: C.navy, marginBottom: 6},
   fieldRow: {flexDirection: 'row', alignItems: 'center'},
   inputWrap: {
     flex: 1,
@@ -194,12 +196,12 @@ export const s = StyleSheet.create({
     backgroundColor: C.bg,
     paddingHorizontal: 14,
   },
-  input: {flex: 1, fontSize: 16, color: C.text, paddingVertical: 12},
+  input: {flex: 1, fontFamily: fonts.regular, fontSize: 16, color: C.text, paddingVertical: 12},
   eye: {minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center'},
   okIcon: {marginLeft: 6},
-  help: {fontSize: 13, color: C.muted, marginTop: 6},
-  error: {fontSize: 13, color: C.error, marginTop: 6, fontWeight: '600'},
-  okText: {fontSize: 13, color: C.ok, marginTop: 6, fontWeight: '600'},
+  help: {fontFamily: fonts.regular, fontSize: 13, color: C.muted, marginTop: 6},
+  error: {fontSize: 13, color: C.error, marginTop: 6, fontFamily: fonts.semibold},
+  okText: {fontSize: 13, color: C.ok, marginTop: 6, fontFamily: fonts.semibold},
   btn: {
     minHeight: 54,
     borderRadius: 16,
@@ -210,7 +212,7 @@ export const s = StyleSheet.create({
   btnPrimary: {backgroundColor: C.navy},
   btnSecondary: {backgroundColor: 'transparent', borderWidth: 1.5, borderColor: C.border},
   btnDisabled: {opacity: 0.45},
-  btnText: {fontSize: 17, fontWeight: '800'},
+  btnText: {fontSize: 17, fontFamily: fonts.extrabold},
   btnTextPrimary: {color: C.yellow},
   btnTextSecondary: {color: C.navy},
   banner: {
@@ -221,9 +223,9 @@ export const s = StyleSheet.create({
     marginBottom: 14,
     gap: 8,
   },
-  bannerText: {flex: 1, fontSize: 14, fontWeight: '600', lineHeight: 20},
+  bannerText: {flex: 1, fontSize: 14, fontFamily: fonts.semibold, lineHeight: 20},
   bannerAction: {minHeight: 44, justifyContent: 'center', paddingHorizontal: 6},
-  bannerActionText: {fontSize: 14, fontWeight: '800', textDecorationLine: 'underline'},
+  bannerActionText: {fontSize: 14, fontFamily: fonts.extrabold, textDecorationLine: 'underline'},
   chip: {
     minHeight: 44,
     paddingHorizontal: 16,
@@ -237,8 +239,8 @@ export const s = StyleSheet.create({
     marginBottom: 8,
   },
   chipOn: {backgroundColor: C.yellow, borderColor: C.yellow},
-  chipText: {fontSize: 15, color: C.navy, fontWeight: '600'},
-  chipTextOn: {fontWeight: '800'},
+  chipText: {fontSize: 15, color: C.navy, fontFamily: fonts.semibold},
+  chipTextOn: {fontFamily: fonts.extrabold},
   card: {
     backgroundColor: C.card,
     borderRadius: 18,
