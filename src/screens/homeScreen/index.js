@@ -17,25 +17,53 @@ import {
   Pressable,
 } from 'react-native';
 import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
-import HeaderContainer from '../../components/homeScreen/headerContainer';
-import SearchContainer from '../../components/homeScreen/searchContainer';
-import BannerContainer from '../../components/homeScreen/bannerContainer';
-import NewArrivalContainer from '../../components/homeScreen/newArrivalContainer';
-import styles from './style.css';
-import { newArrivalSmallData } from '../../data/homeScreen/newArrivalData';
-import { external } from '../../style/external.css';
-import { useValues } from '../../../App';
-import ProductSwiper from '../../components/homeScreen/productSwiper';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import api from '../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import ShowProductsContainer from '../../components/homeScreen/showProducts';
-// import Search from '../../components/icons/Search';
-import { Search } from '../../assets/icons/search';
-import { commonStyles, textRTLStyle } from '../../../src/style/commonStyle.css';
-import appColors from '../../../src/themes/appColors';
 import Geolocation from '@react-native-community/geolocation';
-import {Car, Gauge, Bell, ChevronRight, Sparkles, Wrench} from 'lucide-react-native';
+import {
+  Car,
+  Gauge,
+  Bell,
+  ChevronRight,
+  Sparkles,
+  Wrench,
+  Map as MapIcon,
+  Navigation,
+  Clock,
+  Star,
+  SearchX,
+} from 'lucide-react-native';
+import {
+  AppText,
+  Banner,
+  Card,
+  Chip,
+  EmptyState,
+  IconButton,
+  SearchBar,
+  TallerCard,
+  TallerCardSkeleton,
+  colors,
+  space,
+  radius,
+} from '../../ui';
+import {
+  firstImage,
+  formatKm,
+  formatPrice,
+  formatRating,
+  openState,
+  priceValue,
+  ratingValue,
+  sentenceCase,
+  serviceDistanceKm,
+} from '../../utils/taller';
+import useServiciosCercanos, {
+  MIN_RATING,
+  NEAR_KM,
+  PAGE_SIZE,
+} from './useServiciosCercanos';
 import Icons from 'react-native-vector-icons/FontAwesome5';
 import {
   fetchHomeDueMaintenanceAlerts,
@@ -91,27 +119,11 @@ const flattenUserDataFromGetUserResponse = data => {
 };
 
 const HomeScreen = () => {
-  const { bgFullStyle, t } = useValues();
   const navigation = useNavigation();
-  const [data, setData] = useState([]);
-  const [originalData, setOriginalData] = useState([]);
-  const [dataByCategory, setDataByCategory] = useState(null);
-  const [dataByCategoryOriginal, setdataByCategoryOriginal] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const [searchText, setSearchText] = useState('');
   const [categories, setCategories] = useState([]);
-  const [originalCategory, setoriginalCategory] = useState([]);
   const [location, setLocation] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [locationAttempted, setLocationAttempted] = useState(false);
-  const [pageIndex, setPageIndex] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [isFocusedSearch, setIsFocusedSearch] = useState(false);
-  const PAGE_SIZE = 10;
-  const scrollEndTriggered = useRef(false);
-  const searchDebounceRef = useRef(null);
-  const searchTextRef = useRef('');
 
   const [vehiclePickerModalVisible, setVehiclePickerModalVisible] = useState(false);
   const [kmUpdateModalVisible, setKmUpdateModalVisible] = useState(false);
@@ -421,244 +433,70 @@ const HomeScreen = () => {
     }, [loadUserVehiclesForReminder]),
   );
 
-  const normalizeString = (str) => {
-    if (!str || typeof str !== 'string') return '';
-    return str
-      .toLowerCase()
-      .replace(/[áàäâ]/g, 'a')
-      .replace(/[éèëê]/g, 'e')
-      .replace(/[íìïî]/g, 'i')
-      .replace(/[óòöô]/g, 'o')
-      .replace(/[úùüû]/g, 'u')
-      .replace(/ñ/g, 'n');
-  };
+  const {
+    query,
+    setQuery,
+    searching,
+    debouncedQuery,
+    category,
+    setCategory,
+    filters,
+    toggleFilter,
+    anyFilter,
+    clearAll,
+    items,
+    status,
+    error: listError,
+    reload,
+    loadMore,
+    loadingMore,
+    hasMore,
+  } = useServiciosCercanos({location, ready: locationAttempted});
 
-  const fetchWithFilterAndCategory = useCallback(async (filterValue) => {
-    const uidCategoria = selectedCategory && selectedCategory !== 'Todos' ? selectedCategory : '';
+  const [firstName, setFirstName] = useState('');
+  const [solicitudActiva, setSolicitudActiva] = useState(null);
 
-    setPageIndex(1);
-    setHasMore(true);
-    scrollEndTriggered.current = false;
-    setData([]);
-    setOriginalData([]);
-    setDataByCategory([]);
-    setdataByCategoryOriginal([]);
-
-    try {
-      const body = {
-        pageIndex: 1,
-        pageSize: PAGE_SIZE,
-        filter: filterValue || '',
-        uid_categoria: uidCategoria,
-        id: '',
-        latitude: location?.latitude ?? '',
-        longitude: location?.longitude ?? '',
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      (async () => {
+        try {
+          const j = await AsyncStorage.getItem('@userInfo');
+          const u = j ? JSON.parse(j) : null;
+          if (!active || !u) return;
+          setFirstName(String(u?.nombre || '').trim().split(/\s+/)[0] || '');
+          if (!u?.uid) return;
+          const r = await api.post('usuarios/getSolicitudesByUsuario', {
+            uid_usuario: u.uid,
+            solo_ultima: true,
+            status: 'En espera por aprobación',
+          });
+          const raw = r?.data;
+          const item =
+            raw && typeof raw === 'object' && !Array.isArray(raw) && raw.id
+              ? raw
+              : Array.isArray(raw) && raw.length > 0
+              ? raw[0]
+              : null;
+          if (active) setSolicitudActiva(item);
+        } catch (_) {
+          if (active) setSolicitudActiva(null);
+        }
+      })();
+      return () => {
+        active = false;
       };
-      console.log('body', body);
-      const response = await api.post('/home/getServiciosPaginados', body);
-      const newItems = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
-      const hasMorePages = newItems.length >= PAGE_SIZE;
-
-      if (uidCategoria) {
-        setDataByCategory(newItems);
-        setdataByCategoryOriginal(newItems);
-      } else {
-        setData(newItems);
-        setOriginalData(newItems);
-        setDataByCategory(newItems);
-        setdataByCategoryOriginal(newItems);
-      }
-      setHasMore(hasMorePages);
-      setPageIndex(1);
-    } catch (error) {
-      console.error('Error fetching search data:', error);
-      setData([]);
-      setOriginalData([]);
-      setDataByCategory([]);
-      setdataByCategoryOriginal([]);
-    }
-  }, [selectedCategory, location]);
-
-  const SEARCH_DEBOUNCE_MS = 1500;
-
-  const handleSearchChange = useCallback((text) => {
-    setSearchText(text);
-    searchTextRef.current = text;
-    if (searchDebounceRef.current) {
-      clearTimeout(searchDebounceRef.current);
-      searchDebounceRef.current = null;
-    }
-    searchDebounceRef.current = setTimeout(() => {
-      searchDebounceRef.current = null;
-      const filterToSend = searchTextRef.current;
-      fetchWithFilterAndCategory(filterToSend);
-    }, SEARCH_DEBOUNCE_MS);
-  }, [fetchWithFilterAndCategory]);
-
-  const updateCategories = (data) => {
-    const uniqueCategories = [...new Set(data.map(item => item.categoria))];
-    const updatedCategories = originalCategory.filter(category =>
-      category.id === 'Todos' || uniqueCategories.includes(category.nombre)
-    );
-    setCategories(updatedCategories);
-  };
-
-  const fetchProductsPage = useCallback(async (page, { append = false } = {}) => {
-    const uidCategoria = selectedCategory && selectedCategory !== 'Todos' ? selectedCategory : '';
-    const body = {
-      pageIndex: page,
-      pageSize: PAGE_SIZE,
-      filter: searchText || '',
-      uid_categoria: uidCategoria || '',
-      id: '',
-      latitude: location?.latitude ?? '',
-      longitude: location?.longitude ?? '',
-    };
-    console.log('body', body);
-    try {
-      const response = await api.post('/home/getServiciosPaginados', body);
-      const newItems = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
-      const hasMorePages = newItems.length >= PAGE_SIZE;
-
-      console.log("response", response);
-      console.log("newItems", newItems);
-
-      if (append) {
-        if (uidCategoria) {
-          setDataByCategory(prev => (prev ? [...prev, ...newItems] : newItems));
-          setdataByCategoryOriginal(prev => (prev ? [...prev, ...newItems] : newItems));
-        } else {
-          setData(prev => [...prev, ...newItems]);
-          setOriginalData(prev => [...prev, ...newItems]);
-          setDataByCategory(prev => (prev ? [...prev, ...newItems] : newItems));
-          setdataByCategoryOriginal(prev => (prev ? [...prev, ...newItems] : newItems));
-        }
-      } else {
-        if (uidCategoria) {
-          setDataByCategory(newItems);
-          setdataByCategoryOriginal(newItems);
-        } else {
-          setData(newItems);
-          setOriginalData(newItems);
-          setDataByCategory(newItems);
-          setdataByCategoryOriginal(newItems);
-        }
-      }
-      setHasMore(hasMorePages);
-      setPageIndex(page);
-    } catch (error) {
-      console.error('Error fetching paginated data:', error);
-      setHasMore(false);
-    } finally {
-      setLoadingMore(false);
-      if (append) scrollEndTriggered.current = false;
-    }
-  }, [selectedCategory, searchText, location]);
-
-  const loadMoreProducts = useCallback(() => {
-    if (loadingMore || !hasMore) return;
-    setLoadingMore(true);
-    scrollEndTriggered.current = true;
-    const nextPage = pageIndex + 1;
-    fetchProductsPage(nextPage, { append: true });
-  }, [loadingMore, hasMore, pageIndex, fetchProductsPage]);
-
-  const handleScrollViewScroll = useCallback(
-    ({ nativeEvent }) => {
-      const { contentOffset, contentSize, layoutMeasurement } = nativeEvent;
-      const padding = 120;
-      const isNearBottom =
-        contentOffset.y + layoutMeasurement.height >= contentSize.height - padding;
-
-      if (isNearBottom) {
-        if (!scrollEndTriggered.current && hasMore && !loadingMore) {
-          loadMoreProducts();
-        }
-      } else {
-        scrollEndTriggered.current = false;
-      }
-    },
-    [hasMore, loadingMore, loadMoreProducts]
+    }, []),
   );
 
-  const getData = useCallback(async () => {
-    try {
-      setPageIndex(1);
-      setHasMore(true);
-      const uidCategoria = '';
-      const body = {
-        pageIndex: 1,
-        pageSize: PAGE_SIZE,
-        filter: '',
-        uid_categoria: uidCategoria,
-        id: '',
-        latitude: location?.latitude ?? '',
-        longitude: location?.longitude ?? '',
-      };
-      console.log('body', body);
-      const response = await api.post('/home/getServiciosPaginados', body);
-      const newItems = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
-      const hasMorePages = newItems.length >= PAGE_SIZE;
-
-      setData(newItems);
-      setOriginalData(newItems);
-      setDataByCategory(newItems);
-      setdataByCategoryOriginal(newItems);
-      setHasMore(hasMorePages);
-      setPageIndex(1);
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      setData([]);
-      setOriginalData([]);
-      setCategories([]);
-    }
-  }, [location]);
-
-  const getDataByCategories = useCallback(async (category, filterValue) => {
-    try {
-      setSelectedCategory(category);
-      setPageIndex(1);
-      setHasMore(true);
-      const body = {
-        pageIndex: 1,
-        pageSize: PAGE_SIZE,
-        filter: filterValue ?? searchText ?? '',
-        uid_categoria: category === 'Todos' ? '' : category,
-        id: '',
-        latitude: location?.latitude ?? '',
-        longitude: location?.longitude ?? '',
-      };
-      console.log('body', body);
-      const response = await api.post('/home/getServiciosPaginados', body);
-      const newItems = Array.isArray(response.data) ? response.data : response.data?.data ?? [];
-      const hasMorePages = newItems.length >= PAGE_SIZE;
-
-      setDataByCategory(newItems);
-      setdataByCategoryOriginal(newItems);
-      setHasMore(hasMorePages);
-      setPageIndex(1);
-    } catch (error) {
-      console.error('Error fetching category data:', error);
-      setDataByCategory([]);
-      setdataByCategoryOriginal([]);
-      setSelectedCategory(category);
-    }
-  }, [searchText, location]);
-
-  const returnValues = useCallback(
-    category => {
-      console.log('Selected category:', category);
-
-
-      if (category === 'Todos') {
-        setDataByCategory(null);
-        setSelectedCategory(null);
-        getData();
-      } else {
-        getDataByCategories(category);
+  const handleScrollViewScroll = useCallback(
+    ({nativeEvent}) => {
+      const {contentOffset, contentSize, layoutMeasurement} = nativeEvent;
+      if (contentOffset.y + layoutMeasurement.height >= contentSize.height - 240) {
+        loadMore();
       }
     },
-    [getDataByCategories],
+    [loadMore],
   );
 
   // Lo primero al entrar: solicitar ubicación (lat/lng), luego cargar categorías
@@ -667,18 +505,6 @@ const HomeScreen = () => {
     requestLocationPermission();
   }, []);
 
-  // Cuando ya se intentó obtener ubicación (éxito o fallo), cargar datos con lat/lng
-  useEffect(() => {
-    if (locationAttempted) {
-      getData();
-    }
-  }, [locationAttempted, getData]);
-
-  useEffect(() => {
-    return () => {
-      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current);
-    };
-  }, []);
 
 
   const getCategories = async () => {
@@ -696,17 +522,14 @@ const HomeScreen = () => {
           console.log('Categories:', result.categories);
           result.categories.unshift({ id: 'Todos', nombre: 'Todos' });
           setCategories(result.categories);
-          setoriginalCategory(result.categories)
         } else {
           console.warn(
             'La respuesta no contiene un array válido de categorías.',
           );
           setCategories([]);
-          setoriginalCategory([])
         }
       } else {
         setCategories([]);
-        setoriginalCategory([])
       }
     } catch (error) {
       setCategories([]);
@@ -843,143 +666,196 @@ const HomeScreen = () => {
     requestLocationPermission();
   };
 
-  // Función para obtener la ubicación actual (para uso en otros componentes)
-  const getCurrentLocationData = () => {
-    return location;
+  const categoryChips = useMemo(
+    () => (categories || []).filter(c => c?.id && c.id !== 'Todos' && c?.nombre),
+    [categories],
+  );
+
+  const sectionTitle = debouncedQuery
+    ? `Resultados para “${debouncedQuery}”`
+    : filters.open
+    ? location
+      ? 'Abiertos ahora, cerca de ti'
+      : 'Abiertos ahora'
+    : location
+    ? 'Cerca de ti'
+    : 'Servicios';
+
+  const renderServicio = item => {
+    const t = item?.taller || {};
+    const km = serviceDistanceKm(item, location);
+    const rating = ratingValue(item);
+    const price = priceValue(item);
+    const cat = item?.nombre_categoria || item?.categoria;
+    return (
+      <TallerCard
+        key={item.id || item.uid_servicio}
+        title={sentenceCase(item?.nombre_servicio) || 'Servicio'}
+        subtitle={sentenceCase(t?.nombre || t?.nombre_taller) || undefined}
+        imageUri={firstImage(item?.service_image) || firstImage(t?.image_perfil)}
+        distance={formatKm(km)}
+        rating={formatRating(rating)}
+        open={openState(t?.horarios_atencion)}
+        tag={cat ? sentenceCase(cat) : undefined}
+        price={formatPrice(price)}
+        onPress={() =>
+          navigation.navigate('ProductDetailOne', {uid: item.uid_servicio || item.id})
+        }
+      />
+    );
   };
 
-
-  // const displayData = useMemo(() => 
-  //   dataByCategory !== null
-  //     ? dataByCategory.length > 0
-  //       ? dataByCategory
-  //       : data
-  //     : data,
-  //   [dataByCategory, data]
-  // );
-
-  const displayData = useMemo(() =>
-    dataByCategory !== null
-      ? dataByCategory.length > 0
-        ? dataByCategory
-        : []
-      : [],
-    [dataByCategory, data]
-  );
-
-  const displayTitle = useMemo(() =>
-    selectedCategory
-      ? dataByCategory && dataByCategory.length > 0
-        ? `Servicios seleccionados`
-        : 'Servicios'
-      : 'Servicios',
-    [selectedCategory, dataByCategory]
-  );
-
   return (
-
     <>
-      <View
-        style={{
-          backgroundColor: '#1F2344',
-          borderBottomWidth: 7,
-          borderBottomColor: '#FFD60A',
-          borderBottomLeftRadius: 25,
-          borderBottomRightRadius: 25,
-          overflow: 'hidden',
-        }}>
-        <HeaderContainer />
+      <View style={homeStyles.header}>
+        <View style={homeStyles.headerTop}>
+          <View style={{flex: 1}}>
+            <AppText variant="body" color={colors.onNavyMuted}>
+              {firstName ? `Hola, ${firstName}` : 'Hola'}
+            </AppText>
+            <AppText variant="display" color={colors.onNavy} accessibilityRole="header">
+              ¿Qué necesita tu carro?
+            </AppText>
+          </View>
+          <IconButton
+            icon={MapIcon}
+            label="Ver talleres en el mapa"
+            color={colors.yellow}
+            bg="rgba(255,255,255,0.1)"
+            onPress={() => navigation.navigate('RadioSelector')}
+          />
+        </View>
+        <SearchBar
+          value={query}
+          onChangeText={setQuery}
+          placeholder="Ej: frenos, cambio de aceite, cauchos…"
+          style={{marginTop: space.m}}
+        />
       </View>
 
       <ScrollView
-        contentContainerStyle={[external.Pb_80]}
-        style={[styles.container, { backgroundColor: 'white' }]}
+        style={homeStyles.scroll}
+        contentContainerStyle={homeStyles.scrollContent}
         showsVerticalScrollIndicator={false}
         onScroll={handleScrollViewScroll}
         scrollEventThrottle={200}
-      >
+        keyboardShouldPersistTaps="handled">
+        {solicitudActiva ? (
+          <Card
+            style={homeStyles.activeCard}
+            onPress={() => navigation.navigate('DrawerScreen', {screen: 'MisSolicitudes'})}
+            accessibilityLabel="Ver tu solicitud en curso">
+            <View style={homeStyles.activeRow}>
+              <View style={{flex: 1}}>
+                <AppText variant="caption" color={colors.yellow}>
+                  Tu solicitud en curso
+                </AppText>
+                <AppText variant="subtitle" color={colors.onNavy} numberOfLines={1}>
+                  {String(solicitudActiva?.nombre_solicitud || '').trim() || 'Solicitud de servicio'}
+                </AppText>
+                <AppText variant="caption" color={colors.onNavyMuted}>
+                  Esperando respuesta de los talleres · toca para ver propuestas
+                </AppText>
+              </View>
+              <ChevronRight color={colors.yellow} size={22} strokeWidth={2.5} />
+            </View>
+          </Card>
+        ) : null}
 
-        <View
-          style={[styles.searchBar, isFocusedSearch && styles.searchBarFocused]}>
-          <View style={styles.searchIconWrap}>
-            <Search color={'#2D3261'} size={17} />
-          </View>
-          <TextInput
-            placeholder="Filtrar por servicio, taller, estado y categoria"
-            placeholderTextColor={appColors.subtitle}
-            style={[
-              external.ph_5,
-              commonStyles.subtitleText,
-              styles.searchInput,
-              { textAlign: textRTLStyle },
-            ]}
-            onChangeText={handleSearchChange}
-            value={searchText}
-            onFocus={() => setIsFocusedSearch(true)}
-            onBlur={() => setIsFocusedSearch(false)}
+        {categoryChips.length ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={homeStyles.chipsRow}>
+            <Chip label="Todos" selected={!category} onPress={() => setCategory(null)} />
+            {categoryChips.map(c => (
+              <Chip
+                key={c.id}
+                label={sentenceCase(c.nombre)}
+                selected={category === c.id}
+                onPress={() => setCategory(category === c.id ? null : c.id)}
+              />
+            ))}
+          </ScrollView>
+        ) : null}
+
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={homeStyles.chipsRow}>
+          <Chip
+            icon={Navigation}
+            label={`A menos de ${NEAR_KM} km`}
+            selected={filters.near}
+            onPress={() => toggleFilter('near')}
           />
-          {searchText.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearchChange('')} activeOpacity={0.8}>
-              <Text style={styles.searchClearText}>✕</Text>
-            </TouchableOpacity>
-          )}
+          <Chip
+            icon={Clock}
+            label="Abierto ahora"
+            selected={filters.open}
+            onPress={() => toggleFilter('open')}
+          />
+          <Chip
+            icon={Star}
+            label={`${MIN_RATING}★ o más`}
+            selected={filters.rated}
+            onPress={() => toggleFilter('rated')}
+          />
+        </ScrollView>
+
+        {filters.near && !location ? (
+          <Banner
+            tone="warn"
+            text="Activa tu ubicación para ver los talleres cercanos."
+            actionLabel="Activar"
+            onAction={updateLocation}
+            style={homeStyles.block}
+          />
+        ) : null}
+
+        <View style={homeStyles.sectionHead}>
+          <AppText variant="title" style={{flex: 1}} numberOfLines={2}>
+            {sectionTitle}
+          </AppText>
+          {searching ? <ActivityIndicator color={colors.navy} /> : null}
         </View>
 
-
-
-        <BannerContainer />
-
-        <ProductSwiper returnValues={returnValues} categories={categories.length == 0 ? [] : categories} />
-
-        {displayData.length === 0 && (
-          <View
-            style={{
-              marginHorizontal: 16,
-              marginTop: 0,
-              marginBottom: 6,
-              paddingVertical: 18,
-              paddingHorizontal: 16,
-              alignItems: 'center',
-              borderRadius: 16,
-              backgroundColor: '#F8FAFF',
-              borderWidth: 1,
-              borderColor: '#D9E0F2',
-            }}>
-            <Text
-              style={{
-                fontSize: 12,
-                fontWeight: '800',
-                color: '#1F2344',
-                letterSpacing: 0.6,
-                marginBottom: 10,
-              }}>
-              {/* SERVICIOS */}
-            </Text>
-            <Text style={{ fontSize: 15, color: '#4B5563', textAlign: 'center' }}>
-              {(() => {
-                const value = 'No se encontraron servicios para la categoría seleccionada.';
-                const lower = value.toLowerCase();
-                return lower.charAt(0).toUpperCase() + lower.slice(1);
-              })()}
-            </Text>
+        {status === 'loading' ? (
+          <View style={homeStyles.list}>
+            <TallerCardSkeleton />
+            <TallerCardSkeleton />
+            <TallerCardSkeleton />
+          </View>
+        ) : status === 'error' ? (
+          <Banner text={listError} actionLabel="Reintentar" onAction={reload} style={homeStyles.block} />
+        ) : items.length === 0 ? (
+          <EmptyState
+            icon={SearchX}
+            title={anyFilter || debouncedQuery || category ? 'No encontramos servicios con esa búsqueda' : 'Aún no hay servicios cerca'}
+            message={
+              anyFilter || debouncedQuery || category
+                ? 'Prueba con otra palabra o quita algunos filtros.'
+                : 'Mira el mapa para ver talleres en tu zona.'
+            }
+            actionLabel={anyFilter || debouncedQuery || category ? 'Quitar filtros' : 'Ver mapa'}
+            onAction={
+              anyFilter || debouncedQuery || category
+                ? clearAll
+                : () => navigation.navigate('RadioSelector')
+            }
+          />
+        ) : (
+          <View style={homeStyles.list}>
+            {items.map(renderServicio)}
+            {loadingMore ? (
+              <ActivityIndicator color={colors.navy} style={{marginVertical: space.m}} />
+            ) : !hasMore && !anyFilter && items.length > PAGE_SIZE ? (
+              <AppText variant="caption" color={colors.muted} style={{textAlign: 'center', marginVertical: space.m}}>
+                Eso es todo por ahora
+              </AppText>
+            ) : null}
           </View>
         )}
-
-        <ShowProductsContainer
-          data={displayData}
-          // value={String(displayTitle || '').toUpperCase()}
-          value={''}
-          show={true}
-          showPlus={true}
-          userLocation={location}
-          onEndReached={loadMoreProducts}
-          loadingMore={loadingMore}
-          hasMore={hasMore}
-          marginTop={-10}
-        />
-
-
-
       </ScrollView>
 
       {/* ── Modal de alerta genérico (reemplaza Alert.alert en toda la pantalla) ── */}
@@ -2083,6 +1959,37 @@ const vehicleReminderStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '800',
   },
+});
+
+const homeStyles = StyleSheet.create({
+  header: {
+    backgroundColor: colors.navy,
+    paddingHorizontal: space.m,
+    paddingTop: space.m,
+    paddingBottom: space.m + 4,
+    borderBottomLeftRadius: radius.xl,
+    borderBottomRightRadius: radius.xl,
+  },
+  headerTop: {flexDirection: 'row', alignItems: 'flex-start', gap: space.s},
+  scroll: {flex: 1, backgroundColor: colors.bg},
+  scrollContent: {paddingBottom: 96, paddingTop: space.m},
+  chipsRow: {paddingHorizontal: space.m, paddingBottom: space.s},
+  sectionHead: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: space.m,
+    marginTop: space.s,
+    marginBottom: 12,
+    gap: space.s,
+  },
+  list: {paddingHorizontal: space.m},
+  block: {marginHorizontal: space.m, marginBottom: 12},
+  activeCard: {
+    marginHorizontal: space.m,
+    backgroundColor: colors.navy,
+    borderColor: colors.navy,
+  },
+  activeRow: {flexDirection: 'row', alignItems: 'center', gap: space.s},
 });
 
 const appAlertModalStyles = StyleSheet.create({
