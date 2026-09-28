@@ -45,6 +45,8 @@ import {
 import {OPCIONES_HORA, hora12} from '../../../utils/taller';
 import {direccionDesdeCoordenadas} from '../../../utils/geocoding';
 import PhoneInput from '../../../ui/PhoneInput';
+import useDisponibilidad, {MSG_CORREO_EXISTE, MSG_TELEFONO_EXISTE} from '../../../components/registro/useDisponibilidad';
+import IrALogin from '../../../components/registro/IrALogin';
 import {mostrarTelefono} from '../../../utils/telefono';
 import {iniciarSesionTrasRegistro, obtenerTokenPushSeguro} from '../../../utils/authSession';
 
@@ -223,11 +225,15 @@ const SignUpTaller = ({navigation}) => {
   const touch = k => () => setTouched(t => ({...t, [k]: true}));
   const touchMany = keys => setTouched(t => keys.reduce((a, k) => ({...a, [k]: true}), {...t}));
 
+  // Correo y teléfono: se verifica si ya tienen cuenta mientras se escribe.
+  const dispEmail = useDisponibilidad('email', f.email.trim().toLowerCase(), !validarCorreo(f.email));
+  const dispPhone = useDisponibilidad('phone', normalizarTelefono(f.phone), !validarTelefono(f.phone));
+
   const errores = useMemo(() => {
     const e = {
       responsable: validarNombre(f.responsable, 'el nombre del responsable'),
-      email: validarCorreo(f.email),
-      phone: validarTelefono(f.phone),
+      email: validarCorreo(f.email) || (dispEmail === 'taken' ? MSG_CORREO_EXISTE : ''),
+      phone: validarTelefono(f.phone) || (dispPhone === 'taken' ? MSG_TELEFONO_EXISTE : ''),
       whatsapp: f.whatsappIgual ? '' : validarTelefono(f.whatsapp),
       password: validarPassword(password),
       nombre: validarNombre(f.nombre, 'el nombre del taller'),
@@ -245,7 +251,7 @@ const SignUpTaller = ({navigation}) => {
       if (mal) e.horario = `El ${mal.label} cierra antes de abrir: revisa las horas.`;
     }
     return e;
-  }, [f, password]);
+  }, [f, password, dispEmail, dispPhone]);
 
   const CAMPOS_PASO = {
     1: ['responsable', 'email', 'phone', 'whatsapp', 'password'],
@@ -479,11 +485,17 @@ const SignUpTaller = ({navigation}) => {
         onChangeText={v => set('responsable', v)} onBlur={touch('responsable')} error={show('responsable')}
         ok={touched.responsable && !errores.responsable} autoCapitalize="words" textContentType="name" />
       <Field label="Correo" placeholder="taller@gmail.com" value={f.email} onChangeText={v => set('email', v)}
-        onBlur={touch('email')} error={show('email')} ok={touched.email && !errores.email}
-        help="Lo usarás para entrar. Te avisamos aquí cuando revisemos tu negocio." keyboardType="email-address"
-        autoCapitalize="none" autoCorrect={false} textContentType="emailAddress" />
+        onBlur={touch('email')} error={dispEmail === 'taken' ? MSG_CORREO_EXISTE : show('email')}
+        ok={dispEmail === 'ok' || (touched.email && !errores.email && dispEmail === 'error')}
+        okText={dispEmail === 'ok' ? 'Correo disponible' : undefined}
+        help={dispEmail === 'checking' ? 'Verificando que el correo esté disponible…' : 'Lo usarás para entrar. Te avisamos aquí cuando revisemos tu negocio.'}
+        keyboardType="email-address" autoCapitalize="none" autoCorrect={false} textContentType="emailAddress" />
+      {dispEmail === 'taken' ? <IrALogin onPress={() => navigation.navigate('Login')} /> : null}
       <PhoneInput label="Teléfono" value={f.phone} onChange={v => set('phone', v)} onBlur={touch('phone')}
-        error={show('phone')} ok={touched.phone && !errores.phone} />
+        error={dispPhone === 'taken' ? MSG_TELEFONO_EXISTE : show('phone')}
+        ok={dispPhone === 'ok' || (touched.phone && !errores.phone && dispPhone === 'error')}
+        help={dispPhone === 'checking' ? 'Verificando que el teléfono esté disponible…' : undefined} />
+      {dispPhone === 'taken' ? <IrALogin onPress={() => navigation.navigate('Login')} /> : null}
       <TouchableOpacity style={st.check} onPress={() => set('whatsappIgual', !f.whatsappIgual)} accessibilityRole="checkbox"
         accessibilityState={{checked: f.whatsappIgual}}>
         <Ionicons name={f.whatsappIgual ? 'checkbox' : 'square-outline'} size={24} color={C.navy} />

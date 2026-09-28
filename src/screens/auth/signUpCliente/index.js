@@ -21,6 +21,8 @@ import api from '../../../../axiosInstance';
 import {C, Field, PrimaryButton, Banner} from '../../../components/registro/ui';
 import TermsModal from '../../../components/registro/TermsModal';
 import PhoneInput from '../../../ui/PhoneInput';
+import useDisponibilidad, {MSG_CORREO_EXISTE, MSG_TELEFONO_EXISTE} from '../../../components/registro/useDisponibilidad';
+import IrALogin from '../../../components/registro/IrALogin';
 import {
   validarNombre,
   validarCorreo,
@@ -61,10 +63,14 @@ const SignUpCliente = ({navigation}) => {
     AsyncStorage.setItem(DRAFT_KEY, JSON.stringify({nombre, email, phone})).catch(() => {});
   }, [form.nombre, form.email, form.phone]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Correo y teléfono: se verifica si ya tienen cuenta mientras se escribe.
+  const dispEmail = useDisponibilidad('email', form.email.trim().toLowerCase(), !validarCorreo(form.email));
+  const dispPhone = useDisponibilidad('phone', normalizarTelefono(form.phone), !validarTelefono(form.phone));
+
   const errors = {
     nombre: validarNombre(form.nombre, 'tu nombre'),
-    email: validarCorreo(form.email),
-    phone: validarTelefono(form.phone),
+    email: validarCorreo(form.email) || (dispEmail === 'taken' ? MSG_CORREO_EXISTE : ''),
+    phone: validarTelefono(form.phone) || (dispPhone === 'taken' ? MSG_TELEFONO_EXISTE : ''),
     password: validarPassword(form.password),
   };
   const isValid = !Object.values(errors).some(Boolean);
@@ -175,23 +181,26 @@ const SignUpCliente = ({navigation}) => {
             value={form.email}
             onChangeText={set('email')}
             onBlur={touch('email')}
-            error={show('email')}
-            ok={touched.email && !errors.email}
-            help="Lo usarás para entrar y recuperar tu cuenta."
+            error={dispEmail === 'taken' ? MSG_CORREO_EXISTE : show('email')}
+            ok={dispEmail === 'ok' || (touched.email && !errors.email && dispEmail === 'error')}
+            okText={dispEmail === 'ok' ? 'Correo disponible' : undefined}
+            help={dispEmail === 'checking' ? 'Verificando que el correo esté disponible…' : 'Lo usarás para entrar y recuperar tu cuenta.'}
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
             textContentType="emailAddress"
           />
+          {dispEmail === 'taken' ? <IrALogin onPress={() => navigation.navigate('Login')} /> : null}
           <PhoneInput
             label="Teléfono"
             value={form.phone}
             onChange={set('phone')}
             onBlur={touch('phone')}
-            error={show('phone')}
-            ok={touched.phone && !errors.phone}
-            help="Los talleres te contactarán por aquí."
+            error={dispPhone === 'taken' ? MSG_TELEFONO_EXISTE : show('phone')}
+            ok={dispPhone === 'ok' || (touched.phone && !errors.phone && dispPhone === 'error')}
+            help={dispPhone === 'checking' ? 'Verificando que el teléfono esté disponible…' : 'Los talleres te contactarán por aquí.'}
           />
+          {dispPhone === 'taken' ? <IrALogin onPress={() => navigation.navigate('Login')} /> : null}
           <Field
             label="Contraseña"
             placeholder="Mínimo 6 caracteres"
