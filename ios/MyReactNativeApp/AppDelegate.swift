@@ -11,6 +11,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
   var window: UIWindow?
   var reactNativeDelegate: ReactNativeDelegate?
   var reactNativeFactory: RCTReactNativeFactory?
+  var launchOptions: [UIApplication.LaunchOptionsKey: Any]?
 
   func application(
     _ application: UIApplication,
@@ -26,38 +27,75 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
       didFinishLaunchingWithOptions: launchOptions
     )
 
-    // 🧪 LOG para validar que Facebook SDK cargó correctamente
-    print("📘 Facebook App ID:", Settings.shared.appID ?? "NO FACEBOOK APP ID")
-
-    // ⚛️ React Native
+    // ⚛️ React Native: se prepara aqui; la ventana la crea SceneDelegate.
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
 
     reactNativeDelegate = delegate
     reactNativeFactory = factory
-
-    window = UIWindow(frame: UIScreen.main.bounds)
-
-    factory.startReactNative(
-      withModuleName: "MyReactNativeApp",
-      in: window,
-      launchOptions: launchOptions
-    )
+    self.launchOptions = launchOptions
 
     return true
   }
 
-  // 🔗 Necesario para Login / Deep Links de Facebook
+  // iOS 27+: las apps compiladas con el SDK nuevo DEBEN usar el ciclo de vida
+  // de escenas (UIScene). Sin esto iOS cierra la app al abrirla
+  // (_UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption).
   func application(
     _ application: UIApplication,
-    open url: URL,
-    options: [UIApplication.OpenURLOptionsKey : Any] = [:]
-  ) -> Bool {
-    return ApplicationDelegate.shared.application(
-      application,
-      open: url,
-      options: options
+    configurationForConnecting connectingSceneSession: UISceneSession,
+    options: UIScene.ConnectionOptions
+  ) -> UISceneConfiguration {
+    let config = UISceneConfiguration(name: "Default Configuration", sessionRole: connectingSceneSession.role)
+    config.delegateClass = SceneDelegate.self
+    return config
+  }
+}
+
+// 🪟 Crea la ventana y arranca React Native dentro de la escena.
+class SceneDelegate: UIResponder, UIWindowSceneDelegate {
+
+  var window: UIWindow?
+
+  func scene(
+    _ scene: UIScene,
+    willConnectTo session: UISceneSession,
+    options connectionOptions: UIScene.ConnectionOptions
+  ) {
+    guard let windowScene = scene as? UIWindowScene,
+          let appDelegate = UIApplication.shared.delegate as? AppDelegate,
+          let factory = appDelegate.reactNativeFactory else { return }
+
+    let window = UIWindow(windowScene: windowScene)
+    self.window = window
+    appDelegate.window = window // algunas librerias leen AppDelegate.window
+
+    factory.startReactNative(
+      withModuleName: "MyReactNativeApp",
+      in: window,
+      launchOptions: appDelegate.launchOptions
+    )
+
+    // Enlace con el que se abrio la app (p. ej. regreso del login de Facebook)
+    if let context = connectionOptions.urlContexts.first {
+      openURL(context)
+    }
+  }
+
+  // 🔗 Necesario para Login / Deep Links de Facebook (con escenas llega aqui)
+  func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    if let context = URLContexts.first {
+      openURL(context)
+    }
+  }
+
+  private func openURL(_ context: UIOpenURLContext) {
+    ApplicationDelegate.shared.application(
+      UIApplication.shared,
+      open: context.url,
+      sourceApplication: context.options.sourceApplication,
+      annotation: context.options.annotation
     )
   }
 }
