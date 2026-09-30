@@ -1115,17 +1115,18 @@ const ProductDetailOne = ({ navigation }) => {
           canCall={puedeLlamar(tallerPhone(dataTaller))}
           canWhatsApp={puedeWhatsApp(tallerWhatsApp(dataTaller))}
           canDirections={!!(dataTaller?.ubicacion?.lat && dataTaller?.ubicacion?.lng)}
-          hint={
-            isCliente && !showFabClienteHorario
-              ? openHint(dataTaller?.horarios_atencion) || 'Solo se puede solicitar en horario de atención'
-              : openHint(dataTaller?.horarios_atencion)
-          }
+          hint={openHint(dataTaller?.horarios_atencion)}
           primary={
             isCliente
               ? {
-                  title: showFabClienteHorario ? 'Solicitar servicio' : 'Cerrado ahora',
-                  onPress: handleFabClientePress,
-                  disabled: !showFabClienteHorario,
+                  title: 'Reservar cita',
+                  onPress: () =>
+                    navigation.navigate('ReservarCita', {
+                      uid_taller: DataService?.uid_taller || tallerDetailUid,
+                      nombre_taller: dataTaller?.nombre || '',
+                      uid_servicio: DataService?.uid_servicio || DataService?.id,
+                      nombre_servicio: DataService?.nombre_servicio || '',
+                    }),
                 }
               : {title: 'Escribir por WhatsApp', onPress: handleWhatsApp}
           }

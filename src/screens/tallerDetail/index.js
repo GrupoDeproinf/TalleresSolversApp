@@ -1035,13 +1035,16 @@ const TallerDetail = () => {
         canCall={puedeLlamar(tallerPhone(taller))}
         canWhatsApp={puedeWhatsApp(tallerWhatsApp(taller))}
         canDirections={!!(taller?.ubicacion?.lat && taller?.ubicacion?.lng)}
-        hint={isCliente && !showFabClienteHorario ? (horarioHint || "Solo se puede solicitar en horario de atención") : horarioHint}
+        hint={horarioHint}
         primary={
           isCliente
             ? {
-                title: showFabClienteHorario ? "Solicitar servicio" : "Cerrado ahora",
-                onPress: handleFabClientePress,
-                disabled: !showFabClienteHorario,
+                title: "Reservar cita",
+                onPress: () =>
+                  navigation.navigate("ReservarCita", {
+                    uid_taller: resolvedTallerId,
+                    nombre_taller: tallerNombre,
+                  }),
               }
             : null
         }

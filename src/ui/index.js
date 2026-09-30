@@ -27,6 +27,13 @@ import {colors, space, radius, type, fonts, shadow, TOUCH, MAX_FONT_SCALE} from 
 
 export * from './tokens';
 
+/**
+ * Márgenes del sistema que la pantalla debe sumar. Hoy siempre 0: en iOS los
+ * pone el SafeAreaView de App.tsx y en Android MainActivity (edge-to-edge,
+ * targetSdk 35+). Se deja el hook para no tocar las pantallas si cambia.
+ */
+export const useMargenesSistema = () => ({top: 0, bottom: 0});
+
 // ── Texto ──────────────────────────────────────────────────────────────────
 
 /** Texto con los cuatro niveles del sistema (display/title/subtitle/body/caption). */

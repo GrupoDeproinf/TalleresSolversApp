@@ -68,6 +68,8 @@ import TallerInfoScreen from '../screens/tallerInfo';
 // import HomeScreenTwo from '../screens/homeScreenTwo';
 
 import RadioSelector from '../screens/perimeter-map';
+import ReservarCita from '../screens/citas/ReservarCita';
+import MisCitas, {AgendaTaller} from '../screens/citas/MisCitas';
 
 
 const Stack = createNativeStackNavigator();
@@ -161,6 +163,9 @@ const MyStack = () => {
         <Stack.Screen name="TallerInfoScreen" component={TallerInfoScreen} />
 
         <Stack.Screen name="RadioSelector" component={RadioSelector} />
+        <Stack.Screen name="ReservarCita" component={ReservarCita} />
+        <Stack.Screen name="MisCitas" component={MisCitas} />
+        <Stack.Screen name="AgendaTaller" component={AgendaTaller} />
 
         {/* <Stack.Screen name="HomeScreenTwo" component={HomeScreenTwo} />
         <Stack.Screen name="ProductDetailThree" component={ProductDetailThree} />

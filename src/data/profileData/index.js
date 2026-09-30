@@ -34,6 +34,12 @@ export const profileData = [
     icon: <Icons2 name="car" size={24} color="#2D3261" />,
     screenName: 'VehiclesScreen',
   },
+  {
+    id: 11,
+    title: 'Mis citas',
+    icon: <Icons2 name="calendar" size={24} color="#2D3261" />,
+    screenName: 'MisCitas',
+  },
 
   {
     id: 3,

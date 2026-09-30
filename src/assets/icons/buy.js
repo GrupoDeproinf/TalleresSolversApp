@@ -1,7 +1,7 @@
 import Svg, {ClipPath, Defs, G, Path, Rect} from 'react-native-svg';
 import React from 'react';
 
-export function Buy({color, width, height}) {
+export function Buy(props) {
   return (
     <Svg
       xmlns="http://www.w3.org/2000/svg"

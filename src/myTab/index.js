@@ -2,6 +2,9 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { View, TouchableOpacity, Text, Image, Modal, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import { useMargenesSistema } from '../ui';
+import { CalendarDays } from 'lucide-react-native';
+import { AgendaTallerPestana } from '../screens/citas/MisCitas';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../axiosInstance';
 import HomeScreen from '../screens/homeScreen';
@@ -732,8 +735,7 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const centerIndex = emergencyIndex >= 0 ? emergencyIndex : (serviciosIndex >= 0 ? serviciosIndex : (serviciosScreenIndex >= 0 ? serviciosScreenIndex : -1));
   const hasCenteredButton = centerIndex >= 0;
 
-  // Márgenes del sistema: los aplica MainActivity (Android) y App.tsx (iOS).
-  const insets = {top: 0, bottom: 0};
+  const insets = useMargenesSistema();
 
   const renderNormalTab = (route) => {
     const { options } = descriptors[route.key];
@@ -848,6 +850,7 @@ const TAB_LABELS = {
   Talleres: 'Talleres',
   ProfileScreen: 'Perfil',
   RadioSelector: 'Mapa',
+  AgendaTab: 'Agenda',
   Emergencia: 'Emergencia',
   MyBeg: 'Favoritos',
 };
@@ -1069,12 +1072,12 @@ const MyTabsTaller = () => {
         }}
       />
       <Tab.Screen
-        name="CategoryScreen"
-        component={CategoryScreen}
+        name="AgendaTab"
+        component={AgendaTallerPestana}
         options={{
-          tabBarLabel: 'Category',
-          tabBarIcon: () => <CategoryLight />,
-          activeTabBarIcon: () => <Category />,
+          tabBarLabel: 'Agenda',
+          tabBarIcon: () => <CalendarDays size={30} color="#9BA6B8" strokeWidth={2} />,
+          activeTabBarIcon: () => <CalendarDays size={30} color="#2D3261" strokeWidth={2.2} />,
         }}
       />
 
