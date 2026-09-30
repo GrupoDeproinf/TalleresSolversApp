@@ -1,4 +1,4 @@
-import { Text, TouchableOpacity, View, StyleSheet, Modal } from 'react-native';
+import { Text, TouchableOpacity, View, StyleSheet, Modal, Alert } from 'react-native';
 import React, {useState, useEffect} from 'react';
 import { BackLeft } from '../../utils/icon';
 import styles from './style.css';
@@ -7,7 +7,10 @@ import LinearGradient from 'react-native-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
 
-const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArrow, showClose, showNewService, cantServices }) => {
+// showArrow por defecto true: preserva el comportamiento actual (las pantallas
+// de detalle que no pasan la prop muestran la flecha) ahora con una condición
+// correcta; las que pasan showArrow={false} la siguen ocultando. (APP-14)
+const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArrow = true, showClose, showNewService, cantServices }) => {
   const {
     linearColorStyle,
     textColorStyle,
@@ -32,12 +35,8 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
 
 
   const CloseSesion = async () => {
-    console.log("aquiiii")
-
-
     try {
       await AsyncStorage.removeItem('@userInfo');
-      console.log('Item removed successfully');
     } catch (error) {
       console.error('Error removing item:', error);
     }
@@ -48,6 +47,20 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
     } catch (error) {
       console.error('Error logging out:', error);
     }
+  };
+
+  // Pide confirmación antes de cerrar sesión, para evitar cierres
+  // accidentales con un solo toque. (APP-14)
+  const confirmCloseSesion = () => {
+    Alert.alert(
+      'Cerrar sesión',
+      '¿Está seguro de que desea cerrar sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Cerrar sesión', style: 'destructive', onPress: CloseSesion },
+      ],
+      { cancelable: true },
+    );
   };
 
 
@@ -78,18 +91,18 @@ const FullHeader = ({ onpressBack, modelPress, value, title, show, text, showArr
 
 
       {
-        showArrow ?? (
+        showArrow ? (
           <TouchableOpacity
             onPress={onpressBack}
             style={{ transform: [{ scale: imageRTLStyle }] }}>
             <BackLeft />
           </TouchableOpacity>
-        )
+        ) : null
       }
 
       {
         showClose ? (
-          <TouchableOpacity onPress={CloseSesion}>
+          <TouchableOpacity onPress={confirmCloseSesion}>
             <Text style={{ color: '#2D3261' }}>Cerrar Sesión</Text>
           </TouchableOpacity>
 

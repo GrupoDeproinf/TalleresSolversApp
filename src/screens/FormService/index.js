@@ -985,7 +985,7 @@ const FormTaller = () => {
                     value={caracteristicaSelected}
                     search
                     onChange={item => {
-                      getSubcaracteristicas(item.value, false);
+                      getSubcaracteristicas(item.value, true); // req001 punto 4: preseleccionar la subcategoria
                       setcaracteristicaSelected(item.value);
                     }}
                     keyboardAvoiding

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, TouchableOpacity, Text, Image, Modal, ActivityIndicator } from 'react-native';
+import { View, TouchableOpacity, Text, Image, Modal, ActivityIndicator, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../axiosInstance';
@@ -629,8 +629,7 @@ const EmergencyModalProvider = ({ children }) => {
   };
 
   const handleGoToVehiclesScreen = () => {
-    onClose();
-    setVisible(false);
+    handleClose();
   };
 
   return (
@@ -733,16 +732,14 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   const centerIndex = emergencyIndex >= 0 ? emergencyIndex : (serviciosIndex >= 0 ? serviciosIndex : (serviciosScreenIndex >= 0 ? serviciosScreenIndex : -1));
   const hasCenteredButton = centerIndex >= 0;
 
+  // Márgenes del sistema: los aplica MainActivity (Android) y App.tsx (iOS).
+  const insets = {top: 0, bottom: 0};
+
   const renderNormalTab = (route) => {
     const { options } = descriptors[route.key];
-    const label =
-      options.tabBarLabel !== undefined
-        ? options.tabBarLabel
-        : options.title !== undefined
-          ? options.title
-          : route.name;
+    const label = TAB_LABELS[route.name] || options.tabBarLabel || options.title || route.name;
     const IconComponent = options.tabBarIcon;
-    const ActiveIcon = options.activeTabBarIcon;
+    const ActiveIcon = options.activeTabBarIcon || IconComponent;
     const isFocused = activeTab === route.name;
     const onPress = () => {
       const event = navigation.emit({
@@ -758,78 +755,47 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
       <TouchableOpacity
         key={route.key}
         onPress={onPress}
-        style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <View>{isFocused ? <ActiveIcon /> : <IconComponent />}</View>
-        {isFocused && (
-          <View style={[external.ai_center]}>
-            <View
-              style={{
-                width: windowHeight(3),
-                height: windowHeight(3),
-                borderRadius: windowHeight(3),
-                backgroundColor: '#2D3261',
-                marginVertical: 4,
-              }}
-            />
-            <View
-              style={{
-                width: windowWidth(65),
-                height: windowHeight(15),
-                position: 'absolute',
-                bottom: -windowHeight(18),
-                backgroundColor: '#2D3261',
-                borderTopLeftRadius: windowWidth(65) / 2,
-                borderTopRightRadius: windowWidth(65) / 2,
-              }}
-            />
+        accessibilityRole="tab"
+        accessibilityState={{ selected: isFocused }}
+        accessibilityLabel={label}
+        activeOpacity={0.7}
+        style={tabStyles.tab}>
+        <View style={[tabStyles.iconWrap, isFocused && tabStyles.iconWrapOn]}>
+          <View style={tabStyles.iconScale}>
+            {isFocused ? <ActiveIcon /> : <IconComponent />}
           </View>
-        )}
+        </View>
+        <Text
+          numberOfLines={1}
+          maxFontSizeMultiplier={1.15}
+          style={[tabStyles.label, isFocused && tabStyles.labelOn]}>
+          {label}
+        </Text>
       </TouchableOpacity>
     );
   };
 
-  const renderEmergencyTab = (route) => {
-    const isFocused = activeTab === route.name;
-    const onPress = () => {
-      const event = navigation.emit({
-        type: 'tabPress',
-        target: route.key,
-        canPreventDefault: true,
-      });
-      if (!isFocused && !event.defaultPrevented) {
-        handleTabPress(route.name);
-      }
-    };
-    return (
+  const renderCenterButton = (route, onPress, isServicios) => (
+    <View key={route.key} style={tabStyles.centerCol}>
       <TouchableOpacity
-        key={route.key}
         onPress={onPress}
-        style={{ justifyContent: 'center', alignItems: 'center' }}
-        activeOpacity={0.8}>
-        <View
-          style={{
-            width: 56,
-            height: 56,
-            borderRadius: 28,
-            backgroundColor: '#FFD60A',
-            justifyContent: 'center',
-            alignItems: 'center',
-            marginBottom: windowHeight(10),
-            elevation: 8,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.3,
-            shadowRadius: 4,
-          }}>
-          <MaterialCommunityIcons
-            name="car-emergency"
-            size={30}
-            color="#ffffff"
-          />
-        </View>
+        accessibilityRole="button"
+        accessibilityLabel={TAB_LABELS[route.name] || 'Emergencia'}
+        activeOpacity={0.8}
+        style={tabStyles.centerBtn}>
+        {isServicios ? (
+          <Icons3 name="tools" size={26} color="#1F2344" />
+        ) : (
+          <MaterialCommunityIcons name="car-emergency" size={30} color="#1F2344" />
+        )}
       </TouchableOpacity>
-    );
-  };
+      <Text numberOfLines={1} maxFontSizeMultiplier={1.15} style={tabStyles.centerLabel}>
+        {TAB_LABELS[route.name] || 'Emergencia'}
+      </Text>
+    </View>
+  );
+
+  const barStyle = [tabStyles.bar, { paddingBottom: Math.max(insets.bottom, 6) }];
 
   if (hasCenteredButton) {
     const leftRoutes = state.routes.slice(0, centerIndex);
@@ -838,90 +804,97 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
     const isCenterEmergencia = centerRoute.name === 'Emergencia';
     const isCenterServicios = centerRoute.name === 'Servicios' || centerRoute.name === 'ServiciosScreen';
     return (
-      <LinearGradient
-        start={{ x: 0.0, y: 0.0 }}
-        end={{ x: 0.0, y: 1.0 }}
-        colors={linearColorStyle}
-        style={{
-          flexDirection: viewRTLStyle,
-          backgroundColor: '#ffffff',
-          height: windowHeight(55),
-          borderColor: '#E9E9E9',
-          elevation: 10,
-        }}>
+      <View style={[barStyle, { flexDirection: viewRTLStyle }]}>
         <View style={{ flex: 1, flexDirection: viewRTLStyle }}>
           {leftRoutes.map((route) => renderNormalTab(route))}
         </View>
-        <View
-          style={{
-            width: 72,
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}>
-          <TouchableOpacity
-            onPress={() => {
-              if (isCenterEmergencia && emergencyModal.setVisible) {
-                emergencyModal.setVisible(true);
-              } else if (isCenterServicios) {
-                handleTabPress(centerRoute.name);
-              } else {
-                handleTabPress(centerRoute.name);
-              }
-            }}
-            style={{
-              width: 56,
-              height: 56,
-              borderRadius: 28,
-              backgroundColor: '#FFD60A',
-              justifyContent: 'center',
-              alignItems: 'center',
-              marginBottom: windowHeight(10),
-              elevation: 8,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.3,
-              shadowRadius: 4,
-            }}
-            activeOpacity={0.8}>
-            {isCenterServicios ? (
-              <Icons3 name="tools" size={30} color="#ffffff" />
-            ) : (
-              <MaterialCommunityIcons
-                name="car-emergency"
-                size={30}
-                color="#ffffff"
-              />
-            )}
-          </TouchableOpacity>
-        </View>
+        {renderCenterButton(
+          centerRoute,
+          () => {
+            if (isCenterEmergencia && emergencyModal.setVisible) {
+              emergencyModal.setVisible(true);
+            } else {
+              handleTabPress(centerRoute.name);
+            }
+          },
+          isCenterServicios,
+        )}
         <View style={{ flex: 1, flexDirection: viewRTLStyle }}>
           {rightRoutes.map((route) => renderNormalTab(route))}
         </View>
-      </LinearGradient>
+      </View>
     );
   }
 
   return (
-    <LinearGradient
-      start={{ x: 0.0, y: 0.0 }}
-      end={{ x: 0.0, y: 1.0 }}
-      colors={linearColorStyle}
-      style={{
-        flexDirection: viewRTLStyle,
-        backgroundColor: '#ffffff',
-        height: windowHeight(55),
-        borderColor: '#E9E9E9',
-        elevation: 10,
-      }}>
+    <View style={[barStyle, { flexDirection: viewRTLStyle }]}>
       {state.routes.map((route) => {
         if (route.name === 'Emergencia') {
-          return renderEmergencyTab(route);
+          return renderCenterButton(route, () => handleTabPress(route.name), false);
         }
         return renderNormalTab(route);
       })}
-    </LinearGradient>
+    </View>
   );
 };
+
+/** Nombre visible de cada pestaña (en español, debajo del ícono). */
+const TAB_LABELS = {
+  HomeScreen: 'Inicio',
+  CategoryScreen: 'Categorías',
+  MisSolicitudes: 'Solicitudes',
+  Servicios: 'Servicios',
+  ServiciosScreen: 'Servicios',
+  Talleres: 'Talleres',
+  ProfileScreen: 'Perfil',
+  RadioSelector: 'Mapa',
+  Emergencia: 'Emergencia',
+  MyBeg: 'Favoritos',
+};
+
+const tabStyles = StyleSheet.create({
+  bar: {
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E3E5EE',
+    paddingTop: 6,
+    elevation: 12,
+    shadowColor: '#1F2344',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: -3 },
+  },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', minHeight: 52 },
+  iconWrap: {
+    width: 56,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconWrapOn: { backgroundColor: '#E8EAFB' },
+  iconScale: { transform: [{ scale: 0.8 }] },
+  label: { fontFamily: 'Inter-Medium', fontSize: 11, color: '#5B6078', marginTop: 2 },
+  labelOn: { fontFamily: 'Inter-Bold', color: '#1F2344' },
+  centerCol: { width: 76, alignItems: 'center', justifyContent: 'flex-end' },
+  centerBtn: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#FFD60A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: -22,
+    borderWidth: 4,
+    borderColor: '#FFFFFF',
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  centerLabel: { fontFamily: 'Inter-Bold', fontSize: 11, color: '#1F2344', marginTop: 2 },
+});
 
 // Tabs usuarios clientes
 

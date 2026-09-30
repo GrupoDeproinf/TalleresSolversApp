@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { hora12 } from "../../utils/taller";
 import {
   View,
   Text,
@@ -19,7 +20,6 @@ import {
 import { useRoute, useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityIcons";
 import {
   ArrowLeft,
   MapPin,
@@ -44,6 +44,9 @@ import RatingSuccessModal from "../../commonComponents/RatingSuccessModal";
 import TallerDetailEmergencyModal from "./emergencyModalCliente";
 import useLocationPermission from "../../hooks/useLocationPermission";
 import LocationPermissionModal from "../../commonComponents/LocationPermissionModal";
+import ContactBar, { CONTACT_BAR_SPACE } from "../../ui/ContactBar";
+import { llamar, abrirWhatsApp, puedeLlamar, puedeWhatsApp } from "../../utils/contacto";
+import { openState, openHint, tallerPhone, tallerWhatsApp } from "../../utils/taller";
 
 const { width } = Dimensions.get("window");
 
@@ -205,7 +208,7 @@ function getHorarioAtencionDisplay(taller) {
       detailRows.push({
         key,
         label: HORARIO_DAY_LABELS[key] || key,
-        time: `${open} – ${close}`,
+        time: `${hora12(open)} – ${hora12(close)}`,
       });
     }
     if (detailRows.length > 0) {
@@ -313,10 +316,13 @@ const TallerDetail = () => {
     () => getHorarioAtencionDisplay(taller),
     [taller],
   );
+  const abierto = openState(taller?.horarios_atencion);
+  const horarioHint = openHint(taller?.horarios_atencion);
   const showHorarioAtencion =
     horarioAtencionDisplay.rows.length > 0 || horarioAtencionDisplay.plain !== "";
 
   const [showFabClienteHorario, setShowFabClienteHorario] = useState(false);
+  const [isCliente, setIsCliente] = useState(false);
   const [emergencyModalVisible, setEmergencyModalVisible] = useState(false);
   const [dataComments, setDataComments] = useState([]);
   const [dataAverage, setDataAverage] = useState(0);
@@ -325,6 +331,7 @@ const TallerDetail = () => {
     try {
       const json = await AsyncStorage.getItem("@userInfo");
       const user = json ? JSON.parse(json) : null;
+      setIsCliente(user?.typeUser === "Cliente");
       if (!user || user.typeUser !== "Cliente") {
         setShowFabClienteHorario(false);
         return;
@@ -499,17 +506,32 @@ const TallerDetail = () => {
     }
   };
 
-  const handleCall = () => {
-    const phone = taller?.phone || taller?.telefono;
-    if (!phone) return Alert.alert("Teléfono no disponible");
-    Linking.openURL(`tel:${phone}`);
+  const registrarContacto = async type => {
+    try {
+      const json = await AsyncStorage.getItem("@userInfo");
+      const user = json ? JSON.parse(json) : null;
+      await api.post("/home/saveServiceContactView", {
+        nombre_taller: taller?.nombre || taller?.nombre_taller || null,
+        uid_taller: resolvedTallerId,
+        usuario: {
+          id: user?.uid || user?.id || null,
+          email: user?.email || null,
+          nombre: user?.nombre || null,
+        },
+        type,
+      });
+    } catch (_e) {
+      // Métrica: no bloquea al usuario.
+    }
   };
 
-  const handleWhatsApp = () => {
-    const whatsapp = taller?.whatsapp || taller?.telefono;
-    if (!whatsapp) return Alert.alert("WhatsApp no disponible");
-    const phoneNumber = String(whatsapp).replace(/[^\d]/g, "");
-    Linking.openURL(`whatsapp://send?phone=${phoneNumber}`);
+  const handleCall = async () => {
+    if (await llamar(tallerPhone(taller))) registrarContacto("Llamada");
+  };
+
+  const handleWhatsApp = async () => {
+    const msg = `Hola ${tallerNombre}, los encontré en Solvers y quisiera más información.`;
+    if (await abrirWhatsApp(tallerWhatsApp(taller), msg)) registrarContacto("Whatsapp");
   };
 
   const handleEmail = () => {
@@ -650,31 +672,16 @@ const TallerDetail = () => {
           <View style={styles.heroOverlay} />
           <View style={styles.heroBottom}>
             <View style={styles.heroBadgeRow}>
-              <Text style={styles.activeBadge}>ACTIVO</Text>
+              {abierto === "open" ? (
+                <Text style={styles.activeBadge}>ABIERTO</Text>
+              ) : abierto === "closed" ? (
+                <Text style={[styles.activeBadge, styles.closedBadge]}>CERRADO</Text>
+              ) : null}
               <Text style={styles.estadoBadge}>{estadoTaller}</Text>
             </View>
             <Text style={styles.heroName}>{tallerNombre}</Text>
             <Text style={styles.heroRif}>RIF: {rif}</Text>
           </View>
-        </View>
-
-        <View style={styles.actionsRow}>
-          <TouchableOpacity style={[styles.actionBtn, styles.actionYellow]} onPress={handleCall} activeOpacity={0.9}>
-            <Phone size={18} color="#6F5C00" />
-            <Text style={styles.actionYellowText}>LLAMAR</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, styles.actionGreen]} onPress={handleWhatsApp} activeOpacity={0.9}>
-            <MessageCircle size={18} color="#FFFFFF" />
-            <Text style={styles.actionWhiteText}>WHATSAPP</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.actionBtn, styles.actionBlue]}
-            onPress={() => checkAndOpenMap(() => setShowMap(true))}
-            activeOpacity={0.9}
-            disabled={!taller?.ubicacion?.lat || !taller?.ubicacion?.lng}>
-            <MapPin size={18} color="#FFFFFF" />
-            <Text style={styles.actionWhiteText}>MAPA</Text>
-          </TouchableOpacity>
         </View>
 
         <View style={styles.card}>
@@ -1021,19 +1028,24 @@ const TallerDetail = () => {
         </View>
       </Modal>
 
-      {showFabClienteHorario ? (
-        <TouchableOpacity
-          style={[
-            styles.fabClienteHorario,
-            { bottom: Math.max(insets.bottom, 12) + 10 },
-          ]}
-          activeOpacity={0.9}
-          onPress={handleFabClientePress}
-          accessibilityRole="button"
-          accessibilityLabel="Solicitar servicio">
-          <MaterialCommunityIcons name="car-emergency" size={36} color="#FFFFFF" />
-        </TouchableOpacity>
-      ) : null}
+      <ContactBar
+        onCall={handleCall}
+        onWhatsApp={handleWhatsApp}
+        onDirections={() => checkAndOpenMap(() => setShowMap(true))}
+        canCall={puedeLlamar(tallerPhone(taller))}
+        canWhatsApp={puedeWhatsApp(tallerWhatsApp(taller))}
+        canDirections={!!(taller?.ubicacion?.lat && taller?.ubicacion?.lng)}
+        hint={isCliente && !showFabClienteHorario ? (horarioHint || "Solo se puede solicitar en horario de atención") : horarioHint}
+        primary={
+          isCliente
+            ? {
+                title: showFabClienteHorario ? "Solicitar servicio" : "Cerrado ahora",
+                onPress: handleFabClientePress,
+                disabled: !showFabClienteHorario,
+              }
+            : null
+        }
+      />
 
       <TallerDetailEmergencyModal
         visible={emergencyModalVisible}
@@ -1110,7 +1122,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   scrollContent: {
-    paddingBottom: 28,
+    paddingBottom: CONTACT_BAR_SPACE,
   },
   hero: {
     marginHorizontal: 14,
@@ -1133,21 +1145,25 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     paddingHorizontal: 18,
-    paddingBottom: 35,
+    paddingBottom: 18,
     paddingTop: 15,
     backgroundColor: "rgba(9,13,46,0.62)",
     zIndex: 2,
   },
   activeBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#FFD60A",
-    color: "#6F5C00",
+    backgroundColor: "#E7F6EE",
+    color: "#1E7F46",
     borderRadius: 999,
     paddingVertical: 3,
     paddingHorizontal: 10,
     fontSize: 10,
     fontWeight: "800",
     marginBottom: 7,
+  },
+  closedBadge: {
+    backgroundColor: "#FDECEC",
+    color: "#C62828",
   },
   heroBadgeRow: {
     flexDirection: "row",

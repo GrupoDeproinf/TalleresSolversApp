@@ -1,35 +1,31 @@
 import React from 'react';
 import {NavigationContainer, createNavigationContainerRef} from '@react-navigation/native';
+import {useEffect as usePushEffect} from 'react';
+import {setupPushDeepLinks} from '../utils/pushDeepLink';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Login from '../screens/auth/login';
 
 
 import SignUp from '../screens/auth/signUp';
+import SignUpCliente from '../screens/auth/signUpCliente';
+import SignUpTaller from '../screens/auth/signUpTaller';
 import ForgetPassword from '../screens/auth/forgotPassword';
-import ResetPassword from '../screens/auth/resetPassword';
 
 
 
 
 
 import CategoryDetail from '../screens/categoryScreen/CategoryDetail';
-import OtpVerfication from '../screens/auth/verificationCode';
 
 
 import NotificationScreen from '../screens/notification';
-import MyWhishList from '../screens/myWhishList';
 import NotificationContainer from '../screens/notification/notificationDesc';
-import WhishlitContainer from '../screens/myWhishList/whishlistScreen';
 import EditProfile from '../screens/profileScreen/editProfile';
 import TallerProfileScreen from '../screens/profileScreen/tallerProfileScreen';
 import OrderHistory from '../screens/profileScreen/orderHistory';
 
-import CheckoutScreen from '../screens/checkOut';
-import Splash from '../screens/intro/splash';
 
 
-import Onboarding from '../screens/intro/onBording';
-import OnboardingTwo from '../screens/intro/onBordingTwo';
 import FormTaller from '../screens/FormTaller'
 import FormService from '../screens/FormService'
 
@@ -47,20 +43,11 @@ import TallerEditProfileScreen from '../screens/profileScreen/editProfileTaller'
 import LoaderScreen from '../screens/loaderScreen';
 
 
-import OfferScreen from '../screens/offerScreen';
 import Settings from '../screens/profileScreen/notificationSetting';
-import PaymentScreen from '../screens/profileScreen/paymentScreen';
 import ChangePasswordScreen from '../screens/changePassword';
-import AddressScreen from '../screens/profileScreen/addressScreen';
-import AddtocartOne from '../screens/addtocartOne';
-import AddToCartTwo from '../screens/addtoCartTwo';
-import ChangeAddressScreen from '../screens/changeAddress';
 import RatingScreen from '../screens/ratingScreen';
 import ProductDetailOne from '../screens/productScreen/productDetailOne';
-import CategoryTwo from '../screens/categoryTwo';
-import VoucherScreen from '../screens/voucherScreen';
 
-import OrderStatus from '../screens/orderStatus';
 import PlanesContainer from '../screens/PlanesTaller';
 import PlanesRegistro from '../screens/PlanesRegistro';
 import DrawerScreen from '../drawer';
@@ -93,6 +80,7 @@ export const navigate = (name, params) => {
 };
 
 const MyStack = () => {
+  usePushEffect(() => setupPushDeepLinks(), []);
   // const [initialScreen, setInitialScreen] = useState();
   
   // const validator = () => {
@@ -118,26 +106,18 @@ const MyStack = () => {
 
         
         <Stack.Screen name="SignUp" component={SignUp} />
+        <Stack.Screen name="SignUpCliente" component={SignUpCliente} />
+        <Stack.Screen name="SignUpTaller" component={SignUpTaller} />
         <Stack.Screen name="ForgetPassword" component={ForgetPassword} />
-        <Stack.Screen name="ResetPassword" component={ResetPassword} />
 
 
-        {/* <Stack.Screen name="Onboarding" component={Onboarding} />
-        <Stack.Screen name="OnboardingTwo" component={OnboardingTwo} />
-        <Stack.Screen name="OtpVerfication" component={OtpVerfication} /> */}
 
-        <Stack.Screen name="Splash" component={Splash} />
-
-        
         <Stack.Screen name="CategoryDetail" component={CategoryDetail} />
         
         <Stack.Screen name="NotificationScreen" component={NotificationScreen} />
-        <Stack.Screen name="MyWhishList" component={MyWhishList} />
         <Stack.Screen name="NotificationContainer" component={NotificationContainer} />
-        <Stack.Screen name="CheckoutScreen" component={CheckoutScreen} />
         <Stack.Screen name="ReportarPago" component={ReportarPago} /> 
         <Stack.Screen name="ServiciosContainer" component={ServiciosContainer} /> 
-        <Stack.Screen name="WhishlitContainer" component={WhishlitContainer} /> 
         <Stack.Screen name="FormTaller" component={FormTaller} />  
         <Stack.Screen name="FormService" component={FormService} />  
         <Stack.Screen name="TalleresContainer" component={TalleresContainer} />  
@@ -153,19 +133,10 @@ const MyStack = () => {
 
         {/* por validar */}
 
-        <Stack.Screen name="OfferScreen" component={OfferScreen} />
         <Stack.Screen name="Settings" component={Settings} />
-        <Stack.Screen name="PaymentScreen" component={PaymentScreen} />
         <Stack.Screen name="ChangePasswordScreen" component={ChangePasswordScreen}/>
-        <Stack.Screen name="AddressScreen" component={AddressScreen} />
-        <Stack.Screen name="AddtocartOne" component={AddtocartOne} />
-        <Stack.Screen name="AddToCartTwo" component={AddToCartTwo} />
-        <Stack.Screen name="ChangeAddressScreen" component={ChangeAddressScreen}/>
         <Stack.Screen name="ProductDetailOne" component={ProductDetailOne} />
         <Stack.Screen name="RatingScreen" component={RatingScreen} />
-        <Stack.Screen name="CategoryTwo" component={CategoryTwo} />
-        <Stack.Screen name="VoucherScreen" component={VoucherScreen} />
-        <Stack.Screen name="OrderStatus" component={OrderStatus} />
         <Stack.Screen name="Planes" component={PlanesContainer}/>  
         <Stack.Screen name="PlanesRegistro" component={PlanesRegistro} />
         <Stack.Screen name="LoaderScreen" component={LoaderScreen} />

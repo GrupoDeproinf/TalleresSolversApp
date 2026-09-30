@@ -20,32 +20,46 @@ export const windowWidth = width => {
   return PixelRatio.roundToNearestPixel(tempWidth);
 };
 
+// Escalado tipográfico ACOTADO. (APP-18)
+// El escalado por ancho (width/480) hacía el texto diminuto en pantallas
+// angostas y enorme en tablets (factor hasta ~1.67). Se acota el factor a un
+// rango sensato SOLO para las fuentes; windowWidth se deja intacto porque
+// también se usa para anchos de layout (que sí deben escalar proporcional).
+const FONT_SCALE_MIN = 0.7;
+const FONT_SCALE_MAX = 1.2;
+
+export const scaleFont = size => {
+  const widthScale = SCREEN_WIDTH / 480;
+  const clamped = Math.min(Math.max(widthScale, FONT_SCALE_MIN), FONT_SCALE_MAX);
+  return PixelRatio.roundToNearestPixel(size * clamped);
+};
+
 export const fontSizes = {
-  FONT6: windowWidth(6),
-  FONT7: windowWidth(7),
-  FONT8: windowWidth(8),
-  FONT9: windowWidth(9),
-  FONT10: windowWidth(10),
-  FONT11: windowWidth(11),
-  FONT12: windowWidth(12),
-  FONT13: windowWidth(13),
-  FONT14: windowWidth(14),
-  FONT15: windowWidth(15),
-  FONT16: windowWidth(16),
-  FONT17: windowWidth(17),
-  FONT18: windowWidth(18),
-  FONT19: windowWidth(19),
-  FONT20: windowWidth(20),
-  FONT21: windowWidth(21),
-  FONT22: windowWidth(22),
-  FONT23: windowWidth(23),
-  FONT24: windowWidth(24),
-  FONT25: windowWidth(25),
-  FONT26: windowWidth(26),
-  FONT27: windowWidth(27),
-  FONT28: windowWidth(28),
-  FONT30: windowWidth(30),
-  FONT33: windowWidth(33),
-  FONT37: windowWidth(37),
-  FONT45: windowWidth(45),
+  FONT6: scaleFont(6),
+  FONT7: scaleFont(7),
+  FONT8: scaleFont(8),
+  FONT9: scaleFont(9),
+  FONT10: scaleFont(10),
+  FONT11: scaleFont(11),
+  FONT12: scaleFont(12),
+  FONT13: scaleFont(13),
+  FONT14: scaleFont(14),
+  FONT15: scaleFont(15),
+  FONT16: scaleFont(16),
+  FONT17: scaleFont(17),
+  FONT18: scaleFont(18),
+  FONT19: scaleFont(19),
+  FONT20: scaleFont(20),
+  FONT21: scaleFont(21),
+  FONT22: scaleFont(22),
+  FONT23: scaleFont(23),
+  FONT24: scaleFont(24),
+  FONT25: scaleFont(25),
+  FONT26: scaleFont(26),
+  FONT27: scaleFont(27),
+  FONT28: scaleFont(28),
+  FONT30: scaleFont(30),
+  FONT33: scaleFont(33),
+  FONT37: scaleFont(37),
+  FONT45: scaleFont(45),
 };

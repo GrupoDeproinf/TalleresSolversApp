@@ -60,10 +60,10 @@ const ForgetPassword = ({ navigation }) => {
         Alert.alert('Error', 'No existe una cuenta con ese correo.');
         setGetOtpDisabled(false);
       } else if (error.code === 'auth/invalid-email') {
-        Alert.alert('Error34', 'El correo no es válido.');
+        Alert.alert('Error', 'El correo no es válido.');
         setGetOtpDisabled(false);
       } else {
-        Alert.alert('Error56', error.message);
+        Alert.alert('Error', error.code === 'auth/network-request-failed' ? 'Sin conexión. Revisa tu internet e intenta de nuevo.' : error.code === 'auth/too-many-requests' ? 'Demasiados intentos. Espera unos minutos e intenta de nuevo.' : 'No pudimos enviar el correo. Intenta de nuevo en unos minutos.');
         setGetOtpDisabled(false);
       }
     }

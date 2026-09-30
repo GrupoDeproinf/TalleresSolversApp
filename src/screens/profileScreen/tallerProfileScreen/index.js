@@ -14,6 +14,9 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import React, { useState, useEffect } from 'react';
+import { cerrarSesionFirebase } from '../../../utils/sesionSegura';
+import PhoneInput from '../../../ui/PhoneInput';
+import {validarTelefonoPais} from '../../../utils/telefono';
 import HeaderContainer from '../../../commonComponents/headingContainer';
 import { phoneMo, smithaWilliams, smithaWilliamsMail } from '../../../constant';
 import { commonStyles } from '../../../style/commonStyle.css';
@@ -48,6 +51,8 @@ import notImageFound from '../../../assets/noimageold.jpeg';
 import MapComponent from '../../map'
 
 import { Dropdown } from 'react-native-element-dropdown';
+import {splitDocumentId} from '../../../utils/documentId';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 
 
 const TallerProfileScreen = ({ navigation }) => {
@@ -248,7 +253,7 @@ const TallerProfileScreen = ({ navigation }) => {
           setMetodosPago(updatedMetodosPago);
 
           // Separar el prefijo del tipo de ID (rif) y asignarlo a los estados correspondientes
-          const typeID = result.userData.rif.split('-');
+          const typeID = splitDocumentId(result.userData.rif);
           setcedula(typeID[1] || '');
           setSelectedPrefix(`${typeID[0]}-`);
         } else {
@@ -265,24 +270,6 @@ const TallerProfileScreen = ({ navigation }) => {
         }
       }
 
-      try {
-        // Realizar la solicitud GET utilizando Axios
-        const responseUsers = await api.get('/usuarios/GetUsers', {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        // Verificar que la respuesta del servidor sea exitosa
-        if (responseUsers.status === 200) {
-          const result2 = responseUsers.data;
-          // Filtrar solo los usuarios con typeUser "Certificador"
-          const certificadores = result2.filter(user => user.typeUser === "Certificador");
-          console.log(certificadores);
-        }
-      } catch (error) {
-        console.log(error);
-      }
 
     } catch (e) {
       // error reading value
@@ -303,18 +290,18 @@ const TallerProfileScreen = ({ navigation }) => {
 
   const getImageName = (url) => url.split('/').pop();
 
-  const validatePhone = () => {
-    // Eliminar la máscara para validar solo los números
-    const numericPhone = phone.replace(/[^0-9]/g, ''); // Remueve paréntesis, espacios y guiones
-    const phoneRegex = /^\d{10}$/; // Validar exactamente 10 dígitos
+  // Faltaba: el campo "Características" la llamaba al salir y la app se cerraba.
+  const validateCaracteristicas = () => {
+    const ok = String(Caracteristicas ?? '').trim() !== '';
+    setCaracteristicasError(ok ? '' : 'Caracteristicas es requerido');
+    return ok;
+  };
 
-    if (!phoneRegex.test(numericPhone)) {
-      setPhoneError('Teléfono debe contener exactamente 10 dígitos');
-      return false;
-    } else {
-      setPhoneError('');
-      return true;
-    }
+  const validatePhone = () => {
+    // Teléfono con país: Venezuela 10 dígitos sin 0; otros países según su largo.
+    const msg = validarTelefonoPais(phone ? String(phone) : '');
+    setPhoneError(msg);
+    return !msg;
   };
 
   const onHandleChange = async () => {
@@ -375,43 +362,12 @@ const TallerProfileScreen = ({ navigation }) => {
         if (response.status === 201) {
           const result = response.data;
 
-          try {
-            // Realizar la solicitud GET utilizando Axios
-            const responseUsers = await api.get('/usuarios/GetUsers', {
-              headers: {
-                'Content-Type': 'application/json',
-              },
-            });
-
-            // Verificar que la respuesta del servidor sea exitosa
-            if (responseUsers.status === 200) {
-              const result2 = responseUsers.data;
-              // Filtrar solo los usuarios con typeUser "Certificador"
-              const certificadores = result2.filter(user => user.typeUser === "Certificador");
-
-              // Enviar notificaciones a los certificadores que tienen token
-              for (const certificador of certificadores) {
-                if (certificador.token) {
-                  console.log("Se debe enviar la notificacion")
-                  try {
-                    await api.post('/usuarios/sendNotification', {
-                      token: certificador.token,
-                      title: 'Notificación de Registro de Nuevo Taller',
-                      body: "¡Hola! El taller " + Nombre + " ha sido registrado con éxito. Te invitamos a certificarlo y verificar si cumple con los requerimientos. ¡Gracias por tu colaboración!",
-                      secretCode: "New Taller Created",
-                    });
-                  } catch (error) {
-                    console.log(error);
-                  }
-                }
-              }
-            }
-          } catch (error) {
-            console.log(error);
-          }
+          // Aviso a los certificadores: lo resuelve el servidor (antes se
+          // descargaban todos los usuarios para sacar sus tokens push).
+          api.post('/usuarios/notificarCertificadores', { nombre_taller: Nombre }).catch(() => {});
 
           try {
-            const jsonValue = JSON.stringify(infoUserCreated);
+            const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
             await AsyncStorage.setItem('@userInfo', jsonValue);
           } catch (e) {
           }
@@ -560,14 +516,6 @@ const TallerProfileScreen = ({ navigation }) => {
     Alert.alert('Solvers Informa', text);
   };
 
-  // Funciones para manejar los clics
-  const handleClientePress = () => {
-    settypeOfView('Cliente');
-  };
-
-  const handleTallerPress = () => {
-    settypeOfView('Taller');
-  };
 
   const colors = isDark
     ? ['#3D3F45', '#45474B', '#2A2C32']
@@ -588,6 +536,7 @@ const TallerProfileScreen = ({ navigation }) => {
 
     try {
       await AsyncStorage.removeItem('userToken');
+      await cerrarSesionFirebase();
       navigation.replace('Login');
     } catch (error) {
       console.error('Error logging out:', error);
@@ -963,91 +912,29 @@ const TallerProfileScreen = ({ navigation }) => {
             </View>
 
 
-            <TextInputs
-              title="Número Telefónico"
-              value={phone}
-              placeholder="Ingrese su número"
-              keyboardType="numeric"
-              onChangeText={text => {
-                // Eliminar caracteres no numéricos
-                let numericText = text.replace(/[^0-9]/g, '').slice(0, 10); // Limitar a 10 dígitos
-
-                // Aplicar formato de máscara XXX XXX XX XX
-                let formattedText = '';
-                if (numericText.length > 0 && numericText.length <= 3) {
-                  formattedText = `${numericText}`;
-                } else if (numericText.length > 3 && numericText.length <= 6) {
-                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3)}`;
-                } else if (numericText.length > 6 && numericText.length <= 8) {
-                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6)}`;
-                } else if (numericText.length > 8) {
-                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6, 8)} ${numericText.slice(8)}`;
-                }
-
-                // Actualizar el estado con el texto formateado
-                setPhone(formattedText);
-                setCallTyping(true);
-
-                // Validaciones
-                if (numericText.trim() === '') {
-                  setPhoneError('Número telefónico requerido');
-                } else {
-                  setPhoneError('');
-                }
+            <PhoneInput
+              label="Número telefónico"
+              value={phone ? String(phone) : ''}
+              onChange={v => {
+                setPhone(v);
+                setPhoneError('');
               }}
-              onBlur={() => {
-                validatePhone();
-                setCallTyping(false);
-              }}
-              icon={<Icons name="phone" size={20} color="#9BA6B8" />}
+              onBlur={validatePhone}
+              error={phoneError}
             />
 
-            {phoneError !== '' && (
-              <Text style={styles.errorStyle}>{phoneError}</Text>
-            )}
 
-            <TextInputs
-              title="Whatsapp"
-              value={whats}
-              placeHolder="Ingrese su número(4142617966)"
-              keyboardType="numeric"
-              onChangeText={text => {
-                // Eliminar caracteres no numéricos
-                let numericText = text.replace(/[^0-9]/g, '').slice(0, 10); // Limitar a 10 dígitos
-              
-                // Aplicar formato de máscara XXX XXX XX XX
-                let formattedText = '';
-                if (numericText.length > 0 && numericText.length <= 3) {
-                  formattedText = `${numericText}`;
-                } else if (numericText.length > 3 && numericText.length <= 6) {
-                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3)}`;
-                } else if (numericText.length > 6 && numericText.length <= 8) {
-                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6)}`;
-                } else if (numericText.length > 8) {
-                  formattedText = `${numericText.slice(0, 3)} ${numericText.slice(3, 6)} ${numericText.slice(6, 8)} ${numericText.slice(8)}`;
-                }
-              
-                // Actualizar el estado con el texto formateado
-                setwhats(formattedText);
-                setCallTyping(true);
-              
-                // Validación: Si está vacío, muestra error
-                if (numericText.trim() === '') {
-                  setwhatsError('Número telefónico requerido');
-                } else {
-                  setwhatsError('');
-                }
+            <PhoneInput
+              label="WhatsApp"
+              value={whats ? String(whats) : ''}
+              onChange={v => {
+                setwhats(v);
+                setwhatsError('');
               }}
-              onBlur={() => {
-                validatewhats();
-                setCallTyping(false);
-              }}
-              icon={<Icons name="whatsapp" size={20} color="#9BA6B8" />}
+              onBlur={() => setwhatsError(validarTelefonoPais(whats ? String(whats) : ''))}
+              error={whatsError}
             />
 
-            {whatsError !== '' && (
-              <Text style={styles.errorStyle}>{whatsError}</Text>
-            )}
 
             <View style={{ marginTop: 5 }}>
               {/* Texto "RIF" arriba de los inputs */}

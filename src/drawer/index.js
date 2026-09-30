@@ -3,7 +3,6 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import { MyTabs, MyTabsCliente, MyTabsTaller, MyTabsTallerPendiente, MyTabsAdmin } from '../myTab';
 import { useValues } from '../../App';
 import { windowHeight, windowWidth } from '../themes/appConstant';
-import DrawerContent from './drawerContent';
 // import HomeScreenTwo from '../screens/homeScreenTwo';
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,7 +30,9 @@ const CustomDrawerNavigator = () => {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const userNew = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-      setuser(userNew);
+      // Sin sesión guardada userNew es null: sin este respaldo `user.typeUser`
+      // cerraba la app al abrirla.
+      setuser(userNew || {typeUser: ''});
       console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
       console.log("Userrrr12344444navbarrr", userNew);
       console.log("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++");
@@ -42,20 +43,20 @@ const CustomDrawerNavigator = () => {
   };
 
   // Adaptación: Renderizar directamente los componentes según el tipo de usuario
-  if (user.typeUser === 'Taller') {
+  if (user?.typeUser === 'Taller') {
     // Validar si es taller con status "En espera por aprobación" para mostrar Servicios como inicial
-    if (user.status === 'En espera por aprobación') {
+    if (user?.status === 'En espera por aprobación') {
       return <MyTabsTallerPendiente />;
     } else {
       return <MyTabsTaller />;
     }
   }
 
-  if (user.typeUser === 'Cliente') {
+  if (user?.typeUser === 'Cliente') {
     return <MyTabsCliente />;
   }
 
-  if (user.typeUser === 'Admin') {
+  if (user?.typeUser === 'Admin') {
     return <MyTabsAdmin />;
   }
 

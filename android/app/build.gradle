@@ -2,6 +2,7 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 apply plugin: "com.google.gms.google-services"
+apply plugin: "com.google.firebase.crashlytics"
 apply from: "../../node_modules/react-native-vector-icons/fonts.gradle"
 
 /**
@@ -84,8 +85,8 @@ android {
         applicationId "com.solvers.app"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 74
-        versionName "1.3.9"
+        versionCode 93
+        versionName "1.4.0"
         // Compilar librerías nativas propias (ej. react-native-screens) con
         // alineación de 16 KB. Requiere NDK 27+ (ya configurado).
         externalNativeBuild {
@@ -94,6 +95,12 @@ android {
             }
         }
     }
+    def keystorePropertiesFile = rootProject.file("app/key.properties")
+    def keystoreProperties = new Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+
     signingConfigs {
         debug {
             storeFile file('debug.keystore')
@@ -102,10 +109,14 @@ android {
             keyPassword 'android'
         }
         release {
-            storeFile file('solversapp.keystore')
-            storePassword '1EXE8vx1'
-            keyAlias 'solvers'
-            keyPassword '1EXE8vx1'
+            // APP-08: las credenciales de firma salen del codigo. Se leen de
+            // android/app/key.properties, que esta en .gitignore.
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'] ?: 'solversapp.keystore')
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
         }
     }
     buildTypes {

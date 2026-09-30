@@ -45,7 +45,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 const { RNMapboxNavigation } = NativeModules;
 
 const MAPBOX_TOKEN =
-  'REEMPLAZAR_CON_MAPBOX_PUBLIC_TOKEN';
+  'pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ';
 
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 import { Image, Pressable, Text, View, ImageBackground, Linking, Alert, ScrollView, Dimensions } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { profileData, profileDataAdmin, profileDataTaller } from '../../data/profileData';
 import styles from './style.css';
 import { useNavigation } from '@react-navigation/native';
@@ -10,9 +10,21 @@ import notImageFound from '../../assets/noimageold.jpeg';
 import api from '../../../axiosInstance';
 import Icons from 'react-native-vector-icons/FontAwesome5';
 import Icons2 from 'react-native-vector-icons/AntDesign';
+import { Banner } from '../../ui';
+import { cerrarSesionFirebase } from '../../utils/sesionSegura';
 
 const SOLVERS_WEB_SIGN_IN =
   'https://app.solversapp.com/sign-in?redirectUrl=/';
+
+const TIPOS_CON_PERFIL = ['Cliente', 'Taller'];
+
+/** El servidor responde "No se encontró el usuario" cuando el uid no está en Usuarios. */
+const esUsuarioNoEncontrado = error => {
+  const status = error?.response?.status;
+  const data = error?.response?.data;
+  const msg = typeof data === 'string' ? data : data?.message || data?.error || '';
+  return status === 404 || /no se encontr/i.test(String(msg));
+};
 
 const ProfileScreen = () => {
   const navigation = useNavigation();
@@ -29,18 +41,59 @@ const ProfileScreen = () => {
   );
 
   const [imagePerfil, setimagePerfil] = useState("");
+  // null | 'no_encontrada' (la cuenta ya no existe) | 'sin_conexion'
+  const [avisoPerfil, setAvisoPerfil] = useState(null);
 
   const handleLogout = async () => {
     try {
       await AsyncStorage.removeItem('userToken');
+      await cerrarSesionFirebase();
       navigation.replace('Login');
     } catch (error) {
-      console.error('Error logging out:', error);
+      console.warn('Error logging out:', error);
     }
   };
 
 
   const navigationScreen = useNavigation();
+
+  const getData = useCallback(async () => {
+    let user = null;
+    try {
+      const jsonValue = await AsyncStorage.getItem('@userInfo');
+      user = jsonValue != null ? JSON.parse(jsonValue) : null;
+    } catch (e) {
+      user = null;
+    }
+
+    // Primero lo que ya está guardado en la sesión: el menú correcto aparece
+    // al instante y también sin conexión.
+    if (user && typeof user === 'object') {
+      setinfoUser(prev => ({ ...prev, ...user }));
+      if (user.image_perfil) setimagePerfil(user.image_perfil);
+    }
+    if (!user?.uid) return;
+
+    try {
+      const response = await api.post('/usuarios/getUserByUid', {
+        uid: user.uid,
+      });
+      const userData = response?.data?.userData;
+      if (response.status === 200 && userData) {
+        setinfoUser(prev => ({ ...prev, ...userData }));
+        setimagePerfil(userData.image_perfil || '');
+        setAvisoPerfil(null);
+      }
+    } catch (error) {
+      if (esUsuarioNoEncontrado(error)) {
+        // Los administradores no viven en Usuarios: es lo esperado para ellos.
+        // Para un conductor o un taller significa que la cuenta ya no existe.
+        setAvisoPerfil(TIPOS_CON_PERFIL.includes(user?.typeUser) ? 'no_encontrada' : null);
+      } else {
+        setAvisoPerfil('sin_conexion');
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const unsubscribe = navigationScreen.addListener('focus', () => {
@@ -48,51 +101,7 @@ const ProfileScreen = () => {
     });
 
     return unsubscribe; // Limpia el listener cuando el componente se desmonta
-  }, [navigationScreen]);
-
-
-
-  const getData = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('@userInfo');
-      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-      console.log("valor del storage", user);
-
-      try {
-        // Hacer la solicitud POST utilizando Axios
-        const response = await api.post('/usuarios/getUserByUid', {
-          uid: user.uid,
-        });
-
-        // Verificar la respuesta del servidor
-        if (response.status === 200) {
-          const result = response.data;
-
-
-          console.log("result.userData", result.userData)
-
-          setinfoUser(result.userData)
-
-          setimagePerfil(result.userData.image_perfil);
-        } else {
-          console.error('Error en la solicitud:', response.statusText);
-        }
-      } catch (error) {
-        if (error.response) {
-          console.error(
-            'Error en la solicitud:',
-            error.response.data.message || error.response.statusText,
-          );
-        } else {
-          console.error('Error en la solicitud:', error.message);
-        }
-      }
-
-    } catch (e) {
-      // error reading value
-      console.log(e)
-    }
-  };
+  }, [navigationScreen, getData]);
 
   const {
     viewRTLStyle,
@@ -102,13 +111,17 @@ const ProfileScreen = () => {
   } = useValues();
 
 
-  const removePropertyFromStorage = async (propertyName) => {
+  const removePropertyFromStorage = async () => {
     try {
       await AsyncStorage.removeItem('@userInfo');
-      console.log('Item removed successfully');
     } catch (error) {
-      console.error('Error removing item:', error);
+      console.warn('Error removing item:', error);
     }
+  };
+
+  const cerrarSesion = () => {
+    removePropertyFromStorage();
+    handleLogout();
   };
 
   const handleMainOptionPress = async (item) => {
@@ -131,39 +144,31 @@ const ProfileScreen = () => {
         [
           {
             text: "Cancelar",
-            onPress: () => console.log("Cancelado"),
             style: "cancel",
           },
           {
             text: "Eliminar",
             onPress: async () => {
-              console.log("estoy en test");
-
               try {
                 const jsonValue = await AsyncStorage.getItem('@userInfo');
                 const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-                console.log("valor del storage", user.uid);
                 try {
-                  const response = await api.post('/usuarios/deleteUserFromAuth', {
+                  await api.post('/usuarios/deleteUserFromAuth', {
                     uid: user.uid,
                   });
-
-                  const result = response.data;
-                  console.log('esto es lo despues ', result);
 
                   removePropertyFromStorage();
                   handleLogout();
 
                 } catch (error) {
-                  if (error.response) {
-                    console.log(error);
-                  } else {
-                    console.log("error mas abajo");
-                  }
+                  Alert.alert(
+                    'Solvers',
+                    'No pudimos eliminar tu cuenta. Revisa tu conexión e inténtalo de nuevo.',
+                  );
                 }
 
               } catch (e) {
-                console.log(e);
+                console.warn(e);
               }
             },
             style: "destructive",
@@ -175,14 +180,11 @@ const ProfileScreen = () => {
     }
 
     if (item.id === 6) {
-      removePropertyFromStorage();
-      handleLogout();
+      cerrarSesion();
     } else {
       if (infoUser.typeUser == "Taller") {
         if (item.screenName == "EditProfile") {
-          console.log("aquiii");
           navigation.navigate('TallerEditProfileScreen');
-          // navigation.navigate('EditProfile');
         } else {
           navigation.navigate(item.screenName);
         }
@@ -198,19 +200,9 @@ const ProfileScreen = () => {
 
   const handleAdminOptionPress = (item) => {
     if (item.id === 6) {
-      removePropertyFromStorage();
-      handleLogout();
+      cerrarSesion();
     } else {
-      if (infoUser.typeUser == "Taller") {
-        if (item.screenName == "EditProfile") {
-          console.log("aquiii");
-          navigation.navigate('TallerEditProfileScreen');
-        } else {
-          navigation.navigate(item.screenName);
-        }
-      } else {
-        navigation.navigate(item.screenName);
-      }
+      navigation.navigate(item.screenName);
     }
   };
 
@@ -233,6 +225,8 @@ const ProfileScreen = () => {
     <Pressable
       key={index}
       onPress={() => onPressHandler(item)}
+      accessibilityRole="button"
+      accessibilityLabel={t(item.title)}
       style={({ pressed }) => [
         styles.optionCardOuter,
         pressed && styles.optionCardOuterPressed,
@@ -240,21 +234,15 @@ const ProfileScreen = () => {
       <View
         style={styles.optionCardInner}>
         <View style={[styles.optionRow, { flexDirection: viewRTLStyle }]}>
-          {infoUser.typeUser == "Taller"
-            ? item.id === 2 ? <View style={styles.optionIconWrap}>
-            <Icons2 name="dashboard" size={18} color="#FFD60A" />
-          </View> : (
-              
-              <View style={styles.optionIconWrap}>
+          {infoUser.typeUser == "Taller" && item.id === 2 ? (
+            <View style={styles.optionIconWrap}>
+              <Icons2 name="dashboard" size={18} color="#FFD60A" />
+            </View>
+          ) : (
+            <View style={styles.optionIconWrap}>
               {renderMenuIcon(item)}
             </View>
-            )
-            : (
-              <View style={styles.optionIconWrap}>
-                {renderMenuIcon(item)}
-              </View>
-            )
-          }
+          )}
 
           <View style={styles.optionTitleWrap}>
             <Text
@@ -275,6 +263,14 @@ const ProfileScreen = () => {
       </View>
     </Pressable>
   );
+
+  const esCliente = infoUser.typeUser === 'Cliente';
+  const esTaller = infoUser.typeUser === 'Taller';
+  const tipoVisible = esCliente
+    ? 'Conductor'
+    : esTaller
+    ? 'Taller'
+    : infoUser.typeUser || 'Administrador';
 
   return (
     <View style={styles.screenRoot}>
@@ -318,39 +314,48 @@ const ProfileScreen = () => {
                 )}
               </View>
             </View>
-            <Text style={styles.nameText}>{infoUser.nombre || 'Usuario'}</Text>
-            <Text style={styles.emailText}>{infoUser.email || 'Sin correo registrado'}</Text>
+            <Text style={styles.nameText} numberOfLines={2}>{infoUser.nombre || 'Usuario'}</Text>
+            <Text style={styles.emailText} numberOfLines={1}>{infoUser.email || 'Sin correo registrado'}</Text>
             <View style={styles.userTypeBadge}>
-              <Text style={styles.userTypeBadgeText}>{infoUser.typeUser || 'Usuario'}</Text>
+              <Text style={styles.userTypeBadgeText}>{tipoVisible}</Text>
             </View>
           </View>
 
+          {avisoPerfil === 'no_encontrada' ? (
+            <Banner
+              tone="error"
+              text="No encontramos tu cuenta en Solvers. Puede que se haya eliminado. Inicia sesión de nuevo."
+              actionLabel="Iniciar sesión"
+              onAction={cerrarSesion}
+              style={{ marginBottom: 12 }}
+            />
+          ) : avisoPerfil === 'sin_conexion' ? (
+            <Banner
+              tone="warn"
+              text="No pudimos actualizar tus datos. Revisa tu conexión."
+              actionLabel="Reintentar"
+              onAction={getData}
+              style={{ marginBottom: 12 }}
+            />
+          ) : null}
+
           <View style={styles.menuSection}>
-            {infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente"
+            {!esCliente && !esTaller
               ? profileDataAdmin.map((item, index) =>
-                renderOptionCard(item, `admin-a-${index}`, handleAdminOptionPress),
+                renderOptionCard(item, `admin-${index}`, handleAdminOptionPress),
               )
               : null}
-            {infoUser.typeUser != "Taller" && infoUser.typeUser != "Cliente"
-              ? profileDataAdmin
-                .filter(item => item.id !== 3 || infoUser.typeUser === "Taller")
-                .map((item, index) =>
-                  renderOptionCard(item, `admin-b-${index}`, handleAdminOptionPress),
-                )
-              : null}
-            {infoUser.typeUser == "Cliente"
+            {esCliente
               ? profileData
-                .filter(item => item.id !== 3 || infoUser.typeUser === "Taller")
+                .filter(item => item.id !== 3)
                 .map((item, index) =>
                   renderOptionCard(item, `user-${index}`, handleMainOptionPress),
                 )
               : null}
 
-            {infoUser.typeUser == "Taller"
-              ? profileDataTaller
-                .filter(item => item.id !== 3 || infoUser.typeUser === "Taller")
-                .map((item, index) =>
-                  renderOptionCard(item, `user-${index}`, handleMainOptionPress),
+            {esTaller
+              ? profileDataTaller.map((item, index) =>
+                  renderOptionCard(item, `taller-${index}`, handleMainOptionPress),
                 )
               : null}
           </View>

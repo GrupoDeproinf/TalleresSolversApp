@@ -7,29 +7,118 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		00BDC9461ACD47B28B5198FE /* OFL-LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = D8BE461843F94532A12DFAFE /* OFL-LICENSE.txt */; };
+		01A02BE6A7174F35B1FAEB2C /* Italiana-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B1D338FB61894BD999151E02 /* Italiana-Regular.ttf */; };
+		0437FD74810D4F0BA859594F /* Inter-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 671461CAE4CD4378A345B24A /* Inter-SemiBold.ttf */; };
+		04CD1A5D978D49ECA85C8694 /* Poppins-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9CA859FEBD2A4F59B19D1BBC /* Poppins-BoldItalic.ttf */; };
+		05ADC13AFF454D4995F3B4CB /* Poppins-ExtraBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 54B487B10D8E4BEDA22DE51B /* Poppins-ExtraBoldItalic.ttf */; };
+		0BE3C9DEC51D42C2A945000C /* Poppins-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4A220B9B944F45F3A13CF527 /* Poppins-SemiBold.ttf */; };
+		114BFDA587884667A1357878 /* SofiaSans-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FB961538BB8F425E889A3A2D /* SofiaSans-LightItalic.ttf */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		18FEE84F00B84D1E8BB6A508 /* Poppins-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2EBA26691ED2432585B418DD /* Poppins-Thin.ttf */; };
+		1ABA85A1CAB548BE946CD196 /* Inter-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FCB6F3016E5946A1B6D24A28 /* Inter-ExtraBold.ttf */; };
+		28E8B9DAC1454462948FB1D8 /* SofiaSans-HairLine.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EB3A0DF349EF42B4B8E3CAA6 /* SofiaSans-HairLine.ttf */; };
+		2D9218147552455B8903A2DB /* Poppins-BlackItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E7F2BC42B85B4975B1FB5E79 /* Poppins-BlackItalic.ttf */; };
+		311A81D8E92848F2A50B5192 /* Poppins-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6C8C9EFBC8A8411CA47A3654 /* Poppins-ExtraBold.ttf */; };
+		344FD5E155844C589A8B015B /* SofiaSans-Thin.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9F608B3363C44C939B095341 /* SofiaSans-Thin.ttf */; };
+		3481AFD63CC8474C8DEBA562 /* Poppins-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B56233249A6E468EAC637A6B /* Poppins-Bold.ttf */; };
+		4309D5592A4F4367A1236F3E /* SofiaSans-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FBEDB00FEA3141648CE48E77 /* SofiaSans-ExtraLight.ttf */; };
+		4B47896D79E747A7A1D48F22 /* SofiaSans-ExtraBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 4B3CAA8FE9784036B4B08016 /* SofiaSans-ExtraBold.ttf */; };
+		4C4F4E4B4ADE4E1486575011 /* Inter-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 625F449FD69B4391A030B187 /* Inter-Regular.ttf */; };
+		66A52718FF374DAE9C67D80C /* SofiaSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8120EC156744414290BF6659 /* SofiaSans-Bold.ttf */; };
+		682BAF3991B543C2B1FB5E64 /* SofiaSans-HairLineItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D93CB34D3D304E7A94D97B61 /* SofiaSans-HairLineItalic.ttf */; };
+		705BAC3581B843A6A731C297 /* Inter-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = AC3C5E5AA046412C90B6237D /* Inter-Bold.ttf */; };
+		708D901A5AAE462F941C6416 /* Poppins-MediumItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1946EF2F5EDE4F8893199329 /* Poppins-MediumItalic.ttf */; };
 		73275E8B35687F93B31FC433 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		747F8F0F2D8A4D019DD19FE1 /* Poppins-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D357D57000594CBFA3984F13 /* Poppins-LightItalic.ttf */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
+		7AA266C455384B8FB3E3B8B0 /* Poppins-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 32D7177DA7424827A46ED112 /* Poppins-Regular.ttf */; };
+		7DCFC24AD9F6401BB932E04E /* Poppins-ExtraLight.ttf in Resources */ = {isa = PBXBuildFile; fileRef = E42DE03B6768470ABA476DB9 /* Poppins-ExtraLight.ttf */; };
+		7E286AA216304766A50F4F5C /* SofiaSans-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 454B726C41924DBAAA7D00D3 /* SofiaSans-Italic.ttf */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		8B8AA6B4D3214308A56C2C92 /* Poppins-ThinItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 862B55F9445C4F388C456BFD /* Poppins-ThinItalic.ttf */; };
+		9203C7B751DC43FB840543EE /* Poppins-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7726ACCE04AB4493AB5A5252 /* Poppins-Medium.ttf */; };
+		96FD500EFBEC424F84ECC3BB /* SofiaSans-ExtraBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B70385CB149449BFB1215BE0 /* SofiaSans-ExtraBoldItalic.ttf */; };
+		97C7F30D53F245F389F6C43F /* SofiaSans-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F6F4C506274D47798AD61A92 /* SofiaSans-SemiBold.ttf */; };
+		A3A3C0BE2F8B4CB4B4469D6F /* SofiaSans-ExtraBlackItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8DD10915CA194F0E8D0FAE76 /* SofiaSans-ExtraBlackItalic.ttf */; };
+		A654D68AC974440C9FD22CBC /* Inter-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 27415BB86D0F490F9C1B0D37 /* Inter-Medium.ttf */; };
+		AB2F4F8ADCB84C7B8614C155 /* Poppins-SemiBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 5359F4EEB7704C09B5F99B07 /* Poppins-SemiBoldItalic.ttf */; };
+		ADBBB85AA3284A2DA29A68D5 /* Poppins-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6E81E28E83B042DCB10C0982 /* Poppins-Italic.ttf */; };
+		AF517F6B343A45C9BA25D2EE /* SofiaSans-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C3132E2B27AD41388667805E /* SofiaSans-Regular.ttf */; };
+		B1F20DC3DDD74BE59BE32CB1 /* SofiaSans-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DC415A14F96E4DDFB14C1C56 /* SofiaSans-Light.ttf */; };
+		B62C11B66E8146B5A8865C46 /* Poppins-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 41C9077B40154883A245B46D /* Poppins-Light.ttf */; };
+		BA9053CCB1F841C3B40A9248 /* Poppins-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0D4A18CDA2D54CF9841FF1CF /* Poppins-Black.ttf */; };
+		BF272242F64545C8844E28EE /* SofiaSans-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0CE345E1F8B64AFDBE224C2B /* SofiaSans-BoldItalic.ttf */; };
 		C3F1FF0544E857C1741C2155 /* Pods_MyReactNativeApp.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5C5BC310033F734EF44EC42C /* Pods_MyReactNativeApp.framework */; };
+		C782B3F3D3A84D6DB806E4C2 /* SofiaSans-MediumItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9C2D44891007471EA2B00D86 /* SofiaSans-MediumItalic.ttf */; };
+		CFB1B60CD1994C0F8DDCBB1F /* SofiaSans-ExtraBlack.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6EF97E6E6FD24F40B14DA181 /* SofiaSans-ExtraBlack.ttf */; };
+		DDE0189979C84626B10AA4F8 /* SofiaSans-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 8DB36C5CEA4942BEB0452BF2 /* SofiaSans-Medium.ttf */; };
+		E26B6BEB466A4EE8A83092AB /* SofiaSans-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 750443C32CEE41ADB12D91D0 /* SofiaSans-Black.ttf */; };
+		E3DBECE92C104595867020AD /* SofiaSans-SemiBoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B8B94200DF894652BB07CFF8 /* SofiaSans-SemiBoldItalic.ttf */; };
+		E4D54502DEBF4596884BA245 /* SofiaSans-BlackItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = EB0702AE88F9425680E471FB /* SofiaSans-BlackItalic.ttf */; };
 		EC184434D0854C5EAACDFF8F /* RNMapboxNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = C07143254FCC27E3540D98B7 /* RNMapboxNavigation.swift */; };
+		F3829ECA899F42ECA61D925C /* SofiaSans-ExtraLightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = DE0B6464D4314E07B82B3E8B /* SofiaSans-ExtraLightItalic.ttf */; };
+		F66C0B4990EC4DC6B3D9E00B /* Poppins-ExtraLightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0D280FBF4456459E8B925FE0 /* Poppins-ExtraLightItalic.ttf */; };
 		F8681B3A2DC7E8E100243369 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F8681B392DC7E8E100243369 /* GoogleService-Info.plist */; };
 		F9CBB67561ED26DB3C3C9453 /* RNMapboxNavigation.m in Sources */ = {isa = PBXBuildFile; fileRef = C942B6131D2219DF73B17417 /* RNMapboxNavigation.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0CE345E1F8B64AFDBE224C2B /* SofiaSans-BoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-BoldItalic.ttf"; path = "../src/assets/fonts/SofiaSans-BoldItalic.ttf"; sourceTree = "<group>"; };
+		0D280FBF4456459E8B925FE0 /* Poppins-ExtraLightItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-ExtraLightItalic.ttf"; path = "../src/assets/fonts/Poppins-ExtraLightItalic.ttf"; sourceTree = "<group>"; };
+		0D4A18CDA2D54CF9841FF1CF /* Poppins-Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Black.ttf"; path = "../src/assets/fonts/Poppins-Black.ttf"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* MyReactNativeApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MyReactNativeApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = MyReactNativeApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = MyReactNativeApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = MyReactNativeApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		1946EF2F5EDE4F8893199329 /* Poppins-MediumItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-MediumItalic.ttf"; path = "../src/assets/fonts/Poppins-MediumItalic.ttf"; sourceTree = "<group>"; };
+		27415BB86D0F490F9C1B0D37 /* Inter-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Medium.ttf"; path = "../src/assets/fonts-inter/Inter-Medium.ttf"; sourceTree = "<group>"; };
+		2EBA26691ED2432585B418DD /* Poppins-Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Thin.ttf"; path = "../src/assets/fonts/Poppins-Thin.ttf"; sourceTree = "<group>"; };
+		32D7177DA7424827A46ED112 /* Poppins-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Regular.ttf"; path = "../src/assets/fonts/Poppins-Regular.ttf"; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-MyReactNativeApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MyReactNativeApp.debug.xcconfig"; path = "Target Support Files/Pods-MyReactNativeApp/Pods-MyReactNativeApp.debug.xcconfig"; sourceTree = "<group>"; };
+		41C9077B40154883A245B46D /* Poppins-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Light.ttf"; path = "../src/assets/fonts/Poppins-Light.ttf"; sourceTree = "<group>"; };
+		454B726C41924DBAAA7D00D3 /* SofiaSans-Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-Italic.ttf"; path = "../src/assets/fonts/SofiaSans-Italic.ttf"; sourceTree = "<group>"; };
+		4A220B9B944F45F3A13CF527 /* Poppins-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-SemiBold.ttf"; path = "../src/assets/fonts/Poppins-SemiBold.ttf"; sourceTree = "<group>"; };
+		4B3CAA8FE9784036B4B08016 /* SofiaSans-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-ExtraBold.ttf"; path = "../src/assets/fonts/SofiaSans-ExtraBold.ttf"; sourceTree = "<group>"; };
+		5359F4EEB7704C09B5F99B07 /* Poppins-SemiBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-SemiBoldItalic.ttf"; path = "../src/assets/fonts/Poppins-SemiBoldItalic.ttf"; sourceTree = "<group>"; };
+		54B487B10D8E4BEDA22DE51B /* Poppins-ExtraBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-ExtraBoldItalic.ttf"; path = "../src/assets/fonts/Poppins-ExtraBoldItalic.ttf"; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-MyReactNativeApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-MyReactNativeApp.release.xcconfig"; path = "Target Support Files/Pods-MyReactNativeApp/Pods-MyReactNativeApp.release.xcconfig"; sourceTree = "<group>"; };
 		5C5BC310033F734EF44EC42C /* Pods_MyReactNativeApp.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_MyReactNativeApp.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		625F449FD69B4391A030B187 /* Inter-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Regular.ttf"; path = "../src/assets/fonts-inter/Inter-Regular.ttf"; sourceTree = "<group>"; };
+		671461CAE4CD4378A345B24A /* Inter-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-SemiBold.ttf"; path = "../src/assets/fonts-inter/Inter-SemiBold.ttf"; sourceTree = "<group>"; };
+		6C8C9EFBC8A8411CA47A3654 /* Poppins-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-ExtraBold.ttf"; path = "../src/assets/fonts/Poppins-ExtraBold.ttf"; sourceTree = "<group>"; };
+		6E81E28E83B042DCB10C0982 /* Poppins-Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Italic.ttf"; path = "../src/assets/fonts/Poppins-Italic.ttf"; sourceTree = "<group>"; };
+		6EF97E6E6FD24F40B14DA181 /* SofiaSans-ExtraBlack.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-ExtraBlack.ttf"; path = "../src/assets/fonts/SofiaSans-ExtraBlack.ttf"; sourceTree = "<group>"; };
+		750443C32CEE41ADB12D91D0 /* SofiaSans-Black.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-Black.ttf"; path = "../src/assets/fonts/SofiaSans-Black.ttf"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = MyReactNativeApp/AppDelegate.swift; sourceTree = "<group>"; };
+		7726ACCE04AB4493AB5A5252 /* Poppins-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Medium.ttf"; path = "../src/assets/fonts/Poppins-Medium.ttf"; sourceTree = "<group>"; };
+		8120EC156744414290BF6659 /* SofiaSans-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-Bold.ttf"; path = "../src/assets/fonts/SofiaSans-Bold.ttf"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = MyReactNativeApp/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		862B55F9445C4F388C456BFD /* Poppins-ThinItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-ThinItalic.ttf"; path = "../src/assets/fonts/Poppins-ThinItalic.ttf"; sourceTree = "<group>"; };
+		8DB36C5CEA4942BEB0452BF2 /* SofiaSans-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-Medium.ttf"; path = "../src/assets/fonts/SofiaSans-Medium.ttf"; sourceTree = "<group>"; };
+		8DD10915CA194F0E8D0FAE76 /* SofiaSans-ExtraBlackItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-ExtraBlackItalic.ttf"; path = "../src/assets/fonts/SofiaSans-ExtraBlackItalic.ttf"; sourceTree = "<group>"; };
+		9C2D44891007471EA2B00D86 /* SofiaSans-MediumItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-MediumItalic.ttf"; path = "../src/assets/fonts/SofiaSans-MediumItalic.ttf"; sourceTree = "<group>"; };
+		9CA859FEBD2A4F59B19D1BBC /* Poppins-BoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-BoldItalic.ttf"; path = "../src/assets/fonts/Poppins-BoldItalic.ttf"; sourceTree = "<group>"; };
+		9F608B3363C44C939B095341 /* SofiaSans-Thin.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-Thin.ttf"; path = "../src/assets/fonts/SofiaSans-Thin.ttf"; sourceTree = "<group>"; };
+		AC3C5E5AA046412C90B6237D /* Inter-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-Bold.ttf"; path = "../src/assets/fonts-inter/Inter-Bold.ttf"; sourceTree = "<group>"; };
+		B1D338FB61894BD999151E02 /* Italiana-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Italiana-Regular.ttf"; path = "../src/assets/fonts/Italiana-Regular.ttf"; sourceTree = "<group>"; };
+		B56233249A6E468EAC637A6B /* Poppins-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-Bold.ttf"; path = "../src/assets/fonts/Poppins-Bold.ttf"; sourceTree = "<group>"; };
+		B70385CB149449BFB1215BE0 /* SofiaSans-ExtraBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-ExtraBoldItalic.ttf"; path = "../src/assets/fonts/SofiaSans-ExtraBoldItalic.ttf"; sourceTree = "<group>"; };
+		B8B94200DF894652BB07CFF8 /* SofiaSans-SemiBoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-SemiBoldItalic.ttf"; path = "../src/assets/fonts/SofiaSans-SemiBoldItalic.ttf"; sourceTree = "<group>"; };
 		C07143254FCC27E3540D98B7 /* RNMapboxNavigation.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = RNMapboxNavigation.swift; sourceTree = "<group>"; };
+		C3132E2B27AD41388667805E /* SofiaSans-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-Regular.ttf"; path = "../src/assets/fonts/SofiaSans-Regular.ttf"; sourceTree = "<group>"; };
 		C942B6131D2219DF73B17417 /* RNMapboxNavigation.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = RNMapboxNavigation.m; sourceTree = "<group>"; };
+		D357D57000594CBFA3984F13 /* Poppins-LightItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-LightItalic.ttf"; path = "../src/assets/fonts/Poppins-LightItalic.ttf"; sourceTree = "<group>"; };
+		D8BE461843F94532A12DFAFE /* OFL-LICENSE.txt */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "OFL-LICENSE.txt"; path = "../src/assets/fonts-inter/OFL-LICENSE.txt"; sourceTree = "<group>"; };
+		D93CB34D3D304E7A94D97B61 /* SofiaSans-HairLineItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-HairLineItalic.ttf"; path = "../src/assets/fonts/SofiaSans-HairLineItalic.ttf"; sourceTree = "<group>"; };
+		DC415A14F96E4DDFB14C1C56 /* SofiaSans-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-Light.ttf"; path = "../src/assets/fonts/SofiaSans-Light.ttf"; sourceTree = "<group>"; };
+		DE0B6464D4314E07B82B3E8B /* SofiaSans-ExtraLightItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-ExtraLightItalic.ttf"; path = "../src/assets/fonts/SofiaSans-ExtraLightItalic.ttf"; sourceTree = "<group>"; };
+		E42DE03B6768470ABA476DB9 /* Poppins-ExtraLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-ExtraLight.ttf"; path = "../src/assets/fonts/Poppins-ExtraLight.ttf"; sourceTree = "<group>"; };
+		E7F2BC42B85B4975B1FB5E79 /* Poppins-BlackItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Poppins-BlackItalic.ttf"; path = "../src/assets/fonts/Poppins-BlackItalic.ttf"; sourceTree = "<group>"; };
+		EB0702AE88F9425680E471FB /* SofiaSans-BlackItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-BlackItalic.ttf"; path = "../src/assets/fonts/SofiaSans-BlackItalic.ttf"; sourceTree = "<group>"; };
+		EB3A0DF349EF42B4B8E3CAA6 /* SofiaSans-HairLine.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-HairLine.ttf"; path = "../src/assets/fonts/SofiaSans-HairLine.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F6F4C506274D47798AD61A92 /* SofiaSans-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-SemiBold.ttf"; path = "../src/assets/fonts/SofiaSans-SemiBold.ttf"; sourceTree = "<group>"; };
 		F80605272F22C143002CA0F4 /* MyReactNativeAppRelease.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = MyReactNativeAppRelease.entitlements; path = MyReactNativeApp/MyReactNativeAppRelease.entitlements; sourceTree = "<group>"; };
 		F8681B392DC7E8E100243369 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		F8CF4BEE2DD500B200E30520 /* GoogleMaps.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = GoogleMaps.xcframework; path = Pods/GoogleMaps/Maps/Frameworks/GoogleMaps.xcframework; sourceTree = "<group>"; };
@@ -53,6 +142,9 @@
 		F8FABBAD2DCA428E00D4F313 /* Zocial.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Zocial.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Zocial.ttf"; sourceTree = "<group>"; };
 		F8FABBAE2DCA428E00D4F313 /* FontAwesome6_Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = FontAwesome6_Regular.ttf; path = "../node_modules/react-native-vector-icons/Fonts/FontAwesome6_Regular.ttf"; sourceTree = "<group>"; };
 		F8FABBC12DCBD82800D4F313 /* MyReactNativeApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = MyReactNativeApp.entitlements; path = MyReactNativeApp/MyReactNativeApp.entitlements; sourceTree = "<group>"; };
+		FB961538BB8F425E889A3A2D /* SofiaSans-LightItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-LightItalic.ttf"; path = "../src/assets/fonts/SofiaSans-LightItalic.ttf"; sourceTree = "<group>"; };
+		FBEDB00FEA3141648CE48E77 /* SofiaSans-ExtraLight.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "SofiaSans-ExtraLight.ttf"; path = "../src/assets/fonts/SofiaSans-ExtraLight.ttf"; sourceTree = "<group>"; };
+		FCB6F3016E5946A1B6D24A28 /* Inter-ExtraBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Inter-ExtraBold.ttf"; path = "../src/assets/fonts-inter/Inter-ExtraBold.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -127,6 +219,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				E264882EAEBD4144B8B769B2 /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -159,6 +252,60 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
+		E264882EAEBD4144B8B769B2 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				B1D338FB61894BD999151E02 /* Italiana-Regular.ttf */,
+				0D4A18CDA2D54CF9841FF1CF /* Poppins-Black.ttf */,
+				E7F2BC42B85B4975B1FB5E79 /* Poppins-BlackItalic.ttf */,
+				B56233249A6E468EAC637A6B /* Poppins-Bold.ttf */,
+				9CA859FEBD2A4F59B19D1BBC /* Poppins-BoldItalic.ttf */,
+				6C8C9EFBC8A8411CA47A3654 /* Poppins-ExtraBold.ttf */,
+				54B487B10D8E4BEDA22DE51B /* Poppins-ExtraBoldItalic.ttf */,
+				E42DE03B6768470ABA476DB9 /* Poppins-ExtraLight.ttf */,
+				0D280FBF4456459E8B925FE0 /* Poppins-ExtraLightItalic.ttf */,
+				6E81E28E83B042DCB10C0982 /* Poppins-Italic.ttf */,
+				41C9077B40154883A245B46D /* Poppins-Light.ttf */,
+				D357D57000594CBFA3984F13 /* Poppins-LightItalic.ttf */,
+				7726ACCE04AB4493AB5A5252 /* Poppins-Medium.ttf */,
+				1946EF2F5EDE4F8893199329 /* Poppins-MediumItalic.ttf */,
+				32D7177DA7424827A46ED112 /* Poppins-Regular.ttf */,
+				4A220B9B944F45F3A13CF527 /* Poppins-SemiBold.ttf */,
+				5359F4EEB7704C09B5F99B07 /* Poppins-SemiBoldItalic.ttf */,
+				2EBA26691ED2432585B418DD /* Poppins-Thin.ttf */,
+				862B55F9445C4F388C456BFD /* Poppins-ThinItalic.ttf */,
+				750443C32CEE41ADB12D91D0 /* SofiaSans-Black.ttf */,
+				EB0702AE88F9425680E471FB /* SofiaSans-BlackItalic.ttf */,
+				8120EC156744414290BF6659 /* SofiaSans-Bold.ttf */,
+				0CE345E1F8B64AFDBE224C2B /* SofiaSans-BoldItalic.ttf */,
+				6EF97E6E6FD24F40B14DA181 /* SofiaSans-ExtraBlack.ttf */,
+				8DD10915CA194F0E8D0FAE76 /* SofiaSans-ExtraBlackItalic.ttf */,
+				4B3CAA8FE9784036B4B08016 /* SofiaSans-ExtraBold.ttf */,
+				B70385CB149449BFB1215BE0 /* SofiaSans-ExtraBoldItalic.ttf */,
+				FBEDB00FEA3141648CE48E77 /* SofiaSans-ExtraLight.ttf */,
+				DE0B6464D4314E07B82B3E8B /* SofiaSans-ExtraLightItalic.ttf */,
+				EB3A0DF349EF42B4B8E3CAA6 /* SofiaSans-HairLine.ttf */,
+				D93CB34D3D304E7A94D97B61 /* SofiaSans-HairLineItalic.ttf */,
+				454B726C41924DBAAA7D00D3 /* SofiaSans-Italic.ttf */,
+				DC415A14F96E4DDFB14C1C56 /* SofiaSans-Light.ttf */,
+				FB961538BB8F425E889A3A2D /* SofiaSans-LightItalic.ttf */,
+				8DB36C5CEA4942BEB0452BF2 /* SofiaSans-Medium.ttf */,
+				9C2D44891007471EA2B00D86 /* SofiaSans-MediumItalic.ttf */,
+				C3132E2B27AD41388667805E /* SofiaSans-Regular.ttf */,
+				F6F4C506274D47798AD61A92 /* SofiaSans-SemiBold.ttf */,
+				B8B94200DF894652BB07CFF8 /* SofiaSans-SemiBoldItalic.ttf */,
+				9F608B3363C44C939B095341 /* SofiaSans-Thin.ttf */,
+				AC3C5E5AA046412C90B6237D /* Inter-Bold.ttf */,
+				FCB6F3016E5946A1B6D24A28 /* Inter-ExtraBold.ttf */,
+				27415BB86D0F490F9C1B0D37 /* Inter-Medium.ttf */,
+				625F449FD69B4391A030B187 /* Inter-Regular.ttf */,
+				671461CAE4CD4378A345B24A /* Inter-SemiBold.ttf */,
+				D8BE461843F94532A12DFAFE /* OFL-LICENSE.txt */,
+			);
+			name = Resources;
+			path = "";
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -175,6 +322,7 @@
 				98D15D1071B31BADA93975C3 /* [CP-User] [RNFB] Core Configuration */,
 				C90CEC795706781FBEF2AADA /* [CP] Embed Pods Frameworks */,
 				F8F10A992F9FB03B00104369 /* ShellScript */,
+				5534A0715A6698AC5139EDF4 /* [CP-User] [RNFB] Crashlytics Configuration */,
 			);
 			buildRules = (
 			);
@@ -229,6 +377,52 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				73275E8B35687F93B31FC433 /* PrivacyInfo.xcprivacy in Resources */,
+				01A02BE6A7174F35B1FAEB2C /* Italiana-Regular.ttf in Resources */,
+				BA9053CCB1F841C3B40A9248 /* Poppins-Black.ttf in Resources */,
+				2D9218147552455B8903A2DB /* Poppins-BlackItalic.ttf in Resources */,
+				3481AFD63CC8474C8DEBA562 /* Poppins-Bold.ttf in Resources */,
+				04CD1A5D978D49ECA85C8694 /* Poppins-BoldItalic.ttf in Resources */,
+				311A81D8E92848F2A50B5192 /* Poppins-ExtraBold.ttf in Resources */,
+				05ADC13AFF454D4995F3B4CB /* Poppins-ExtraBoldItalic.ttf in Resources */,
+				7DCFC24AD9F6401BB932E04E /* Poppins-ExtraLight.ttf in Resources */,
+				F66C0B4990EC4DC6B3D9E00B /* Poppins-ExtraLightItalic.ttf in Resources */,
+				ADBBB85AA3284A2DA29A68D5 /* Poppins-Italic.ttf in Resources */,
+				B62C11B66E8146B5A8865C46 /* Poppins-Light.ttf in Resources */,
+				747F8F0F2D8A4D019DD19FE1 /* Poppins-LightItalic.ttf in Resources */,
+				9203C7B751DC43FB840543EE /* Poppins-Medium.ttf in Resources */,
+				708D901A5AAE462F941C6416 /* Poppins-MediumItalic.ttf in Resources */,
+				7AA266C455384B8FB3E3B8B0 /* Poppins-Regular.ttf in Resources */,
+				0BE3C9DEC51D42C2A945000C /* Poppins-SemiBold.ttf in Resources */,
+				AB2F4F8ADCB84C7B8614C155 /* Poppins-SemiBoldItalic.ttf in Resources */,
+				18FEE84F00B84D1E8BB6A508 /* Poppins-Thin.ttf in Resources */,
+				8B8AA6B4D3214308A56C2C92 /* Poppins-ThinItalic.ttf in Resources */,
+				E26B6BEB466A4EE8A83092AB /* SofiaSans-Black.ttf in Resources */,
+				E4D54502DEBF4596884BA245 /* SofiaSans-BlackItalic.ttf in Resources */,
+				66A52718FF374DAE9C67D80C /* SofiaSans-Bold.ttf in Resources */,
+				BF272242F64545C8844E28EE /* SofiaSans-BoldItalic.ttf in Resources */,
+				CFB1B60CD1994C0F8DDCBB1F /* SofiaSans-ExtraBlack.ttf in Resources */,
+				A3A3C0BE2F8B4CB4B4469D6F /* SofiaSans-ExtraBlackItalic.ttf in Resources */,
+				4B47896D79E747A7A1D48F22 /* SofiaSans-ExtraBold.ttf in Resources */,
+				96FD500EFBEC424F84ECC3BB /* SofiaSans-ExtraBoldItalic.ttf in Resources */,
+				4309D5592A4F4367A1236F3E /* SofiaSans-ExtraLight.ttf in Resources */,
+				F3829ECA899F42ECA61D925C /* SofiaSans-ExtraLightItalic.ttf in Resources */,
+				28E8B9DAC1454462948FB1D8 /* SofiaSans-HairLine.ttf in Resources */,
+				682BAF3991B543C2B1FB5E64 /* SofiaSans-HairLineItalic.ttf in Resources */,
+				7E286AA216304766A50F4F5C /* SofiaSans-Italic.ttf in Resources */,
+				B1F20DC3DDD74BE59BE32CB1 /* SofiaSans-Light.ttf in Resources */,
+				114BFDA587884667A1357878 /* SofiaSans-LightItalic.ttf in Resources */,
+				DDE0189979C84626B10AA4F8 /* SofiaSans-Medium.ttf in Resources */,
+				C782B3F3D3A84D6DB806E4C2 /* SofiaSans-MediumItalic.ttf in Resources */,
+				AF517F6B343A45C9BA25D2EE /* SofiaSans-Regular.ttf in Resources */,
+				97C7F30D53F245F389F6C43F /* SofiaSans-SemiBold.ttf in Resources */,
+				E3DBECE92C104595867020AD /* SofiaSans-SemiBoldItalic.ttf in Resources */,
+				344FD5E155844C589A8B015B /* SofiaSans-Thin.ttf in Resources */,
+				705BAC3581B843A6A731C297 /* Inter-Bold.ttf in Resources */,
+				1ABA85A1CAB548BE946CD196 /* Inter-ExtraBold.ttf in Resources */,
+				A654D68AC974440C9FD22CBC /* Inter-Medium.ttf in Resources */,
+				4C4F4E4B4ADE4E1486575011 /* Inter-Regular.ttf in Resources */,
+				0437FD74810D4F0BA859594F /* Inter-SemiBold.ttf in Resources */,
+				00BDC9461ACD47B28B5198FE /* OFL-LICENSE.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -251,6 +445,20 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\n# Ruta explícita a la versión de Node.js que deseas usar\nexport NODE_BINARY=\"/Users/evanderalvarado/.nvm/versions/node/v22.14.0/bin/node\"\n\n# Variables de entorno existentes\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n# Confirmar qué versión de Node.js se está usando\necho \"Using Node.js at: $NODE_BINARY\"\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
+		5534A0715A6698AC5139EDF4 /* [CP-User] [RNFB] Crashlytics Configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Resources/DWARF/${TARGET_NAME}",
+				"$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "[CP-User] [RNFB] Crashlytics Configuration";
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#!/usr/bin/env bash\n#\n# Copyright (c) 2016-present Invertase Limited & Contributors\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this library except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#   http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n#\nset -e\n\nif [[ ${PODS_ROOT} ]]; then\n  echo \"info: Exec FirebaseCrashlytics Run from Pods\"\n  \"${PODS_ROOT}/FirebaseCrashlytics/run\"\nelse\n  echo \"info: Exec FirebaseCrashlytics Run from framework\"\n  \"${PROJECT_DIR}/FirebaseCrashlytics.framework/run\"\nfi\n";
+		};
 		98D15D1071B31BADA93975C3 /* [CP-User] [RNFB] Core Configuration */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -260,8 +468,6 @@
 				"$(BUILT_PRODUCTS_DIR)/$(INFOPLIST_PATH)",
 			);
 			name = "[CP-User] [RNFB] Core Configuration";
-			outputPaths = (
-			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "#!/usr/bin/env bash\n#\n# Copyright (c) 2016-present Invertase Limited & Contributors\n#\n# Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this library except in compliance with the License.\n# You may obtain a copy of the License at\n#\n#   http://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.\n#\n\n##########################################################################\n##########################################################################\n#\n#  NOTE THAT IF YOU CHANGE THIS FILE YOU MUST RUN pod install AFTERWARDS\n#\n#  This file is installed as an Xcode build script in the project file\n#  by cocoapods, and you will not see your changes until you pod install\n#\n##########################################################################\n##########################################################################\n\nset -e\n\n_MAX_LOOKUPS=2;\n_SEARCH_RESULT=''\n_RN_ROOT_EXISTS=''\n_CURRENT_LOOKUPS=1\n_JSON_ROOT=\"'react-native'\"\n_JSON_FILE_NAME='firebase.json'\n_JSON_OUTPUT_BASE64='e30=' # { }\n_CURRENT_SEARCH_DIR=${PROJECT_DIR}\n_PLIST_BUDDY=/usr/libexec/PlistBuddy\n_TARGET_PLIST=\"${BUILT_PRODUCTS_DIR}/${INFOPLIST_PATH}\"\n_DSYM_PLIST=\"${DWARF_DSYM_FOLDER_PATH}/${DWARF_DSYM_FILE_NAME}/Contents/Info.plist\"\n\n# plist arrays\n_PLIST_ENTRY_KEYS=()\n_PLIST_ENTRY_TYPES=()\n_PLIST_ENTRY_VALUES=()\n\nfunction setPlistValue {\n  echo \"info:      setting plist entry '$1' of type '$2' in file '$4'\"\n  ${_PLIST_BUDDY} -c \"Add :$1 $2 '$3'\" $4 || echo \"info:      '$1' already exists\"\n}\n\nfunction getFirebaseJsonKeyValue () {\n  if [[ ${_RN_ROOT_EXISTS} ]]; then\n    ruby -Ku -e \"require 'rubygems';require 'json'; output=JSON.parse('$1'); puts output[$_JSON_ROOT]['$2']\"\n  else\n    echo \"\"\n  fi;\n}\n\nfunction jsonBoolToYesNo () {\n  if [[ $1 == \"false\" ]]; then\n    echo \"NO\"\n  elif [[ $1 == \"true\" ]]; then\n    echo \"YES\"\n  else echo \"NO\"\n  fi\n}\n\necho \"info: -> RNFB build script started\"\necho \"info: 1) Locating ${_JSON_FILE_NAME} file:\"\n\nif [[ -z ${_CURRENT_SEARCH_DIR} ]]; then\n  _CURRENT_SEARCH_DIR=$(pwd)\nfi;\n\nwhile true; do\n  _CURRENT_SEARCH_DIR=$(dirname \"$_CURRENT_SEARCH_DIR\")\n  if [[ \"$_CURRENT_SEARCH_DIR\" == \"/\" ]] || [[ ${_CURRENT_LOOKUPS} -gt ${_MAX_LOOKUPS} ]]; then break; fi;\n  echo \"info:      ($_CURRENT_LOOKUPS of $_MAX_LOOKUPS) Searching in '$_CURRENT_SEARCH_DIR' for a ${_JSON_FILE_NAME} file.\"\n  _SEARCH_RESULT=$(find \"$_CURRENT_SEARCH_DIR\" -maxdepth 2 -name ${_JSON_FILE_NAME} -print | /usr/bin/head -n 1)\n  if [[ ${_SEARCH_RESULT} ]]; then\n    echo \"info:      ${_JSON_FILE_NAME} found at $_SEARCH_RESULT\"\n    break;\n  fi;\n  _CURRENT_LOOKUPS=$((_CURRENT_LOOKUPS+1))\ndone\n\nif [[ ${_SEARCH_RESULT} ]]; then\n  _JSON_OUTPUT_RAW=$(cat \"${_SEARCH_RESULT}\")\n  _RN_ROOT_EXISTS=$(ruby -Ku -e \"require 'rubygems';require 'json'; output=JSON.parse('$_JSON_OUTPUT_RAW'); puts output[$_JSON_ROOT]\" || echo '')\n\n  if [[ ${_RN_ROOT_EXISTS} ]]; then\n    if ! python3 --version >/dev/null 2>&1; then echo \"python3 not found, firebase.json file processing error.\" && exit 1; fi\n    _JSON_OUTPUT_BASE64=$(python3 -c 'import json,sys,base64;print(base64.b64encode(bytes(json.dumps(json.loads(open('\"'${_SEARCH_RESULT}'\"', '\"'rb'\"').read())['${_JSON_ROOT}']), '\"'utf-8'\"')).decode())' || echo \"e30=\")\n  fi\n\n  _PLIST_ENTRY_KEYS+=(\"firebase_json_raw\")\n  _PLIST_ENTRY_TYPES+=(\"string\")\n  _PLIST_ENTRY_VALUES+=(\"$_JSON_OUTPUT_BASE64\")\n\n  # config.app_data_collection_default_enabled\n  _APP_DATA_COLLECTION_ENABLED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"app_data_collection_default_enabled\")\n  if [[ $_APP_DATA_COLLECTION_ENABLED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseDataCollectionDefaultEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_APP_DATA_COLLECTION_ENABLED\")\")\n  fi\n\n  # config.analytics_auto_collection_enabled\n  _ANALYTICS_AUTO_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_auto_collection_enabled\")\n  if [[ $_ANALYTICS_AUTO_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FIREBASE_ANALYTICS_COLLECTION_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AUTO_COLLECTION\")\")\n  fi\n\n  # config.analytics_collection_deactivated\n  _ANALYTICS_DEACTIVATED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_collection_deactivated\")\n  if [[ $_ANALYTICS_DEACTIVATED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FIREBASE_ANALYTICS_COLLECTION_DEACTIVATED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_DEACTIVATED\")\")\n  fi\n\n  # config.analytics_idfv_collection_enabled\n  _ANALYTICS_IDFV_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_idfv_collection_enabled\")\n  if [[ $_ANALYTICS_IDFV_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_IDFV_COLLECTION_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_IDFV_COLLECTION\")\")\n  fi\n\n  # config.analytics_default_allow_analytics_storage\n  _ANALYTICS_STORAGE=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_analytics_storage\")\n  if [[ $_ANALYTICS_STORAGE ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_ANALYTICS_STORAGE\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_STORAGE\")\")\n  fi\n\n  # config.analytics_default_allow_ad_storage\n  _ANALYTICS_AD_STORAGE=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_ad_storage\")\n  if [[ $_ANALYTICS_AD_STORAGE ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_STORAGE\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AD_STORAGE\")\")\n  fi\n\n  # config.analytics_default_allow_ad_user_data\n  _ANALYTICS_AD_USER_DATA=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_ad_user_data\")\n  if [[ $_ANALYTICS_AD_USER_DATA ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_USER_DATA\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AD_USER_DATA\")\")\n  fi\n\n  # config.analytics_default_allow_ad_personalization_signals\n  _ANALYTICS_PERSONALIZATION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"analytics_default_allow_ad_personalization_signals\")\n  if [[ $_ANALYTICS_PERSONALIZATION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_DEFAULT_ALLOW_AD_PERSONALIZATION_SIGNALS\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_PERSONALIZATION\")\")\n  fi\n\n  # config.analytics_registration_with_ad_network_enabled\n  _ANALYTICS_REGISTRATION_WITH_AD_NETWORK=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"google_analytics_registration_with_ad_network_enabled\")\n  if [[ $_ANALYTICS_REGISTRATION_WITH_AD_NETWORK ]]; then\n    _PLIST_ENTRY_KEYS+=(\"GOOGLE_ANALYTICS_REGISTRATION_WITH_AD_NETWORK_ENABLED\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_REGISTRATION_WITH_AD_NETWORK\")\")\n  fi\n\n  # config.google_analytics_automatic_screen_reporting_enabled\n  _ANALYTICS_AUTO_SCREEN_REPORTING=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"google_analytics_automatic_screen_reporting_enabled\")\n  if [[ $_ANALYTICS_AUTO_SCREEN_REPORTING ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseAutomaticScreenReportingEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_ANALYTICS_AUTO_SCREEN_REPORTING\")\")\n  fi\n\n  # config.perf_auto_collection_enabled\n  _PERF_AUTO_COLLECTION=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"perf_auto_collection_enabled\")\n  if [[ $_PERF_AUTO_COLLECTION ]]; then\n    _PLIST_ENTRY_KEYS+=(\"firebase_performance_collection_enabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_PERF_AUTO_COLLECTION\")\")\n  fi\n\n  # config.perf_collection_deactivated\n  _PERF_DEACTIVATED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"perf_collection_deactivated\")\n  if [[ $_PERF_DEACTIVATED ]]; then\n    _PLIST_ENTRY_KEYS+=(\"firebase_performance_collection_deactivated\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_PERF_DEACTIVATED\")\")\n  fi\n\n  # config.messaging_auto_init_enabled\n  _MESSAGING_AUTO_INIT=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"messaging_auto_init_enabled\")\n  if [[ $_MESSAGING_AUTO_INIT ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseMessagingAutoInitEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_MESSAGING_AUTO_INIT\")\")\n  fi\n\n  # config.in_app_messaging_auto_colllection_enabled\n  _FIAM_AUTO_INIT=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"in_app_messaging_auto_collection_enabled\")\n  if [[ $_FIAM_AUTO_INIT ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseInAppMessagingAutomaticDataCollectionEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_FIAM_AUTO_INIT\")\")\n  fi\n\n  # config.app_check_token_auto_refresh\n  _APP_CHECK_TOKEN_AUTO_REFRESH=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"app_check_token_auto_refresh\")\n  if [[ $_APP_CHECK_TOKEN_AUTO_REFRESH ]]; then\n    _PLIST_ENTRY_KEYS+=(\"FirebaseAppCheckTokenAutoRefreshEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"$(jsonBoolToYesNo \"$_APP_CHECK_TOKEN_AUTO_REFRESH\")\")\n  fi\n\n  # config.crashlytics_disable_auto_disabler - undocumented for now - mainly for debugging, document if becomes useful\n  _CRASHLYTICS_AUTO_DISABLE_ENABLED=$(getFirebaseJsonKeyValue \"$_JSON_OUTPUT_RAW\" \"crashlytics_disable_auto_disabler\")\n  if [[ $_CRASHLYTICS_AUTO_DISABLE_ENABLED == \"true\" ]]; then\n    echo \"Disabled Crashlytics auto disabler.\" # do nothing\n  else\n    _PLIST_ENTRY_KEYS+=(\"FirebaseCrashlyticsCollectionEnabled\")\n    _PLIST_ENTRY_TYPES+=(\"bool\")\n    _PLIST_ENTRY_VALUES+=(\"NO\")\n  fi\nelse\n  _PLIST_ENTRY_KEYS+=(\"firebase_json_raw\")\n  _PLIST_ENTRY_TYPES+=(\"string\")\n  _PLIST_ENTRY_VALUES+=(\"$_JSON_OUTPUT_BASE64\")\n  echo \"warning:   A firebase.json file was not found, whilst this file is optional it is recommended to include it to configure firebase services in React Native Firebase.\"\nfi;\n\necho \"info: 2) Injecting Info.plist entries: \"\n\n# Log out the keys we're adding\nfor i in \"${!_PLIST_ENTRY_KEYS[@]}\"; do\n  echo \"    ->  $i) ${_PLIST_ENTRY_KEYS[$i]}\" \"${_PLIST_ENTRY_TYPES[$i]}\" \"${_PLIST_ENTRY_VALUES[$i]}\"\ndone\n\nfor plist in \"${_TARGET_PLIST}\" \"${_DSYM_PLIST}\" ; do\n  if [[ -f \"${plist}\" ]]; then\n\n    # paths with spaces break the call to setPlistValue. temporarily modify\n    # the shell internal field separator variable (IFS), which normally\n    # includes spaces, to consist only of line breaks\n    oldifs=$IFS\n    IFS=\"\n\"\n\n    for i in \"${!_PLIST_ENTRY_KEYS[@]}\"; do\n      setPlistValue \"${_PLIST_ENTRY_KEYS[$i]}\" \"${_PLIST_ENTRY_TYPES[$i]}\" \"${_PLIST_ENTRY_VALUES[$i]}\" \"${plist}\"\n    done\n\n    # restore the original internal field separator value\n    IFS=$oldifs\n  else\n    echo \"warning:   A Info.plist build output file was not found (${plist})\"\n  fi\ndone\n\necho \"info: <- RNFB build script finished\"\n";
@@ -296,13 +502,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-MyReactNativeApp/Pods-MyReactNativeApp-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-MyReactNativeApp/Pods-MyReactNativeApp-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -317,13 +519,9 @@
 			inputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-MyReactNativeApp/Pods-MyReactNativeApp-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
-			inputPaths = (
-			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
 				"${PODS_ROOT}/Target Support Files/Pods-MyReactNativeApp/Pods-MyReactNativeApp-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			outputPaths = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -375,7 +573,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyReactNativeApp/MyReactNativeApp.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2026092901;
 				DEVELOPMENT_TEAM = HQ927CYR6D;
 				ENABLE_BITCODE = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
@@ -485,7 +683,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.11;
+				MARKETING_VERSION = 1.4.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -510,7 +708,7 @@
 				CODE_SIGN_ENTITLEMENTS = MyReactNativeApp/MyReactNativeAppRelease.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2026092901;
 				DEVELOPMENT_TEAM = HQ927CYR6D;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				FRAMEWORK_SEARCH_PATHS = (
@@ -620,7 +818,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.3.11;
+				MARKETING_VERSION = 1.4.0;
 				OTHER_LDFLAGS = (
 					"$(inherited)",
 					"-ObjC",
@@ -714,7 +912,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -794,7 +995,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = false;

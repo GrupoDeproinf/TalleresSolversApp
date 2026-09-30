@@ -17,6 +17,7 @@ import {
   TextInput,
 } from 'react-native';
 import React, { useState, useEffect, useRef } from 'react';
+import {OPCIONES_HORA} from '../../../utils/taller';
 // import AuthContainer from '../../../commonComponents/authContainer';
 // import {
 //   confirmPasswords,
@@ -70,10 +71,11 @@ import messaging from '@react-native-firebase/messaging';
 
 import Geolocation from '@react-native-community/geolocation';
 import { Dropdown } from 'react-native-element-dropdown';
+import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 
 
 
-const MAPBOX_TOKEN = 'REEMPLAZAR_CON_MAPBOX_PUBLIC_TOKEN';
+const MAPBOX_TOKEN = 'pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ';
 
 const buildLocationPickerHTML = (lat, lng) => `<!DOCTYPE html>
 <html>
@@ -142,10 +144,8 @@ const BUSINESS_DAYS = [
   { key: 'domingo', label: 'Domingo' },
 ];
 
-const TIME_OPTIONS = Array.from({ length: 24 }, (_, hour) => {
-  const value = `${String(hour).padStart(2, '0')}:00`;
-  return { label: value, value };
-});
+// Etiqueta en 12 h, valor en 24 h (lo que guarda el servidor).
+const TIME_OPTIONS = OPCIONES_HORA;
 
 const buildDefaultBusinessHours = () =>
   BUSINESS_DAYS.reduce((acc, day) => {
@@ -591,7 +591,7 @@ const SignUp = ({ navigation }) => {
                 token: token
               };
 
-              console.log('infoUserCreated', infoUserCreated);
+              // console.log('infoUserCreated', infoUserCreated);  // removido: datos sensibles
 
               try {
                 // Hacer la solicitud POST utilizando Axios
@@ -607,7 +607,7 @@ const SignUp = ({ navigation }) => {
                 console.log(result); // Aquí puedes manejar la respuesta
 
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {
@@ -635,8 +635,12 @@ const SignUp = ({ navigation }) => {
                     error?.response?.data?.message,
                   );
                   setGetOtpDisabled(false);
-                  console.log(error.response)
-                  showToast(error?.response?.data?.message == undefined ? error?.response?.data : error?.response?.data?.message); // Mostrar el mensaje de error del servidor
+                  // Mostrar solo un mensaje claro; nunca el objeto crudo del
+                  // servidor (podía filtrar detalles técnicos). (APP-10)
+                  showToast(
+                    error?.response?.data?.message ||
+                      'No se pudo crear el usuario. Verifique los datos e intente nuevamente.',
+                  );
                 } else {
                   // La solicitud fue hecha pero no se recibió respuesta
                   console.error('Error en la solicitud:', error);
@@ -756,7 +760,7 @@ const SignUp = ({ navigation }) => {
                 token: token
               };
 
-              console.log(infoUserCreated);
+              // console.log(infoUserCreated);  // removido: datos sensibles
               console.log('Aquiiiiiiiiiiiii123');
 
               try {
@@ -775,7 +779,7 @@ const SignUp = ({ navigation }) => {
                 infoUserCreated.uid = result.uid;
 
                 try {
-                  const jsonValue = JSON.stringify(infoUserCreated);
+                  const jsonValue = JSON.stringify(sanitizeUserInfo(infoUserCreated));
                   console.log(jsonValue);
                   await AsyncStorage.setItem('@userInfo', jsonValue);
                 } catch (e) {
@@ -2977,16 +2981,15 @@ const SignUp = ({ navigation }) => {
   };
 
   // Funciones para manejar los clics
+  // Registro nuevo (documento de mejora, sección 6): el conductor entra en un
+  // minuto y el taller se registra en 4 pasos con guardado automático.
+  // Los formularios anteriores de esta pantalla quedan sin uso.
   const handleClientePress = () => {
-    console.log('Cliente Card Pressed2');
-    setSelectedPrefix('V-');
-    settypeOfView('Cliente');
+    navigation.navigate('SignUpCliente');
   };
 
   const handleTallerPress = () => {
-    console.log('Taller Card Pressed1');
-    setSelectedPrefix('J-');
-    settypeOfView('Taller');
+    navigation.navigate('SignUpTaller');
   };
 
   const toggleCheckBox = index => {

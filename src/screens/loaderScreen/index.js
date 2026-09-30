@@ -5,6 +5,7 @@ import styles from './style.css';
 import { useValues } from '../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../../axiosInstance';
+import { sanitizeUserInfo } from '../../utils/sanitizeUserInfo';
 
 const LoaderScreen = ({ navigation }) => {
 
@@ -43,7 +44,7 @@ const LoaderScreen = ({ navigation }) => {
 
             if (result.message === "Usuario encontrado") {
               try {
-                const jsonValue = JSON.stringify(result.userData);
+                const jsonValue = JSON.stringify(sanitizeUserInfo(result.userData));
                 console.log(jsonValue);
                 await AsyncStorage.setItem('@userInfo', jsonValue);
 
