@@ -802,33 +802,7 @@ const TallerProfileScreen = ({ navigation }) => {
               <Text style={styles.errorStyle}>{DireccionError}</Text>
             )}
 
-            <TextInputs
-              title="Registro Comercial"
-              value={RegComercial}
-              placeHolder="Ingrese su Registro Comercial"
-              onChangeText={text => {
-                // Eliminar cualquier caracter que no sea un número
-                const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
-                if (numericText.length <= 10) {
-                  setRegComercial(numericText);
-                  setRegComercialTyping(true);
-                  if (numericText.trim() === '') {
-                    setRegComercialError('Registro comercial es requerido');
-                  } else {
-                    setRegComercialError('');
-                  }
-                }
-              }}
-              onBlur={() => {
-                setRegComercialTyping(false);
-              }}
-              keyboardType="numeric" // Establece el teclado numérico
-              icon={<Icons name="id-card" size={20} color="#9BA6B8" />}
-            />
-
-            {RegComercialError !== '' && (
-              <Text style={styles.errorStyle}>{RegComercialError}</Text>
-            )}
+            {/* Req. 003: se retiro Registro Comercial y Agente Autorizado. */}
 
             <View style={{ marginTop: 5 }}>
               <Text
@@ -1003,31 +977,6 @@ const TallerProfileScreen = ({ navigation }) => {
             {emailError !== '' && (
               <Text style={styles.errorStyle}>{emailError}</Text>
             )}
-          </View>
-
-          <Text style={{ marginBottom: 10, color: 'black', marginTop: 15 }}>
-            ¿Es un Agente Autorizado?
-          </Text>
-
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginBottom: 15,
-            }}>
-            <RadioButton
-              value="si"
-              status={checked === 'si' ? 'checked' : 'unchecked'}
-              onPress={() => setChecked('si')}
-            />
-            <Text style={{ color: 'black' }}>Sí</Text>
-
-            <RadioButton
-              value="no"
-              status={checked === 'no' ? 'checked' : 'unchecked'}
-              onPress={() => setChecked('no')}
-            />
-            <Text style={{ color: 'black' }}>No</Text>
           </View>
 
           <TextInputs

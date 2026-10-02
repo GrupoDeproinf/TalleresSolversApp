@@ -618,7 +618,7 @@ const SignUpTaller = ({navigation}) => {
         {categoriasDisp.map(c => {
           const idx = f.categorias.indexOf(c.uid);
           return (
-            <Chip key={c.uid} label={idx === 0 ? `★ ${c.nombre}` : c.nombre} selected={idx >= 0} onPress={() => {
+            <Chip key={c.uid} label={idx === 0 ? `★ ${c.nombre.toUpperCase()}` : c.nombre.toUpperCase()} selected={idx >= 0} onPress={() => {
               setF(prev => ({
                 ...prev,
                 categorias: prev.categorias.includes(c.uid) ? prev.categorias.filter(x => x !== c.uid) : [...prev.categorias, c.uid],

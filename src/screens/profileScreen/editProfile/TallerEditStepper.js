@@ -1830,71 +1830,12 @@ const TallerEditStepper = ({
             color: '#4B5563',
             lineHeight: 18,
           }}>
-          Cuéntanos sobre tu experiencia, registro comercial y métodos de pago disponibles.
+          Cuéntanos sobre tu experiencia y métodos de pago disponibles.
         </Text>
       </View>
 
-      <TextInputs
-        title="Registro Comercial"
-        formCardMode={true}
-        value={RegComercial}
-        placeHolder="Ingrese su Registro Comercial"
-        onChangeText={text => {
-          const numericText = text.replace(/[^0-9]/g, '').slice(0, 10);
-          if (numericText.length <= 10) {
-            setRegComercial(numericText);
-            setRegComercialTyping(true);
-            if (numericText?.trim() === '') {
-              setRegComercialError('Registro comercial es requerido');
-            } else {
-              setRegComercialError('');
-            }
-          }
-        }}
-        onBlur={() => {
-          setRegComercialTyping(false);
-        }}
-        keyboardType="numeric"
-        icon={<Icons name="id-card" size={20} color="#9BA6B8"/>}
-      />
-      {RegComercialError !== '' && (
-        <Text style={styles.errorStyle}>{RegComercialError}</Text>
-      )}
-
-      <Text style={{ fontSize: 13, fontWeight: '600', color: '#1F2937', marginBottom: 10, marginTop: 15 }}>
-        ¿Es un Agente Autorizado?
-      </Text>
-
-      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
-        {[
-          { value: 'si', label: 'Sí', icon: 'checkmark-circle-outline' },
-          { value: 'no', label: 'No', icon: 'close-circle-outline' },
-        ].map(opt => {
-          const isSelected = checked === opt.value;
-          return (
-            <TouchableOpacity
-              key={opt.value}
-              onPress={() => setChecked(opt.value)}
-              style={{
-                flex: 1,
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingVertical: 14,
-                borderRadius: 14,
-                borderWidth: 1.5,
-                borderColor: isSelected ? '#2D3261' : '#D1D5DB',
-                backgroundColor: isSelected ? '#2D3261' : '#F9FAFB',
-                gap: 8,
-              }}>
-              <Icons2 name={opt.icon} size={20} color={isSelected ? '#FFD60A' : '#9CA3AF'} />
-              <Text style={{ fontSize: 14, fontWeight: '700', color: isSelected ? '#FFD60A' : '#4B5563' }}>
-                {opt.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
+      {/* Req. 003: se retiro el paso Registro Comercial / Agente Autorizado.
+          Los valores ya guardados se conservan al guardar el perfil. */}
 
       <TextInputs
         title="Caracteristicas del negocio"
