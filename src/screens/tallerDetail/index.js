@@ -46,7 +46,7 @@ import useLocationPermission from "../../hooks/useLocationPermission";
 import LocationPermissionModal from "../../commonComponents/LocationPermissionModal";
 import ContactBar, { CONTACT_BAR_SPACE } from "../../ui/ContactBar";
 import { llamar, abrirWhatsApp, puedeLlamar, puedeWhatsApp } from "../../utils/contacto";
-import { openState, openHint, tallerPhone, tallerWhatsApp } from "../../utils/taller";
+import { openState, openHint, tallerPhone, tallerWhatsApp, precioDesde } from "../../utils/taller";
 
 const { width } = Dimensions.get("window");
 
@@ -870,12 +870,7 @@ const TallerDetail = () => {
                   ? { uri: _svcUri }
                   : require("../../assets/noimageNew.png");
                 const serviceUid = service?.uid_servicio || service?.id;
-                const precioServicio =
-                  service?.precio != null && service?.precio !== ""
-                    ? `$${service.precio}`
-                    : service?.tarifa != null && service?.tarifa !== ""
-                    ? `$${service.tarifa}`
-                    : "Precio por consultar";
+                const precioServicio = precioDesde(service?.precio, service?.tarifa);
                 const categoriaServicio =
                   service?.nombre_categoria || service?.categoria || service?.subcategoria || "";
                 const puntuacionServicio =

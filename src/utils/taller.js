@@ -157,8 +157,19 @@ export const priceValue = item => {
   return Number.isFinite(n) && n > 0 ? n : null;
 };
 
+// Req. 003: el costo de un servicio es referencial y se muestra como
+// "Desde Ref. 35" (las tarjetas ya anteponen "desde").
 export const formatPrice = n =>
-  n == null ? '' : `$${Number.isInteger(n) ? n : n.toFixed(2).replace('.', ',')}`;
+  n == null ? '' : `Ref. ${Number.isInteger(n) ? n : n.toFixed(2).replace('.', ',')}`;
+
+// Texto completo para listas y detalle: "Desde Ref. 35" o "Precio por consultar".
+export const precioDesde = (...valores) => {
+  for (const v of valores) {
+    const n = priceValue({precio: v});
+    if (n != null) return `Desde ${formatPrice(n)}`;
+  }
+  return 'Precio por consultar';
+};
 
 export const sentenceCase = value => {
   const lower = String(value || '').trim().toLowerCase();

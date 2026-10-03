@@ -53,7 +53,7 @@ import useLocationPermission from '../../../hooks/useLocationPermission';
 import LocationPermissionModal from '../../../commonComponents/LocationPermissionModal';
 import ContactBar, { CONTACT_BAR_SPACE } from '../../../ui/ContactBar';
 import { llamar, abrirWhatsApp, puedeLlamar, puedeWhatsApp } from '../../../utils/contacto';
-import { openHint, tallerPhone, tallerWhatsApp } from '../../../utils/taller';
+import { openHint, tallerPhone, tallerWhatsApp, precioDesde } from '../../../utils/taller';
 import {
   ArrowLeft,
   ChevronRight,
@@ -799,7 +799,7 @@ const ProductDetailOne = ({ navigation }) => {
               <View style={styles.priceInlineRow}>
                 <Text style={styles.priceInlineLabel}>DESDE:</Text>
                 <Text style={styles.priceInlineValue} numberOfLines={1}>
-                  {precioVisible === 'Por consultar' ? precioVisible : `$${precioVisible}`}
+                  {precioVisible === 'Por consultar' ? precioVisible : `Ref. ${precioVisible}`}
                 </Text>
               </View>
               <TouchableOpacity
@@ -895,12 +895,7 @@ const ProductDetailOne = ({ navigation }) => {
                     ? { uri: imageUriCandidate.trim() }
                     : require('../../../assets/noimageNew.png');
                 const serviceUid = service?.uid_servicio || service?.id;
-                const precioServicio =
-                  service?.precio != null && service?.precio !== ''
-                    ? `$${service.precio}`
-                    : service?.tarifa != null && service?.tarifa !== ''
-                      ? `$${service.tarifa}`
-                      : 'Precio por consultar';
+                const precioServicio = precioDesde(service?.precio, service?.tarifa);
                 const categoriaServicio =
                   service?.nombre_categoria || service?.categoria || service?.subcategoria || '';
                 const puntuacionServicio =

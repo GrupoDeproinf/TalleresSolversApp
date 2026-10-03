@@ -131,8 +131,7 @@ const NewCategoriesDetail = ({
                     {color: textColorStyle},
                     {textAlign: textRTLStyle},
                   ]}>
-                  {currSymbol}
-                  {precioFinal}
+                  Desde Ref. {precioFinal}
                 </Text>
               </View>
               <View style={styles.arrowChip}>

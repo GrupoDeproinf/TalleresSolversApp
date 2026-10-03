@@ -1,3 +1,4 @@
+import {precioDesde} from '../../../utils/taller';
 import {
   Animated,
   Dimensions,
@@ -188,7 +189,7 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop, uidTaller, n
           {/* Footer: price + arrow button */}
           <View style={styles.gridCardFooter}>
             <Text style={[styles.gridCardPrice, {color: isDark ? '#FFD60A' : '#1F2344'}]}>
-              ${item.precio}
+              {precioDesde(item.precio)}
             </Text>
             <View style={styles.gridCardPlusBtn}>
               <Icons2 name="chevron-right" size={14} color="#1F2344" />
