@@ -264,6 +264,48 @@ const SignUpTaller = ({navigation}) => {
 
   const faltantesDocs = DOCS.filter(d => d.required && !f.docs?.[d.key]?.uri).map(d => d.label);
 
+  // ── Verificación del documento RIF (Req. 003) ────────────────────────────
+  // Al subir el RIF se compara con el número escrito. Es informativo: nunca
+  // impide continuar, y lo que no se pueda leer lo revisa una persona.
+  const [rifCheck, setRifCheck] = useState({estado: '', mensaje: ''});
+  const rifDocUri = f.docs?.rifIdFiscal?.uri || '';
+  const rifDeclarado = errores.rif ? '' : `${f.rifPrefijo}-${onlyDigits(f.rifNumero)}`;
+  useEffect(() => {
+    if (!rifDocUri || !rifDeclarado) {
+      setRifCheck({estado: '', mensaje: ''});
+      return undefined;
+    }
+    let cancelado = false;
+    setRifCheck({estado: 'revisando', mensaje: ''});
+    (async () => {
+      try {
+        const documento = await archivoABase64(rifDocUri);
+        const {data} = await api.post(
+          '/usuarios/validarRifDocumento',
+          {rif: rifDeclarado, nombre: f.nombre.trim(), documento},
+          {timeout: 45000},
+        );
+        if (cancelado) return;
+        setRifCheck({
+          estado: data?.estado || '',
+          mensaje:
+            data?.estado === 'no_legible'
+              ? 'No pudimos leer el RIF automáticamente. Lo revisará nuestro equipo.'
+              : data?.mensaje || '',
+        });
+      } catch (e) {
+        // Sin conexión, o un servidor que aún no tiene esta función: se omite
+        // el aviso; el documento se revisa igual al aprobar el negocio.
+        if (!cancelado) setRifCheck({estado: '', mensaje: ''});
+      }
+    })();
+    return () => {
+      cancelado = true;
+    };
+    // El nombre no dispara una nueva revisión: solo viaja como referencia.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rifDocUri, rifDeclarado]);
+
   // ── Navegación entre pasos ───────────────────────────────────────────────
   const irA = n => {
     set('step', n);
@@ -513,6 +555,57 @@ const SignUpTaller = ({navigation}) => {
 
   const rifError = show('rif');
   const rifOk = !errores.rif;
+  // Documentos del negocio (Req. 003: se cargan en el paso 2, junto al RIF).
+  const docsBloque = (
+    <>
+      {DOCS.map(d => {
+        const file = f.docs?.[d.key];
+        const esImagen = file?.type?.startsWith('image/');
+        return (
+          <View key={d.key} style={[st.docRow, file ? {borderColor: C.ok} : null]}>
+            {file && esImagen ? (
+              <Image source={{uri: file.uri}} style={st.docThumb} />
+            ) : (
+              <View style={[st.docThumb, st.docThumbEmpty]}>
+                <Ionicons name={file ? 'document-text' : d.required ? 'camera-outline' : 'add'} size={24} color={file ? C.ok : C.muted} />
+              </View>
+            )}
+            <View style={{flex: 1, marginHorizontal: 12}}>
+              <Text style={st.docTitle}>
+                {d.label} {d.required ? <Text style={st.req}>*</Text> : <Text style={st.opt}>(opcional)</Text>}
+              </Text>
+              <Text style={[st.docHelp, file && {color: C.ok}]}>{file ? `✓ ${file.name || 'Listo'}` : d.help}</Text>
+              {d.key === 'rifIdFiscal' && file && rifCheck.estado ? (
+                <Text
+                  style={[
+                    st.docHelp,
+                    {marginTop: 4},
+                    rifCheck.estado === 'verificado' && {color: C.ok},
+                    rifCheck.estado === 'no_coincide' && {color: C.error},
+                  ]}>
+                  {rifCheck.estado === 'revisando'
+                    ? 'Comparando con el RIF que escribiste…'
+                    : rifCheck.estado === 'verificado'
+                      ? `✓ ${rifCheck.mensaje}`
+                      : rifCheck.mensaje}
+                </Text>
+              ) : null}
+            </View>
+            {file ? (
+              <TouchableOpacity onPress={() => quitarDoc(d.key)} style={st.docAction} accessibilityLabel={`Quitar ${d.label}`}>
+                <Ionicons name="trash-outline" size={22} color={C.error} />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={() => setPickerFor(d.key)} style={st.docAction} accessibilityLabel={`Subir ${d.label}`}>
+                <Text style={st.docActionText}>Subir</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        );
+      })}
+    </>
+  );
+
   const paso2 = (
     <>
       <StepHeader step={2} total={TOTAL} savedLabel="Se guarda automáticamente" title="Tu negocio" subtitle="Lo que verán los conductores en Solvers." />
@@ -602,6 +695,10 @@ const SignUpTaller = ({navigation}) => {
         </View>
       ))}
       {show('horario') ? <Text style={st.err}>{show('horario')}</Text> : null}
+
+      <Text style={[st.label, {marginTop: 16}]}>Documentos del negocio</Text>
+      <Text style={st.help}>Sube el RIF y las fotos del taller. Comparamos el RIF del documento con el que escribiste arriba.</Text>
+      {docsBloque}
     </>
   );
 
@@ -659,40 +756,10 @@ const SignUpTaller = ({navigation}) => {
   const catNombres = categoriasDisp.filter(c => f.categorias.includes(c.uid)).map(c => c.nombre);
   const paso4 = (
     <>
-      <StepHeader step={4} total={TOTAL} savedLabel="Se guarda automáticamente" title="Documentos y envío" subtitle="Con esto revisamos y aprobamos tu negocio." />
-      {DOCS.map(d => {
-        const file = f.docs?.[d.key];
-        const esImagen = file?.type?.startsWith('image/');
-        return (
-          <View key={d.key} style={[st.docRow, file ? {borderColor: C.ok} : null]}>
-            {file && esImagen ? (
-              <Image source={{uri: file.uri}} style={st.docThumb} />
-            ) : (
-              <View style={[st.docThumb, st.docThumbEmpty]}>
-                <Ionicons name={file ? 'document-text' : d.required ? 'camera-outline' : 'add'} size={24} color={file ? C.ok : C.muted} />
-              </View>
-            )}
-            <View style={{flex: 1, marginHorizontal: 12}}>
-              <Text style={st.docTitle}>
-                {d.label} {d.required ? <Text style={st.req}>*</Text> : <Text style={st.opt}>(opcional)</Text>}
-              </Text>
-              <Text style={[st.docHelp, file && {color: C.ok}]}>{file ? `✓ ${file.name || 'Listo'}` : d.help}</Text>
-            </View>
-            {file ? (
-              <TouchableOpacity onPress={() => quitarDoc(d.key)} style={st.docAction} accessibilityLabel={`Quitar ${d.label}`}>
-                <Ionicons name="trash-outline" size={22} color={C.error} />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity onPress={() => setPickerFor(d.key)} style={st.docAction} accessibilityLabel={`Subir ${d.label}`}>
-                <Text style={st.docActionText}>Subir</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        );
-      })}
-
+      <StepHeader step={4} total={TOTAL} savedLabel="Se guarda automáticamente" title="Revisa y envía" subtitle="Con esto revisamos y aprobamos tu negocio." />
       {faltantesDocs.length ? (
-        <Banner type="warn" text={`Puedes enviar ahora y subir después: ${faltantesDocs.join(', ')}. Revisamos tu negocio cuando esté todo.`} />
+        <Banner type="warn" text={`Puedes enviar ahora y subir después: ${faltantesDocs.join(', ')}. Revisamos tu negocio cuando esté todo.`}
+          actionLabel="Subir ahora" onAction={() => irA(2)} />
       ) : null}
 
       <Card>
