@@ -51,6 +51,24 @@ import {mostrarTelefono} from '../../../utils/telefono';
 import {iniciarSesionTrasRegistro, obtenerTokenPushSeguro} from '../../../utils/authSession';
 
 const DRAFT_KEY = '@registroTallerDraft';
+// Identificador anónimo del borrador, para el aviso de registro incompleto.
+const BORRADOR_ID_KEY = '@registroTallerBorradorId';
+
+// Qué le falta al taller, en palabras que entienda quien le va a escribir.
+const ETIQUETAS_FALTANTES = {
+  responsable: 'Nombre del responsable',
+  email: 'Correo',
+  phone: 'Teléfono',
+  whatsapp: 'WhatsApp',
+  password: 'Contraseña',
+  nombre: 'Nombre del taller',
+  rif: 'Número de RIF',
+  estado: 'Estado',
+  direccion: 'Dirección',
+  ubicacion: 'Ubicación en el mapa',
+  horario: 'Horario de atención',
+  categorias: 'Servicios que ofrece',
+};
 const TOTAL = 4;
 
 const ESTADOS = [
@@ -263,6 +281,49 @@ const SignUpTaller = ({navigation}) => {
   const show = k => (touched[k] ? errores[k] : '');
 
   const faltantesDocs = DOCS.filter(d => d.required && !f.docs?.[d.key]?.uri).map(d => d.label);
+
+  // ── Aviso de registro incompleto (Req. 003) ──────────────────────────────
+  // Al pasar del paso 1 (ya hay teléfono válido) y en cada cambio de paso se
+  // informa el avance al servidor. Es silencioso y nunca afecta al registro.
+  const borradorIdRef = useRef('');
+  useEffect(() => {
+    if (!loaded || f.step < 2) return;
+    (async () => {
+      try {
+        if (!borradorIdRef.current) {
+          let id = await AsyncStorage.getItem(BORRADOR_ID_KEY);
+          if (!id) {
+            id = `b${Date.now().toString(36)}${Math.random().toString(36).slice(2, 14)}`;
+            await AsyncStorage.setItem(BORRADOR_ID_KEY, id);
+          }
+          borradorIdRef.current = id;
+        }
+        const phone = normalizarTelefono(f.phone);
+        const faltantes = [
+          ...Object.keys(ETIQUETAS_FALTANTES)
+            .filter(k => k !== 'password' && errores[k])
+            .map(k => ETIQUETAS_FALTANTES[k]),
+          ...faltantesDocs.map(d => `Documento: ${d}`),
+        ];
+        await api.post(
+          '/usuarios/registroProgreso',
+          {
+            borradorId: borradorIdRef.current,
+            paso: f.step,
+            responsable: f.responsable.trim(),
+            nombre: f.nombre.trim(),
+            email: f.email.trim().toLowerCase(),
+            phone,
+            whatsapp: f.whatsappIgual ? phone : normalizarTelefono(f.whatsapp),
+            faltantes,
+          },
+          {timeout: 15000},
+        );
+      } catch (e) {}
+    })();
+    // Solo al cambiar de paso: no en cada tecla.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.step, loaded]);
 
   // ── Verificación del documento RIF (Req. 003) ────────────────────────────
   // Al subir el RIF se compara con el número escrito. Es informativo: nunca
@@ -483,6 +544,7 @@ const SignUpTaller = ({navigation}) => {
       }
 
       await AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
+      await AsyncStorage.removeItem(BORRADOR_ID_KEY).catch(() => {});
       setSendStage('Entrando…');
       try {
         await iniciarSesionTrasRegistro(email, password);
@@ -510,6 +572,11 @@ const SignUpTaller = ({navigation}) => {
         style: 'destructive',
         onPress: () => {
           AsyncStorage.removeItem(DRAFT_KEY).catch(() => {});
+          if (borradorIdRef.current) {
+            api.post('/usuarios/registroProgreso', {borradorId: borradorIdRef.current, completado: true}).catch(() => {});
+          }
+          AsyncStorage.removeItem(BORRADOR_ID_KEY).catch(() => {});
+          borradorIdRef.current = '';
           setF(INICIAL);
           setPassword('');
           setTouched({});
@@ -550,6 +617,9 @@ const SignUpTaller = ({navigation}) => {
       <Field label="Contraseña" placeholder="Mínimo 6 caracteres" value={password} onChangeText={setPassword}
         onBlur={touch('password')} error={show('password')} secure autoCapitalize="none" textContentType="newPassword"
         help="Mínimo 6 caracteres. Por seguridad no se guarda en el borrador." />
+      <Text style={[st.help, {marginTop: 12}]}>
+        Guardamos tu avance. Si no terminas el registro, podemos escribirte por WhatsApp para ayudarte a completarlo.
+      </Text>
     </>
   );
 
