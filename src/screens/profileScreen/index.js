@@ -184,7 +184,8 @@ const ProfileScreen = () => {
     } else {
       if (infoUser.typeUser == "Taller") {
         if (item.screenName == "EditProfile") {
-          navigation.navigate('TallerEditProfileScreen');
+          // Perfil del negocio en una sola pantalla (antes: editor de 7 pasos).
+          navigation.navigate('PerfilNegocio');
         } else {
           navigation.navigate(item.screenName);
         }
