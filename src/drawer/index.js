@@ -47,9 +47,12 @@ const CustomDrawerNavigator = () => {
     // Validar si es taller con status "En espera por aprobación" para mostrar Servicios como inicial
     if (user?.status === 'En espera por aprobación') {
       return <MyTabsTallerPendiente />;
-    } else {
-      return <MyTabsTaller />;
     }
+    // Negocio aún sin aprobar por otro motivo (le faltan documentos o fue
+    // rechazado): mismas pestañas, pero abre en la pantalla de su negocio, que
+    // le dice qué falta. Antes caía en el inicio de los conductores.
+    const sinAprobar = !!user?.status && user.status !== 'Aprobado';
+    return <MyTabsTaller key={sinAprobar ? 'negocio' : 'inicio'} initialRouteName={sinAprobar ? 'Servicios' : 'HomeScreen'} />;
   }
 
   if (user?.typeUser === 'Cliente') {

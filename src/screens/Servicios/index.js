@@ -484,7 +484,10 @@ const ServiciosContainer = ({ navigation }) => {
   // Registro nuevo: si falta un documento o fue rechazado, antes esta vista
   // quedaba en blanco. Ahora explica qué pasa y qué hacer.
   const estadoRegistro = !uidTallerParam ? estadoComercio(userData) : null;
-  const irASubirDocumentos = () => navigationScreen.navigate('TallerEditProfileScreen');
+  // "Subir documentos" abre la pantalla de documentos; "Corregir mis datos"
+  // (negocio rechazado) sigue abriendo el editor completo.
+  const irASubirDocumentos = () => navigationScreen.navigate('DocumentosTaller');
+  const irACorregirDatos = () => navigationScreen.navigate('TallerEditProfileScreen');
   if (
     estadoRegistro &&
     (estadoRegistro.tipo === 'rechazado' ||
@@ -506,7 +509,7 @@ const ServiciosContainer = ({ navigation }) => {
           <EstadoComercioCard
             user={userData}
             onSubirDocumentos={irASubirDocumentos}
-            onCorregir={irASubirDocumentos}
+            onCorregir={irACorregirDatos}
           />
         </ScrollView>
       </View>
@@ -670,7 +673,7 @@ const ServiciosContainer = ({ navigation }) => {
 
         {renderModalCitaAgendada()}
         {/* ── Header: oculto si es vista propia sin servicios ── */}
-        {(dataServicios.length > 0 || uidTallerParam) && <View style={[modalStyles.servicesHeaderWrapper, { paddingTop: insets.top + windowHeight(3.8) }]}>
+        {<View style={[modalStyles.servicesHeaderWrapper, { paddingTop: insets.top + windowHeight(3.8) }]}>
           <View style={modalStyles.servicesHeaderCircle1} />
           <View style={modalStyles.servicesHeaderCircle2} />
           {uidTallerParam ? (
@@ -696,11 +699,11 @@ const ServiciosContainer = ({ navigation }) => {
           <EstadoComercioCard
             user={userData}
             onSubirDocumentos={irASubirDocumentos}
-            onCorregir={irASubirDocumentos}
+            onCorregir={irACorregirDatos}
           />
         )}
 
-        {dataServicios.length > 0 ? (
+        {dataServicios.length > 0 || !uidTallerParam ? (
           <>
             {/* ── Stats card ───────────────────────────────────────────────── */}
             <View style={modalStyles.statsCard}>
@@ -727,6 +730,7 @@ const ServiciosContainer = ({ navigation }) => {
             </View>
 
             {/* ── Filter chips ─────────────────────────────────────────────── */}
+            {dataServicios.length > 0 ? (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -744,6 +748,7 @@ const ServiciosContainer = ({ navigation }) => {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+            ) : null}
           </>
         ) : null}
 
@@ -767,56 +772,22 @@ const ServiciosContainer = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           ) : (
-            <View style={[modalStyles.emptyStateContainer, { flex: 1 }]}>
-              {/* Hero superior */}
-              <View style={modalStyles.emptyHero}>
-                <View style={modalStyles.emptyHeroInner}>
-                  {/* <Text style={modalStyles.emptyHeroTag}>SERVICIOS</Text> */}
-                  <Text style={modalStyles.emptyHeroTitle}>
-                    ¡LLEVA TU NEGOCIO AL{'\n'}SIGUIENTE NIVEL! {' '}
-                    {/* <Text style={{ fontSize: 35, fontWeight: 'bold', color: '#FFD60A' }}>🚀</Text> */}
-                  </Text>
-                  <Text style={modalStyles.emptyHeroSubtitle}>
-                    Crea tu perfil de servicios hoy mismo y empieza a conectar con cientos de
-                    clientes que buscan lo que tú haces mejor.
-                  </Text>
-                </View>
+            /* ── Sin servicios todavía: misma bandeja, con el aviso de estado arriba ── */
+            <View style={modalStyles.emptyTallerContainer}>
+              <View style={modalStyles.emptyTallerIconWrap}>
+                <Icons5 name="tools" size={30} color="#1D1E56" />
               </View>
-
-              {/* Tarjeta de beneficios */}
-              <View style={modalStyles.emptyCard}>
-                <View style={modalStyles.emptyCardItem}>
-                  <Icons name="check-circle" size={18} color="#1D1E56" />
-                  <View style={modalStyles.emptyCardItemTextWrap}>
-                    <Text style={modalStyles.emptyCardItemTitle}>Ponle valor a tu trabajo</Text>
-                    <Text style={modalStyles.emptyCardItemSubtitle}>Tú decides el precio</Text>
-                  </View>
-                </View>
-                <View style={modalStyles.emptyCardItem}>
-                  <Icons name="check-circle" size={18} color="#1D1E56" />
-                  <View style={modalStyles.emptyCardItemTextWrap}>
-                    <Text style={modalStyles.emptyCardItemTitle}>Sé dueño de tu tiempo</Text>
-                    <Text style={modalStyles.emptyCardItemSubtitle}>Gestiona tu agenda</Text>
-                  </View>
-                </View>
-                <View style={modalStyles.emptyCardItem}>
-                  <Icons name="check-circle" size={20} color="#1D1E56" />
-                  <View style={modalStyles.emptyCardItemTextWrap}>
-                    <Text style={modalStyles.emptyCardItemTitle}>Clientes reales</Text>
-                    <Text style={modalStyles.emptyCardItemSubtitle}>Recibe solicitudes al instante</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Botón principal */}
+              <Text style={modalStyles.emptyTallerTitle}>Aún no tienes servicios</Text>
+              <Text style={modalStyles.emptyTallerSubtitle}>
+                Agrega tu primer servicio para{'\n'}empezar a recibir clientes.
+              </Text>
               <TouchableOpacity
-                style={modalStyles.emptyPrimaryButton}
-                activeOpacity={0.9}
-                onPress={createorEditService}>
-                <View style={modalStyles.emptyPrimaryIconWrap}>
-                  <Icons name="plus" size={25} color="#FFFFFF" />
-                </View>
-                <Text style={modalStyles.emptyPrimaryText}>Agrega tus servicios</Text>
+                style={modalStyles.emptyTallerBackBtn}
+                onPress={createorEditService}
+                activeOpacity={0.85}
+                accessibilityRole="button">
+                <Icons name="plus" size={15} color="#FFFFFF" />
+                <Text style={modalStyles.emptyTallerBackText}>Agregar servicio</Text>
               </TouchableOpacity>
             </View>
           )

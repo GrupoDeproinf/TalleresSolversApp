@@ -37,6 +37,7 @@ import ReportarPago from '../screens/ReportarPago';
 import ServiciosContainer from '../screens/Servicios'
 
 import TallerEditProfileScreen from '../screens/profileScreen/editProfileTaller';
+import DocumentosTaller from '../screens/profileScreen/documentosTaller';
 
 
 
@@ -127,6 +128,7 @@ const MyStack = () => {
 
 
         <Stack.Screen name="TallerEditProfileScreen" component={TallerEditProfileScreen} /> 
+        <Stack.Screen name="DocumentosTaller" component={DocumentosTaller} />
         <Stack.Screen name="OrderHistory" component={OrderHistory} />
 
 

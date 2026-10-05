@@ -1047,10 +1047,10 @@ const MyTabsCliente = () => {
   );
 };
 
-const MyTabsTaller = () => {
+const MyTabsTaller = ({initialRouteName = 'HomeScreen'}) => {
   return (
     <Tab.Navigator
-      initialRouteName="HomeScreen"
+      initialRouteName={initialRouteName}
       screenOptions={{ headerShown: false }}
       tabBar={props => <CustomTabBar {...props} />}
       tabBarOptions={{

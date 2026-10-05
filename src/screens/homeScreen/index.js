@@ -239,6 +239,10 @@ const HomeScreen = () => {
         const j = await AsyncStorage.getItem('@userInfo');
         const u = j ? JSON.parse(j) : null;
         const uid = String(u?.uid ?? u?.id ?? '');
+        // El recordatorio de vehículo es para conductores, no para talleres.
+        if (u?.typeUser === 'Taller') {
+          return;
+        }
         if (u?.showModalKm === false || !(await shouldShowReminder('km', uid))) {
           return;
         }
@@ -414,6 +418,11 @@ const HomeScreen = () => {
             return;
           }
 
+          /* El recordatorio de vehículo es para conductores, no para talleres. */
+          if (userSnapshot?.typeUser === 'Taller') {
+            setVehiclePickerModalVisible(false);
+            return;
+          }
           /* Recordatorio KM solo si el usuario no desactivó el aviso (showModalKm !== false). */
           if (userSnapshot?.showModalKm === false) {
             setVehiclePickerModalVisible(false);
