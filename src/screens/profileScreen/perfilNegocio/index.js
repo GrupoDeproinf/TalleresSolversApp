@@ -141,7 +141,6 @@ const PerfilNegocio = ({navigation}) => {
     const e = {
       nombre: validarNombre(f.nombre, 'el nombre del taller'),
       phone: validarTelefono(f.phone),
-      whatsapp: f.whatsapp ? validarTelefono(f.whatsapp) : '',
       estado: f.estado ? '' : 'Elige el estado donde está el taller.',
       direccion: f.direccion.trim().length >= 8 ? '' : 'Escribe la dirección con una referencia (ej: Av. Bolívar, frente a la plaza).',
       horario: '',
@@ -166,7 +165,6 @@ const PerfilNegocio = ({navigation}) => {
     // mostrarlo no cuenta como un cambio del taller.
     const tel = v => normalizarTelefono(v || '');
     if (tel(f.phone) !== tel(original.phone)) c.phone = tel(f.phone);
-    if (f.whatsapp && tel(f.whatsapp) !== tel(original.whatsapp)) c.whatsapp = tel(f.whatsapp);
     if (f.estado !== original.estado) c.estado = f.estado;
     if (f.direccion.trim() !== original.direccion.trim()) c.Direccion = f.direccion.trim();
     if ((f.lat !== original.lat || f.lng !== original.lng) && f.lat != null && f.lng != null) {
@@ -263,8 +261,9 @@ const PerfilNegocio = ({navigation}) => {
               inputStyle={{minHeight: 84, textAlignVertical: 'top'}} help={`${f.descripcion.length}/400`} />
 
             <Text style={st.seccion}>Contacto</Text>
-            <PhoneInput label="Teléfono" value={f.phone} onChange={v => set('phone', v)} onBlur={tocar('phone')} error={ver('phone')} />
-            <PhoneInput label="WhatsApp del taller" value={f.whatsapp} onChange={v => set('whatsapp', v)} onBlur={tocar('whatsapp')} error={ver('whatsapp')} />
+            {/* Req. 005: un solo número. El servidor lo usa también como WhatsApp. */}
+            <PhoneInput label="Teléfono y WhatsApp" value={f.phone} onChange={v => set('phone', v)} onBlur={tocar('phone')} error={ver('phone')}
+              help="Los conductores te llaman y te escriben a este número." />
 
             <Text style={st.seccion}>Ubicación</Text>
             <Text style={st.label}>Estado</Text>

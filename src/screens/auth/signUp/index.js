@@ -3897,7 +3897,7 @@ const SignUp = ({ navigation }) => {
                 <Image source={UserImage} style={stylesCard.iconImage} />
               </View>
               <Text style={stylesCard.cardLabel}>USO PERSONAL</Text>
-              <Text style={stylesCard.cardTitle}>Soy cliente</Text>
+              <Text style={stylesCard.cardTitle}>Soy usuario</Text>
               <Text style={stylesCard.cardSubtitle}>
                 Solicita servicios, agenda citas y lleva el control de tus vehículos desde un solo lugar.
               </Text>

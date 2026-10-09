@@ -310,7 +310,15 @@ const FormTaller = () => {
 
         if (result.categories.length > 0) {
           if (loadData) {
-            setcaracteristicaSelected('');
+            // Req. 005: desde la bandeja de Servicios se llega con la categoría
+            // ya elegida ("+ Crear servicio de Frenos").
+            const preseleccion = String(route.params?.categoriaUid || '');
+            if (preseleccion && result.categories.some(c => c.id === preseleccion)) {
+              setcaracteristicaSelected(preseleccion);
+              getSubcaracteristicas(preseleccion, true);
+            } else {
+              setcaracteristicaSelected('');
+            }
             // getSubcaracteristicas(result.categories[0].id, true);
           }
         }

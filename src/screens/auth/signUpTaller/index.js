@@ -20,11 +20,13 @@ import {
   Modal,
   BackHandler,
   Alert,
+  TextInput,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Dropdown} from 'react-native-element-dropdown';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import api from '../../../../axiosInstance';
 import {C, Field, PrimaryButton, Banner, Chip, Card, StepHeader} from '../../../components/registro/ui';
 import TermsModal from '../../../components/registro/TermsModal';
@@ -69,7 +71,8 @@ const ETIQUETAS_FALTANTES = {
   horario: 'Horario de atención',
   categorias: 'Servicios que ofrece',
 };
-const TOTAL = 4;
+// Req. 005: registro en 3 pasos (cuenta, negocio, servicios).
+const TOTAL = 3;
 
 const ESTADOS = [
   'Amazonas', 'Anzoátegui', 'Apure', 'Aragua', 'Barinas', 'Bolívar', 'Carabobo',
@@ -107,6 +110,43 @@ const DOCS = [
   {key: 'fotoInternaTaller', label: 'Interior del taller', help: 'El área de trabajo.', required: true},
   {key: 'logotipoNegocio', label: 'Logo del negocio', help: 'Opcional. Se muestra a los conductores.'},
 ];
+
+// En el registro solo se piden el logo y el RIF; las fotos del taller se suben
+// después, desde "Tu negocio" (Req. 005).
+const DOCS_REGISTRO = ['logotipoNegocio', 'rifIdFiscal'].map(k => DOCS.find(d => d.key === k));
+
+// Ícono de cada categoría según su nombre (las categorías vienen del panel).
+const ICONOS_CATEGORIA = [
+  [/aceite|lubric/, 'oil'],
+  [/aire|a\/?c\b|climat/, 'snowflake'],
+  [/lavado/, 'car-wash'],
+  [/electro|bater/, 'car-battery'],
+  [/escaneo|ecu|comput|diagn/, 'car-cog'],
+  [/freno/, 'car-brake-alert'],
+  [/\bgas\b|gnv|glp/, 'gas-cylinder'],
+  [/latoner|pintura/, 'spray'],
+  [/inyector/, 'engine'],
+  [/metalmec/, 'cog'],
+  [/mecanic/, 'wrench'],
+  [/neumatic|rines|caucho|llanta/, 'tire'],
+  [/parabrisa|vidrio/, 'car-windshield'],
+  [/radiador/, 'radiator'],
+  [/direccion|suspension|tren/, 'steering'],
+  [/silenciador|escape/, 'pipe'],
+  [/alarma|gps/, 'shield-car'],
+  [/moto/, 'motorbike'],
+  [/tapicer/, 'car-seat'],
+];
+const sinAcentos = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const iconoCategoria = nombre => {
+  const n = sinAcentos(nombre);
+  const hit = ICONOS_CATEGORIA.find(([re]) => re.test(n));
+  return hit ? hit[1] : 'tools';
+};
+const nombreBonito = v => {
+  const t = String(v || '').trim().toLowerCase();
+  return t.charAt(0).toUpperCase() + t.slice(1);
+};
 
 const horarioVacio = () =>
   DIAS.reduce((acc, d) => {
@@ -163,6 +203,7 @@ const SignUpTaller = ({navigation}) => {
   const [categoriasDisp, setCategoriasDisp] = useState([]);
   const [catsError, setCatsError] = useState('');
   const [planGratis, setPlanGratis] = useState(null);
+  const [busqueda, setBusqueda] = useState('');
   const scrollRef = useRef(null);
 
   // ── Borrador: cargar y guardar automáticamente ───────────────────────────
@@ -172,7 +213,7 @@ const SignUpTaller = ({navigation}) => {
         const raw = await AsyncStorage.getItem(DRAFT_KEY);
         if (raw) {
           const d = JSON.parse(raw);
-          setF({...INICIAL, ...d, horario: {...horarioVacio(), ...(d.horario || {})}});
+          setF({...INICIAL, ...d, step: Math.min(Math.max(Number(d.step) || 1, 1), TOTAL), whatsappIgual: true, horario: {...horarioVacio(), ...(d.horario || {})}});
           if (d.step > 1 || d.email || d.nombre) setResumed(true);
         }
       } catch (e) {}
@@ -252,7 +293,7 @@ const SignUpTaller = ({navigation}) => {
       responsable: validarNombre(f.responsable, 'el nombre del responsable'),
       email: validarCorreo(f.email) || (dispEmail === 'taken' ? MSG_CORREO_EXISTE : ''),
       phone: validarTelefono(f.phone) || (dispPhone === 'taken' ? MSG_TELEFONO_EXISTE : ''),
-      whatsapp: f.whatsappIgual ? '' : validarTelefono(f.whatsapp),
+      whatsapp: '', // Req. 005: un solo número; el WhatsApp es el mismo teléfono
       password: validarPassword(password),
       nombre: validarNombre(f.nombre, 'el nombre del taller'),
       rif: validarRif(f.rifPrefijo, f.rifNumero),
@@ -262,20 +303,14 @@ const SignUpTaller = ({navigation}) => {
       horario: '',
       categorias: f.categorias.length ? '' : 'Elige al menos una categoría de servicio.',
     };
-    const on = DIAS.filter(d => f.horario?.[d.key]?.enabled);
-    if (!on.length) e.horario = 'Elige al menos un día de atención (puedes usar los atajos).';
-    else {
-      const mal = on.find(d => f.horario[d.key].open >= f.horario[d.key].close);
-      if (mal) e.horario = `El ${mal.label} cierra antes de abrir: revisa las horas.`;
-    }
+    // Req. 005: el horario ya no se pide en el registro; se carga en el perfil.
     return e;
   }, [f, password, dispEmail, dispPhone]);
 
   const CAMPOS_PASO = {
     1: ['responsable', 'email', 'phone', 'whatsapp', 'password'],
-    2: ['nombre', 'rif', 'estado', 'direccion', 'ubicacion', 'horario'],
+    2: ['nombre', 'rif', 'estado', 'direccion', 'ubicacion'],
     3: ['categorias'],
-    4: [],
   };
   const pasoValido = n => !CAMPOS_PASO[n].some(k => errores[k]);
   const show = k => (touched[k] ? errores[k] : '');
@@ -314,7 +349,7 @@ const SignUpTaller = ({navigation}) => {
             nombre: f.nombre.trim(),
             email: f.email.trim().toLowerCase(),
             phone,
-            whatsapp: f.whatsappIgual ? phone : normalizarTelefono(f.whatsapp),
+            whatsapp: phone,
             faltantes,
           },
           {timeout: 15000},
@@ -490,7 +525,7 @@ const SignUpTaller = ({navigation}) => {
       const token = await obtenerTokenPushSeguro();
       const email = f.email.trim().toLowerCase();
       const phone = normalizarTelefono(f.phone);
-      const whatsapp = f.whatsappIgual ? phone : normalizarTelefono(f.whatsapp);
+      const whatsapp = phone; // Req. 005: un solo número
       const metodos = METODOS_PAGO.reduce((acc, m) => ({...acc, [m.value]: f.metodosPago.includes(m.value)}), {});
       const categorias = categoriasDisp.filter(c => f.categorias.includes(c.uid));
 
@@ -603,17 +638,8 @@ const SignUpTaller = ({navigation}) => {
       <PhoneInput label="Teléfono" value={f.phone} onChange={v => set('phone', v)} onBlur={touch('phone')}
         error={dispPhone === 'taken' ? MSG_TELEFONO_EXISTE : show('phone')}
         ok={dispPhone === 'ok' || (touched.phone && !errores.phone && dispPhone === 'error')}
-        help={dispPhone === 'checking' ? 'Verificando que el teléfono esté disponible…' : undefined} />
+        help={dispPhone === 'checking' ? 'Verificando que el teléfono esté disponible…' : 'También lo usamos como tu WhatsApp para los conductores.'} />
       {dispPhone === 'taken' ? <IrALogin onPress={() => navigation.navigate('Login')} /> : null}
-      <TouchableOpacity style={st.check} onPress={() => set('whatsappIgual', !f.whatsappIgual)} accessibilityRole="checkbox"
-        accessibilityState={{checked: f.whatsappIgual}}>
-        <Ionicons name={f.whatsappIgual ? 'checkbox' : 'square-outline'} size={24} color={C.navy} />
-        <Text style={st.checkText}>Este número tiene WhatsApp</Text>
-      </TouchableOpacity>
-      {!f.whatsappIgual && (
-        <PhoneInput label="WhatsApp del taller" value={f.whatsapp} onChange={v => set('whatsapp', v)}
-          onBlur={touch('whatsapp')} error={show('whatsapp')} ok={touched.whatsapp && !errores.whatsapp} />
-      )}
       <Field label="Contraseña" placeholder="Mínimo 6 caracteres" value={password} onChangeText={setPassword}
         onBlur={touch('password')} error={show('password')} secure autoCapitalize="none" textContentType="newPassword"
         help="Mínimo 6 caracteres. Por seguridad no se guarda en el borrador." />
@@ -628,7 +654,7 @@ const SignUpTaller = ({navigation}) => {
   // Documentos del negocio (Req. 003: se cargan en el paso 2, junto al RIF).
   const docsBloque = (
     <>
-      {DOCS.map(d => {
+      {DOCS_REGISTRO.map(d => {
         const file = f.docs?.[d.key];
         const esImagen = file?.type?.startsWith('image/');
         return (
@@ -682,7 +708,11 @@ const SignUpTaller = ({navigation}) => {
       <Field label="Nombre del taller" placeholder="Taller Los Hermanos" value={f.nombre} onChangeText={v => set('nombre', v)}
         onBlur={touch('nombre')} error={show('nombre')} ok={touched.nombre && !errores.nombre} autoCapitalize="words" />
 
-      <Text style={st.label}>RIF</Text>
+      <Text style={st.label}>Logotipo y RIF</Text>
+      <Text style={st.help}>Sube tu logotipo y tu RIF. Comparamos el RIF del documento con el número que escribas abajo.</Text>
+      {docsBloque}
+
+      <Text style={[st.label, {marginTop: 8}]}>Número de RIF</Text>
       <View style={st.chipsRow}>
         {RIF_PREFIJOS.map(p => (
           <Chip key={p} label={p} selected={f.rifPrefijo === p} onPress={() => set('rifPrefijo', p)} style={st.rifChip} />
@@ -733,67 +763,65 @@ const SignUpTaller = ({navigation}) => {
       </TouchableOpacity>
       {show('ubicacion') ? <Text style={st.err}>{show('ubicacion')}</Text> : <View style={{height: 16}} />}
 
-      <Text style={st.label}>Horario de atención</Text>
-      <View style={st.chipsRow}>
-        {PRESETS.map(p => (
-          <Chip key={p.label} label={`+ ${p.label}`} onPress={() => {
-            setF(prev => {
-              const h = {...prev.horario};
-              p.dias.forEach(d => (h[d] = {enabled: true, open: p.open, close: p.close}));
-              return {...prev, horario: h};
-            });
-            touch('horario')();
-          }} />
-        ))}
-      </View>
-      <View style={st.chipsRow}>
-        {DIAS.map(d => (
-          <Chip key={d.key} label={d.label} selected={!!f.horario[d.key]?.enabled} onPress={() => {
-            setF(prev => ({...prev, horario: {...prev.horario, [d.key]: {...prev.horario[d.key], enabled: !prev.horario[d.key]?.enabled}}}));
-            touch('horario')();
-          }} />
-        ))}
-      </View>
-      {DIAS.filter(d => f.horario[d.key]?.enabled).map(d => (
-        <View key={d.key} style={st.horaRow}>
-          <Text style={st.horaDia}>{d.label}</Text>
-          {['open', 'close'].map(k => (
-            <Dropdown key={k} style={st.horaDrop} data={HORAS} labelField="label" valueField="value"
-              value={f.horario[d.key][k]} selectedTextStyle={{fontSize: 15, color: C.text}}
-              onChange={i => setF(prev => ({...prev, horario: {...prev.horario, [d.key]: {...prev.horario[d.key], [k]: i.value}}}))} />
-          ))}
-        </View>
-      ))}
-      {show('horario') ? <Text style={st.err}>{show('horario')}</Text> : null}
-
-      <Text style={[st.label, {marginTop: 16}]}>Documentos del negocio</Text>
-      <Text style={st.help}>Sube el RIF y las fotos del taller. Comparamos el RIF del documento con el que escribiste arriba.</Text>
-      {docsBloque}
     </>
   );
 
   const cupo = planGratis?.cantidad_servicios;
   const paso3 = (
     <>
-      <StepHeader step={3} total={TOTAL} savedLabel="Se guarda automáticamente" title="Tus servicios" subtitle="¿Qué trabajos hace tu taller? La primera que elijas será la principal." />
+      <StepHeader step={3} total={TOTAL} savedLabel="Se guarda automáticamente" title="Tus servicios" subtitle="¿Qué trabajos hace tu taller? El primero que elijas será tu servicio principal." />
       {catsError ? (
         <Banner text={catsError} actionLabel="Reintentar" onAction={cargarCategorias} />
       ) : !categoriasDisp.length ? (
         <Text style={st.help}>Cargando categorías…</Text>
       ) : null}
-      <View style={st.chipsRow}>
-        {categoriasDisp.map(c => {
-          const idx = f.categorias.indexOf(c.uid);
-          return (
-            <Chip key={c.uid} label={idx === 0 ? `★ ${c.nombre.toUpperCase()}` : c.nombre.toUpperCase()} selected={idx >= 0} onPress={() => {
-              setF(prev => ({
-                ...prev,
-                categorias: prev.categorias.includes(c.uid) ? prev.categorias.filter(x => x !== c.uid) : [...prev.categorias, c.uid],
-              }));
-              touch('categorias')();
-            }} />
-          );
-        })}
+      <View style={st.buscador}>
+        <Ionicons name="search" size={20} color={C.muted} />
+        <TextInput
+          style={st.buscadorInput}
+          placeholder="Buscar servicios…"
+          placeholderTextColor="#9AA0B4"
+          value={busqueda}
+          onChangeText={setBusqueda}
+          autoCorrect={false}
+          accessibilityLabel="Buscar servicios"
+        />
+      </View>
+      <View style={st.catGrid}>
+        {categoriasDisp
+          .filter(c => !busqueda.trim() || sinAcentos(c.nombre).includes(sinAcentos(busqueda.trim())))
+          .map(c => {
+            const idx = f.categorias.indexOf(c.uid);
+            const sel = idx >= 0;
+            const principal = idx === 0;
+            return (
+              <TouchableOpacity
+                key={c.uid}
+                style={[st.catCard, sel && st.catCardSel, principal && st.catCardPrincipal]}
+                activeOpacity={0.85}
+                accessibilityRole="checkbox"
+                accessibilityState={{checked: sel}}
+                accessibilityLabel={`${nombreBonito(c.nombre)}${principal ? ', servicio principal' : ''}`}
+                onPress={() => {
+                  setF(prev => ({
+                    ...prev,
+                    categorias: prev.categorias.includes(c.uid) ? prev.categorias.filter(x => x !== c.uid) : [...prev.categorias, c.uid],
+                  }));
+                  touch('categorias')();
+                }}>
+                <MaterialCommunityIcons name={iconoCategoria(c.nombre)} size={26} color={principal ? C.navy : sel ? C.yellow : C.navy} />
+                <View style={{flex: 1, marginLeft: 10}}>
+                  <Text style={[st.catNombre, sel && !principal && {color: '#FFFFFF'}]} numberOfLines={2}>{nombreBonito(c.nombre)}</Text>
+                  {principal ? <Text style={st.catPrincipalText}>Servicio principal</Text> : null}
+                </View>
+                {principal ? (
+                  <MaterialCommunityIcons name="crown" size={18} color={C.navy} />
+                ) : sel ? (
+                  <Ionicons name="checkmark-circle" size={20} color={C.yellow} />
+                ) : null}
+              </TouchableOpacity>
+            );
+          })}
       </View>
       {show('categorias') ? <Text style={st.err}>{show('categorias')}</Text> : null}
 
@@ -806,56 +834,10 @@ const SignUpTaller = ({navigation}) => {
         </Text>
       </Card>
 
-      <Text style={[st.label, {marginTop: 8}]}>Métodos de pago que aceptas <Text style={st.opt}>(opcional)</Text></Text>
-      <View style={st.chipsRow}>
-        {METODOS_PAGO.map(m => (
-          <Chip key={m.value} label={m.label} selected={f.metodosPago.includes(m.value)} onPress={() =>
-            setF(prev => ({
-              ...prev,
-              metodosPago: prev.metodosPago.includes(m.value) ? prev.metodosPago.filter(x => x !== m.value) : [...prev.metodosPago, m.value],
-            }))} />
-        ))}
-      </View>
-
-      <Field label="Cuéntale a los conductores sobre tu taller (opcional)" placeholder="Ej: 15 años en frenos y suspensión, atendemos todas las marcas."
-        value={f.descripcion} onChangeText={v => set('descripcion', v)} multiline maxLength={400}
-        inputStyle={{minHeight: 80, textAlignVertical: 'top'}} help={`${f.descripcion.length}/400`} />
     </>
   );
 
-  const catNombres = categoriasDisp.filter(c => f.categorias.includes(c.uid)).map(c => c.nombre);
-  const paso4 = (
-    <>
-      <StepHeader step={4} total={TOTAL} savedLabel="Se guarda automáticamente" title="Revisa y envía" subtitle="Con esto revisamos y aprobamos tu negocio." />
-      {faltantesDocs.length ? (
-        <Banner type="warn" text={`Puedes enviar ahora y subir después: ${faltantesDocs.join(', ')}. Revisamos tu negocio cuando esté todo.`}
-          actionLabel="Subir ahora" onAction={() => irA(2)} />
-      ) : null}
-
-      <Card>
-        <Text style={st.cardTitle}>Resumen</Text>
-        {[
-          ['Taller', f.nombre],
-          ['RIF', `${f.rifPrefijo}-${formatearRif(f.rifNumero)}`],
-          ['Responsable', f.responsable],
-          ['Contacto', `${mostrarTelefono(f.phone)} · ${f.email}`],
-          ['Dirección', `${f.direccion}${f.estado ? `, ${f.estado}` : ''}`],
-          ['Horario', resumenHorario(f.horario)],
-          ['Servicios', catNombres.join(', ') || '—'],
-        ].map(([k, v]) => (
-          <View key={k} style={st.sumRow}>
-            <Text style={st.sumKey}>{k}</Text>
-            <Text style={st.sumVal}>{v}</Text>
-          </View>
-        ))}
-        <TouchableOpacity onPress={() => irA(2)} style={{minHeight: 44, justifyContent: 'center'}}>
-          <Text style={st.link}>Editar datos del negocio</Text>
-        </TouchableOpacity>
-      </Card>
-    </>
-  );
-
-  const pasos = {1: paso1, 2: paso2, 3: paso3, 4: paso4};
+  const pasos = {1: paso1, 2: paso2, 3: paso3};
   const esUltimo = f.step === TOTAL;
 
   return (
@@ -953,6 +935,14 @@ const st = StyleSheet.create({
   horaDrop: {flex: 1, minHeight: 44, borderRadius: 12, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, paddingHorizontal: 12, marginRight: 8},
   cardTitle: {fontSize: 16, fontWeight: '800', color: C.navy, marginBottom: 6},
   cardBody: {fontSize: 14, color: C.text, lineHeight: 21},
+  buscador: {flexDirection: 'row', alignItems: 'center', minHeight: 48, borderRadius: 14, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, paddingHorizontal: 14, marginBottom: 12},
+  buscadorInput: {flex: 1, marginLeft: 8, fontSize: 16, color: C.text, paddingVertical: 10},
+  catGrid: {flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between'},
+  catCard: {width: '48.5%', minHeight: 64, flexDirection: 'row', alignItems: 'center', borderRadius: 14, backgroundColor: C.bg, borderWidth: 1.5, borderColor: C.border, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 10},
+  catCardSel: {backgroundColor: C.navy, borderColor: C.navy},
+  catCardPrincipal: {backgroundColor: C.yellow, borderColor: C.yellow},
+  catNombre: {fontSize: 14, fontWeight: '700', color: C.navy},
+  catPrincipalText: {fontSize: 11, fontWeight: '600', color: C.navy, marginTop: 2},
   docRow: {flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: C.border, borderRadius: 14, padding: 10, marginBottom: 10},
   docThumb: {width: 52, height: 52, borderRadius: 10},
   docThumbEmpty: {backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center'},

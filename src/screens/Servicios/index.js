@@ -652,12 +652,14 @@ const ServiciosContainer = ({ navigation }) => {
   }
 
 
-  const createorEditService = () => {
+  // categoriaUid (opcional): abre el formulario con esa categoría ya elegida.
+  const createorEditService = categoriaUid => {
     if (Number(cantServices) == 0 || Number(cantServices) < 0){
       setModalVisible(true)
     } else {
       navigationScreen.navigate('FormService', {
         uid: '',
+        ...(typeof categoriaUid === 'string' && categoriaUid ? {categoriaUid} : {}),
         ...(uidTallerParam ? {uid_taller: uidTallerParam, nombre_taller: nombreTallerParam} : {}),
       });
       setModalVisible(false)
@@ -772,24 +774,41 @@ const ServiciosContainer = ({ navigation }) => {
               </TouchableOpacity>
             </View>
           ) : (
-            /* ── Sin servicios todavía: misma bandeja, con el aviso de estado arriba ── */
-            <View style={modalStyles.emptyTallerContainer}>
+            /* ── Estado vacío guiado (Req. 005): sugiere un servicio por cada
+                categoría que el taller eligió al registrarse ── */
+            <ScrollView contentContainerStyle={modalStyles.guiadoContainer} showsVerticalScrollIndicator={false}>
               <View style={modalStyles.emptyTallerIconWrap}>
                 <Icons5 name="tools" size={30} color="#1D1E56" />
               </View>
-              <Text style={modalStyles.emptyTallerTitle}>Aún no tienes servicios</Text>
+              <Text style={modalStyles.emptyTallerTitle}>¡Haz que tu taller destaque!</Text>
               <Text style={modalStyles.emptyTallerSubtitle}>
-                Agrega tu primer servicio para{'\n'}empezar a recibir clientes.
+                Agrega servicios específicos para{'\n'}empezar a recibir clientes.
               </Text>
+              {(Array.isArray(userData?.categorias) ? userData.categorias : [])
+                .filter(c => c?.uid && c?.nombre)
+                .slice(0, 6)
+                .map(c => (
+                  <TouchableOpacity
+                    key={c.uid}
+                    style={modalStyles.guiadoSugerencia}
+                    onPress={() => createorEditService(c.uid)}
+                    activeOpacity={0.85}
+                    accessibilityRole="button">
+                    <Icons name="plus" size={14} color="#1D1E56" />
+                    <Text style={modalStyles.guiadoSugerenciaText} numberOfLines={1}>
+                      Crear servicio de {String(c.nombre).charAt(0).toUpperCase() + String(c.nombre).slice(1).toLowerCase()}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               <TouchableOpacity
-                style={modalStyles.emptyTallerBackBtn}
-                onPress={createorEditService}
+                style={[modalStyles.emptyTallerBackBtn, {marginTop: 14}]}
+                onPress={() => createorEditService()}
                 activeOpacity={0.85}
                 accessibilityRole="button">
                 <Icons name="plus" size={15} color="#FFFFFF" />
-                <Text style={modalStyles.emptyTallerBackText}>Agregar servicio</Text>
+                <Text style={modalStyles.emptyTallerBackText}>Agregar otro servicio</Text>
               </TouchableOpacity>
-            </View>
+            </ScrollView>
           )
         ) : (
           <ScrollView
@@ -1072,6 +1091,31 @@ const modalStyles = StyleSheet.create({
     fontSize: 15,
   },
   // ── Empty state: taller sin servicios (vista admin desde Acciones) ──────
+  guiadoContainer: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+    paddingBottom: 140,
+  },
+  guiadoSugerencia: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'stretch',
+    minHeight: 48,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#1D1E56',
+    backgroundColor: '#FFF7D1',
+    paddingHorizontal: 16,
+    marginTop: 10,
+  },
+  guiadoSugerenciaText: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1D1E56',
+  },
   emptyTallerContainer: {
     flex: 1,
     alignItems: 'center',
