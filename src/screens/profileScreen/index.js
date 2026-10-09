@@ -186,6 +186,10 @@ const ProfileScreen = () => {
         if (item.screenName == "EditProfile") {
           // Perfil del negocio en una sola pantalla (antes: editor de 7 pasos).
           navigation.navigate('PerfilNegocio');
+        } else if (item.screenName == "Dashboard") {
+          // "Estadísticas" apuntaba a una pantalla que no existía. Los datos
+          // del negocio están en el inicio del taller.
+          navigation.navigate('HomeScreen');
         } else {
           navigation.navigate(item.screenName);
         }

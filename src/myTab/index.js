@@ -13,6 +13,7 @@ import ServiciosContainer from '../screens/Servicios';
 
 import RadioSelector from '../screens/perimeter-map';
 import MisSolicitudesScreen from '../screens/misSolicitudes';
+import TallerInicio from '../screens/tallerInicio';
 import SolicitudesTallerScreen from '../screens/solicitudesTaller';
 import {
   Category,
@@ -1059,7 +1060,8 @@ const MyTabsTaller = ({initialRouteName = 'HomeScreen'}) => {
       }}>
       <Tab.Screen
         name="HomeScreen"
-        component={HomeScreen}
+        // Req. 005: el taller ve los datos de su negocio, no el catálogo del conductor.
+        component={TallerInicio}
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8" />,
@@ -1131,7 +1133,8 @@ const MyTabsTallerPendiente = () => {
       }}>
       <Tab.Screen
         name="HomeScreen"
-        component={HomeScreen}
+        // Req. 005: el taller ve los datos de su negocio, no el catálogo del conductor.
+        component={TallerInicio}
         options={{
           tabBarLabel: 'Home',
           tabBarIcon: () => <Icons name="home" size={30} color="#9BA6B8" />,
