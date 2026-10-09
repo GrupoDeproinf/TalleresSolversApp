@@ -164,6 +164,35 @@ const ReportarPago = ({ navigation }) => {
   /** true si se llegó desde PlanesRegistro con param enviado desde Mis planes. */
   const fromPlanesTaller = route.params?.fromPlanesTaller === true;
 
+  // El precio del plan es sin IVA: el taller paga el total con IVA, y en
+  // bolívares a la tasa oficial del BCV del día (la calcula el servidor).
+  const [tasaPago, setTasaPago] = useState(null);
+  const precioBase = Number(PrecioPago) || 0;
+  const totalConIva = (
+    tasaPago?.montos?.total ?? Math.round(precioBase * 116) / 100
+  ).toFixed(2);
+  const enBs = n =>
+    Number(n).toLocaleString('es-VE', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  const detallePago =
+    precioBase > 0
+      ? `Plan $${precioBase.toFixed(2)} + IVA 16%` +
+        (tasaPago?.montos?.monto_bs
+          ? ` · Bs ${enBs(tasaPago.montos.monto_bs)} (tasa BCV ${enBs(tasaPago.tasa)})`
+          : '')
+      : '';
+
+  useEffect(() => {
+    const base = Number(route.params?.data?.monto) || 0;
+    if (base <= 0) return;
+    api
+      .get('/usuarios/tasaBcv', { params: { monto: base } })
+      .then(r => setTasaPago(r.data))
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     const { data } = route.params;
     setdataPlan(data);
@@ -886,13 +915,18 @@ const ReportarPago = ({ navigation }) => {
             <View style={styles.footerLeftContainer}>
               <Text style={styles.footerTotalText}>Total a Pagar</Text>
               <View style={styles.footerPriceRow}>
-                <Text style={styles.footerAmountText}>${PrecioPago}</Text>
+                <Text style={styles.footerAmountText}>${totalConIva}</Text>
                 <View style={styles.footerPlanBadge}>
                   <Text style={styles.footerPlanBadgeText}>
                     ({nombrePlan})
                   </Text>
                 </View>
               </View>
+              {detallePago ? (
+                <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
+                  {detallePago}
+                </Text>
+              ) : null}
             </View>
           }
           valueContainerStyle={styles.footerValueContainer}
@@ -993,7 +1027,13 @@ const ReportarPago = ({ navigation }) => {
                         </View>
                       </View>
                       <Text style={styles.modalHeroTitle}>
-                        Total: ${PrecioPago}
+                        Total: ${totalConIva}
+                        {detallePago ? (
+                          <Text style={{ fontSize: 12, fontWeight: '400' }}>
+                            {'\n'}
+                            {detallePago}
+                          </Text>
+                        ) : null}
                       </Text>
                       <Text style={styles.modalHeroSubtitle}>
                         Sube tu comprobante y completa los datos para validar tu
@@ -1084,7 +1124,13 @@ const ReportarPago = ({ navigation }) => {
                         </View>
                       </View>
                       <Text style={styles.modalHeroTitle}>
-                        Total: ${PrecioPago}
+                        Total: ${totalConIva}
+                        {detallePago ? (
+                          <Text style={{ fontSize: 12, fontWeight: '400' }}>
+                            {'\n'}
+                            {detallePago}
+                          </Text>
+                        ) : null}
                       </Text>
                       <Text style={styles.modalHeroSubtitle}>
                         Ingresa la referencia y los datos bancarios para reportar tu
@@ -1311,7 +1357,13 @@ const ReportarPago = ({ navigation }) => {
                         </View>
                       </View>
                       <Text style={styles.modalHeroTitle}>
-                        Total: ${PrecioPago}
+                        Total: ${totalConIva}
+                        {detallePago ? (
+                          <Text style={{ fontSize: 12, fontWeight: '400' }}>
+                            {'\n'}
+                            {detallePago}
+                          </Text>
+                        ) : null}
                       </Text>
                       <Text style={styles.modalHeroSubtitle}>
                         Completa la referencia, teléfono y bancos para registrar tu
@@ -1571,7 +1623,13 @@ const ReportarPago = ({ navigation }) => {
                           </View>
                         </View>
                         <Text style={styles.modalHeroTitle}>
-                          Total: ${PrecioPago}
+                          Total: ${totalConIva}
+                        {detallePago ? (
+                          <Text style={{ fontSize: 12, fontWeight: '400' }}>
+                            {'\n'}
+                            {detallePago}
+                          </Text>
+                        ) : null}
                         </Text>
                         <Text style={styles.modalHeroSubtitle}>
                           Confirma los datos de contacto y registra el pago en
