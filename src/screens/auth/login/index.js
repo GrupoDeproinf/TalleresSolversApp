@@ -678,8 +678,9 @@ const SignIn = ({navigation}) => {
                 loginStyles.wrap,
               ]}>
               <AuthContainer
-              title="¡Hola de nuevo!"
-              subtitle="Accede a tu cuenta para gestionar tus servicios y vehículos."
+              marca
+              title={'Encuentra a los\nbuenos aquí.'}
+              subtitle="Soluciones automotrices de confianza"
               AlignItemTitle={'center'}
               value={
                 <View style={loginStyles.formCard}>

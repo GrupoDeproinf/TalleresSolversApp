@@ -13,7 +13,9 @@ import styles from './style.css';
 import {useValues} from '../../../App';
 import {useNavigation} from '@react-navigation/native';
 
-const AuthContainer = ({subtitle, title, value, onPress, showBack, AlignItemTitle}) => {
+// `marca`: muestra el titular de campaña ("ENCUENTRA A LOS BUENOS AQUÍ.") en
+// lugar de un título normal. Se usa en el inicio de sesión.
+const AuthContainer = ({subtitle, title, value, onPress, showBack, AlignItemTitle, marca}) => {
   const {textRTLStyle, imageRTLStyle} = useValues();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
@@ -24,6 +26,19 @@ const AuthContainer = ({subtitle, title, value, onPress, showBack, AlignItemTitl
   return (
     <View style={styles.container}>
       <View style={[styles.hero, {paddingTop: heroPaddingTop}]}>
+        {/* Huellas de neumático de la línea gráfica (decorativas) */}
+        <Image
+          source={require('../../assets/brand/huella-amarilla.png')}
+          style={styles.huellaArriba}
+          resizeMode="contain"
+          accessible={false}
+        />
+        <Image
+          source={require('../../assets/brand/huella-amarilla.png')}
+          style={styles.huellaAbajo}
+          resizeMode="contain"
+          accessible={false}
+        />
         <View style={styles.heroInner}>
           <View style={styles.heroRow}>
             {showBack && (
@@ -42,6 +57,7 @@ const AuthContainer = ({subtitle, title, value, onPress, showBack, AlignItemTitl
           <Text
             style={[
               styles.heroTitle,
+              marca && styles.heroTitleMarca,
               {textAlign: AlignItemTitle != undefined ? AlignItemTitle : textRTLStyle},
             ]}>
             {title}
@@ -49,6 +65,7 @@ const AuthContainer = ({subtitle, title, value, onPress, showBack, AlignItemTitl
           <Text
             style={[
               styles.subtitleText,
+              marca && styles.subtitleMarca,
               {textAlign: AlignItemTitle != undefined ? AlignItemTitle : textRTLStyle},
             ]}>
             {subtitle}

@@ -2,8 +2,9 @@ import {StyleSheet} from 'react-native';
 import {windowHeight, windowWidth} from '../../themes/appConstant';
 import {external} from '../../style/external.css';
 
-const DARK_BLUE = '#1F2344';
-const YELLOW = '#FFD60A';
+// Colores de la línea gráfica (ui/tokens.js > brand).
+const DARK_BLUE = '#151D61';
+const YELLOW = '#FCC800';
 
 const styles = StyleSheet.create({
   container: {
@@ -22,6 +23,39 @@ const styles = StyleSheet.create({
     borderBottomWidth: 10,
     borderBottomColor: YELLOW,
     overflow: 'hidden',
+  },
+  huellaArriba: {
+    position: 'absolute',
+    top: -18,
+    right: -150,
+    width: 420,
+    height: 128,
+    opacity: 0.22,
+    transform: [{rotate: '180deg'}],
+  },
+  huellaAbajo: {
+    position: 'absolute',
+    bottom: 6,
+    left: -170,
+    width: 420,
+    height: 128,
+    opacity: 0.18,
+  },
+  heroTitleMarca: {
+    fontFamily: 'Poppins-BlackItalic',
+    fontWeight: undefined,
+    fontSize: 28,
+    lineHeight: 33,
+    letterSpacing: 0.4,
+    color: YELLOW,
+    textTransform: 'uppercase',
+    marginBottom: 10,
+  },
+  subtitleMarca: {
+    fontFamily: 'Poppins-Italic',
+    fontSize: 16,
+    lineHeight: 22,
+    color: '#FFFFFF',
   },
   heroInner: {
     width: '100%',

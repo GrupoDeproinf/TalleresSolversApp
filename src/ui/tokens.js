@@ -38,6 +38,20 @@ export const colors = {
   overlay: 'rgba(15, 18, 40, 0.55)',
 };
 
+// Línea gráfica de la campaña "Encuentra a los buenos aquí" (Solvers Mesa #2).
+// Colores tomados de la guía; la huella de neumático está en assets/brand.
+export const brand = {
+  yellow: '#FCC800',
+  yellowSoft: '#FEE666',
+  navy: '#151D61',
+  navyDeep: '#101A3E',
+  headline: 'ENCUENTRA A LOS BUENOS AQUÍ.',
+  tagline: 'Soluciones automotrices de confianza',
+  promise: 'Tu carro pide, Solvers resuelve.',
+  // Titular de campaña: negro, inclinado y en mayúsculas.
+  headlineFont: 'Poppins-BlackItalic',
+};
+
 export const space = {xs: 4, s: 8, m: 16, l: 24, xl: 32, xxl: 48};
 
 export const radius = {s: 10, m: 14, l: 18, xl: 24, pill: 999};
