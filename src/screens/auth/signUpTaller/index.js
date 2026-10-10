@@ -360,19 +360,62 @@ const SignUpTaller = ({navigation}) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [f.step, loaded]);
 
-  // ── Verificación del documento RIF (Req. 003) ────────────────────────────
-  // Al subir el RIF se compara con el número escrito. Es informativo: nunca
-  // impide continuar, y lo que no se pueda leer lo revisa una persona.
-  const [rifCheck, setRifCheck] = useState({estado: '', mensaje: ''});
+  // ── Lectura y verificación del documento RIF ─────────────────────────────
+  // Al subir el RIF, el servidor lee el número del documento (PDF del SENIAT
+  // o el código QR de la foto) y la app lo llena sola. Si el taller ya había
+  // escrito un número, se compara. Es una ayuda: nunca impide continuar, y lo
+  // que no se pueda leer lo revisa una persona.
+  const [rifCheck, setRifCheck] = useState({estado: '', mensaje: '', leido: ''});
+  const rifLeidoRef = useRef({uri: '', texto: ''});
   const rifDocUri = f.docs?.rifIdFiscal?.uri || '';
-  const rifDeclarado = errores.rif ? '' : `${f.rifPrefijo}-${onlyDigits(f.rifNumero)}`;
+  const rifDeclarado = errores.rif ? '' : `${f.rifPrefijo}-${formatearRif(f.rifNumero)}`;
+  const rifEscrito = onlyDigits(f.rifNumero);
+
+  /** "J-41073612-7" → llena la letra y el número del formulario. */
+  const usarRifDelDocumento = texto => {
+    const m = String(texto || '').match(/^([A-Z?])-(\d{8})-(\d)$/);
+    if (!m) return false;
+    setF(prev => ({
+      ...prev,
+      rifPrefijo: RIF_PREFIJOS.includes(m[1]) ? m[1] : prev.rifPrefijo,
+      rifNumero: `${m[2]}${m[3]}`,
+    }));
+    return true;
+  };
+
+  const compararConLeido = leido => {
+    const soloNumeros = t => onlyDigits(t);
+    const mismaLetra = leido.startsWith('?') || leido[0] === f.rifPrefijo;
+    if (soloNumeros(leido) === rifEscrito && mismaLetra) {
+      // Si se acaba de llenar solo, se conserva ese aviso.
+      setRifCheck(prev =>
+        prev.estado === 'verificado' && prev.leido === leido
+          ? prev
+          : {estado: 'verificado', mensaje: 'El RIF coincide con el documento.', leido},
+      );
+    } else {
+      setRifCheck({
+        estado: 'no_coincide',
+        mensaje: `El documento es del RIF ${leido} y abajo dice otro número.`,
+        leido,
+      });
+    }
+  };
+
   useEffect(() => {
-    if (!rifDocUri || !rifDeclarado) {
-      setRifCheck({estado: '', mensaje: ''});
+    if (!rifDocUri) {
+      rifLeidoRef.current = {uri: '', texto: ''};
+      setRifCheck({estado: '', mensaje: '', leido: ''});
+      return undefined;
+    }
+    // Documento ya leído: solo se compara con lo escrito, sin volver a enviarlo.
+    if (rifLeidoRef.current.uri === rifDocUri) {
+      const leido = rifLeidoRef.current.texto;
+      if (leido && rifEscrito.length === 9) compararConLeido(leido);
       return undefined;
     }
     let cancelado = false;
-    setRifCheck({estado: 'revisando', mensaje: ''});
+    setRifCheck({estado: 'revisando', mensaje: '', leido: ''});
     (async () => {
       try {
         const documento = await archivoABase64(rifDocUri);
@@ -382,25 +425,37 @@ const SignUpTaller = ({navigation}) => {
           {timeout: 45000},
         );
         if (cancelado) return;
-        setRifCheck({
-          estado: data?.estado || '',
-          mensaje:
-            data?.estado === 'no_legible'
-              ? 'No pudimos leer el RIF automáticamente. Lo revisará nuestro equipo.'
-              : data?.mensaje || '',
-        });
+        const leido = /^[A-Z?]-\d{8}-\d$/.test(data?.rifDocumento || '') ? data.rifDocumento : '';
+        rifLeidoRef.current = {uri: rifDocUri, texto: leido};
+        if (!leido) {
+          setRifCheck({
+            estado: 'no_legible',
+            mensaje: 'No pudimos leer el número en el documento. Escríbelo abajo; nuestro equipo lo revisará.',
+            leido: '',
+          });
+        } else if (rifEscrito.length < 9) {
+          // Aún no había escrito el número: se llena con el del documento.
+          usarRifDelDocumento(leido);
+          setRifCheck({
+            estado: 'verificado',
+            mensaje: `Leímos tu RIF del documento: ${leido.replace('?-', '')}. Ya lo llenamos por ti.`,
+            leido,
+          });
+        } else {
+          compararConLeido(leido);
+        }
       } catch (e) {
-        // Sin conexión, o un servidor que aún no tiene esta función: se omite
-        // el aviso; el documento se revisa igual al aprobar el negocio.
-        if (!cancelado) setRifCheck({estado: '', mensaje: ''});
+        // Sin conexión o servidor sin respuesta: se omite el aviso; el
+        // documento se revisa igual al aprobar el negocio.
+        if (!cancelado) setRifCheck({estado: '', mensaje: '', leido: ''});
       }
     })();
     return () => {
       cancelado = true;
     };
-    // El nombre no dispara una nueva revisión: solo viaja como referencia.
+    // El nombre no dispara una nueva lectura: solo viaja como referencia.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rifDocUri, rifDeclarado]);
+  }, [rifDocUri, rifEscrito, f.rifPrefijo]);
 
   // ── Navegación entre pasos ───────────────────────────────────────────────
   const irA = n => {
@@ -652,9 +707,7 @@ const SignUpTaller = ({navigation}) => {
   const rifError = show('rif');
   const rifOk = !errores.rif;
   // Documentos del negocio (Req. 003: se cargan en el paso 2, junto al RIF).
-  const docsBloque = (
-    <>
-      {DOCS_REGISTRO.map(d => {
+  const filaDocumento = d => {
         const file = f.docs?.[d.key];
         const esImagen = file?.type?.startsWith('image/');
         return (
@@ -670,7 +723,13 @@ const SignUpTaller = ({navigation}) => {
               <Text style={st.docTitle}>
                 {d.label} {d.required ? <Text style={st.req}>*</Text> : <Text style={st.opt}>(opcional)</Text>}
               </Text>
-              <Text style={[st.docHelp, file && {color: C.ok}]}>{file ? `✓ ${file.name || 'Listo'}` : d.help}</Text>
+              <Text style={[st.docHelp, file && {color: C.ok}]}>
+                {file
+                  ? `✓ ${file.name || 'Listo'}`
+                  : d.key === 'rifIdFiscal'
+                    ? 'PDF del SENIAT o foto donde se vea el código QR.'
+                    : d.help}
+              </Text>
               {d.key === 'rifIdFiscal' && file && rifCheck.estado ? (
                 <Text
                   style={[
@@ -680,11 +739,19 @@ const SignUpTaller = ({navigation}) => {
                     rifCheck.estado === 'no_coincide' && {color: C.error},
                   ]}>
                   {rifCheck.estado === 'revisando'
-                    ? 'Comparando con el RIF que escribiste…'
+                    ? 'Leyendo el número de tu RIF…'
                     : rifCheck.estado === 'verificado'
                       ? `✓ ${rifCheck.mensaje}`
                       : rifCheck.mensaje}
                 </Text>
+              ) : null}
+              {d.key === 'rifIdFiscal' && file && rifCheck.estado === 'no_coincide' && rifCheck.leido ? (
+                <TouchableOpacity
+                  onPress={() => usarRifDelDocumento(rifCheck.leido)}
+                  style={{marginTop: 6, minHeight: 32, justifyContent: 'center'}}
+                  accessibilityRole="button">
+                  <Text style={st.docActionText}>Usar el RIF del documento</Text>
+                </TouchableOpacity>
               ) : null}
             </View>
             {file ? (
@@ -698,9 +765,8 @@ const SignUpTaller = ({navigation}) => {
             )}
           </View>
         );
-      })}
-    </>
-  );
+  };
+  const docDe = clave => DOCS_REGISTRO.find(d => d && d.key === clave);
 
   const paso2 = (
     <>
@@ -708,11 +774,12 @@ const SignUpTaller = ({navigation}) => {
       <Field label="Nombre del taller" placeholder="Taller Los Hermanos" value={f.nombre} onChangeText={v => set('nombre', v)}
         onBlur={touch('nombre')} error={show('nombre')} ok={touched.nombre && !errores.nombre} autoCapitalize="words" />
 
-      <Text style={st.label}>Logotipo y RIF</Text>
-      <Text style={st.help}>Sube tu logotipo y tu RIF. Comparamos el RIF del documento con el número que escribas abajo.</Text>
-      {docsBloque}
+      {docDe('logotipoNegocio') ? filaDocumento(docDe('logotipoNegocio')) : null}
 
-      <Text style={[st.label, {marginTop: 8}]}>Número de RIF</Text>
+      <Text style={[st.label, {marginTop: 8}]}>RIF</Text>
+      <Text style={st.help}>Sube tu RIF y llenamos el número por ti. Si no lo podemos leer, lo escribes abajo.</Text>
+      {docDe('rifIdFiscal') ? filaDocumento(docDe('rifIdFiscal')) : null}
+
       <View style={st.chipsRow}>
         {RIF_PREFIJOS.map(p => (
           <Chip key={p} label={p} selected={f.rifPrefijo === p} onPress={() => set('rifPrefijo', p)} style={st.rifChip} />

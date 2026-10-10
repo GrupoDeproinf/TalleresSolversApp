@@ -50,8 +50,9 @@ export const validarPassword = v => {
   return '';
 };
 
-// RIF: letra (J, G, V, E, P, C) + 8 dígitos + dígito verificador.
-export const RIF_PREFIJOS = ['J', 'G', 'V', 'E', 'P', 'C'];
+// RIF: letra + 8 dígitos + dígito verificador. En el registro se ofrecen las
+// cuatro letras que usan los negocios (P y C se quitaron a pedido del cliente).
+export const RIF_PREFIJOS = ['J', 'G', 'V', 'E'];
 
 export const normalizarRif = (prefijo, numero) => {
   const d = onlyDigits(numero).slice(0, 9);
