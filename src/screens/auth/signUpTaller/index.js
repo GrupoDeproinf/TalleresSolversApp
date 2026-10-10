@@ -21,7 +21,10 @@ import {
   BackHandler,
   Alert,
   TextInput,
+  ActivityIndicator,
+  PermissionsAndroid,
 } from 'react-native';
+import Geolocation from '@react-native-community/geolocation';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Dropdown} from 'react-native-element-dropdown';
@@ -45,7 +48,7 @@ import {
   mensajeDeError,
 } from '../../../components/registro/validators';
 import {OPCIONES_HORA, hora12} from '../../../utils/taller';
-import {direccionDesdeCoordenadas} from '../../../utils/geocoding';
+import {direccionDesdeCoordenadas, buscarDirecciones, mapaEstaticoUrl} from '../../../utils/geocoding';
 import PhoneInput from '../../../ui/PhoneInput';
 import useDisponibilidad, {MSG_CORREO_EXISTE, MSG_TELEFONO_EXISTE} from '../../../components/registro/useDisponibilidad';
 import IrALogin from '../../../components/registro/IrALogin';
@@ -174,6 +177,8 @@ const INICIAL = {
   direccionMapa: '',
   lat: null,
   lng: null,
+  // De dónde salió el pin: 'direccion' (búsqueda), 'gps' o 'manual' (mapa).
+  pinOrigen: '',
   horario: horarioVacio(),
   categorias: [],
   metodosPago: [],
@@ -271,6 +276,84 @@ const SignUpTaller = ({navigation}) => {
       return {...prev, direccionMapa: dir, direccion};
     });
   }, []);
+
+  // ── Pin automático a partir de la dirección ──────────────────────────────
+  // Cuando el taller termina de escribir la dirección, se busca en el mapa y
+  // se coloca el pin en la mejor coincidencia. Ubica la calle, no el local:
+  // el taller lo confirma viendo el mapa y lo ajusta si hace falta. Un pin
+  // puesto a mano o con el GPS no se mueve solo.
+  const [sugerencias, setSugerencias] = useState([]);
+  const [buscandoPin, setBuscandoPin] = useState(false);
+  const direccionEditadaRef = useRef(false);
+  useEffect(() => {
+    const texto = String(f.direccion || '').trim();
+    if (!direccionEditadaRef.current || texto.length < 8) return undefined;
+    if (f.pinOrigen === 'manual' || f.pinOrigen === 'gps') return undefined;
+    // Pin de un borrador anterior (sin origen registrado): se respeta.
+    if (!f.pinOrigen && Number.isFinite(f.lat) && Number.isFinite(f.lng)) return undefined;
+    let cancelado = false;
+    const espera = setTimeout(async () => {
+      setBuscandoPin(true);
+      const lista = await buscarDirecciones(texto, f.estado);
+      if (cancelado) return;
+      setBuscandoPin(false);
+      setSugerencias(lista);
+      if (lista.length) {
+        const mejor = lista[0];
+        setF(prev =>
+          prev.pinOrigen === 'manual' || prev.pinOrigen === 'gps'
+            ? prev
+            : {...prev, lat: mejor.lat, lng: mejor.lng, direccionMapa: mejor.texto, pinOrigen: 'direccion'},
+        );
+      }
+    }, 1100);
+    return () => {
+      cancelado = true;
+      clearTimeout(espera);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [f.direccion, f.estado]);
+
+  const elegirSugerencia = sug => {
+    setF(prev => ({...prev, lat: sug.lat, lng: sug.lng, direccionMapa: sug.texto, pinOrigen: 'direccion'}));
+    setTouched(prev => ({...prev, ubicacion: true}));
+  };
+
+  // ── Pin con la ubicación del teléfono ────────────────────────────────────
+  const [ubicando, setUbicando] = useState(false);
+  const usarMiUbicacion = async () => {
+    if (ubicando) return;
+    try {
+      if (Platform.OS === 'android') {
+        const permiso = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+        if (permiso !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Solvers', 'Para usar tu ubicación, permite el acceso en los ajustes del teléfono. También puedes marcar el punto en el mapa.');
+          return;
+        }
+      } else {
+        Geolocation.requestAuthorization();
+      }
+      setUbicando(true);
+      Geolocation.getCurrentPosition(
+        pos => {
+          const lat = Number(pos.coords.latitude.toFixed(6));
+          const lng = Number(pos.coords.longitude.toFixed(6));
+          setUbicando(false);
+          setSugerencias([]);
+          setF(prev => ({...prev, lat, lng, direccionMapa: '', pinOrigen: 'gps'}));
+          setTouched(prev => ({...prev, ubicacion: true}));
+          buscarDireccion(lat, lng);
+        },
+        () => {
+          setUbicando(false);
+          Alert.alert('Solvers', 'No pudimos obtener tu ubicación. Revisa que el GPS esté encendido o marca el punto en el mapa.');
+        },
+        {enableHighAccuracy: true, timeout: 12000, maximumAge: 5000},
+      );
+    } catch (_) {
+      setUbicando(false);
+    }
+  };
 
   // Borradores viejos con pin pero sin dirección escrita.
   useEffect(() => {
@@ -768,6 +851,8 @@ const SignUpTaller = ({navigation}) => {
   };
   const docDe = clave => DOCS_REGISTRO.find(d => d && d.key === clave);
 
+  const tienePin = Number.isFinite(f.lat) && Number.isFinite(f.lng);
+
   const paso2 = (
     <>
       <StepHeader step={2} total={TOTAL} savedLabel="Se guarda automáticamente" title="Tu negocio" subtitle="Lo que verán los conductores en Solvers." />
@@ -808,26 +893,69 @@ const SignUpTaller = ({navigation}) => {
       />
       {show('estado') ? <Text style={st.err}>{show('estado')}</Text> : <View style={{height: 16}} />}
 
-      <Field label="Dirección" placeholder="Av. Bolívar, local 3, frente a la plaza" value={f.direccion}
-        onChangeText={v => set('direccion', v)} onBlur={touch('direccion')} error={show('direccion')}
+      <Field label="Dirección" placeholder="Av. Bolívar Norte, local 3, frente a la plaza" value={f.direccion}
+        onChangeText={v => {
+          direccionEditadaRef.current = true;
+          set('direccion', v);
+        }}
+        onBlur={touch('direccion')} error={show('direccion')}
         ok={touched.direccion && !errores.direccion} multiline inputStyle={{minHeight: 56, textAlignVertical: 'top'}} />
 
       <Text style={st.label}>Ubicación en el mapa</Text>
-      <TouchableOpacity style={[st.mapBtn, show('ubicacion') ? {borderColor: C.error} : errores.ubicacion ? null : {borderColor: C.ok}]}
-        onPress={() => setMapVisible(true)} accessibilityRole="button">
-        <Ionicons name={errores.ubicacion ? 'location-outline' : 'location'} size={24} color={errores.ubicacion ? C.navy : C.ok} />
-        <View style={{flex: 1, marginLeft: 10}}>
-          <Text style={st.mapTitle}>{errores.ubicacion ? 'Marcar en el mapa' : 'Ubicación marcada'}</Text>
-          <Text style={st.mapSub}>
-            {errores.ubicacion
-              ? 'Toca para mover el pin hasta tu taller.'
-              : buscandoDireccion
-              ? 'Buscando la dirección…'
-              : `${f.direccionMapa || 'Pin colocado en el mapa'} · Toca para ajustar`}
-          </Text>
+      {tienePin ? (
+        <View style={[st.mapCard, {borderColor: C.ok}]}>
+          <TouchableOpacity onPress={() => setMapVisible(true)} activeOpacity={0.9} accessibilityRole="button" accessibilityLabel="Ajustar el pin en el mapa">
+            <Image source={{uri: mapaEstaticoUrl(f.lat, f.lng)}} style={st.mapImg} resizeMode="cover" />
+            <View style={st.mapAjustar}>
+              <Ionicons name="move" size={14} color={C.navy} />
+              <Text style={st.mapAjustarText}>Ajustar pin</Text>
+            </View>
+          </TouchableOpacity>
+          <View style={st.mapPie}>
+            <Ionicons name="location" size={18} color={C.ok} />
+            <Text style={[st.mapSub, {flex: 1, marginLeft: 8, marginTop: 0}]}>
+              {buscandoDireccion
+                ? 'Buscando la dirección…'
+                : f.pinOrigen === 'direccion'
+                  ? `Pusimos el pin según tu dirección: ${f.direccionMapa}. Revisa que esté sobre tu taller.`
+                  : f.direccionMapa || 'Pin colocado en el mapa.'}
+            </Text>
+          </View>
         </View>
-        <Ionicons name="chevron-forward" size={20} color={C.muted} />
-      </TouchableOpacity>
+      ) : (
+        <Text style={st.help}>
+          {buscandoPin
+            ? 'Buscando tu dirección en el mapa…'
+            : 'Escribe la dirección y ponemos el pin por ti, o usa una de estas opciones.'}
+        </Text>
+      )}
+
+      {f.pinOrigen === 'direccion' && sugerencias.length > 1 ? (
+        <View style={{marginTop: 8}}>
+          <Text style={st.help}>¿No es ahí? Elige otra coincidencia:</Text>
+          {sugerencias.slice(0, 4).map(sug => {
+            const activa = sug.lat === f.lat && sug.lng === f.lng;
+            return (
+              <TouchableOpacity key={`${sug.lat},${sug.lng}`} style={[st.sugRow, activa && {borderColor: C.ok}]}
+                onPress={() => elegirSugerencia(sug)} accessibilityRole="button">
+                <Ionicons name={activa ? 'radio-button-on' : 'radio-button-off'} size={18} color={activa ? C.ok : C.muted} />
+                <Text style={st.sugText} numberOfLines={2}>{sug.texto}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      ) : null}
+
+      <View style={st.mapAcciones}>
+        <TouchableOpacity style={st.mapAccion} onPress={usarMiUbicacion} disabled={ubicando} accessibilityRole="button">
+          {ubicando ? <ActivityIndicator size="small" color={C.navy} /> : <Ionicons name="navigate" size={18} color={C.navy} />}
+          <Text style={st.mapAccionText}>{ubicando ? 'Ubicando…' : 'Estoy en el taller'}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[st.mapAccion, {marginLeft: 8}]} onPress={() => setMapVisible(true)} accessibilityRole="button">
+          <Ionicons name="map-outline" size={18} color={C.navy} />
+          <Text style={st.mapAccionText}>{tienePin ? 'Mover en el mapa' : 'Marcar en el mapa'}</Text>
+        </TouchableOpacity>
+      </View>
       {show('ubicacion') ? <Text style={st.err}>{show('ubicacion')}</Text> : <View style={{height: 16}} />}
 
     </>
@@ -963,7 +1091,8 @@ const SignUpTaller = ({navigation}) => {
         lng={f.lng}
         onClose={() => setMapVisible(false)}
         onConfirm={({lat, lng}) => {
-          setF(prev => ({...prev, lat, lng, direccionMapa: ''}));
+          setSugerencias([]);
+          setF(prev => ({...prev, lat, lng, direccionMapa: '', pinOrigen: 'manual'}));
           touch('ubicacion')();
           setMapVisible(false);
           buscarDireccion(lat, lng);
@@ -996,6 +1125,16 @@ const st = StyleSheet.create({
   dropdown: {minHeight: 52, borderRadius: 14, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, paddingHorizontal: 14},
   mapBtn: {flexDirection: 'row', alignItems: 'center', minHeight: 64, borderRadius: 14, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, paddingHorizontal: 14},
   mapTitle: {fontSize: 16, fontWeight: '700', color: C.navy},
+  mapCard: {borderRadius: 14, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, overflow: 'hidden'},
+  mapImg: {width: '100%', height: 150, backgroundColor: '#E6E8F0'},
+  mapAjustar: {position: 'absolute', right: 10, top: 10, flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 6, elevation: 2},
+  mapAjustarText: {marginLeft: 5, fontSize: 12, fontWeight: '700', color: C.navy},
+  mapPie: {flexDirection: 'row', alignItems: 'flex-start', padding: 12},
+  mapAcciones: {flexDirection: 'row', marginTop: 10},
+  mapAccion: {flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', minHeight: 46, borderRadius: 12, borderWidth: 1.5, borderColor: C.border, backgroundColor: '#FFFFFF', paddingHorizontal: 8},
+  mapAccionText: {marginLeft: 6, fontSize: 13.5, fontWeight: '700', color: C.navy},
+  sugRow: {flexDirection: 'row', alignItems: 'center', minHeight: 44, borderRadius: 10, borderWidth: 1, borderColor: C.border, backgroundColor: '#FFFFFF', paddingHorizontal: 10, paddingVertical: 8, marginTop: 6},
+  sugText: {flex: 1, marginLeft: 8, fontSize: 13.5, color: C.text},
   mapSub: {fontSize: 13, color: C.muted, marginTop: 2},
   horaRow: {flexDirection: 'row', alignItems: 'center', marginBottom: 8},
   horaDia: {width: 48, fontSize: 15, fontWeight: '700', color: C.navy},
