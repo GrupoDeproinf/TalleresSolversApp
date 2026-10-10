@@ -72,6 +72,7 @@ import messaging from '@react-native-firebase/messaging';
 import Geolocation from '@react-native-community/geolocation';
 import { Dropdown } from 'react-native-element-dropdown';
 import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
+import SeleccionCuenta from './SeleccionCuenta';
 
 
 
@@ -3288,6 +3289,17 @@ const SignUp = ({ navigation }) => {
 
   const DARK_BLUE = '#1F2344';
   const YELLOW = '#FFD60A';
+
+  // Elección del tipo de cuenta: pantalla propia con la línea gráfica nueva.
+  if (typeOfView === '') {
+    return (
+      <SeleccionCuenta
+        onCliente={handleClientePress}
+        onNegocio={handleTallerPress}
+        onIniciarSesion={() => navigation.navigate('Login')}
+      />
+    );
+  }
 
   return (
     <View
