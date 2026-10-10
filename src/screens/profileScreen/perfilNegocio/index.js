@@ -21,6 +21,7 @@ import {Dropdown} from 'react-native-element-dropdown';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../../../axiosInstance';
 import {C, Field, PrimaryButton, Banner, Chip} from '../../../components/registro/ui';
+import MetodosPago, {METODOS_PAGO, CAMPOS_PAGO, datosParaEnviar} from '../../../components/registro/MetodosPago';
 import LocationPicker from '../../../components/registro/LocationPicker';
 import {validarNombre, validarTelefono, normalizarTelefono} from '../../../components/registro/validators';
 import {OPCIONES_HORA, parseHorarios} from '../../../utils/taller';
@@ -48,16 +49,6 @@ const PRESETS = [
   {label: 'Sáb 8 a. m.–12 p. m.', dias: ['sabado'], open: '08:00', close: '12:00'},
 ];
 
-const METODOS_PAGO = [
-  {value: 'efectivo', label: 'Efectivo'},
-  {value: 'pagoMovil', label: 'Pago Móvil'},
-  {value: 'puntoVenta', label: 'Punto de venta'},
-  {value: 'transferencia', label: 'Transferencia'},
-  {value: 'tarjetaCreditoN', label: 'Crédito nacional'},
-  {value: 'tarjetaCreditoI', label: 'Crédito internacional'},
-  {value: 'zelle', label: 'Zelle'},
-  {value: 'zinli', label: 'Zinli'},
-];
 
 const horarioDesde = raw => {
   const h = parseHorarios(raw) || {};
@@ -89,6 +80,11 @@ const formularioDesde = u => ({
   lng: numero(u?.ubicacion?.lng ?? u?.lng),
   horario: horarioDesde(u?.horarios_atencion),
   metodos: METODOS_PAGO.reduce((acc, m) => ({...acc, [m.value]: u?.metodos_pago?.[m.value] === true}), {}),
+  // Datos opcionales para que le paguen (banco, teléfono, correo…).
+  metodosDatos: Object.keys(CAMPOS_PAGO).reduce((acc, metodo) => {
+    const d = u?.metodos_pago_datos?.[metodo];
+    return d && typeof d === 'object' ? {...acc, [metodo]: {...d}} : acc;
+  }, {}),
 });
 
 const iguales = (a, b) => JSON.stringify(a) === JSON.stringify(b);
@@ -173,6 +169,8 @@ const PerfilNegocio = ({navigation}) => {
     }
     if (!iguales(f.horario, original.horario)) c.horarios_atencion = f.horario;
     if (!iguales(f.metodos, original.metodos)) c.metodos_pago = f.metodos;
+    const datosAhora = datosParaEnviar(f.metodos, f.metodosDatos);
+    if (!iguales(datosAhora, datosParaEnviar(original.metodos, original.metodosDatos))) c.metodos_pago_datos = datosAhora;
     return c;
   }, [f, original]);
 
@@ -334,12 +332,11 @@ const PerfilNegocio = ({navigation}) => {
             {ver('horario') ? <Text style={st.err}>{ver('horario')}</Text> : null}
 
             <Text style={st.seccion}>Métodos de pago que aceptas</Text>
-            <View style={st.chipsRow}>
-              {METODOS_PAGO.map(m => (
-                <Chip key={m.value} label={m.label} selected={!!f.metodos[m.value]} onPress={() =>
-                  setF(prev => ({...prev, metodos: {...prev.metodos, [m.value]: !prev.metodos[m.value]}}))} />
-              ))}
-            </View>
+            <MetodosPago
+              seleccion={f.metodos}
+              datos={f.metodosDatos}
+              onChange={(sel, datos) => setF(prev => ({...prev, metodos: sel, metodosDatos: datos}))}
+            />
 
             <Text style={st.seccion}>Documentos</Text>
             <TouchableOpacity style={st.mapBtn} onPress={() => navigation.navigate('DocumentosTaller')} accessibilityRole="button">

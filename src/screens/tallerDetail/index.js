@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
+import {datosParaMostrar} from '../../components/registro/MetodosPago';
 import { hora12 } from "../../utils/taller";
 import {
   View,
@@ -804,6 +805,20 @@ const TallerDetail = () => {
                 </View>
               ))}
             </View>
+            {/* Datos que el taller dejó para que le paguen (opcionales) */}
+            {activePaymentMethods
+              .map(m => ({m, datos: datosParaMostrar(m.id, taller?.metodos_pago_datos)}))
+              .filter(x => x.datos.length)
+              .map(({m, datos}) => (
+                <View key={`datos-${m.id}`} style={{marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#EEF0F6'}}>
+                  <Text style={[styles.paymentText, {fontWeight: '700', marginBottom: 4}]}>{m.name}</Text>
+                  {datos.map(d => (
+                    <Text key={d.label} style={styles.paymentText} selectable>
+                      {d.label}: {d.valor}
+                    </Text>
+                  ))}
+                </View>
+              ))}
           </View>
         )}
 

@@ -33,6 +33,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import api from '../../../../axiosInstance';
 import {C, Field, PrimaryButton, Banner, Chip, Card, StepHeader} from '../../../components/registro/ui';
 import TermsModal from '../../../components/registro/TermsModal';
+import MetodosPago, {METODOS_PAGO, datosParaEnviar} from '../../../components/registro/MetodosPago';
 import LocationPicker from '../../../components/registro/LocationPicker';
 import {elegirArchivo, archivoABase64} from '../../../components/registro/mediaPicker';
 import {
@@ -96,16 +97,6 @@ const DIAS = [
 
 const HORAS = OPCIONES_HORA;
 
-const METODOS_PAGO = [
-  {value: 'efectivo', label: 'Efectivo'},
-  {value: 'pagoMovil', label: 'Pago Móvil'},
-  {value: 'puntoVenta', label: 'Punto de venta'},
-  {value: 'transferencia', label: 'Transferencia'},
-  {value: 'tarjetaCreditoN', label: 'Crédito nacional'},
-  {value: 'tarjetaCreditoI', label: 'Crédito internacional'},
-  {value: 'zelle', label: 'Zelle'},
-  {value: 'zinli', label: 'Zinli'},
-];
 
 const DOCS = [
   {key: 'rifIdFiscal', label: 'RIF', help: 'Foto o PDF legible del RIF vigente.', required: true, pdf: true},
@@ -139,7 +130,37 @@ const ICONOS_CATEGORIA = [
   [/alarma|gps/, 'shield-car'],
   [/moto/, 'motorbike'],
   [/tapicer/, 'car-seat'],
+  // Categorías que aún no existen en el panel: quedan con ícono si se crean.
+  [/caja|transmision/, 'car-shift-pattern'],
+  [/embrague|croche/, 'car-clutch'],
+  [/grua|remolque/, 'tow-truck'],
+  [/cerraj|llave/, 'key-variant'],
+  [/sonido|audio|multimedia/, 'speaker'],
+  [/polariz|ahumado/, 'window-closed-variant'],
+  [/luces|faro/, 'car-light-high'],
+  [/alineacion|balanceo/, 'car-tire-alert'],
+  [/pulitura|detailing|estetica/, 'car-wash'],
+  [/rectific|motor/, 'engine-outline'],
+  [/repuesto/, 'car-wrench'],
 ];
+
+// Grupos en que se muestran las categorías al elegir servicios. Cada
+// categoría cae en el primer grupo que la reconoce; el resto va a "Otros".
+const GRUPOS_CATEGORIA = [
+  {titulo: 'Mecánica y motor', icono: 'engine', re: /mecanic|aceite|lubric|inyector|radiador|silenciador|escape|\bgas\b|gnv|glp|motor|caja|transmision|embrague|croche|rectific|turbo/},
+  {titulo: 'Frenos, suspensión y cauchos', icono: 'car-brake-alert', re: /freno|tren|direccion|suspension|neumatic|rines|caucho|llanta|alineacion|balanceo/},
+  {titulo: 'Electricidad y electrónica', icono: 'car-battery', re: /electro|electric|bater|escaneo|ecu|comput|diagn|aire|climat|alarma|gps|sonido|audio|multimedia|luces|faro/},
+  {titulo: 'Carrocería y estética', icono: 'spray', re: /latoner|pintura|parabrisa|vidrio|tapicer|lavado|pulitura|detailing|estetica|polariz|ahumado/},
+  {titulo: 'Otros servicios', icono: 'tools', re: /./},
+];
+const agruparCategorias = lista => {
+  const grupos = GRUPOS_CATEGORIA.map(g => ({...g, items: []}));
+  lista.forEach(c => {
+    const n = sinAcentos(c.nombre);
+    (grupos.find(g => g.re.test(n)) || grupos[grupos.length - 1]).items.push(c);
+  });
+  return grupos.filter(g => g.items.length);
+};
 const sinAcentos = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const iconoCategoria = nombre => {
   const n = sinAcentos(nombre);
@@ -182,6 +203,7 @@ const INICIAL = {
   horario: horarioVacio(),
   categorias: [],
   metodosPago: [],
+  metodosPagoDatos: {},
   descripcion: '',
   docs: {},
 };
@@ -688,6 +710,7 @@ const SignUpTaller = ({navigation}) => {
           seguro: '',
           agenteAutorizado: 'no',
           metodos_pago: metodos,
+          metodos_pago_datos: datosParaEnviar(metodos, f.metodosPagoDatos),
           horarios_atencion: f.horario,
           estado: f.estado,
           categorias,
@@ -962,30 +985,7 @@ const SignUpTaller = ({navigation}) => {
   );
 
   const cupo = planGratis?.cantidad_servicios;
-  const paso3 = (
-    <>
-      <StepHeader step={3} total={TOTAL} savedLabel="Se guarda automáticamente" title="Tus servicios" subtitle="¿Qué trabajos hace tu taller? El primero que elijas será tu servicio principal." />
-      {catsError ? (
-        <Banner text={catsError} actionLabel="Reintentar" onAction={cargarCategorias} />
-      ) : !categoriasDisp.length ? (
-        <Text style={st.help}>Cargando categorías…</Text>
-      ) : null}
-      <View style={st.buscador}>
-        <Ionicons name="search" size={20} color={C.muted} />
-        <TextInput
-          style={st.buscadorInput}
-          placeholder="Buscar servicios…"
-          placeholderTextColor="#9AA0B4"
-          value={busqueda}
-          onChangeText={setBusqueda}
-          autoCorrect={false}
-          accessibilityLabel="Buscar servicios"
-        />
-      </View>
-      <View style={st.catGrid}>
-        {categoriasDisp
-          .filter(c => !busqueda.trim() || sinAcentos(c.nombre).includes(sinAcentos(busqueda.trim())))
-          .map(c => {
+  const tarjetaCategoria = c => {
             const idx = f.categorias.indexOf(c.uid);
             const sel = idx >= 0;
             const principal = idx === 0;
@@ -1016,9 +1016,64 @@ const SignUpTaller = ({navigation}) => {
                 ) : null}
               </TouchableOpacity>
             );
-          })}
+  };
+  const categoriasFiltradas = categoriasDisp.filter(
+    c => !busqueda.trim() || sinAcentos(c.nombre).includes(sinAcentos(busqueda.trim())),
+  );
+
+  const metodosMarcados = METODOS_PAGO.reduce((acc, m) => ({...acc, [m.value]: f.metodosPago.includes(m.value)}), {});
+  const paso3 = (
+    <>
+      <StepHeader step={3} total={TOTAL} savedLabel="Se guarda automáticamente" title="Tus servicios" subtitle="¿Qué trabajos hace tu taller? El primero que elijas será tu servicio principal." />
+      {catsError ? (
+        <Banner text={catsError} actionLabel="Reintentar" onAction={cargarCategorias} />
+      ) : !categoriasDisp.length ? (
+        <Text style={st.help}>Cargando categorías…</Text>
+      ) : null}
+      <View style={st.buscador}>
+        <Ionicons name="search" size={20} color={C.muted} />
+        <TextInput
+          style={st.buscadorInput}
+          placeholder="Buscar servicios…"
+          placeholderTextColor="#9AA0B4"
+          value={busqueda}
+          onChangeText={setBusqueda}
+          autoCorrect={false}
+          accessibilityLabel="Buscar servicios"
+        />
       </View>
+      {agruparCategorias(categoriasFiltradas).map(g => (
+        <View key={g.titulo} style={{marginBottom: 6}}>
+          <View style={st.grupoCab}>
+            <MaterialCommunityIcons name={g.icono} size={18} color={C.navy} />
+            <Text style={st.grupoTitulo}>{g.titulo}</Text>
+            <Text style={st.grupoCuenta}>
+              {g.items.filter(c => f.categorias.includes(c.uid)).length
+                ? `${g.items.filter(c => f.categorias.includes(c.uid)).length} elegido(s)`
+                : ''}
+            </Text>
+          </View>
+          <View style={st.catGrid}>{g.items.map(tarjetaCategoria)}</View>
+        </View>
+      ))}
+      {categoriasDisp.length && !categoriasFiltradas.length ? (
+        <Text style={st.help}>No encontramos "{busqueda.trim()}". Prueba con otra palabra.</Text>
+      ) : null}
       {show('categorias') ? <Text style={st.err}>{show('categorias')}</Text> : null}
+
+      <Text style={[st.label, {marginTop: 16}]}>Métodos de pago que aceptas <Text style={st.opt}>(opcional)</Text></Text>
+      <Text style={st.help}>Marca los que recibes. Si quieres, escribe de una vez los datos para que te paguen.</Text>
+      <MetodosPago
+        seleccion={metodosMarcados}
+        datos={f.metodosPagoDatos}
+        onChange={(sel, datos) =>
+          setF(prev => ({
+            ...prev,
+            metodosPago: METODOS_PAGO.filter(m => sel[m.value]).map(m => m.value),
+            metodosPagoDatos: datos,
+          }))
+        }
+      />
 
       <Card style={{marginTop: 12, backgroundColor: '#F2F4FF', borderColor: '#D9DEFA'}}>
         <Text style={st.cardTitle}>Tu plan gratuito</Text>
@@ -1144,6 +1199,9 @@ const st = StyleSheet.create({
   buscador: {flexDirection: 'row', alignItems: 'center', minHeight: 48, borderRadius: 14, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, paddingHorizontal: 14, marginBottom: 12},
   buscadorInput: {flex: 1, marginLeft: 8, fontSize: 16, color: C.text, paddingVertical: 10},
   catGrid: {flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between'},
+  grupoCab: {flexDirection: 'row', alignItems: 'center', marginTop: 10, marginBottom: 8},
+  grupoTitulo: {flex: 1, marginLeft: 8, fontSize: 14.5, fontWeight: '800', color: C.navy},
+  grupoCuenta: {fontSize: 12.5, fontWeight: '700', color: C.ok},
   catCard: {width: '48.5%', minHeight: 64, flexDirection: 'row', alignItems: 'center', borderRadius: 14, backgroundColor: C.bg, borderWidth: 1.5, borderColor: C.border, paddingHorizontal: 12, paddingVertical: 10, marginBottom: 10},
   catCardSel: {backgroundColor: C.navy, borderColor: C.navy},
   catCardPrincipal: {backgroundColor: C.yellow, borderColor: C.yellow},
