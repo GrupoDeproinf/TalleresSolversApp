@@ -4076,7 +4076,7 @@ const SignUp = ({ navigation }) => {
                 Cuando utilizas SOLVERS, podemos recopilar la siguiente información:
               </Text>
               <Text style={termsStyles.bullet}>– <Text style={termsStyles.bulletBold}>Información personal:</Text> Nombre, dirección de correo electrónico, número de teléfono y cualquier otra información que decidas proporcionarnos al registrarte o utilizar nuestros servicios.</Text>
-              <Text style={termsStyles.bullet}>– <Text style={termsStyles.bulletBold}>Información de ubicación:</Text> Para ofrecerte una mejor experiencia, podemos acceder a tu ubicación a través de Google Maps para mostrarte los talleres mecánicos más cercanos.</Text>
+              <Text style={termsStyles.bullet}>– <Text style={termsStyles.bulletBold}>Información de ubicación:</Text> Para ofrecerte una mejor experiencia, podemos acceder a tu ubicación para mostrarte los talleres mecánicos más cercanos.</Text>
               <Text style={termsStyles.bullet}>– <Text style={termsStyles.bulletBold}>Datos de uso:</Text> Información sobre cómo utilizas la aplicación, incluyendo las funciones que utilizas y el tiempo que pasas en la app.</Text>
 
               <Text style={termsStyles.sectionTitle}>2. Cómo utilizamos tu información</Text>
@@ -4099,7 +4099,7 @@ const SignUp = ({ navigation }) => {
 
               <Text style={termsStyles.sectionTitle}>5. Tus derechos</Text>
               <Text style={termsStyles.body}>
-                Tienes derecho a acceder, corregir o eliminar tu información personal. Si deseas ejercer estos derechos, por favor contáctanos a través de solverstalleres@gmail.com.
+                Tienes derecho a acceder, corregir o eliminar tu información personal. Si deseas ejercer estos derechos, por favor contáctanos a través de info@solversapp.com.
               </Text>
 
               <Text style={termsStyles.sectionTitle}>6. Cambios a esta política de privacidad</Text>
@@ -4109,7 +4109,7 @@ const SignUp = ({ navigation }) => {
 
               <Text style={termsStyles.sectionTitle}>7. Contacto</Text>
               <Text style={termsStyles.body}>
-                Si tienes preguntas o inquietudes sobre esta política de privacidad, no dudes en contactarnos a través de solverstalleres@gmail.com.
+                Si tienes preguntas o inquietudes sobre esta política de privacidad, no dudes en contactarnos a través de info@solversapp.com.
               </Text>
             </ScrollView>
 

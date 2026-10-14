@@ -1140,6 +1140,16 @@ const ReportarPago = ({ navigation }) => {
                     </View>
 
                     <View>
+                      {/* Req. 006: cédula del emisor para la validación del pago */}
+                      <TextInputs
+                        title={'Cédula o RIF del titular (opcional)'}
+                        placeHolder={'V-12345678'}
+                        value={identificacion ? String(identificacion) : ''}
+                        onChangeText={text =>
+                          setidentificacion(text.toUpperCase().replace(/[^VEJGP0-9-]/g, '').slice(0, 14))
+                        }
+                        autoCapitalize="characters"
+                      />
                       <TextInputs
                         title={'Nro de referencia'}
                         placeHolder={'000000000'}
@@ -1374,6 +1384,16 @@ const ReportarPago = ({ navigation }) => {
                       </Text>
                     </View>
 
+                    {/* Req. 006: cédula del emisor para la validación del pago */}
+                    <TextInputs
+                      title={'Cédula o RIF del titular (opcional)'}
+                      placeHolder={'V-12345678'}
+                      value={identificacion ? String(identificacion) : ''}
+                      onChangeText={text =>
+                        setidentificacion(text.toUpperCase().replace(/[^VEJGP0-9-]/g, '').slice(0, 14))
+                      }
+                      autoCapitalize="characters"
+                    />
                     <View style={styles.efectivoInputsRow}>
                       <View style={styles.efectivoInputCol}>
                         <TextInputs
