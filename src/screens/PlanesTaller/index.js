@@ -356,7 +356,7 @@ const PlanesContainer = () => {
               <Text style={styles.priceLabel}>Precio</Text>
               <View style={styles.priceWrap}>
                 <Text style={styles.priceValue}>{precioStr}</Text>
-                <Text style={styles.priceCurrency}>USD</Text>
+                <Text style={styles.priceCurrency}>{gratis ? 'USD' : 'USD + IVA'}</Text>
                 {gratis ? (
                   <View style={styles.freeBadge}>
                     <Text style={styles.freeBadgeText}>GRATIS</Text>

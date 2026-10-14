@@ -277,47 +277,57 @@ const PlanesRegistro = () => {
         <View style={styles.planesWrap}>
           {dataPlanes.map((plan) => {
             const destacado = plan?.mejor_opcion === true;
+            // Req. 006: el precio se muestra con IVA, como se cobra.
+            const base = Number(plan?.monto) || 0;
+            const conIva = Math.round(base * 116) / 100;
+            const dinero = n => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace('.', ','));
+            const dias = parseInt(plan?.vigencia, 10);
             return (
               <View key={plan.id} style={styles.planCardWrap}>
-                {destacado && (
-                  <View style={styles.badgeMejorOpcion}>
-                    <Text style={styles.badgeMejorOpcionText}>La mejor opción</Text>
-                  </View>
-                )}
                 <View style={[styles.planCard, destacado && styles.planCardDestacado]}>
                   <View style={[styles.planCardHeader, destacado ? styles.planCardHeaderYellow : styles.planCardHeaderBlue]}>
                     <View style={styles.planCardHeaderLeft}>
-                      <Text style={[styles.planCardNombre, destacado ? styles.planCardNombreDark : styles.planCardNombreWhite]}>
+                      {destacado ? (
+                        <View style={styles.badgeMejorOpcion}>
+                          <Text style={styles.badgeMejorOpcionText}>LA MEJOR OPCIÓN</Text>
+                        </View>
+                      ) : null}
+                      <Text style={[styles.planCardNombre, destacado ? styles.planCardNombreDark : styles.planCardNombreWhite]} numberOfLines={1}>
                         {plan?.nombre?.toUpperCase() || 'PLAN'}
                       </Text>
                       <Text style={[styles.planCardTagline, destacado ? styles.planCardTaglineDark : styles.planCardTaglineWhite]}>
-                        {plan?.descripcion || `Hasta ${plan?.cantidad_servicios} servicios`}
+                        {Number.isFinite(dias) && dias > 0 ? `${dias} días de publicación` : 'Publicación mensual'}
                       </Text>
                     </View>
                     <View style={styles.planCardPrecioWrap}>
-                      <Text style={[styles.planCardPrecio, destacado ? styles.planCardPrecioDark : styles.planCardPrecioWhite]}>
-                        ${plan?.monto}
-                      </Text>
-                      <Text style={[styles.planCardMes, destacado ? styles.planCardMesDark : styles.planCardMesWhite]}>
-                        /mes
+                      <View style={styles.planCardPrecioFila}>
+                        <Text style={[styles.planCardPrecio, destacado ? styles.planCardPrecioDark : styles.planCardPrecioWhite]}>
+                          ${dinero(base)}
+                        </Text>
+                        <Text style={[styles.planCardMes, destacado ? styles.planCardMesDark : styles.planCardMesWhite]}>
+                          /mes
+                        </Text>
+                      </View>
+                      <Text style={[styles.planCardIva, destacado ? styles.planCardMesDark : styles.planCardMesWhite]}>
+                        + IVA · Total ${dinero(conIva)}
                       </Text>
                     </View>
                   </View>
                   <View style={styles.planCardBody}>
-                    <View style={styles.planCardBodyLeft}>
-                      <View style={styles.planCardFeature}>
-                        <Icons name="check-circle" size={18} color={DARK_BLUE} />
-                        <Text style={styles.planCardFeatureText}>Hasta {plan?.cantidad_servicios} servicios</Text>
-                      </View>
-                      <View style={styles.planCardFeature}>
-                        <Icons name="check-circle" size={18} color={DARK_BLUE} />
-                        <Text style={styles.planCardFeatureText}>Estadísticas de tu negocio</Text>
-                      </View>
+                    <View style={styles.planCardFeature}>
+                      <Icons name="check-circle" size={18} color={DARK_BLUE} />
+                      <Text style={styles.planCardFeatureText}>Hasta {plan?.cantidad_servicios} servicios publicados</Text>
+                    </View>
+                    <View style={styles.planCardFeature}>
+                      <Icons name="check-circle" size={18} color={DARK_BLUE} />
+                      <Text style={styles.planCardFeatureText}>Estadísticas de tu negocio</Text>
                     </View>
                     <TouchableOpacity
                       style={[styles.planCardBtn, destacado ? styles.planCardBtnYellow : styles.planCardBtnBlue]}
                       onPress={() => handleSeleccionarPlan(plan)}
-                      activeOpacity={0.85}>
+                      activeOpacity={0.85}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Seleccionar ${plan?.nombre || 'plan'}, ${dinero(conIva)} dólares con IVA`}>
                       <Text style={[styles.planCardBtnText, destacado ? styles.planCardBtnTextDark : styles.planCardBtnTextWhite]}>
                         Seleccionar plan
                       </Text>
@@ -499,24 +509,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   planCardWrap: {
-    marginBottom: 20,
-    position: 'relative',
-    width: '88%',
-    maxWidth: 340,
+    marginBottom: 16,
+    width: '100%',
+    maxWidth: 400,
+    paddingHorizontal: 18,
   },
   badgeMejorOpcion: {
-    position: 'absolute',
-    top: -10,
-    left: 20,
-    zIndex: 1,
+    alignSelf: 'flex-start',
     backgroundColor: DARK_BLUE,
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 10,
+    paddingVertical: 3,
+    paddingHorizontal: 10,
+    borderRadius: 999,
+    marginBottom: 8,
   },
   badgeMejorOpcionText: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
+    letterSpacing: 0.8,
     color: '#FFFFFF',
   },
   planCard: {
@@ -529,7 +538,10 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  planCardDestacado: {},
+  planCardDestacado: {
+    borderWidth: 2,
+    borderColor: YELLOW,
+  },
   planCardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -547,6 +559,7 @@ const styles = StyleSheet.create({
   },
   planCardHeaderLeft: {
     flex: 1,
+    marginRight: 12,
   },
   planCardNombre: {
     fontSize: 18,
@@ -571,8 +584,15 @@ const styles = StyleSheet.create({
     color: '#4B5563',
   },
   planCardPrecioWrap: {
+    alignItems: 'flex-end',
+  },
+  planCardPrecioFila: {
     flexDirection: 'row',
     alignItems: 'baseline',
+  },
+  planCardIva: {
+    fontSize: 12.5,
+    marginTop: 2,
   },
   planCardPrecio: {
     fontSize: 26,
@@ -595,16 +615,10 @@ const styles = StyleSheet.create({
     color: '#4B5563',
   },
   planCardBody: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
     paddingHorizontal: 18,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 18,
     backgroundColor: '#FFFFFF',
-  },
-  planCardBodyLeft: {
-    flex: 1,
-    marginRight: 12,
   },
   planCardFeature: {
     flexDirection: 'row',
@@ -612,18 +626,18 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   planCardFeatureText: {
-    fontSize: 16,
+    flex: 1,
+    fontSize: 15,
     color: '#1F2937',
     marginLeft: 10,
     fontWeight: '500',
   },
   planCardBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    marginTop: 6,
+    minHeight: 48,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: 120,
   },
   planCardBtnBlue: {
     backgroundColor: DARK_BLUE,

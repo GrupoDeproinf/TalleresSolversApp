@@ -706,7 +706,7 @@ const ReportarPago = ({ navigation }) => {
 
         <ScrollView
           style={{ flex: 1 }}
-          contentContainerStyle={{ paddingBottom: 140 }}>
+          contentContainerStyle={{ paddingTop: 4, paddingBottom: 24 }}>
           {
             dataMetodos.length != 0 ? (
               dataMetodos.map((item, index) => {
@@ -718,12 +718,11 @@ const ReportarPago = ({ navigation }) => {
                       setmetodoSelected(item.tipo_pago);
                       paymentDatas(index);
                     }}
-                    style={{ width: '100%' }}>
+                    style={{ marginHorizontal: 16, marginBottom: 14 }}>
                     <LinearGradient
                       colors={['#1F2344', '#151939']}
                       style={[
                         styles.paymentCard,
-                        item.tipo_pago === 'Efectivo' && { minHeight: 120 },
                         // El borde amarillo se pinta con overlay interno (sin afectar layout)
                         index === selectedItem && styles.paymentCardSelected,
                       ]}>
@@ -897,58 +896,32 @@ const ReportarPago = ({ navigation }) => {
 
       
 
-      <View
-        style={{
-          position: 'absolute',
-          left: 0,
-          right: 0,
-          bottom: 0,
-          paddingBottom: 24,
-          paddingTop: 8,
-          paddingHorizontal: 12,
-          backgroundColor: '#F5F6F8',
-        }}>
-        <BottomContainer
-          backgroundColors={['#F5F6F8', '#F5F6F8']}
-          contentColors={['#F5F6F8', '#F5F6F8']}
-          leftValue={
-            <View style={styles.footerLeftContainer}>
-              <Text style={styles.footerTotalText}>Total a Pagar</Text>
-              <View style={styles.footerPriceRow}>
-                <Text style={styles.footerAmountText}>${totalConIva}</Text>
-                <View style={styles.footerPlanBadge}>
-                  <Text style={styles.footerPlanBadgeText}>
-                    ({nombrePlan})
-                  </Text>
-                </View>
-              </View>
-              {detallePago ? (
-                <Text style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
-                  {detallePago}
-                </Text>
-              ) : null}
-            </View>
-          }
-          valueContainerStyle={styles.footerValueContainer}
-          value={
-            <TouchableOpacity
-              onPress={() => {
-                if (selectedItem == null) {
-                  showToast('Debe seleccionar un metodo de pago');
-                } else {
-                  // setModalVisible(true);
-                  setAddItem(true);
-                  clearImage();
-                }
-              }}
-              style={[external.fd_row, external.ai_center, styles.footerReportButton]}>
-              <Icons name="send" size={16} color="#1F2344" />
-              <Text style={styles.payNowText}>Reportar</Text>
-            </TouchableOpacity>
-          }
-        />
+      {/* Pie fijo debajo de la lista (Req. 006: antes flotaba y tapaba la última opción). */}
+      <View style={styles.pieTotal}>
+        <View style={styles.pieTotalFila}>
+          <Text style={styles.footerTotalText}>Total a pagar</Text>
+          <View style={styles.footerPlanBadge}>
+            <Text style={styles.footerPlanBadgeText}>{nombrePlan}</Text>
+          </View>
+        </View>
+        <Text style={styles.pieMonto}>${totalConIva}</Text>
+        {detallePago ? <Text style={styles.pieDetalle}>{detallePago}</Text> : null}
+        <TouchableOpacity
+          onPress={() => {
+            if (selectedItem == null) {
+              showToast('Debe seleccionar un metodo de pago');
+            } else {
+              setAddItem(true);
+              clearImage();
+            }
+          }}
+          style={styles.pieBoton}
+          accessibilityRole="button"
+          activeOpacity={0.85}>
+          <Icons name="send" size={16} color="#1F2344" />
+          <Text style={styles.pieBotonTexto}>Reportar pago</Text>
+        </TouchableOpacity>
       </View>
-
     </View>
 
 

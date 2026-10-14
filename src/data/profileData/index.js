@@ -51,13 +51,13 @@ export const profileData = [
     id: 7,
     title: 'Soporte',
     icon: <Location />,
-    screenName: 'whatsapp://send?text=%C2%A1Hola%21%20Necesito%20ayuda&phone=+584241318415',
+    screenName: 'whatsapp://send?text=%C2%A1Hola%21%20Necesito%20ayuda&phone=+584227658377',
   },
   {
     id: 8,
     title: 'Borrar cuenta',
     icon: <Minus />,
-    screenName: 'whatsapp://send?text=%C2%A1Hola%21%20Necesito%20ayuda&phone=+584241318415',
+    screenName: 'whatsapp://send?text=%C2%A1Hola%21%20Necesito%20ayuda&phone=+584227658377',
   },
   {
     id: 6,
@@ -104,13 +104,13 @@ export const profileDataTaller = [
     id: 7,
     title: 'Soporte',
     icon: <Location />,
-    screenName: 'whatsapp://send?text=%C2%A1Hola%21%20Necesito%20ayuda&phone=+584241318415',
+    screenName: 'whatsapp://send?text=%C2%A1Hola%21%20Necesito%20ayuda&phone=+584227658377',
   },
   {
     id: 8,
     title: 'Borrar cuenta',
     icon: <Minus />,
-    screenName: 'whatsapp://send?text=%C2%A1Hola%21%20Necesito%20ayuda&phone=+584241318415',
+    screenName: 'whatsapp://send?text=%C2%A1Hola%21%20Necesito%20ayuda&phone=+584227658377',
   },
   {
     id: 6,

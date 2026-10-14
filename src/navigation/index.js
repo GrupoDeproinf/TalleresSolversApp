@@ -39,6 +39,7 @@ import ServiciosContainer from '../screens/Servicios'
 import TallerEditProfileScreen from '../screens/profileScreen/editProfileTaller';
 import DocumentosTaller from '../screens/profileScreen/documentosTaller';
 import PerfilNegocio from '../screens/profileScreen/perfilNegocio';
+import TallerInicio from '../screens/tallerInicio';
 
 
 
@@ -131,6 +132,7 @@ const MyStack = () => {
         <Stack.Screen name="TallerEditProfileScreen" component={TallerEditProfileScreen} /> 
         <Stack.Screen name="DocumentosTaller" component={DocumentosTaller} />
         <Stack.Screen name="PerfilNegocio" component={PerfilNegocio} />
+        <Stack.Screen name="EstadisticasNegocio" component={TallerInicio} />
         <Stack.Screen name="OrderHistory" component={OrderHistory} />
 
 

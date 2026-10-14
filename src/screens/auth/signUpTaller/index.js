@@ -406,7 +406,7 @@ const SignUpTaller = ({navigation}) => {
       direccion: String(f.direccion).trim().length >= 8 ? '' : 'Escribe la dirección con una referencia (ej: Av. Bolívar, frente a la plaza).',
       ubicacion: Number.isFinite(f.lat) && Number.isFinite(f.lng) ? '' : 'Marca en el mapa dónde está el taller para que los conductores lleguen.',
       horario: '',
-      categorias: f.categorias.length ? '' : 'Elige al menos una categoría de servicio.',
+      categorias: f.categorias.length ? '' : 'Elige al menos una especialidad.',
     };
     // Req. 005: el horario ya no se pide en el registro; se carga en el perfil.
     return e;
@@ -996,7 +996,7 @@ const SignUpTaller = ({navigation}) => {
                 activeOpacity={0.85}
                 accessibilityRole="checkbox"
                 accessibilityState={{checked: sel}}
-                accessibilityLabel={`${nombreBonito(c.nombre)}${principal ? ', servicio principal' : ''}`}
+                accessibilityLabel={`${nombreBonito(c.nombre)}${principal ? ', especialidad destacada' : ''}`}
                 onPress={() => {
                   setF(prev => ({
                     ...prev,
@@ -1007,7 +1007,7 @@ const SignUpTaller = ({navigation}) => {
                 <MaterialCommunityIcons name={iconoCategoria(c.nombre)} size={26} color={principal ? C.navy : sel ? C.yellow : C.navy} />
                 <View style={{flex: 1, marginLeft: 10}}>
                   <Text style={[st.catNombre, sel && !principal && {color: '#FFFFFF'}]} numberOfLines={2}>{nombreBonito(c.nombre)}</Text>
-                  {principal ? <Text style={st.catPrincipalText}>Servicio principal</Text> : null}
+                  {principal ? <Text style={st.catPrincipalText}>Especialidad destacada</Text> : null}
                 </View>
                 {principal ? (
                   <MaterialCommunityIcons name="crown" size={18} color={C.navy} />
@@ -1024,22 +1024,22 @@ const SignUpTaller = ({navigation}) => {
   const metodosMarcados = METODOS_PAGO.reduce((acc, m) => ({...acc, [m.value]: f.metodosPago.includes(m.value)}), {});
   const paso3 = (
     <>
-      <StepHeader step={3} total={TOTAL} savedLabel="Se guarda automáticamente" title="Tus servicios" subtitle="¿Qué trabajos hace tu taller? El primero que elijas será tu servicio principal." />
+      <StepHeader step={3} total={TOTAL} savedLabel="Se guarda automáticamente" title="Especialidades" subtitle="Selecciona las áreas principales que trabaja tu negocio. La primera que elijas será tu especialidad destacada." />
       {catsError ? (
         <Banner text={catsError} actionLabel="Reintentar" onAction={cargarCategorias} />
       ) : !categoriasDisp.length ? (
-        <Text style={st.help}>Cargando categorías…</Text>
+        <Text style={st.help}>Cargando especialidades…</Text>
       ) : null}
       <View style={st.buscador}>
         <Ionicons name="search" size={20} color={C.muted} />
         <TextInput
           style={st.buscadorInput}
-          placeholder="Buscar servicios…"
+          placeholder="Buscar especialidad (frenos, aire, latonería…)"
           placeholderTextColor="#9AA0B4"
           value={busqueda}
           onChangeText={setBusqueda}
           autoCorrect={false}
-          accessibilityLabel="Buscar servicios"
+          accessibilityLabel="Buscar especialidad"
         />
       </View>
       {agruparCategorias(categoriasFiltradas).map(g => (
@@ -1097,7 +1097,7 @@ const SignUpTaller = ({navigation}) => {
         <TouchableOpacity onPress={atras} style={st.topBtn} accessibilityRole="button" accessibilityLabel="Atrás">
           <Ionicons name="chevron-back" size={26} color={C.navy} />
         </TouchableOpacity>
-        <Text style={st.topTitle}>Registra tu taller</Text>
+        <Text style={st.topTitle}>Registra tu negocio</Text>
         <View style={st.topBtn} />
       </View>
 

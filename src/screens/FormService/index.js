@@ -447,7 +447,8 @@ const FormTaller = () => {
 
           console.log("ya esta aqui la data")
 
-          setImages(dataFinal);
+          // Req. 006: el servicio tiene una sola foto (es la que se muestra).
+          setImages(dataFinal.slice(0, 1));
           setLoading(false)
 
         }
@@ -580,10 +581,12 @@ const FormTaller = () => {
           ) {
             setModalVisible(false);
             setIsButtonDisabled(false);
+            // Req. 006: si el plan no tenía cupo, el servicio quedó oculto.
+            if (result.aviso) showToast(result.aviso);
             if (fromRegistro) {
               setShowRegistroModal(true);
             } else {
-              showToast(result.message);
+              if (!result.aviso) showToast(result.message);
               navigation.goBack();
             }
           } else {
@@ -697,7 +700,8 @@ const FormTaller = () => {
 
   const applyPhotoResult = (target, uri, b64) => {
     if (target === 'imagen') {
-      setImages(prev => [{ uri, base64: b64 }, ...prev]);
+      // Una sola foto por servicio: la nueva reemplaza a la anterior.
+      setImages([{ uri, base64: b64 }]);
     }
   };
 
@@ -710,12 +714,11 @@ const FormTaller = () => {
     setPhotoModalVisible(false);
     setTimeout(() => {
       launchImageLibrary(
-        { mediaType: 'photo', includeBase64: true, selectionLimit: 0 },
+        { mediaType: 'photo', includeBase64: true, selectionLimit: 1 },
         response => {
           if (response.didCancel || response.error) return;
-          response.assets.forEach(asset => {
-            applyPhotoResult(photoModalTarget, asset.uri, asset.base64);
-          });
+          const asset = response.assets?.[0];
+          if (asset) applyPhotoResult(photoModalTarget, asset.uri, asset.base64);
         },
       );
     }, 400);
@@ -857,14 +860,14 @@ const FormTaller = () => {
                   styles.formPhotoHeroTitle,
                   { textAlign: textRTLStyle },
                 ]}>
-                Galería del servicio
+                Foto del servicio
               </Text>
               <Text
                 style={[
                   styles.formPhotoHeroHint,
                   { textAlign: textRTLStyle },
                 ]}>
-                Desliza el carrusel horizontal para ver todas · abajo puedes agregar más
+                Es la que verán los conductores en el catálogo. Toca la foto para cambiarla.
               </Text>
 
               <View style={styles.formPhotoStripWrap}>
@@ -889,78 +892,41 @@ const FormTaller = () => {
                       <Icons name="camera" size={36} color="#1F2344" />
                     </View>
                     <Text style={styles.formPhotoPlaceholderTitle}>
-                      Aún no hay fotos
+                      Aún no hay foto
                     </Text>
                     <Text style={styles.formPhotoPlaceholderSub}>
-                      Toca aquí para elegir imágenes desde tu galería
+                      Toca aquí para tomarla o elegirla de tu galería
                     </Text>
                   </TouchableOpacity>
                 ) : (
-                  <ScrollView
-                    horizontal
-                    nestedScrollEnabled
-                    showsHorizontalScrollIndicator={false}
-                    keyboardShouldPersistTaps="handled"
-                    style={styles.formPhotoStrip}
-                    contentContainerStyle={[
-                      styles.formPhotoStripContent,
-                      { flexDirection: viewRTLStyle },
-                    ]}>
-                    {images.map((image, index) => (
-                      <View
-                        key={`${image.uri}-${index}`}
-                        style={styles.formPhotoCell}>
-                        <Image
-                          source={{ uri: image.uri }}
-                          style={styles.formPhotoCellImage}
-                          resizeMode="cover"
-                        />
-                        <TouchableOpacity
-                          onPress={() => removeImage(index)}
-                          style={styles.formPhotoCellRemove}
-                          activeOpacity={0.85}
-                          hitSlop={{
-                            top: 6,
-                            bottom: 6,
-                            left: 6,
-                            right: 6,
-                          }}>
-                          <Icons name="trash-o" size={14} color="#FFD60A" />
-                        </TouchableOpacity>
-                        <View style={styles.formPhotoCellBadge}>
-                          <Text style={styles.formPhotoCellBadgeText}>
-                            {index + 1}/{images.length}
-                          </Text>
-                        </View>
-                      </View>
-                    ))}
-                  </ScrollView>
+                  <TouchableOpacity
+                    activeOpacity={0.9}
+                    onPress={() => openPhotoOptions('imagen')}
+                    style={styles.formPhotoPlaceholderSlide}
+                    accessibilityRole="button"
+                    accessibilityLabel="Cambiar la foto del servicio">
+                    <Image
+                      source={{ uri: images[0].uri }}
+                      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 16 }}
+                      resizeMode="cover"
+                    />
+                    <TouchableOpacity
+                      onPress={() => removeImage(0)}
+                      style={styles.formPhotoCellRemove}
+                      activeOpacity={0.85}
+                      accessibilityLabel="Quitar la foto"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                      <Icons name="trash-o" size={14} color="#FFD60A" />
+                    </TouchableOpacity>
+                    <View style={[styles.formPhotoCellBadge, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }]}>
+                      <Icons name="camera" size={11} color="#FFFFFF" />
+                      <Text style={[styles.formPhotoCellBadgeText, { marginLeft: 5 }]}>Cambiar foto</Text>
+                    </View>
+                  </TouchableOpacity>
                 )}
               </View>
             </View>
 
-            <View style={styles.formPhotoFormCard}>
-              <TouchableOpacity
-                style={[
-                  styles.formPhotoAddBar,
-                  { flexDirection: viewRTLStyle },
-                ]}
-                onPress={() => openPhotoOptions('imagen')}
-                activeOpacity={0.88}>
-                <View style={styles.formPhotoAddBarIcon}>
-                  <Icons name="plus-circle" size={22} color="#1F2344" />
-                </View>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text style={styles.formPhotoAddBarTitle}>
-                    Agregar o cambiar fotos
-                  </Text>
-                  <Text style={styles.formPhotoAddBarSub}>
-                    JPG o PNG · varias a la vez
-                  </Text>
-                </View>
-                <Icons name="chevron-right" size={18} color="#64748B" />
-              </TouchableOpacity>
-            </View>
           </View>
 
 

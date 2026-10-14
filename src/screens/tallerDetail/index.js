@@ -561,10 +561,18 @@ const TallerDetail = () => {
   const telefonoB = taller?.telefono_2 || taller?.telefonoSecundario || "";
   const direccion =
     taller?.Direccion || taller?.direccion || taller?.ubicacion?.direccion || "Dirección no registrada";
-  const caracteristicasTaller =
-    taller?.Caracteristicas || taller?.caracteristicas || "Este taller no ha cargado características todavía.";
-  const experienciaTaller =
-    taller?.Experiencia || taller?.experiencia || "Este taller no ha cargado su experiencia todavía.";
+  const caracteristicasTaller = String(taller?.Caracteristicas || taller?.caracteristicas || "").trim();
+  // Req. 006: especialidades del negocio (categorías elegidas al registrarse).
+  const especialidades = (Array.isArray(taller?.categorias) ? taller.categorias : [])
+    .map(c => String((c && (c.nombre || c.name)) || (typeof c === "string" ? c : "")).trim())
+    .filter(Boolean)
+    .map(n => n.charAt(0).toUpperCase() + n.slice(1).toLowerCase())
+    .filter((n, i, arr) => arr.indexOf(n) === i);
+  const redes = [
+    {clave: "Instagram", url: String(taller?.LinkInstagram || "").trim()},
+    {clave: "Facebook", url: String(taller?.LinkFacebook || "").trim()},
+    {clave: "TikTok", url: String(taller?.LinkTiktok || "").trim()},
+  ].filter(r => r.url);
 
   // Normaliza cualquier campo de imagen: puede llegar como string, array o null
   const resolveUri = (val) => {
@@ -756,23 +764,40 @@ const TallerDetail = () => {
           </ScrollView>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Características</Text>
-          <View style={styles.infoItem}>
-            <View style={styles.infoTextWrapNoIcon}>
-              <Text style={styles.infoValue}>{String(caracteristicasTaller)}</Text>
+        {especialidades.length ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Especialidades</Text>
+            <View style={{flexDirection: "row", flexWrap: "wrap", marginTop: 4}}>
+              {especialidades.map((n, i) => (
+                <View
+                  key={n}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    backgroundColor: i === 0 ? "#FFD60A" : "#EEF0F8",
+                    borderRadius: 999,
+                    paddingHorizontal: 12,
+                    paddingVertical: 6,
+                    marginRight: 8,
+                    marginBottom: 8,
+                  }}>
+                  <Text style={{color: "#1F2344", fontWeight: i === 0 ? "800" : "600", fontSize: 13}}>{n}</Text>
+                </View>
+              ))}
             </View>
           </View>
-        </View>
+        ) : null}
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Experiencia</Text>
-          <View style={styles.infoItem}>
-            <View style={styles.infoTextWrapNoIcon}>
-              <Text style={styles.infoValue}>{String(experienciaTaller)}</Text>
+        {caracteristicasTaller ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Sobre el negocio</Text>
+            <View style={styles.infoItem}>
+              <View style={styles.infoTextWrapNoIcon}>
+                <Text style={styles.infoValue}>{caracteristicasTaller}</Text>
+              </View>
             </View>
           </View>
-        </View>
+        ) : null}
 
         {showHorarioAtencion ? (
           <View style={styles.card}>
@@ -822,9 +847,11 @@ const TallerDetail = () => {
           </View>
         )}
 
+        {redes.length ? (
         <View style={styles.card}>
           <Text style={styles.cardTitlePlain}>Síguenos</Text>
           <View style={styles.socialGrid}>
+            {taller?.LinkInstagram ? (
             <TouchableOpacity
               style={[styles.socialRow, styles.socialRowHalf]}
               onPress={() => handleSocialMedia("Instagram", taller?.LinkInstagram)}
@@ -837,6 +864,8 @@ const TallerDetail = () => {
               </View>
               <ChevronRight size={16} color="#6B7280" />
             </TouchableOpacity>
+            ) : null}
+            {taller?.LinkFacebook ? (
             <TouchableOpacity
               style={[styles.socialRow, styles.socialRowHalf]}
               onPress={() => handleSocialMedia("Facebook", taller?.LinkFacebook)}
@@ -849,6 +878,8 @@ const TallerDetail = () => {
               </View>
               <ChevronRight size={16} color="#6B7280" />
             </TouchableOpacity>
+            ) : null}
+            {taller?.LinkTiktok ? (
             <TouchableOpacity
               style={[styles.socialRow, styles.socialRowFull]}
               onPress={() => handleSocialMedia("TikTok", taller?.LinkTiktok)}
@@ -861,8 +892,10 @@ const TallerDetail = () => {
               </View>
               <ChevronRight size={16} color="#6B7280" />
             </TouchableOpacity>
+            ) : null}
           </View>
         </View>
+        ) : null}
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Servicios de este negocio</Text>

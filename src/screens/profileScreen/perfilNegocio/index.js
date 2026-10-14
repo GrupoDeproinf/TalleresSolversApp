@@ -72,6 +72,10 @@ const numero = v => {
 const formularioDesde = u => ({
   nombre: String(u?.nombre || ''),
   descripcion: String(u?.Caracteristicas || ''),
+  // Req. 006: redes sociales del negocio.
+  instagram: String(u?.LinkInstagram || ''),
+  facebook: String(u?.LinkFacebook || ''),
+  tiktok: String(u?.LinkTiktok || ''),
   phone: String(u?.phone || ''),
   whatsapp: String(u?.whatsapp || ''),
   estado: String(u?.estado || ''),
@@ -157,6 +161,9 @@ const PerfilNegocio = ({navigation}) => {
     const c = {};
     if (f.nombre.trim() !== original.nombre.trim()) c.nombre = f.nombre.trim();
     if (f.descripcion.trim() !== original.descripcion.trim()) c.Caracteristicas = f.descripcion.trim();
+    if (f.instagram.trim() !== original.instagram.trim()) c.LinkInstagram = f.instagram.trim();
+    if (f.facebook.trim() !== original.facebook.trim()) c.LinkFacebook = f.facebook.trim();
+    if (f.tiktok.trim() !== original.tiktok.trim()) c.LinkTiktok = f.tiktok.trim();
     // Se compara ya normalizado: que el campo le dé formato al número al
     // mostrarlo no cuenta como un cambio del taller.
     const tel = v => normalizarTelefono(v || '');
@@ -245,7 +252,7 @@ const PerfilNegocio = ({navigation}) => {
             <Text style={st.title}>Tu negocio</Text>
             <Text style={st.subtitle}>Lo que ven los conductores en Solvers.</Text>
 
-            <Field label="Nombre del taller" value={f.nombre} onChangeText={v => set('nombre', v)}
+            <Field label="Nombre del negocio" value={f.nombre} onChangeText={v => set('nombre', v)}
               onBlur={tocar('nombre')} error={ver('nombre')} autoCapitalize="words" />
 
             <View style={st.soloLectura}>
@@ -254,7 +261,7 @@ const PerfilNegocio = ({navigation}) => {
               <Text style={st.soloLecturaNota}>Para cambiar el RIF o el correo, escríbenos por soporte.</Text>
             </View>
 
-            <Field label="Cuéntale a los conductores sobre tu taller" placeholder="Ej: 15 años en frenos y suspensión, atendemos todas las marcas."
+            <Field label="Cuéntale a los conductores sobre tu negocio" placeholder="Ej: 15 años en frenos y suspensión, atendemos todas las marcas."
               value={f.descripcion} onChangeText={v => set('descripcion', v.slice(0, 400))} multiline
               inputStyle={{minHeight: 84, textAlignVertical: 'top'}} help={`${f.descripcion.length}/400`} />
 
@@ -338,6 +345,15 @@ const PerfilNegocio = ({navigation}) => {
               onChange={(sel, datos) => setF(prev => ({...prev, metodos: sel, metodosDatos: datos}))}
             />
 
+            <Text style={st.seccion}>Redes sociales</Text>
+            <Text style={st.notaRedes}>Opcional. Escribe tu usuario (@tunegocio) o el enlace. Solo se muestran en tu perfil las que llenes.</Text>
+            <Field label="Instagram" placeholder="@tunegocio" value={f.instagram} onChangeText={v => set('instagram', v)}
+              autoCapitalize="none" autoCorrect={false} keyboardType="url" />
+            <Field label="Facebook" placeholder="facebook.com/tunegocio" value={f.facebook} onChangeText={v => set('facebook', v)}
+              autoCapitalize="none" autoCorrect={false} keyboardType="url" />
+            <Field label="TikTok" placeholder="@tunegocio" value={f.tiktok} onChangeText={v => set('tiktok', v)}
+              autoCapitalize="none" autoCorrect={false} keyboardType="url" />
+
             <Text style={st.seccion}>Documentos</Text>
             <TouchableOpacity style={st.mapBtn} onPress={() => navigation.navigate('DocumentosTaller')} accessibilityRole="button">
               <Ionicons name="document-text-outline" size={24} color={C.navy} />
@@ -388,6 +404,7 @@ const st = StyleSheet.create({
   body: {paddingHorizontal: 20, paddingBottom: 24},
   title: {fontSize: 26, fontWeight: '800', color: C.navy, marginTop: 8},
   subtitle: {fontSize: 15, color: C.muted, marginTop: 4, marginBottom: 18},
+  notaRedes: {fontSize: 13, color: C.muted, marginTop: -6, marginBottom: 10},
   seccion: {fontSize: 18, fontWeight: '800', color: C.navy, marginTop: 20, marginBottom: 12},
   label: {fontSize: 15, fontWeight: '700', color: C.navy, marginBottom: 8},
   err: {fontSize: 13, color: C.error, marginTop: 6, marginBottom: 12, fontWeight: '600'},

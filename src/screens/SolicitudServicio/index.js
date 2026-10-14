@@ -156,6 +156,17 @@ const sentenceCase = raw => {
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
 };
 
+
+/** "Cambio de aceite y filtro. Además…" → "Cambio de aceite y filtro" (máx. 50). */
+const tituloDesdeDescripcion = texto => {
+  const t = String(texto || '').trim().replace(/\s+/g, ' ');
+  // Sin lookbehind: el motor JS de algunos Android no lo soporta.
+  const primera = (t.split(/[.!?]\s/)[0] || t).trim();
+  if (primera.length <= 50) return primera.replace(/[.\s]+$/, '');
+  const corte = primera.slice(0, 50);
+  return `${corte.slice(0, corte.lastIndexOf(' ') > 20 ? corte.lastIndexOf(' ') : 50)}…`;
+};
+
 const SolicitudServicio = () => {
   const navigation = useNavigation();
   const route = useRoute();
@@ -413,7 +424,9 @@ const SolicitudServicio = () => {
         nombre_usuario,
         uid_usuario,
         phone_usuario: phone,
-        nombreSolicitud: (nombreSolicitud || '').trim(),
+        // Req. 006: un solo campo. El título de la solicitud sale del
+        // comienzo de la descripción (lo usan las listas de los talleres).
+        nombreSolicitud: tituloDesdeDescripcion(descripcion),
         vehiculo: vehicle || null,
         categoriaId,
         descripcion: (descripcion || '').trim(),
@@ -496,17 +509,7 @@ const SolicitudServicio = () => {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Datos de la solicitud</Text>
 
-            <Text style={styles.label}>Nombre del servicio</Text>
-            <TextInput
-              style={styles.input}
-              value={nombreSolicitud}
-              onChangeText={setNombreSolicitud}
-              placeholder="Ej: Cambio de aceite, Revisión de frenos"
-              placeholderTextColor="#9CA3AF"
-              returnKeyType="next"
-            />
-
-            <Text style={[styles.label, { marginTop: 18 }]}>
+            <Text style={styles.label}>
               Categoría <Text style={styles.labelRequired}>*</Text>
             </Text>
             {loadingCategories ? (
@@ -529,7 +532,7 @@ const SolicitudServicio = () => {
             )}
 
             <Text style={[styles.label, { marginTop: 18 }]}>
-              Descripción del problema <Text style={styles.labelRequired}>*</Text>
+              ¿Qué necesita tu vehículo? <Text style={styles.labelRequired}>*</Text>
             </Text>
             <TextInput
               style={[styles.input, styles.inputMultiline]}
@@ -541,7 +544,7 @@ const SolicitudServicio = () => {
                     : text,
                 )
               }
-              placeholder="Describe qué sucede con tu vehículo (mínimo 20 y máximo 125 caracteres)"
+              placeholder="Ej: Cambio de aceite y filtro; o: suenan los frenos al detenerme (mínimo 20 caracteres)"
               placeholderTextColor="#9CA3AF"
               multiline
               numberOfLines={4}
@@ -681,10 +684,6 @@ const SolicitudServicio = () => {
               Revisa los datos antes de confirmar. ¿Deseas crear esta solicitud?
             </Text>
             <View style={styles.confirmSummary}>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Nombre del servicio</Text>
-                <Text style={styles.confirmValue} numberOfLines={1}>{nombreSolicitud.trim() || '—'}</Text>
-              </View>
               <View style={styles.confirmRow}>
                 <Text style={styles.confirmLabel}>Vehículo</Text>
                 <Text style={styles.confirmValue} numberOfLines={1}>{vehicleSummaryWithYear}</Text>

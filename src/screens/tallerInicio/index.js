@@ -69,8 +69,11 @@ const Accion = ({icono, titulo, detalle, onPress}) => (
   </TouchableOpacity>
 );
 
-const TallerInicio = ({navigation}) => {
+const TallerInicio = ({navigation, route}) => {
   const insets = useSafeAreaInsets();
+  // Abierta desde Perfil → Estadísticas (Req. 006): misma información, con
+  // botón para volver.
+  const comoEstadisticas = route?.name === 'EstadisticasNegocio';
   const [usuario, setUsuario] = useState(null);
   const [resumen, setResumen] = useState(null);
   const [cargando, setCargando] = useState(true);
@@ -139,7 +142,16 @@ const TallerInicio = ({navigation}) => {
         {/* ── Cabecera de campaña ── */}
         <View style={[st.hero, {paddingTop: insets.top + 18}]}>
           <Image source={require('../../assets/brand/huella-amarilla.png')} style={st.huella} resizeMode="contain" accessible={false} />
-          <T style={st.heroSaludo}>Tu negocio</T>
+          {comoEstadisticas ? (
+            <TouchableOpacity
+              onPress={() => navigation.goBack()}
+              style={st.volver}
+              accessibilityRole="button"
+              accessibilityLabel="Volver">
+              <Ionicons name="chevron-back" size={22} color={brand.navy} />
+            </TouchableOpacity>
+          ) : null}
+          <T style={st.heroSaludo}>{comoEstadisticas ? 'Estadísticas' : 'Tu negocio'}</T>
           <T style={st.heroNombre} numberOfLines={2}>
             {usuario?.nombre || 'Solvers'}
           </T>
@@ -257,6 +269,7 @@ const TallerInicio = ({navigation}) => {
 
 const st = StyleSheet.create({
   pantalla: {flex: 1, backgroundColor: colors.bg},
+  volver: {width: 40, height: 40, borderRadius: 20, backgroundColor: brand.yellow, alignItems: 'center', justifyContent: 'center', marginBottom: 12},
   hero: {
     backgroundColor: brand.navy,
     paddingHorizontal: 20,
