@@ -11,7 +11,6 @@ import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
-import com.solvers.app.mapbox.NavigationEmbeddedView
 
 class MainActivity : ReactActivity() {
 
@@ -63,20 +62,6 @@ class MainActivity : ReactActivity() {
     }
   }
 
-  /**
-   * Si hay un NavigationEmbeddedView visible en pantalla, el back lo cierra
-   * correctamente (llama done() en JS). Si no hay ninguno, comportamiento normal.
-   */
-  override fun onBackPressed() {
-    val decorView = window.decorView as? ViewGroup
-    if (decorView != null) {
-      for (i in 0 until decorView.childCount) {
-        val child = decorView.getChildAt(i)
-        if (child is NavigationEmbeddedView && child.handleBackPress()) return
-      }
-    }
-    super.onBackPressed()
-  }
 
   /**
    * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]

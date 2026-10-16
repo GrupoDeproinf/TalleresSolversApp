@@ -50,12 +50,5 @@
         </intent-filter>
       </activity>
 
-      <!-- Activity de navegación Mapbox (pantalla completa, sin barra de título) -->
-      <activity
-        android:name=".mapbox.NavigationActivity"
-        android:label="Navegación"
-        android:theme="@style/Theme.AppCompat.NoActionBar"
-        android:configChanges="keyboard|keyboardHidden|orientation|screenLayout|screenSize"
-        android:exported="false" />
     </application>
 </manifest>

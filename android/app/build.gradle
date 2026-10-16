@@ -194,7 +194,9 @@ dependencies {
     implementation "com.google.firebase:firebase-messaging"
 
     // Mapbox Navigation SDK v2
-    implementation("com.mapbox.navigation:android:2.21.0")
+    // Mapbox Navigation SDK quitado (Google avisaba que su librería nativa
+    // libnavigator-android.so no es compatible con páginas de 16 KB). "Cómo
+    // llegar" ahora abre Waze o Google Maps.
 
     // Material (FloatingActionButton en NavigationActivity)
     implementation("com.google.android.material:material:1.12.0")

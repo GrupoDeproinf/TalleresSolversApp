@@ -30,7 +30,7 @@ import {
   Image,
   Linking,
   Modal,
-  NativeModules,
+  Alert,
   Platform,
   StatusBar,
   StyleSheet,
@@ -42,7 +42,41 @@ import { WebView } from 'react-native-webview';
 import Geolocation from '@react-native-community/geolocation';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 
-const { RNMapboxNavigation } = NativeModules;
+// Req. 006: la navegación paso a paso ya no usa el SDK nativo de Mapbox
+// (Google Play avisaba que su librería no es compatible con páginas de 16 KB).
+// "¡Vamos!" abre la app de mapas que el conductor ya usa.
+const RNMapboxNavigation = null;
+
+const abrirEn = async url => {
+  try {
+    await Linking.openURL(url);
+    return true;
+  } catch (_) {
+    return false;
+  }
+};
+
+/** Ofrece Waze, Google Maps y (en iPhone) Mapas de Apple con la ruta al destino. */
+const abrirNavegacionExterna = (lat, lng, nombre) => {
+  const destino = `${lat},${lng}`;
+  const opciones = [
+    {text: 'Waze', onPress: () => abrirEn(`https://waze.com/ul?ll=${destino}&navigate=yes`)},
+    {
+      text: 'Google Maps',
+      onPress: () =>
+        abrirEn(`https://www.google.com/maps/dir/?api=1&destination=${destino}&travelmode=driving`),
+    },
+  ];
+  if (Platform.OS === 'ios') {
+    opciones.push({
+      text: 'Mapas de Apple',
+      onPress: () =>
+        abrirEn(`http://maps.apple.com/?daddr=${destino}&dirflg=d&q=${encodeURIComponent(nombre || 'Destino')}`),
+    });
+  }
+  opciones.push({text: 'Cancelar', style: 'cancel'});
+  Alert.alert('¿Con qué app quieres ir?', nombre ? `Ruta hasta ${nombre}` : undefined, opciones, {cancelable: true});
+};
 
 const MAPBOX_TOKEN =
   'pk.eyJ1IjoibHVpcy1zb2x2ZXJzIiwiYSI6ImNtaTZla2k2ZzJxY3Yyam9sd3d4c2JoeDIifQ.za22tuYJ06Tf8mseJJMqmQ';
@@ -409,74 +443,7 @@ const MapboxNavigation = ({
 
   // ── "¡Vamos!" — oculta card → zoom al origen → navigation nativo
   const handleVamos = () => {
-    if (isTransitioning || navActive) return;
-    setIsTransitioning(true);
-    animCancelRef.current = false;
-
-    // Ocultar card inferior y botón cerrar (ambas plataformas)
-    Animated.parallel([
-      Animated.timing(cardTranslateY, {
-        toValue: 320,
-        duration: 260,
-        easing: Easing.in(Easing.ease),
-        useNativeDriver: true,
-      }),
-      Animated.timing(closeBtnOpacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    // ── Android: sin pre-carga ni NavigationEmbeddedView ──────────────────────
-    // El Modal de RN vive en una Window distinta al decorView de la Activity,
-    // por lo que bringChildToFront nunca aparece encima del Modal.
-    // Usamos NavigationActivity directamente, que sí toma toda la pantalla.
-    if (Platform.OS === 'android') {
-      setNavActive(true);
-      return;
-    }
-
-    // ── iOS: flujo completo con pre-carga + zoom cinematográfico ──────────────
-    const startNav = () => {
-      if (animCancelRef.current) return;
-      setNavActive(true);
-    };
-
-    if (origin?.latitude && origin?.longitude) {
-      // 1) Pre-cargar el mapa de navigation nativo en segundo plano
-      RNMapboxNavigation?.preloadNavigationUI?.(
-        origin.latitude, origin.longitude,
-        destinationLat, destinationLng,
-        destinationName,
-      );
-
-      // 2) Zoom + pitch hacia la ubicación del usuario
-      webViewRef.current?.injectJavaScript(`
-        (function(){
-          try {
-            if (typeof map !== 'undefined' && map) {
-              map.flyTo({
-                center: [${origin.longitude}, ${origin.latitude}],
-                zoom: 18,
-                pitch: 45,
-                duration: 1600,
-                essential: true
-              });
-            }
-          } catch(e) {}
-        })();
-        true;
-      `);
-
-      // 3) Al terminar el zoom revelar el mapa ya cargado
-      setTimeout(() => {
-        if (animCancelRef.current) return;
-        startNav();
-      }, 1400);
-    } else {
-      startNav();
-    }
+    abrirNavegacionExterna(destinationLat, destinationLng, destinationName);
   };
 
   // ── Lanzar navegación nativa ───────────────────────────────────────────────

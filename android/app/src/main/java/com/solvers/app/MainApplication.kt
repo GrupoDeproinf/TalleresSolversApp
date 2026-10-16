@@ -11,16 +11,15 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.facebook.react.defaults.DefaultReactNativeHost
 import com.facebook.react.soloader.OpenSourceMergedSoMapping
 import com.facebook.soloader.SoLoader
-import com.solvers.app.mapbox.RNMapboxNavigationPackage
 
 class MainApplication : Application(), ReactApplication {
 
   override val reactNativeHost: ReactNativeHost =
       object : DefaultReactNativeHost(this) {
         override fun getPackages(): List<ReactPackage> =
-            PackageList(this).packages.apply {
-              add(RNMapboxNavigationPackage())
-            }
+            // Req. 006: la navegación paso a paso se hace en Waze o Google
+            // Maps; ya no se registra el módulo nativo de Mapbox Navigation.
+            PackageList(this).packages
 
         override fun getJSMainModuleName(): String = "index"
 
