@@ -40,6 +40,12 @@ const CORTO = {
   motor: 'Motor',
   transmision: 'Caja y embrague',
   escape: 'Escape',
+  latoneria: 'Latonería y pintura',
+  autolavado: 'Autolavado',
+  tapiceria: 'Tapicería',
+  vidrios: 'Parabrisas y vidrios',
+  gas: 'Gas vehicular',
+  motos: 'Motos',
 };
 
 const sinAcentos = v =>
