@@ -563,7 +563,11 @@ const TallerDetail = () => {
     taller?.Direccion || taller?.direccion || taller?.ubicacion?.direccion || "Dirección no registrada";
   const caracteristicasTaller = String(taller?.Caracteristicas || taller?.caracteristicas || "").trim();
   // Req. 006: especialidades del negocio (categorías elegidas al registrarse).
-  const especialidades = (Array.isArray(taller?.categorias) ? taller.categorias : [])
+  // Con el catálogo nuevo se muestran los servicios que eligió el negocio;
+  // los registros anteriores muestran sus categorías.
+  const especialidades = (Array.isArray(taller?.especialidades) && taller.especialidades.length
+    ? taller.especialidades.map(e => e && e.servicio)
+    : Array.isArray(taller?.categorias) ? taller.categorias : [])
     .map(c => String((c && (c.nombre || c.name)) || (typeof c === "string" ? c : "")).trim())
     .filter(Boolean)
     .map(n => n.charAt(0).toUpperCase() + n.slice(1).toLowerCase())

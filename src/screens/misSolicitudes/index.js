@@ -164,6 +164,8 @@ const mapItemToSolicitud = item => {
     id: item.id,
     nombreSolicitud: nombreSol,
     nombre_solicitud: nombreSol,
+    // Número de referencia de la solicitud (S-000123).
+    codigo: item.codigo_solicitud || '',
     estado: mapBackendStatusToInternal(item.status),
     statusOriginal: item.status,
     fecha: fechaTexto,
@@ -198,6 +200,7 @@ const mapPropuestaToCard = (p, solicitudEnEspera) => {
   return {
     id: p.id || p.uid || String(Math.random()),
     nombreSolicitud: p.nombre_servicio || p.nombre_solicitud || solicitudEnEspera?.nombreSolicitud || 'Propuesta',
+    codigo: p.codigo_solicitud || solicitudEnEspera?.codigo || '',
     estado: mapBackendStatusToInternal(p.status),
     statusOriginal: p.status,
     fecha: fechaTexto,
@@ -802,7 +805,7 @@ const MisSolicitudesScreen = () => {
                   <View style={styles.cardInfoBlock}>
                     <View style={styles.cardInfoItem}>
                       <MaterialCommunityIcons name="file-document-outline" size={18} color={appColors.primary} style={styles.cardInfoIcon} />
-                      <Text style={styles.cardInfoLabel}>Nombre solicitud</Text>
+                      <Text style={styles.cardInfoLabel}>{item.codigo ? `Solicitud ${item.codigo}` : 'Nombre solicitud'}</Text>
                       <Text style={styles.cardInfoValue} numberOfLines={2}>
                         {item.nombre_solicitud || item.nombreSolicitud || '—'}
                       </Text>
@@ -962,6 +965,12 @@ const MisSolicitudesScreen = () => {
                         Vencida
                       </Text>
                     </View>
+                    {cardDetailItem.codigo ? (
+                      <View style={styles.detailModalRow}>
+                        <Text style={styles.detailModalLabel}>N.º de solicitud</Text>
+                        <Text style={styles.detailModalValue} selectable>{cardDetailItem.codigo}</Text>
+                      </View>
+                    ) : null}
                     <View style={styles.detailModalRow}>
                       <Text style={styles.detailModalLabel}>Nombre solicitud</Text>
                       <Text style={styles.detailModalValue}>

@@ -34,6 +34,7 @@ import api from '../../../../axiosInstance';
 import {C, Field, PrimaryButton, Banner, Chip, Card, StepHeader} from '../../../components/registro/ui';
 import TermsModal from '../../../components/registro/TermsModal';
 import MetodosPago, {METODOS_PAGO, datosParaEnviar} from '../../../components/registro/MetodosPago';
+import SelectorEspecialidades from '../../../components/registro/SelectorEspecialidades';
 import LocationPicker from '../../../components/registro/LocationPicker';
 import {elegirArchivo, archivoABase64} from '../../../components/registro/mediaPicker';
 import {
@@ -202,6 +203,9 @@ const INICIAL = {
   pinOrigen: '',
   horario: horarioVacio(),
   categorias: [],
+  // Catálogo del cliente: áreas elegidas y servicios (incluye los agregados a mano).
+  areas: [],
+  especialidades: [],
   metodosPago: [],
   metodosPagoDatos: {},
   descripcion: '',
@@ -230,7 +234,6 @@ const SignUpTaller = ({navigation}) => {
   const [categoriasDisp, setCategoriasDisp] = useState([]);
   const [catsError, setCatsError] = useState('');
   const [planGratis, setPlanGratis] = useState(null);
-  const [busqueda, setBusqueda] = useState('');
   const scrollRef = useRef(null);
 
   // ── Borrador: cargar y guardar automáticamente ───────────────────────────
@@ -260,14 +263,13 @@ const SignUpTaller = ({navigation}) => {
   const cargarCategorias = useCallback(async () => {
     setCatsError('');
     try {
-      const r = await api.get('/usuarios/getActiveCategories');
-      const list = (r?.data?.categories || [])
-        .map(c => ({uid: c.id || c.uid, nombre: String(c.nombre || '').trim()}))
-        .filter(c => c.uid && c.nombre)
-        .sort((a, b) => a.nombre.localeCompare(b.nombre));
+      // Catálogo de servicios del cliente (8 áreas con sus servicios).
+      const r = await api.get('/usuarios/catalogoServicios');
+      const list = (r?.data?.grupos || []).filter(g => g && g.id && Array.isArray(g.servicios));
+      if (!list.length) throw new Error('catálogo vacío');
       setCategoriasDisp(list);
     } catch (e) {
-      setCatsError(mensajeDeError(e, 'No pudimos cargar las categorías.'));
+      setCatsError(mensajeDeError(e, 'No pudimos cargar los servicios.'));
     }
   }, []);
 
@@ -406,7 +408,7 @@ const SignUpTaller = ({navigation}) => {
       direccion: String(f.direccion).trim().length >= 8 ? '' : 'Escribe la dirección con una referencia (ej: Av. Bolívar, frente a la plaza).',
       ubicacion: Number.isFinite(f.lat) && Number.isFinite(f.lng) ? '' : 'Marca en el mapa dónde está el taller para que los conductores lleguen.',
       horario: '',
-      categorias: f.categorias.length ? '' : 'Elige al menos una especialidad.',
+      categorias: (f.especialidades || []).length ? '' : 'Elige al menos un servicio que hagas.',
     };
     // Req. 005: el horario ya no se pide en el registro; se carga en el perfil.
     return e;
@@ -687,7 +689,13 @@ const SignUpTaller = ({navigation}) => {
       const phone = normalizarTelefono(f.phone);
       const whatsapp = phone; // Req. 005: un solo número
       const metodos = METODOS_PAGO.reduce((acc, m) => ({...acc, [m.value]: f.metodosPago.includes(m.value)}), {});
-      const categorias = categoriasDisp.filter(c => f.categorias.includes(c.uid));
+      // Las categorías del panel salen de las áreas elegidas (así los
+      // conductores lo encuentran por categoría).
+      const porUid = new Map();
+      categoriasDisp
+        .filter(g => (f.areas || []).includes(g.id) && (f.especialidades || []).some(e => e.grupo === g.id))
+        .forEach(g => (g.categorias || []).forEach(c => c && c.uid && porUid.set(c.uid, {uid: c.uid, nombre: c.nombre})));
+      const categorias = [...porUid.values()];
 
       const res = await api.post(
         '/usuarios/SaveTallerExtended',
@@ -714,6 +722,7 @@ const SignUpTaller = ({navigation}) => {
           horarios_atencion: f.horario,
           estado: f.estado,
           categorias,
+          especialidades: f.especialidades || [],
           base64: docsB64.logotipoNegocio || '',
           rifIdFiscal: docsB64.rifIdFiscal || '',
           permisoOperacion: docsB64.permisoOperacion || '',
@@ -985,79 +994,25 @@ const SignUpTaller = ({navigation}) => {
   );
 
   const cupo = planGratis?.cantidad_servicios;
-  const tarjetaCategoria = c => {
-            const idx = f.categorias.indexOf(c.uid);
-            const sel = idx >= 0;
-            const principal = idx === 0;
-            return (
-              <TouchableOpacity
-                key={c.uid}
-                style={[st.catCard, sel && st.catCardSel, principal && st.catCardPrincipal]}
-                activeOpacity={0.85}
-                accessibilityRole="checkbox"
-                accessibilityState={{checked: sel}}
-                accessibilityLabel={`${nombreBonito(c.nombre)}${principal ? ', especialidad destacada' : ''}`}
-                onPress={() => {
-                  setF(prev => ({
-                    ...prev,
-                    categorias: prev.categorias.includes(c.uid) ? prev.categorias.filter(x => x !== c.uid) : [...prev.categorias, c.uid],
-                  }));
-                  touch('categorias')();
-                }}>
-                <MaterialCommunityIcons name={iconoCategoria(c.nombre)} size={26} color={principal ? C.navy : sel ? C.yellow : C.navy} />
-                <View style={{flex: 1, marginLeft: 10}}>
-                  <Text style={[st.catNombre, sel && !principal && {color: '#FFFFFF'}]} numberOfLines={2}>{nombreBonito(c.nombre)}</Text>
-                  {principal ? <Text style={st.catPrincipalText}>Especialidad destacada</Text> : null}
-                </View>
-                {principal ? (
-                  <MaterialCommunityIcons name="crown" size={18} color={C.navy} />
-                ) : sel ? (
-                  <Ionicons name="checkmark-circle" size={20} color={C.yellow} />
-                ) : null}
-              </TouchableOpacity>
-            );
-  };
-  const categoriasFiltradas = categoriasDisp.filter(
-    c => !busqueda.trim() || sinAcentos(c.nombre).includes(sinAcentos(busqueda.trim())),
-  );
-
   const metodosMarcados = METODOS_PAGO.reduce((acc, m) => ({...acc, [m.value]: f.metodosPago.includes(m.value)}), {});
   const paso3 = (
     <>
-      <StepHeader step={3} total={TOTAL} savedLabel="Se guarda automáticamente" title="Especialidades" subtitle="Selecciona las áreas principales que trabaja tu negocio. La primera que elijas será tu especialidad destacada." />
+      <StepHeader step={3} total={TOTAL} savedLabel="Se guarda automáticamente" title="Especialidades" subtitle="Selecciona las áreas principales que trabaja tu negocio y los servicios que haces. El primero que elijas será tu especialidad destacada." />
       {catsError ? (
         <Banner text={catsError} actionLabel="Reintentar" onAction={cargarCategorias} />
       ) : !categoriasDisp.length ? (
         <Text style={st.help}>Cargando especialidades…</Text>
       ) : null}
-      <View style={st.buscador}>
-        <Ionicons name="search" size={20} color={C.muted} />
-        <TextInput
-          style={st.buscadorInput}
-          placeholder="Buscar especialidad (frenos, aire, latonería…)"
-          placeholderTextColor="#9AA0B4"
-          value={busqueda}
-          onChangeText={setBusqueda}
-          autoCorrect={false}
-          accessibilityLabel="Buscar especialidad"
+      {categoriasDisp.length ? (
+        <SelectorEspecialidades
+          grupos={categoriasDisp}
+          areas={f.areas || []}
+          especialidades={f.especialidades || []}
+          onChange={(areas, especialidades) => {
+            setF(prev => ({...prev, areas, especialidades}));
+            touch('categorias')();
+          }}
         />
-      </View>
-      {agruparCategorias(categoriasFiltradas).map(g => (
-        <View key={g.titulo} style={{marginBottom: 6}}>
-          <View style={st.grupoCab}>
-            <MaterialCommunityIcons name={g.icono} size={18} color={C.navy} />
-            <Text style={st.grupoTitulo}>{g.titulo}</Text>
-            <Text style={st.grupoCuenta}>
-              {g.items.filter(c => f.categorias.includes(c.uid)).length
-                ? `${g.items.filter(c => f.categorias.includes(c.uid)).length} elegido(s)`
-                : ''}
-            </Text>
-          </View>
-          <View style={st.catGrid}>{g.items.map(tarjetaCategoria)}</View>
-        </View>
-      ))}
-      {categoriasDisp.length && !categoriasFiltradas.length ? (
-        <Text style={st.help}>No encontramos "{busqueda.trim()}". Prueba con otra palabra.</Text>
       ) : null}
       {show('categorias') ? <Text style={st.err}>{show('categorias')}</Text> : null}
 

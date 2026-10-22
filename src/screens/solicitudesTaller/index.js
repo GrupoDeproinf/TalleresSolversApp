@@ -175,6 +175,8 @@ const mapItemToServicio = item => {
   return {
     id: item.id,
     nombreSolicitud: item.nombre_solicitud || 'Solicitud de servicio',
+    // Número de referencia (S-000123) para ubicarla con el cliente.
+    codigo: item.codigo_solicitud || '',
     cliente: item.nombre_usuario || '—',
     vehiculo: vehiculoTexto,
     vehiculoObj: vehiculo,
@@ -841,6 +843,9 @@ const SolicitudesTallerScreen = () => {
               disabled={!cardClickable}>
               <View style={styles.cardHeaderRow}>
                 <View style={styles.cardTitleColumn}>
+                  {item.codigo ? (
+                    <Text style={{fontSize: 12, fontWeight: '800', color: '#B98F00', letterSpacing: 0.5}}>{item.codigo}</Text>
+                  ) : null}
                   <Text style={styles.serviceName} numberOfLines={2}>
                     {item.nombreSolicitud}
                   </Text>
@@ -1031,6 +1036,11 @@ const SolicitudesTallerScreen = () => {
                   </TouchableOpacity>
                   {openSections.solicitud && (
                     <View style={styles.modalSectionCard}>
+                      {selectedServicio.codigo ? (
+                        <Text style={{fontSize: 12.5, fontWeight: '800', color: '#B98F00', letterSpacing: 0.5}} selectable>
+                          Solicitud {selectedServicio.codigo}
+                        </Text>
+                      ) : null}
                       <Text style={styles.modalServiceName} numberOfLines={2}>
                         {selectedServicio.nombreSolicitud}
                       </Text>

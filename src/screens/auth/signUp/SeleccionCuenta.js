@@ -2,9 +2,12 @@
 // Sigue la línea gráfica de la campaña (azul marino, amarillo, huella de
 // neumático y titular inclinado) y deja las dos opciones a la vista sin
 // tener que desplazar, también en teléfonos pequeños.
-import React from 'react';
+import React, {useEffect, useRef} from 'react';
 import {
+  Animated,
+  Easing,
   Image,
+  Pressable,
   Platform,
   ScrollView,
   StatusBar,
@@ -13,6 +16,9 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+
+// Respuesta al toque: se hunde un poco al presionar (120 ms, salida rápida).
+const SALIDA = Easing.bezier(0.23, 1, 0.32, 1);
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {brand} from '../../../ui/tokens';
@@ -28,13 +34,36 @@ const Opcion = ({
   ventajas,
   destacada,
   onPress,
-}) => (
-  <TouchableOpacity
-    style={[s.tarjeta, destacada && s.tarjetaDestacada]}
-    activeOpacity={0.85}
+  indice = 0,
+}) => {
+  const escala = useRef(new Animated.Value(1)).current;
+  // Entrada al abrir la pantalla: sube y aparece, una tarjeta tras otra.
+  const entrada = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(entrada, {
+      toValue: 1,
+      duration: 280,
+      delay: 60 + indice * 70,
+      easing: SALIDA,
+      useNativeDriver: true,
+    }).start();
+  }, [entrada, indice]);
+  const presion = v =>
+    Animated.timing(escala, {toValue: v, duration: 120, easing: SALIDA, useNativeDriver: true}).start();
+  const subir = entrada.interpolate({inputRange: [0, 1], outputRange: [16, 0]});
+  return (
+  <Pressable
     onPress={onPress}
+    onPressIn={() => presion(0.97)}
+    onPressOut={() => presion(1)}
     accessibilityRole="button"
     accessibilityLabel={`${titulo}. ${descripcion}`}>
+  <Animated.View
+    style={[
+      s.tarjeta,
+      destacada && s.tarjetaDestacada,
+      {opacity: entrada, transform: [{translateY: subir}, {scale: escala}]},
+    ]}>
     <View style={s.tarjetaFila}>
       <View style={[s.icono, destacada ? s.iconoAmarillo : s.iconoMarino]}>
         <MaterialCommunityIcons
@@ -68,8 +97,10 @@ const Opcion = ({
         </View>
       ))}
     </View>
-  </TouchableOpacity>
-);
+  </Animated.View>
+  </Pressable>
+  );
+};
 
 const SeleccionCuenta = ({onCliente, onNegocio, onIniciarSesion}) => {
   const insets = useSafeAreaInsets();
@@ -103,20 +134,21 @@ const SeleccionCuenta = ({onCliente, onNegocio, onIniciarSesion}) => {
         showsVerticalScrollIndicator={false}>
         <Opcion
           icono="car-side"
-          etiqueta="USO PERSONAL"
-          titulo="Soy usuario"
-          descripcion="Encuentra talleres de confianza y lleva el control de tu vehículo."
+          etiqueta="SOLUCIONES PARA TI"
+          titulo="Busco servicios para mi carro"
+          descripcion="Encuentra talleres de confianza cerca de ti y lleva el control del cuidado de tu vehículo."
           ventajas={['Pide servicios', 'Agenda citas', 'Mantenimientos']}
           onPress={onCliente}
         />
         <Opcion
           destacada
           icono="garage-variant"
-          etiqueta="PARA TU NEGOCIO"
-          titulo="Tengo un negocio"
-          descripcion="Registra tu taller y recibe clientes que buscan tus servicios."
+          etiqueta="PARA TU NEGOCIO AUTOMOTRIZ"
+          titulo="Ofrezco servicios automotrices"
+          descripcion="Registra tu taller, muestra tus servicios y conecta con conductores que te necesitan."
           ventajas={['Empieza gratis', 'Publica servicios', 'Más clientes']}
           onPress={onNegocio}
+          indice={1}
         />
         <Text style={s.promesa}>{brand.promise}</Text>
       </ScrollView>

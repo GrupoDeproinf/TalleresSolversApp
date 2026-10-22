@@ -762,6 +762,7 @@ const HomeScreen = () => {
                   Tu solicitud en curso
                 </AppText>
                 <AppText variant="subtitle" color={colors.onNavy} numberOfLines={1}>
+                  {solicitudActiva?.codigo_solicitud ? `${solicitudActiva.codigo_solicitud} · ` : ''}
                   {String(solicitudActiva?.nombre_solicitud || '').trim() || 'Solicitud de servicio'}
                 </AppText>
                 <AppText variant="caption" color={colors.onNavyMuted}>
