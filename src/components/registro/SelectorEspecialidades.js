@@ -24,6 +24,7 @@ import {
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {C} from './ui';
+import {NOMBRE_AREA} from '../../utils/areasServicio';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -33,22 +34,7 @@ const AMARILLO = '#FCC800';
 const MARINO = '#151D61';
 
 // Nombre corto para que quepa dentro de la burbuja.
-const CORTO = {
-  mantenimiento: 'Mantenimiento',
-  frenos: 'Frenos',
-  suspension: 'Suspensión y dirección',
-  electrico: 'Electricidad',
-  climatizacion: 'Aire acondicionado',
-  motor: 'Motor',
-  transmision: 'Caja y embrague',
-  escape: 'Escape',
-  latoneria: 'Latonería y pintura',
-  autolavado: 'Autolavado',
-  tapiceria: 'Tapicería',
-  vidrios: 'Parabrisas y vidrios',
-  gas: 'Gas vehicular',
-  motos: 'Motos',
-};
+const CORTO = NOMBRE_AREA;
 
 const sinAcentos = v =>
   String(v || '')

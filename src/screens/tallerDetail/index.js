@@ -48,6 +48,7 @@ import LocationPermissionModal from "../../commonComponents/LocationPermissionMo
 import ContactBar, { CONTACT_BAR_SPACE } from "../../ui/ContactBar";
 import { llamar, abrirWhatsApp, puedeLlamar, puedeWhatsApp } from "../../utils/contacto";
 import { openState, openHint, tallerPhone, tallerWhatsApp, precioDesde } from "../../utils/taller";
+import {areasDeEspecialidades} from '../../utils/areasServicio';
 
 const { width } = Dimensions.get("window");
 
@@ -562,11 +563,13 @@ const TallerDetail = () => {
   const direccion =
     taller?.Direccion || taller?.direccion || taller?.ubicacion?.direccion || "Dirección no registrada";
   const caracteristicasTaller = String(taller?.Caracteristicas || taller?.caracteristicas || "").trim();
-  // Req. 006: especialidades del negocio (categorías elegidas al registrarse).
-  // Con el catálogo nuevo se muestran los servicios que eligió el negocio;
-  // los registros anteriores muestran sus categorías.
-  const especialidades = (Array.isArray(taller?.especialidades) && taller.especialidades.length
-    ? taller.especialidades.map(e => e && e.servicio)
+  // Req. 006: especialidades del negocio. Se muestran las áreas generales
+  // (Frenos, Motor…), no cada servicio, para no saturar el perfil; la
+  // primera es la del servicio destacado. Los registros anteriores muestran
+  // sus categorías.
+  const areasElegidas = areasDeEspecialidades(taller?.especialidades);
+  const especialidades = (areasElegidas.length
+    ? areasElegidas
     : Array.isArray(taller?.categorias) ? taller.categorias : [])
     .map(c => String((c && (c.nombre || c.name)) || (typeof c === "string" ? c : "")).trim())
     .filter(Boolean)
