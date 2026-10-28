@@ -234,6 +234,8 @@ const SignUpTaller = ({navigation}) => {
   const [categoriasDisp, setCategoriasDisp] = useState([]);
   const [catsError, setCatsError] = useState('');
   const [planGratis, setPlanGratis] = useState(null);
+  // Tope de servicios en el registro: el cupo del plan gratuito (5 si no carga).
+  const maxServicios = parseInt(planGratis?.cantidad_servicios, 10) > 0 ? parseInt(planGratis.cantidad_servicios, 10) : 5;
   const scrollRef = useRef(null);
 
   // ── Borrador: cargar y guardar automáticamente ───────────────────────────
@@ -408,11 +410,15 @@ const SignUpTaller = ({navigation}) => {
       direccion: String(f.direccion).trim().length >= 8 ? '' : 'Escribe la dirección con una referencia (ej: Av. Bolívar, frente a la plaza).',
       ubicacion: Number.isFinite(f.lat) && Number.isFinite(f.lng) ? '' : 'Marca en el mapa dónde está el taller para que los conductores lleguen.',
       horario: '',
-      categorias: (f.especialidades || []).length ? '' : 'Elige al menos un servicio que hagas.',
+      categorias: !(f.especialidades || []).length
+        ? 'Elige al menos un servicio que hagas.'
+        : f.especialidades.length > maxServicios
+          ? `Elegiste ${f.especialidades.length} servicios y tu plan gratuito incluye hasta ${maxServicios}. Quita ${f.especialidades.length - maxServicios} para seguir.`
+          : '',
     };
     // Req. 005: el horario ya no se pide en el registro; se carga en el perfil.
     return e;
-  }, [f, password, dispEmail, dispPhone]);
+  }, [f, password, dispEmail, dispPhone, maxServicios]);
 
   const CAMPOS_PASO = {
     1: ['responsable', 'email', 'phone', 'whatsapp', 'password'],
@@ -722,7 +728,7 @@ const SignUpTaller = ({navigation}) => {
           horarios_atencion: f.horario,
           estado: f.estado,
           categorias,
-          especialidades: f.especialidades || [],
+          especialidades: (f.especialidades || []).slice(0, maxServicios),
           base64: docsB64.logotipoNegocio || '',
           rifIdFiscal: docsB64.rifIdFiscal || '',
           permisoOperacion: docsB64.permisoOperacion || '',
@@ -1008,6 +1014,7 @@ const SignUpTaller = ({navigation}) => {
           grupos={categoriasDisp}
           areas={f.areas || []}
           especialidades={f.especialidades || []}
+          maximo={maxServicios}
           onChange={(areas, especialidades) => {
             setF(prev => ({...prev, areas, especialidades}));
             touch('categorias')();

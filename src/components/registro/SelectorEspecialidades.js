@@ -4,6 +4,8 @@
 // 2. Debajo aparecen los servicios de cada área elegida (burbujas pequeñas)
 //    y toca los que hace. Si falta alguno, lo agrega con "+ Otro".
 // El primer servicio elegido es la especialidad destacada.
+// `maximo` es el cupo de servicios del plan (en el registro, el gratuito):
+// al llegar al tope no se pueden elegir más hasta quitar alguno.
 //
 // El catálogo viene del servidor (/usuarios/catalogoServicios).
 import React, {useEffect, useMemo, useRef, useState} from 'react';
@@ -93,10 +95,18 @@ const Burbuja = ({onPress, style, children, accessibilityLabel, seleccionada}) =
   );
 };
 
-const SelectorEspecialidades = ({grupos, areas, especialidades, onChange}) => {
+const SelectorEspecialidades = ({grupos, areas, especialidades, onChange, maximo}) => {
   const [busqueda, setBusqueda] = useState('');
   const [agregandoEn, setAgregandoEn] = useState('');
   const [nuevo, setNuevo] = useState('');
+  const [avisoTope, setAvisoTope] = useState(false);
+
+  const tope = Number.isFinite(maximo) && maximo > 0 ? maximo : null;
+  const lleno = tope != null && especialidades.length >= tope;
+  // El aviso se va solo cuando vuelve a haber espacio.
+  useEffect(() => {
+    if (!lleno) setAvisoTope(false);
+  }, [lleno]);
 
   const elegido = (grupo, servicio) =>
     especialidades.findIndex(e => e.grupo === grupo && sinAcentos(e.servicio) === sinAcentos(servicio));
@@ -119,6 +129,8 @@ const SelectorEspecialidades = ({grupos, areas, especialidades, onChange}) => {
     const i = elegido(grupo, servicio);
     if (i >= 0) {
       onChange(areas, especialidades.filter((_, j) => j !== i));
+    } else if (lleno) {
+      setAvisoTope(true);
     } else {
       onChange(areas.includes(grupo) ? areas : [...areas, grupo], [...especialidades, {grupo, servicio, personalizado}]);
     }
@@ -126,7 +138,9 @@ const SelectorEspecialidades = ({grupos, areas, especialidades, onChange}) => {
 
   const agregarOtro = grupo => {
     const t = nuevo.replace(/\s+/g, ' ').trim().slice(0, 60);
-    if (t.length >= 3 && elegido(grupo, t) < 0) {
+    if (lleno) {
+      setAvisoTope(true);
+    } else if (t.length >= 3 && elegido(grupo, t) < 0) {
       animar();
       onChange(areas, [...especialidades, {grupo, servicio: t.charAt(0).toUpperCase() + t.slice(1), personalizado: true}]);
     }
@@ -151,13 +165,14 @@ const SelectorEspecialidades = ({grupos, areas, especialidades, onChange}) => {
     const i = elegido(grupo, servicio);
     const sel = i >= 0;
     const esDestacada = sel && i === 0;
+    const bloqueada = !sel && lleno;
     return (
       <Burbuja
         key={`${grupo}-${servicio}`}
         seleccionada={sel}
         onPress={() => alternarServicio(grupo, servicio, personalizado)}
-        accessibilityLabel={`${servicio}${esDestacada ? ', especialidad destacada' : ''}`}
-        style={[s.pildora, sel && s.pildoraSel, esDestacada && s.pildoraDestacada]}>
+        accessibilityLabel={`${servicio}${esDestacada ? ', especialidad destacada' : ''}${bloqueada ? ', llegaste al máximo de tu plan' : ''}`}
+        style={[s.pildora, sel && s.pildoraSel, esDestacada && s.pildoraDestacada, bloqueada && s.pildoraBloqueada]}>
         {esDestacada ? (
           <MaterialCommunityIcons name="crown" size={14} color={MARINO} style={{marginRight: 5}} />
         ) : sel ? (
@@ -225,7 +240,31 @@ const SelectorEspecialidades = ({grupos, areas, especialidades, onChange}) => {
         })}
       </View>
 
-      {areas.length ? <Text style={s.paso}>2. Elige los servicios que haces</Text> : null}
+      {areas.length ? (
+        <View style={s.pasoFila}>
+          <Text style={[s.paso, {flex: 1}]}>2. Elige los servicios que haces</Text>
+          {tope != null ? (
+            <View style={[s.cupo, lleno && s.cupoLleno]} accessibilityLabel={`${especialidades.length} de ${tope} servicios elegidos`}>
+              <Text style={[s.cupoTexto, lleno && s.cupoTextoLleno]}>
+                {especialidades.length} de {tope}
+              </Text>
+            </View>
+          ) : null}
+        </View>
+      ) : null}
+      {tope != null && areas.length ? (
+        <Text style={[s.ayuda, {marginTop: -4, marginBottom: 10}]}>
+          Tu plan gratuito incluye hasta {tope} servicios. Con un plan pago podrás publicar más.
+        </Text>
+      ) : null}
+      {avisoTope ? (
+        <View style={s.avisoTope} accessibilityLiveRegion="polite">
+          <Ionicons name="information-circle" size={18} color={MARINO} />
+          <Text style={s.avisoTopeTexto}>
+            Ya elegiste {tope}, el máximo de tu plan gratuito. Quita uno para elegir otro.
+          </Text>
+        </View>
+      ) : null}
       {areas
         .map(id => grupos.find(g => g.id === id))
         .filter(Boolean)
@@ -240,7 +279,7 @@ const SelectorEspecialidades = ({grupos, areas, especialidades, onChange}) => {
               <View style={s.nube}>
                 {g.servicios.map(sv => pildora(g.id, sv, false))}
                 {propios.map(e => pildora(g.id, e.servicio, true))}
-                {agregandoEn === g.id ? null : (
+                {agregandoEn === g.id || lleno ? null : (
                   <Burbuja
                     onPress={() => {
                       animar();
@@ -294,6 +333,13 @@ const s = StyleSheet.create({
   buscadorInput: {flex: 1, marginLeft: 8, fontSize: 16, color: C.text, paddingVertical: 10},
   ayuda: {fontSize: 13, color: C.muted},
   paso: {fontSize: 14.5, fontWeight: '800', color: MARINO, marginTop: 14, marginBottom: 10},
+  pasoFila: {flexDirection: 'row', alignItems: 'center'},
+  cupo: {marginTop: 4, marginLeft: 8, borderRadius: 999, backgroundColor: '#EEF0F8', paddingHorizontal: 10, paddingVertical: 4},
+  cupoLleno: {backgroundColor: AMARILLO},
+  cupoTexto: {fontSize: 12.5, fontWeight: '800', color: MARINO},
+  cupoTextoLleno: {color: MARINO},
+  avisoTope: {flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF6CC', borderRadius: 12, padding: 10, marginBottom: 10},
+  avisoTopeTexto: {marginLeft: 8, fontSize: 13, color: MARINO, flex: 1},
   areas: {flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between'},
   area: {
     width: 100,
@@ -329,6 +375,7 @@ const s = StyleSheet.create({
   },
   pildoraSel: {backgroundColor: MARINO, borderColor: MARINO},
   pildoraDestacada: {backgroundColor: AMARILLO, borderColor: AMARILLO},
+  pildoraBloqueada: {opacity: 0.4},
   pildoraOtro: {backgroundColor: '#FFFFFF', borderStyle: 'dashed', borderColor: MARINO},
   pildoraTexto: {fontSize: 13.5, fontWeight: '600', color: C.text},
   pildoraTextoSel: {color: '#FFFFFF'},
