@@ -160,6 +160,8 @@ const FormTaller = () => {
     useState('');
   const [NameServicio, setNameServicio] = useState('');
   const [precio, setprecio] = useState(0);
+  // Sin precio fijo: los conductores ven "Precio por consultar".
+  const [porConsultar, setPorConsultar] = useState(false);
   const [setprecioError, setsetprecioError] = useState('');
 
   const [Description, setDescription] = useState(0);
@@ -236,7 +238,10 @@ const FormTaller = () => {
     } else {
       setNameServicio('Nuevo Servicio');
       getCaracteristicas(true);
-      setNombre('');
+      // Desde "Servicios por completar" llega con el nombre que eligió en el
+      // registro (la categoría llega en categoriaUid).
+      setNombre(String(route.params?.nombreSugerido || '').slice(0, 80));
+      setPorConsultar(false);
       setcaracteristicaSelected('');
       setSubcaracteristicaSelected('');
       setprecio(0);
@@ -420,7 +425,8 @@ const FormTaller = () => {
         getCaracteristicas(false);
         getSubcaracteristicas(result.service.uid_categoria, false);
 
-        setprecio(result.service.precio || 0);
+        setprecio(result.service.precio || '');
+        setPorConsultar(!Number(String(result.service.precio || '').replace(/[^0-9.]/g, '')));
         setDescription(result.service.descripcion || '');
         setGarantia(result.service.garantia || '');
         setChecked(result.service.estatus ? 'si' : 'no' || false);
@@ -515,9 +521,7 @@ const FormTaller = () => {
         caracteristicaSelected != undefined &&
         SubcaracteristicaSelected != '' &&
         SubcaracteristicaSelected != undefined &&
-        precio != '' &&
-        precio != undefined &&
-        precio != undefined &&
+        (porConsultar || (precio != '' && precio != undefined && precio != 0)) &&
         Description != '' &&
         Description != undefined &&
         Description != undefined &&
@@ -548,7 +552,7 @@ const FormTaller = () => {
 
         const dataFinal = {
           id: uidService == undefined || uidService == '' ? '' : uidService,
-          precio: precio.replace('$', ''),
+          precio: porConsultar ? '' : String(precio).replace('$', ''),
           uid_servicio:
             uidService == undefined || uidService == '' ? '' : uidService,
           categoria: categoria,
@@ -1011,6 +1015,24 @@ const FormTaller = () => {
               icon={<Icons name="gears" size={20} color="#64748B" />}
             />
 
+            <TouchableOpacity
+              style={stylesConsultar.fila}
+              onPress={() => {
+                setPorConsultar(v => !v);
+                setsetprecioError('');
+              }}
+              activeOpacity={0.8}
+              accessibilityRole="checkbox"
+              accessibilityState={{checked: porConsultar}}
+              accessibilityLabel="Precio por consultar">
+              <Icons name={porConsultar ? 'check-square' : 'square-o'} size={22} color="#1D1E56" />
+              <View style={{flex: 1, marginLeft: 10}}>
+                <Text style={stylesConsultar.titulo}>Precio por consultar</Text>
+                <Text style={stylesConsultar.ayuda}>Si depende del carro o del trabajo. El conductor te escribe para pedir el precio.</Text>
+              </View>
+            </TouchableOpacity>
+
+            {porConsultar ? null : (
             <TextInputs
               formCardMode
               fullWidth={'100%'}
@@ -1030,6 +1052,7 @@ const FormTaller = () => {
               icon={<Icons name="money" size={20} color="#64748B" />}
               keyboardType="numeric"
             />
+            )}
 
             <TextInputs
               formCardMode
@@ -1349,6 +1372,12 @@ const FormTaller = () => {
     </View>
   );
 };
+
+const stylesConsultar = StyleSheet.create({
+  fila: {flexDirection: 'row', alignItems: 'center', minHeight: 48, paddingVertical: 8, marginBottom: 6},
+  titulo: {fontSize: 15, fontWeight: '700', color: '#1D1E56'},
+  ayuda: {fontSize: 12.5, color: '#64748B', marginTop: 2},
+});
 
 const registroModalStyles = StyleSheet.create({
   overlay: {

@@ -173,6 +173,15 @@ const TallerInicio = ({navigation, route}) => {
             />
           ) : null}
 
+          {s?.porCompletar > 0 ? (
+            <Accion
+              icono="construct-outline"
+              titulo={s.porCompletar === 1 ? 'Te falta 1 servicio por completar' : `Te faltan ${s.porCompletar} servicios por completar`}
+              detalle="Los elegiste al registrarte. Agrega precio y foto para aparecer en más búsquedas."
+              onPress={irAServicios}
+            />
+          ) : null}
+
           {cargando && !resumen ? (
             <View style={st.centro}>
               <ActivityIndicator color={brand.navy} />

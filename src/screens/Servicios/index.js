@@ -18,6 +18,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { windowHeight, windowWidth } from '../../themes/appConstant';
 import EstadoComercioCard, { estadoComercio } from '../../components/registro/EstadoComercioCard';
+import ServiciosPorCompletar from '../../components/registro/ServiciosPorCompletar';
+import { serviciosPorCompletar } from '../../utils/serviciosPorCompletar';
 
 const ServiciosContainer = ({ navigation }) => {
   const insets = useSafeAreaInsets();
@@ -59,6 +61,13 @@ const ServiciosContainer = ({ navigation }) => {
     if (filterCategoria === 'Todos') return dataServicios;
     return dataServicios.filter(s => String(s.categoria || '').trim() === filterCategoria);
   }, [dataServicios, filterCategoria]);
+
+  // Lo que eligió en el registro y aún no ha creado (ver serviciosPorCompletar).
+  const pendientes = useMemo(
+    () => serviciosPorCompletar(userData?.especialidades, dataServicios),
+    [userData, dataServicios],
+  );
+  const completarServicio = ({nombre, categoriaUid}) => createorEditService(categoriaUid, nombre);
 
   const totalServicios = dataServicios.length;
   const publicados = dataServicios.filter(s => s.estatus).length;
@@ -653,13 +662,14 @@ const ServiciosContainer = ({ navigation }) => {
 
 
   // categoriaUid (opcional): abre el formulario con esa categoría ya elegida.
-  const createorEditService = categoriaUid => {
+  const createorEditService = (categoriaUid, nombreSugerido) => {
     if (Number(cantServices) == 0 || Number(cantServices) < 0){
       setModalVisible(true)
     } else {
       navigationScreen.navigate('FormService', {
         uid: '',
         ...(typeof categoriaUid === 'string' && categoriaUid ? {categoriaUid} : {}),
+        ...(typeof nombreSugerido === 'string' && nombreSugerido ? {nombreSugerido} : {}),
         ...(uidTallerParam ? {uid_taller: uidTallerParam, nombre_taller: nombreTallerParam} : {}),
       });
       setModalVisible(false)
@@ -784,7 +794,12 @@ const ServiciosContainer = ({ navigation }) => {
               <Text style={modalStyles.emptyTallerSubtitle}>
                 Agrega servicios específicos para{'\n'}empezar a recibir clientes.
               </Text>
-              {(Array.isArray(userData?.categorias) ? userData.categorias : [])
+              {pendientes.length ? (
+                <View style={{alignSelf: 'stretch', marginHorizontal: -16}}>
+                  <ServiciosPorCompletar pendientes={pendientes} onCompletar={completarServicio} titulo="Empieza por estos" />
+                </View>
+              ) : null}
+              {(pendientes.length ? [] : Array.isArray(userData?.categorias) ? userData.categorias : [])
                 .filter(c => c?.uid && c?.nombre)
                 .slice(0, 6)
                 .map(c => (
@@ -818,6 +833,9 @@ const ServiciosContainer = ({ navigation }) => {
               external.Pb_80,
               { paddingBottom: insets.bottom + 120 },
             ]}>
+            {!uidTallerParam ? (
+              <ServiciosPorCompletar pendientes={pendientes} onCompletar={completarServicio} />
+            ) : null}
             <ServicesContainer
               data={filteredServicios}
               show={false}
