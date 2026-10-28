@@ -65,7 +65,7 @@ const ServiciosPorCompletar = ({pendientes, onCompletar, titulo = 'Servicios por
 };
 
 const s = StyleSheet.create({
-  tarjeta: {backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E3E6F0', padding: 14, marginHorizontal: 16, marginTop: 12, marginBottom: 4},
+  tarjeta: {backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E3E6F0', padding: 14, marginHorizontal: 20, marginTop: 12, marginBottom: 4},
   cabecera: {flexDirection: 'row', alignItems: 'center'},
   titulo: {flex: 1, fontSize: 16, fontWeight: '800', color: MARINO},
   contador: {minWidth: 26, height: 26, borderRadius: 13, backgroundColor: AMARILLO, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6},

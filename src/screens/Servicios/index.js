@@ -1,4 +1,4 @@
-import { ScrollView, Text, View, useFocusEffect, Image, Modal, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { ScrollView, Text, TextInput, View, useFocusEffect, Image, Modal, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import FullHeader from '../../commonComponents/fullHeader';
 import { external } from '../../style/external.css';
@@ -57,10 +57,15 @@ const ServiciosContainer = ({ navigation }) => {
     return cats;
   }, [dataServicios]);
 
+  // Buscador: aparece cuando hay más de 8 servicios.
+  const [busqueda, setBusqueda] = useState('');
+  const normal = v => String(v || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
   const filteredServicios = useMemo(() => {
-    if (filterCategoria === 'Todos') return dataServicios;
-    return dataServicios.filter(s => String(s.categoria || '').trim() === filterCategoria);
-  }, [dataServicios, filterCategoria]);
+    const q = normal(busqueda);
+    return dataServicios.filter(s =>
+      (filterCategoria === 'Todos' || String(s.categoria || '').trim() === filterCategoria) &&
+      (!q || normal(s.nombre_servicio).includes(q) || normal(s.categoria).includes(q)));
+  }, [dataServicios, filterCategoria, busqueda]);
 
   // Lo que eligió en el registro y aún no ha creado (ver serviciosPorCompletar).
   const pendientes = useMemo(
@@ -741,8 +746,28 @@ const ServiciosContainer = ({ navigation }) => {
               </View>
             </View>
 
-            {/* ── Filter chips ─────────────────────────────────────────────── */}
-            {dataServicios.length > 0 ? (
+            {dataServicios.length > 8 ? (
+              <View style={modalStyles.buscador}>
+                <Icons name="search" size={16} color="#64748B" />
+                <TextInput
+                  style={modalStyles.buscadorInput}
+                  value={busqueda}
+                  onChangeText={setBusqueda}
+                  placeholder="Buscar en tus servicios"
+                  placeholderTextColor="#94A3B8"
+                  autoCorrect={false}
+                  accessibilityLabel="Buscar en tus servicios"
+                />
+                {busqueda ? (
+                  <TouchableOpacity onPress={() => setBusqueda('')} hitSlop={10} accessibilityLabel="Borrar búsqueda">
+                    <Icons name="times-circle" size={18} color="#94A3B8" />
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+            ) : null}
+
+            {/* ── Filtros por categoría (solo si hay más de una) ─────────────── */}
+            {categorias.length > 2 ? (
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -755,7 +780,7 @@ const ServiciosContainer = ({ navigation }) => {
                   onPress={() => setFilterCategoria(cat)}
                   activeOpacity={0.8}>
                   <Text style={[modalStyles.filterChipText, filterCategoria === cat && modalStyles.filterChipTextActive]}>
-                    {cat === 'Todos' ? 'Todos' : cat.toUpperCase()}
+                    {cat === 'Todos' ? 'Todos' : cat.charAt(0).toUpperCase() + cat.slice(1).toLowerCase()}
                   </Text>
                 </TouchableOpacity>
               ))}
@@ -795,7 +820,7 @@ const ServiciosContainer = ({ navigation }) => {
                 Agrega servicios específicos para{'\n'}empezar a recibir clientes.
               </Text>
               {pendientes.length ? (
-                <View style={{alignSelf: 'stretch', marginHorizontal: -16}}>
+                <View style={{alignSelf: 'stretch', marginHorizontal: -20}}>
                   <ServiciosPorCompletar pendientes={pendientes} onCompletar={completarServicio} titulo="Empieza por estos" />
                 </View>
               ) : null}
@@ -835,6 +860,11 @@ const ServiciosContainer = ({ navigation }) => {
             ]}>
             {!uidTallerParam ? (
               <ServiciosPorCompletar pendientes={pendientes} onCompletar={completarServicio} />
+            ) : null}
+            {busqueda && !filteredServicios.length ? (
+              <Text style={{textAlign: 'center', color: '#64748B', marginTop: 16, marginHorizontal: 20}}>
+                No encontramos servicios con "{busqueda}".
+              </Text>
             ) : null}
             <ServicesContainer
               data={filteredServicios}
@@ -1109,6 +1139,8 @@ const modalStyles = StyleSheet.create({
     fontSize: 15,
   },
   // ── Empty state: taller sin servicios (vista admin desde Acciones) ──────
+  buscador: {flexDirection: 'row', alignItems: 'center', minHeight: 44, marginHorizontal: 20, marginTop: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E3E6F0', backgroundColor: '#FFFFFF', paddingHorizontal: 12},
+  buscadorInput: {flex: 1, marginLeft: 8, fontSize: 15, color: '#1F2344', paddingVertical: 8},
   guiadoContainer: {
     alignItems: 'center',
     paddingHorizontal: 24,

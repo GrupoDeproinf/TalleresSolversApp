@@ -1,7 +1,6 @@
 import {precioDesde} from '../../../utils/taller';
 import {
   Animated,
-  Dimensions,
   FlatList,
   Image,
   Modal,
@@ -12,12 +11,10 @@ import {
   View,
 } from 'react-native';
 
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const CARD_WIDTH = (SCREEN_WIDTH - 40 - 10) / 2; // padding 20px c/lado + gap 10px
 import React, {useCallback, useEffect, useRef, useState} from 'react';
 
 /** Círculo verde parpadeante para servicios publicados */
-const PulsingDot = () => {
+const PulsingDot = ({style}) => {
   const opacity = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -31,7 +28,7 @@ const PulsingDot = () => {
     return () => anim.stop();
   }, [opacity]);
 
-  return <Animated.View style={[styles.gridCardStatusCircle, styles.gridCardStatusCircleOn, {opacity}]} />;
+  return <Animated.View style={[styles.gridCardStatusCircle, styles.gridCardStatusCircleOn, style, {opacity}]} />;
 };
 import H3HeadingCategory from '../../../commonComponents/headingCategory/H3HeadingCategory';
 import {YellowStar} from '../../../assets/icons/yellowStar';
@@ -47,15 +44,6 @@ import notImageFound from '../../../assets/noimageNew.png';
 
 /** Nombre del servicio: todo en mayúsculas */
 const toUpperName = raw => String(raw ?? '').trim().toUpperCase();
-
-/** Descripción visible en tarjeta: máximo 40 caracteres */
-const truncateDescription = raw => {
-  const s = String(raw ?? '').trim();
-  if (!s) {
-    return '';
-  }
-  return s.length > 40 ? `${s.slice(0, 40)}…` : s;
-};
 
 /** Resto de textos: minúsculas con la primera letra en mayúscula (tipo oración) */
 const capitalizeSentence = raw => {
@@ -122,80 +110,47 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop, uidTaller, n
     });
   }, [modalService, closeServiceModal, navigation]);
 
+  // Lista compacta (una fila por servicio): con planes de 20 o 50 servicios
+  // la cuadrícula de tarjetas grandes saturaba la pantalla.
   const renderItem = ({item}) => {
-    const categoriaTxt = String(item.categoria ?? '').trim();
-    const descripcionCard = truncateDescription(item.descripcion);
-    const puntuacionTxt =
-      item.puntuacion != null && String(item.puntuacion).trim() !== ''
-        ? String(item.puntuacion)
-        : '0';
+    const categoriaTxt = capitalizeSentence(item.categoria);
     const imgUri = Array.isArray(item.service_image)
       ? item.service_image[0]
       : item.service_image;
+    const nombre = capitalizeSentence(t(item.nombre_servicio ?? ''));
+    const precio = precioDesde(item.precio);
+    const publicado = !!item.estatus;
 
     return (
       <TouchableOpacity
         onPress={() => openServiceModal(item)}
-        activeOpacity={0.88}
-        style={[styles.gridCard, {width: CARD_WIDTH}]}>
-
-        {/* ── Image section ── */}
-        <View style={styles.gridCardImgWrap}>
-          <Image
-            source={imgUri ? {uri: imgUri} : notImageFound}
-            style={styles.gridCardImg}
-            resizeMode="cover"
-          />
-          {/* Dark gradient overlay at bottom of image */}
-          <View style={styles.gridCardImgOverlay} />
-
-          {/* Category badge */}
-          {categoriaTxt ? (
-            <View style={styles.gridCardCatBadge}>
-              <Text style={styles.gridCardCatText} numberOfLines={1}>
-                {categoriaTxt.toUpperCase()}
-              </Text>
-            </View>
-          ) : null}
-
-          {/* Rating pill bottom-right */}
-          {/* <View style={styles.gridCardRating}>
-            <YellowStar />
-            <Text style={styles.gridCardRatingText}>{puntuacionTxt}</Text>
-          </View> */}
-        </View>
-
-        {/* ── Status circle (top-right corner of card) ── */}
-        {item.estatus
-          ? <PulsingDot />
-          : <View style={[styles.gridCardStatusCircle, styles.gridCardStatusCircleOff]} />
-        }
-
-        {/* ── Body ── */}
-        <View style={[styles.gridCardBody, {backgroundColor: isDark ? '#1E2235' : '#FFFFFF'}]}>
-          <Text
-            style={[styles.gridCardName, {color: isDark ? '#F1F5F9' : '#1F2344'}]}
-            numberOfLines={2}>
-            {toUpperName(t(item.nombre_servicio ?? ''))}
-          </Text>
-          {descripcionCard ? (
-            <Text
-              style={[styles.gridCardDesc, {color: isDark ? '#94A3B8' : '#64748B'}]}
-              numberOfLines={1}>
-              {descripcionCard}
-            </Text>
-          ) : null}
-
-          {/* Footer: price + arrow button */}
-          <View style={styles.gridCardFooter}>
-            <Text style={[styles.gridCardPrice, {color: isDark ? '#FFD60A' : '#1F2344'}]}>
-              {precioDesde(item.precio)}
-            </Text>
-            <View style={styles.gridCardPlusBtn}>
-              <Icons2 name="chevron-right" size={14} color="#1F2344" />
-            </View>
+        activeOpacity={0.85}
+        style={[fila.fila, {backgroundColor: isDark ? '#1E2235' : '#FFFFFF'}]}
+        accessibilityRole="button"
+        accessibilityLabel={`${nombre}. ${precio}. ${publicado ? 'Publicado' : 'No publicado'}`}>
+        {imgUri ? (
+          <Image source={{uri: imgUri}} style={fila.foto} resizeMode="cover" />
+        ) : (
+          <View style={[fila.foto, fila.sinFoto]}>
+            <Icons2 name="tools" size={18} color="#1F2344" />
           </View>
+        )}
+        <View style={fila.texto}>
+          <Text style={[fila.nombre, {color: isDark ? '#F1F5F9' : '#1F2344'}]} numberOfLines={1}>
+            {nombre}
+          </Text>
+          <Text style={[fila.detalle, {color: isDark ? '#94A3B8' : '#64748B'}]} numberOfLines={1}>
+            {categoriaTxt ? `${categoriaTxt} · ` : ''}
+            {precio}
+          </Text>
         </View>
+        <View style={[fila.estado, publicado ? fila.estadoOn : fila.estadoOff]}>
+          {publicado ? <PulsingDot style={fila.punto} /> : <View style={[styles.gridCardStatusCircle, styles.gridCardStatusCircleOff, fila.punto]} />}
+          <Text style={[fila.estadoTexto, publicado ? fila.estadoTextoOn : fila.estadoTextoOff]}>
+            {publicado ? 'Publicado' : 'Oculto'}
+          </Text>
+        </View>
+        <Icons2 name="chevron-right" size={12} color={isDark ? '#64748B' : '#94A3B8'} style={{marginLeft: 8}} />
       </TouchableOpacity>
     );
   };
@@ -213,9 +168,8 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop, uidTaller, n
         keyExtractor={(row, index) =>
           String(row?.id ?? row?.uid_servicio ?? `svc-${index}`)
         }
-        numColumns={2}
-        columnWrapperStyle={styles.gridRow}
         scrollEnabled={false}
+        contentContainerStyle={fila.lista}
       />
       <Snackbar
         visible={visibleHint !== null && visibleHint !== false}
@@ -359,5 +313,33 @@ const ServicesContainer = ({data, value, show, showPlus, marginTop, uidTaller, n
     </View>
   );
 };
+
+const fila = StyleSheet.create({
+  lista: {paddingTop: 4},
+  fila: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 72,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E7EAF2',
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+    marginBottom: 8,
+  },
+  foto: {width: 52, height: 52, borderRadius: 12, backgroundColor: '#EEF0F8'},
+  sinFoto: {alignItems: 'center', justifyContent: 'center'},
+  texto: {flex: 1, marginLeft: 12, marginRight: 8},
+  nombre: {fontSize: 15, fontWeight: '700'},
+  detalle: {fontSize: 12.5, marginTop: 3},
+  estado: {flexDirection: 'row', alignItems: 'center', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 4},
+  estadoOn: {backgroundColor: '#E7F7EE'},
+  estadoOff: {backgroundColor: '#F1F3F7'},
+  // El punto de estado se usa dentro de la pastilla, no en la esquina.
+  punto: {position: 'relative', top: 0, right: 0, width: 8, height: 8, borderRadius: 4, borderWidth: 0},
+  estadoTexto: {fontSize: 11.5, fontWeight: '700', marginLeft: 5},
+  estadoTextoOn: {color: '#15803D'},
+  estadoTextoOff: {color: '#64748B'},
+});
 
 export default ServicesContainer;
