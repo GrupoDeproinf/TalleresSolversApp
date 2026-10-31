@@ -1,4 +1,4 @@
-import { ScrollView, Text, TextInput, View, useFocusEffect, Image, Modal, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { ActivityIndicator, ScrollView, Text, TextInput, View, useFocusEffect, Image, Modal, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import FullHeader from '../../commonComponents/fullHeader';
 import { external } from '../../style/external.css';
@@ -41,6 +41,8 @@ const ServiciosContainer = ({ navigation }) => {
   const [scheduledVisitDate, setScheduledVisitDate] = useState('');
 
   const [cantServices, setcantServices] = useState(0);
+  // Si no se pudo cargar el perfil, se muestra un aviso con "Reintentar".
+  const [cargaFallo, setCargaFallo] = useState(false);
 
   const [modalVisible, setModalVisible] = useState(false);
   const [filterCategoria, setFilterCategoria] = useState('Todos');
@@ -134,6 +136,7 @@ const ServiciosContainer = ({ navigation }) => {
 
 
   const getData = async () => {
+    setCargaFallo(false);
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
@@ -151,67 +154,47 @@ const ServiciosContainer = ({ navigation }) => {
 
 
         if (result.message === 'Usuario encontrado') {
-          // console.log("result.userData.subscripcion_actual", result.userData.subscripcion_actual)
+          // La pantalla siempre muestra algo. Antes solo cubría algunas
+          // combinaciones de estado y con otras (p. ej. "En espera de
+          // documentos", plan "Pendiente" o "Rechazado") quedaba en blanco.
+          //   · Plan vencido o sin plan → elegir un plan.
+          //   · Cualquier otro caso → sus servicios (puede ir adelantando).
+          const u = result?.userData || {};
+          const sub = u.subscripcion_actual || null;
+          const subStatus = String(sub?.status || '');
+          const negocioAprobado = u.status === 'Aprobado';
+          const enRevision = u.status === 'En espera por aprobación';
 
-          if (result?.userData?.status == "En espera por aprobación" && result?.userData?.scheduled_visit == undefined) {
-            if (!registroRedirectedRef.current) {
-              setShowModalAprobacion(true);
-              setTimeout(() => setBannerVisible(true), 600);
+          setcantServices(sub?.cantidad_servicios ?? 0);
+
+          if (negocioAprobado && (!sub || subStatus === 'Vencido')) {
+            setshowPlanes(true);
+            setshowPorAprobar(false);
+            setshowServices(false);
+          } else {
+            if (enRevision && !registroRedirectedRef.current) {
+              if (u.scheduled_visit == undefined) {
+                setShowModalAprobacion(true);
+                setTimeout(() => setBannerVisible(true), 600);
+              } else {
+                setShowModalCitaAgendada(true);
+              }
+            }
+            if (enRevision && u.scheduled_visit != undefined) {
+              setScheduledVisitDate(u.scheduled_visit);
             }
             setshowPlanes(false);
             setshowPorAprobar(false);
             setshowServices(true);
-            setcantServices(result.userData.subscripcion_actual.cantidad_servicios)
-            getServices(user.uid)
-          } else if (result?.userData?.status == "En espera por aprobación" && result?.userData?.scheduled_visit != undefined) {
-            if (!registroRedirectedRef.current) setShowModalCitaAgendada(true);
-            setScheduledVisitDate(result.userData.scheduled_visit);
-            setshowPlanes(false);
-            setshowPorAprobar(false);
-            setshowServices(true);
-            setcantServices(result.userData.subscripcion_actual.cantidad_servicios)
-            getServices(user.uid)
+            getServices(user.uid);
           }
-
-
-          if (result?.userData?.status == "Aprobado" && result?.userData?.subscripcion_actual?.status == "Por Aprobar") {
-            setshowPlanes(false)
-            setshowPorAprobar(false)
-            setshowServices(true)
-            getServices(user.uid)
-            setcantServices(result.userData.subscripcion_actual.cantidad_servicios)
-          }
-
-          if (result?.userData?.status == "Aprobado" && result?.userData?.subscripcion_actual?.status == 'Vencido') {
-            setshowPlanes(true)
-            setcantServices(result.userData.subscripcion_actual.cantidad_servicios)
-          }
-
-          if (result?.userData?.status == "Aprobado" && result?.userData?.subscripcion_actual == undefined) {
-            setshowPlanes(true)
-            setcantServices(result.userData.subscripcion_actual.cantidad_servicios)
-          }
-
-
-
-          if (result?.userData?.status == "Aprobado" && result?.userData?.subscripcion_actual?.status == 'Aprobado') {
-            setshowPlanes(false)
-            setshowPorAprobar(false)
-            setshowServices(true)
-            getServices(user.uid)
-            setcantServices(result.userData.subscripcion_actual.cantidad_servicios)
-          }
-
-
-
-
-
-
         } else {
           console.log('Usuario no encontrado');
           setdataServicios([])
+          setCargaFallo(true)
         }
       } catch (error) {
+        setCargaFallo(true)
         if (error.response) {
           console.error('Error en la solicitud:', error.response.statusText);
           setdataServicios([])
@@ -222,6 +205,7 @@ const ServiciosContainer = ({ navigation }) => {
       }
     } catch (e) {
       setdataServicios([])
+      setCargaFallo(true)
       console.log(e)
     }
   };
@@ -933,7 +917,29 @@ const ServiciosContainer = ({ navigation }) => {
   }
 
   // Ningún flag activo aún: pantalla en blanco mientras terminan las validaciones
-  return null;
+  // Mientras carga (o si falló) nunca se deja la pantalla en blanco.
+  return (
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#F4F5F9'}}>
+      {cargaFallo ? (
+        <>
+          <Text style={{fontSize: 16, fontWeight: '700', color: '#1D1E56', textAlign: 'center'}}>
+            No pudimos cargar tus servicios
+          </Text>
+          <Text style={{fontSize: 14, color: '#64748B', textAlign: 'center', marginTop: 6}}>
+            Revisa tu conexión e intenta de nuevo.
+          </Text>
+          <TouchableOpacity
+            onPress={getData}
+            style={{marginTop: 16, minHeight: 44, paddingHorizontal: 22, borderRadius: 999, backgroundColor: '#1D1E56', alignItems: 'center', justifyContent: 'center'}}
+            accessibilityRole="button">
+            <Text style={{color: '#FFD60A', fontWeight: '800'}}>Reintentar</Text>
+          </TouchableOpacity>
+        </>
+      ) : (
+        <ActivityIndicator size="large" color="#1D1E56" accessibilityLabel="Cargando tus servicios" />
+      )}
+    </View>
+  );
 
 };
 
