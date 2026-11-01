@@ -25,6 +25,7 @@ import { WebView } from 'react-native-webview';
 import MapboxNavigation from '../../commonComponents/MapboxNavigation';
 import appColors from '../../themes/appColors';
 import api from '../../../axiosInstance';
+import {marcarSolicitudesVistas} from '../../utils/solicitudesNuevas';
 
 const STATUS_EN_ESPERA = 'En espera por aprobación';
 
@@ -341,6 +342,8 @@ const SolicitudesTallerScreen = () => {
         : sortedData;
       setServicios(filteredData.map(mapItemToServicio));
       setServiciosRaw(filteredData);
+      // Las que ya ve en pantalla dejan de contar como nuevas en el inicio.
+      marcarSolicitudesVistas(filteredData.map(item => item?.id));
       setServiciosEnEspera(filteredData.map(mapItemToServicio));
       setServiciosEnEsperaRaw(filteredData);
     } catch (e) {

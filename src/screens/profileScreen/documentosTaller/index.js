@@ -15,6 +15,7 @@ import {
   StyleSheet,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SafeAreaView} from 'react-native-safe-area-context';
@@ -131,6 +132,17 @@ const DocumentosTaller = ({navigation}) => {
       }
       setNuevos({});
       const quedan = DOCS.filter(d => d.required && !urlDe((actualizado || {})[d.key]) && !nuevos[d.key]).length;
+      if (!quedan) {
+        // Observación 1.4.6: al terminar los documentos, directo a completar
+        // los servicios (antes volvía al inicio sin indicar nada).
+        await AsyncStorage.setItem('@irAServiciosPorCompletar', '1').catch(() => {});
+        Alert.alert(
+          '¡Documentos recibidos!',
+          'Tu negocio entró a revisión y te avisaremos por notificación y correo. Mientras tanto, completa tus servicios para aparecer en las búsquedas apenas te aprobemos.',
+          [{text: 'Completar mis servicios', onPress: () => navigation.reset({index: 0, routes: [{name: 'DrawerScreen'}]})}],
+          {cancelable: false},
+        );
+      }
       setBanner({
         type: 'ok',
         text: quedan

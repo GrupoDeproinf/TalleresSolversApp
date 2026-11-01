@@ -82,6 +82,7 @@ const ServiciosContainer = ({ navigation }) => {
 
 
   const navigationScreen = useNavigation();
+  const vieneDeDocumentosRef = useRef(false);
 
   // uid_taller / nombre_taller recibidos desde FormTaller (agente viendo servicios de otro taller)
   const uidTallerParam    = route.params?.uid_taller;
@@ -167,12 +168,21 @@ const ServiciosContainer = ({ navigation }) => {
 
           setcantServices(sub?.cantidad_servicios ?? 0);
 
+          // Viene de subir sus documentos: ya le dijimos que entró a revisión,
+          // así que no se tapa la lista de servicios por completar con el aviso.
+          // (La pantalla carga dos veces al abrir: el ref recuerda la marca.)
+          if ((await AsyncStorage.getItem('@irAServiciosPorCompletar').catch(() => null)) === '1') {
+            vieneDeDocumentosRef.current = true;
+            await AsyncStorage.removeItem('@irAServiciosPorCompletar').catch(() => {});
+          }
+          const vieneDeDocumentos = vieneDeDocumentosRef.current;
+
           if (negocioAprobado && (!sub || subStatus === 'Vencido')) {
             setshowPlanes(true);
             setshowPorAprobar(false);
             setshowServices(false);
           } else {
-            if (enRevision && !registroRedirectedRef.current) {
+            if (enRevision && !registroRedirectedRef.current && !vieneDeDocumentos) {
               if (u.scheduled_visit == undefined) {
                 setShowModalAprobacion(true);
                 setTimeout(() => setBannerVisible(true), 600);

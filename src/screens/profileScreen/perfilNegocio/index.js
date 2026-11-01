@@ -26,6 +26,7 @@ import LocationPicker from '../../../components/registro/LocationPicker';
 import {validarNombre, validarTelefono, normalizarTelefono} from '../../../components/registro/validators';
 import {OPCIONES_HORA, parseHorarios} from '../../../utils/taller';
 import PhoneInput from '../../../ui/PhoneInput';
+import {pendientesDelPerfil} from '../../../utils/perfilPendiente';
 
 const ESTADOS = [
   'Amazonas', 'Anzoátegui', 'Apure', 'Aragua', 'Barinas', 'Bolívar', 'Carabobo',
@@ -92,6 +93,19 @@ const formularioDesde = u => ({
 });
 
 const iguales = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+
+// Título de sección con la marca "Pendiente" cuando al perfil le falta ese dato.
+const Seccion = ({titulo, pendiente}) => (
+  <View style={st.seccionFila}>
+    <Text style={[st.seccion, {marginTop: 0, marginBottom: 0, flexShrink: 1}]}>{titulo}</Text>
+    {pendiente ? (
+      <View style={st.pendiente} accessibilityLabel="Pendiente por completar">
+        <View style={st.pendientePunto} />
+        <Text style={st.pendienteTexto}>Pendiente</Text>
+      </View>
+    ) : null}
+  </View>
+);
 
 const PerfilNegocio = ({navigation}) => {
   const [uid, setUid] = useState('');
@@ -183,6 +197,21 @@ const PerfilNegocio = ({navigation}) => {
 
   const hayCambios = Object.keys(cambios).length > 0;
 
+  // Lo que le falta al perfil, según lo que hay ahora en pantalla: la marca
+  // se quita apenas el taller llena el dato (y se confirma al guardar).
+  const pendientes = useMemo(() => {
+    if (!f) return [];
+    return pendientesDelPerfil({
+      descripcion: f.descripcion,
+      diasAbiertos: DIAS.filter(d => f.horario[d.key]?.enabled).length,
+      metodos: Object.values(f.metodos || {}).some(v => v === true),
+      redes: [f.instagram, f.facebook, f.tiktok].some(v => String(v || '').trim()),
+      ubicacion: f.lat != null && f.lng != null,
+      logo: !!String((typeof usuario?.logotipoNegocio === 'string' ? usuario.logotipoNegocio : usuario?.logotipoNegocio?.url) || '').trim(),
+    });
+  }, [f, usuario]);
+  const falta = k => pendientes.some(c => c.key === k);
+
   // Solo se valida lo que se va a enviar: un dato viejo incompleto que el
   // taller no tocó no le impide guardar otro cambio.
   const CAMPO_DE = {nombre: 'nombre', phone: 'phone', whatsapp: 'whatsapp', estado: 'estado', Direccion: 'direccion', horarios_atencion: 'horario'};
@@ -252,6 +281,25 @@ const PerfilNegocio = ({navigation}) => {
             <Text style={st.title}>Tu negocio</Text>
             <Text style={st.subtitle}>Lo que ven los conductores en Solvers.</Text>
 
+            {pendientes.length ? (
+              <View style={st.resumenPendiente}>
+                <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 6}}>
+                  <Ionicons name="alert-circle" size={20} color={C.navy} />
+                  <Text style={st.resumenTitulo}>
+                    {pendientes.length === 1 ? 'Te falta 1 dato por completar' : `Te faltan ${pendientes.length} datos por completar`}
+                  </Text>
+                </View>
+                <Text style={st.resumenTexto}>Un perfil completo genera más confianza y más contactos. Están marcados abajo:</Text>
+                <View style={st.chipsRow}>
+                  {pendientes.map(c => (
+                    <View key={c.key} style={st.resumenChip}>
+                      <Text style={st.resumenChipTexto}>{c.label}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            ) : null}
+
             <Field label="Nombre del negocio" value={f.nombre} onChangeText={v => set('nombre', v)}
               onBlur={tocar('nombre')} error={ver('nombre')} autoCapitalize="words" />
 
@@ -261,6 +309,7 @@ const PerfilNegocio = ({navigation}) => {
               <Text style={st.soloLecturaNota}>Para cambiar el RIF o el correo, escríbenos por soporte.</Text>
             </View>
 
+            {falta('descripcion') ? <Seccion titulo="Descripción" pendiente /> : null}
             <Field label="Cuéntale a los conductores sobre tu negocio" placeholder="Ej: 15 años en frenos y suspensión, atendemos todas las marcas."
               value={f.descripcion} onChangeText={v => set('descripcion', v.slice(0, 400))} multiline
               inputStyle={{minHeight: 84, textAlignVertical: 'top'}} help={`${f.descripcion.length}/400`} />
@@ -294,8 +343,8 @@ const PerfilNegocio = ({navigation}) => {
               onChangeText={v => set('direccion', v)} onBlur={tocar('direccion')} error={ver('direccion')}
               multiline inputStyle={{minHeight: 56, textAlignVertical: 'top'}} />
 
-            <Text style={st.label}>Ubicación en el mapa</Text>
-            <TouchableOpacity style={[st.mapBtn, tieneUbicacion ? {borderColor: C.ok} : null]} onPress={() => setMapVisible(true)} accessibilityRole="button">
+            <Text style={st.label}>Ubicación en el mapa{falta('ubicacion') ? <Text style={st.pendienteInline}>  · Pendiente</Text> : null}</Text>
+            <TouchableOpacity style={[st.mapBtn, tieneUbicacion ? {borderColor: C.ok} : st.campoPendiente]} onPress={() => setMapVisible(true)} accessibilityRole="button">
               <Ionicons name={tieneUbicacion ? 'location' : 'location-outline'} size={24} color={tieneUbicacion ? C.ok : C.navy} />
               <View style={{flex: 1, marginLeft: 10}}>
                 <Text style={st.mapTitle}>{tieneUbicacion ? 'Ubicación marcada' : 'Marcar en el mapa'}</Text>
@@ -305,7 +354,7 @@ const PerfilNegocio = ({navigation}) => {
             </TouchableOpacity>
             <View style={{height: 16}} />
 
-            <Text style={st.seccion}>Horario de atención</Text>
+            <Seccion titulo="Horario de atención" pendiente={falta('horario')} />
             <View style={st.chipsRow}>
               {PRESETS.map(p => (
                 <Chip key={p.label} label={`+ ${p.label}`} onPress={() => {
@@ -338,14 +387,14 @@ const PerfilNegocio = ({navigation}) => {
             ))}
             {ver('horario') ? <Text style={st.err}>{ver('horario')}</Text> : null}
 
-            <Text style={st.seccion}>Métodos de pago que aceptas</Text>
+            <Seccion titulo="Métodos de pago que aceptas" pendiente={falta('metodos')} />
             <MetodosPago
               seleccion={f.metodos}
               datos={f.metodosDatos}
               onChange={(sel, datos) => setF(prev => ({...prev, metodos: sel, metodosDatos: datos}))}
             />
 
-            <Text style={st.seccion}>Redes sociales</Text>
+            <Seccion titulo="Redes sociales" pendiente={falta('redes')} />
             <Text style={st.notaRedes}>Opcional. Escribe tu usuario (@tunegocio) o el enlace. Solo se muestran en tu perfil las que llenes.</Text>
             <Field label="Instagram" placeholder="@tunegocio" value={f.instagram} onChangeText={v => set('instagram', v)}
               autoCapitalize="none" autoCorrect={false} keyboardType="url" />
@@ -354,12 +403,12 @@ const PerfilNegocio = ({navigation}) => {
             <Field label="TikTok" placeholder="@tunegocio" value={f.tiktok} onChangeText={v => set('tiktok', v)}
               autoCapitalize="none" autoCorrect={false} keyboardType="url" />
 
-            <Text style={st.seccion}>Documentos</Text>
-            <TouchableOpacity style={st.mapBtn} onPress={() => navigation.navigate('DocumentosTaller')} accessibilityRole="button">
+            <Seccion titulo="Documentos" pendiente={falta('logo')} />
+            <TouchableOpacity style={[st.mapBtn, falta('logo') ? st.campoPendiente : null]} onPress={() => navigation.navigate('DocumentosTaller')} accessibilityRole="button">
               <Ionicons name="document-text-outline" size={24} color={C.navy} />
               <View style={{flex: 1, marginLeft: 10}}>
                 <Text style={st.mapTitle}>Documentos del negocio</Text>
-                <Text style={st.mapSub}>RIF, fotos del taller y logo.</Text>
+                <Text style={st.mapSub}>{falta('logo') ? 'Falta tu logo: súbelo aquí.' : 'RIF, fotos del taller y logo.'}</Text>
               </View>
               <Ionicons name="chevron-forward" size={20} color={C.muted} />
             </TouchableOpacity>
@@ -419,6 +468,17 @@ const st = StyleSheet.create({
   horaRow: {flexDirection: 'row', alignItems: 'center', marginBottom: 8},
   horaDia: {width: 48, fontSize: 15, fontWeight: '700', color: C.navy},
   horaDrop: {flex: 1, minHeight: 44, borderRadius: 12, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, paddingHorizontal: 12, marginRight: 8},
+  seccionFila: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 20, marginBottom: 12},
+  pendiente: {flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF4CC', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4, marginLeft: 8},
+  pendientePunto: {width: 7, height: 7, borderRadius: 4, backgroundColor: '#E5484D', marginRight: 6},
+  pendienteTexto: {fontSize: 12, fontWeight: '800', color: '#7A5B00'},
+  pendienteInline: {fontSize: 13, fontWeight: '800', color: '#B7791F'},
+  campoPendiente: {borderColor: '#FCC800', backgroundColor: '#FFFBEA'},
+  resumenPendiente: {backgroundColor: '#FFF8DB', borderRadius: 16, borderWidth: 1.5, borderColor: '#FCC800', padding: 14, marginBottom: 18},
+  resumenTitulo: {fontSize: 16, fontWeight: '800', color: C.navy, marginLeft: 8, flexShrink: 1},
+  resumenTexto: {fontSize: 14, color: C.text, marginBottom: 10},
+  resumenChip: {backgroundColor: '#FFFFFF', borderRadius: 999, borderWidth: 1, borderColor: '#F0D46A', paddingHorizontal: 10, paddingVertical: 5, marginRight: 6, marginBottom: 6},
+  resumenChipTexto: {fontSize: 13, fontWeight: '700', color: C.navy},
   footer: {paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: C.border},
 });
 

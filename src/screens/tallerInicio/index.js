@@ -22,6 +22,8 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../../axiosInstance';
 import {colors, brand, fonts, radius, shadow, MAX_FONT_SCALE} from '../../ui/tokens';
 import {estadoComercio} from '../../components/registro/EstadoComercioCard';
+import {datosPerfilDesdeUsuario, pendientesDelPerfil, listaLegible} from '../../utils/perfilPendiente';
+import {contarSolicitudesNuevas, publicarSolicitudesNuevas} from '../../utils/solicitudesNuevas';
 
 const T = props => <Text maxFontSizeMultiplier={MAX_FONT_SCALE} {...props} />;
 
@@ -56,16 +58,42 @@ const Metrica = ({icono, valor, etiqueta, nota, notaSube}) => (
   </View>
 );
 
-const Accion = ({icono, titulo, detalle, onPress}) => (
+const Accion = ({icono, titulo, detalle, onPress, punto}) => (
   <TouchableOpacity style={st.accion} onPress={onPress} activeOpacity={0.85} accessibilityRole="button" accessibilityLabel={titulo}>
     <View style={st.accionIcono}>
       <Ionicons name={icono} size={20} color={brand.navy} />
+      {punto ? <View style={st.punto} /> : null}
     </View>
     <View style={{flex: 1}}>
       <T style={st.accionTitulo}>{titulo}</T>
       {detalle ? <T style={st.accionDetalle}>{detalle}</T> : null}
     </View>
     <Ionicons name="chevron-forward" size={18} color={colors.muted} />
+  </TouchableOpacity>
+);
+
+// Pendiente que el taller no debe pasar por alto (observación 1.4.6): fondo
+// amarillo, número grande y botón de acción.
+const Pendiente = ({icono, numero, titulo, detalle, boton, onPress}) => (
+  <TouchableOpacity style={st.pendiente} onPress={onPress} activeOpacity={0.88} accessibilityRole="button" accessibilityLabel={`${titulo}. ${boton}`}>
+    <View style={st.pendienteFila}>
+      <View style={st.pendienteIcono}>
+        <Ionicons name={icono} size={22} color={brand.yellow} />
+        {numero ? (
+          <View style={st.pendienteNumero}>
+            <T style={st.pendienteNumeroTexto} maxFontSizeMultiplier={1}>{numero > 9 ? '9+' : numero}</T>
+          </View>
+        ) : null}
+      </View>
+      <View style={{flex: 1}}>
+        <T style={st.pendienteTitulo}>{titulo}</T>
+        {detalle ? <T style={st.pendienteDetalle}>{detalle}</T> : null}
+      </View>
+    </View>
+    <View style={st.pendienteBoton}>
+      <T style={st.pendienteBotonTexto}>{boton}</T>
+      <Ionicons name="arrow-forward" size={16} color={brand.yellow} />
+    </View>
   </TouchableOpacity>
 );
 
@@ -79,6 +107,7 @@ const TallerInicio = ({navigation, route}) => {
   const [cargando, setCargando] = useState(true);
   const [refrescando, setRefrescando] = useState(false);
   const [error, setError] = useState('');
+  const [nuevas, setNuevas] = useState(0);
 
   const cargar = useCallback(async esRefresco => {
     if (esRefresco) setRefrescando(true);
@@ -93,7 +122,15 @@ const TallerInicio = ({navigation, route}) => {
         api.post('/usuarios/resumenTaller', {uid}, {timeout: 25000}),
         api.post('/usuarios/getUserByUid', {uid}, {timeout: 25000}),
       ]);
-      if (u.status === 'fulfilled' && u.value?.data?.userData) setUsuario({...local, ...u.value.data.userData});
+      const actual = u.status === 'fulfilled' && u.value?.data?.userData ? {...local, ...u.value.data.userData} : null;
+      if (actual) setUsuario(actual);
+      // Solicitudes nuevas: solo cuando puede atenderlas (negocio aprobado y
+      // plan activo), igual que la pestaña Solicitudes.
+      const quien = actual || local;
+      const puedeAtender = quien?.status === 'Aprobado' && String(quien?.subscripcion_actual?.status || '') === 'Aprobado';
+      const n = puedeAtender ? await contarSolicitudesNuevas(quien) : 0;
+      setNuevas(n);
+      publicarSolicitudesNuevas(n);
       if (r.status === 'fulfilled') setResumen(r.value.data);
       else setError('No pudimos cargar los datos de tu negocio. Desliza hacia abajo para reintentar.');
     } catch (e) {
@@ -132,6 +169,8 @@ const TallerInicio = ({navigation, route}) => {
   const maxDia = Math.max(1, ...(v?.porDia || []).map(d => d.cantidad));
   const tv = v ? tendencia(v.ultimos30, v.previos30) : null;
   const tc = c ? tendencia(c.ultimos30, c.previos30) : null;
+  // Mientras falten documentos, ese es el único pendiente que se destaca.
+  const perfilPendiente = usuario && tipoEstado !== 'faltan' ? pendientesDelPerfil(datosPerfilDesdeUsuario(usuario)) : [];
 
   return (
     <View style={st.pantalla}>
@@ -165,20 +204,45 @@ const TallerInicio = ({navigation, route}) => {
 
         <View style={st.cuerpo}>
           {tipoEstado === 'faltan' ? (
-            <Accion
+            <Pendiente
               icono="document-attach-outline"
               titulo="Sube tus documentos"
               detalle="Con ellos revisamos y aprobamos tu negocio."
+              boton="Subir documentos"
               onPress={() => navigation.navigate('DocumentosTaller')}
             />
           ) : null}
 
+          {nuevas > 0 ? (
+            <Pendiente
+              icono="notifications-outline"
+              numero={nuevas}
+              titulo={nuevas === 1 ? 'Tienes 1 solicitud nueva' : `Tienes ${nuevas} solicitudes nuevas`}
+              detalle="Un conductor busca un servicio cerca de ti. Responde rápido para ganar el trabajo."
+              boton="Ver solicitudes"
+              onPress={irASolicitudes}
+            />
+          ) : null}
+
           {s?.porCompletar > 0 ? (
-            <Accion
+            <Pendiente
               icono="construct-outline"
+              numero={s.porCompletar}
               titulo={s.porCompletar === 1 ? 'Te falta 1 servicio por completar' : `Te faltan ${s.porCompletar} servicios por completar`}
-              detalle="Los elegiste al registrarte. Agrega precio y foto para aparecer en más búsquedas."
+              detalle="Los elegiste al registrarte. Agrega precio y foto para aparecer en las búsquedas."
+              boton="Completar servicios"
               onPress={irAServicios}
+            />
+          ) : null}
+
+          {perfilPendiente.length ? (
+            <Pendiente
+              icono="storefront-outline"
+              numero={perfilPendiente.length}
+              titulo="Completa tu perfil"
+              detalle={`Te falta: ${listaLegible(perfilPendiente)}.`}
+              boton="Completar perfil"
+              onPress={() => navigation.navigate('PerfilNegocio')}
             />
           ) : null}
 
@@ -266,8 +330,8 @@ const TallerInicio = ({navigation, route}) => {
 
           <T style={st.seccion}>Accesos rápidos</T>
           <Accion icono="construct-outline" titulo="Mis servicios" detalle="Crea, edita y publica lo que ofreces." onPress={irAServicios} />
-          <Accion icono="clipboard-outline" titulo="Solicitudes" detalle="Responde a los conductores que te buscan." onPress={irASolicitudes} />
-          <Accion icono="storefront-outline" titulo="Perfil del negocio" detalle="Horario, dirección, contacto y documentos." onPress={() => navigation.navigate('PerfilNegocio')} />
+          <Accion icono="clipboard-outline" titulo="Solicitudes" detalle={nuevas ? `${nuevas} ${nuevas === 1 ? 'nueva' : 'nuevas'} por responder.` : 'Responde a los conductores que te buscan.'} onPress={irASolicitudes} punto={nuevas > 0} />
+          <Accion icono="storefront-outline" titulo="Perfil del negocio" detalle={perfilPendiente.length ? `Pendiente: ${listaLegible(perfilPendiente)}.` : 'Horario, dirección, contacto y documentos.'} onPress={() => navigation.navigate('PerfilNegocio')} punto={perfilPendiente.length > 0} />
 
           <T style={st.lema}>{brand.promise}</T>
         </View>
@@ -326,6 +390,16 @@ const st = StyleSheet.create({
   accionIcono: {width: 40, height: 40, borderRadius: 20, backgroundColor: brand.yellowSoft, alignItems: 'center', justifyContent: 'center', marginRight: 12},
   accionTitulo: {fontFamily: fonts.bold, fontSize: 15, color: colors.text},
   accionDetalle: {fontFamily: fonts.regular, fontSize: 13, color: colors.muted, marginTop: 2},
+  punto: {position: 'absolute', top: 0, right: 0, width: 12, height: 12, borderRadius: 6, backgroundColor: colors.error, borderWidth: 2, borderColor: '#FFFFFF'},
+  pendiente: {backgroundColor: brand.yellow, borderRadius: radius.l, padding: 16, marginBottom: 12, ...shadow.card},
+  pendienteFila: {flexDirection: 'row', alignItems: 'center'},
+  pendienteIcono: {width: 46, height: 46, borderRadius: 23, backgroundColor: brand.navy, alignItems: 'center', justifyContent: 'center', marginRight: 12},
+  pendienteNumero: {position: 'absolute', top: -4, right: -4, minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 5, backgroundColor: colors.error, borderWidth: 2, borderColor: brand.yellow, alignItems: 'center', justifyContent: 'center'},
+  pendienteNumeroTexto: {fontFamily: fonts.extrabold, fontSize: 11, color: '#FFFFFF'},
+  pendienteTitulo: {fontFamily: fonts.extrabold, fontSize: 16, lineHeight: 21, color: brand.navyDeep},
+  pendienteDetalle: {fontFamily: fonts.medium, fontSize: 13, lineHeight: 18, color: brand.navyDeep, marginTop: 2, opacity: 0.85},
+  pendienteBoton: {flexDirection: 'row', alignItems: 'center', justifyContent: 'center', alignSelf: 'stretch', backgroundColor: brand.navy, borderRadius: radius.pill, paddingVertical: 11, marginTop: 12},
+  pendienteBotonTexto: {fontFamily: fonts.bold, fontSize: 14, color: brand.yellow, marginRight: 6},
   lema: {fontFamily: 'Poppins-Italic', fontSize: 14, color: colors.muted, textAlign: 'center', marginTop: 18},
 });
 

@@ -15,6 +15,7 @@ import RadioSelector from '../screens/perimeter-map';
 import MisSolicitudesScreen from '../screens/misSolicitudes';
 import TallerInicio from '../screens/tallerInicio';
 import SolicitudesTallerScreen from '../screens/solicitudesTaller';
+import { useConteoSolicitudesNuevas } from '../utils/solicitudesNuevas';
 import {
   Category,
   CategoryLight,
@@ -736,8 +737,12 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
   // Márgenes del sistema: los aplica MainActivity (Android) y App.tsx (iOS).
   const insets = {top: 0, bottom: 0};
 
+  // Punto rojo en Solicitudes cuando el taller tiene solicitudes sin ver.
+  const solicitudesNuevas = useConteoSolicitudesNuevas();
+
   const renderNormalTab = (route) => {
     const { options } = descriptors[route.key];
+    const aviso = route.name === 'MisSolicitudes' && solicitudesNuevas > 0 ? solicitudesNuevas : 0;
     const label = TAB_LABELS[route.name] || options.tabBarLabel || options.title || route.name;
     const IconComponent = options.tabBarIcon;
     const ActiveIcon = options.activeTabBarIcon || IconComponent;
@@ -758,13 +763,18 @@ const CustomTabBar = ({ state, descriptors, navigation }) => {
         onPress={onPress}
         accessibilityRole="tab"
         accessibilityState={{ selected: isFocused }}
-        accessibilityLabel={label}
+        accessibilityLabel={aviso ? `${label}, ${aviso} ${aviso === 1 ? 'nueva' : 'nuevas'}` : label}
         activeOpacity={0.7}
         style={tabStyles.tab}>
         <View style={[tabStyles.iconWrap, isFocused && tabStyles.iconWrapOn]}>
           <View style={tabStyles.iconScale}>
             {isFocused ? <ActiveIcon /> : <IconComponent />}
           </View>
+          {aviso ? (
+            <View style={tabStyles.aviso}>
+              <Text style={tabStyles.avisoTexto} maxFontSizeMultiplier={1}>{aviso > 9 ? '9+' : aviso}</Text>
+            </View>
+          ) : null}
         </View>
         <Text
           numberOfLines={1}
@@ -854,6 +864,21 @@ const TAB_LABELS = {
 };
 
 const tabStyles = StyleSheet.create({
+  aviso: {
+    position: 'absolute',
+    top: -4,
+    right: 6,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
+    paddingHorizontal: 4,
+    backgroundColor: '#E5484D',
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avisoTexto: { color: '#FFFFFF', fontSize: 10, fontWeight: '800' },
   bar: {
     backgroundColor: '#FFFFFF',
     borderTopWidth: 1,

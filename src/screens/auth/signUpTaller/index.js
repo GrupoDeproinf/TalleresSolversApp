@@ -33,7 +33,7 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import api from '../../../../axiosInstance';
 import {C, Field, PrimaryButton, Banner, Chip, Card, StepHeader} from '../../../components/registro/ui';
 import TermsModal from '../../../components/registro/TermsModal';
-import MetodosPago, {METODOS_PAGO, datosParaEnviar} from '../../../components/registro/MetodosPago';
+import {METODOS_PAGO, datosParaEnviar} from '../../../components/registro/MetodosPago';
 import SelectorEspecialidades from '../../../components/registro/SelectorEspecialidades';
 import LocationPicker from '../../../components/registro/LocationPicker';
 import {elegirArchivo, archivoABase64} from '../../../components/registro/mediaPicker';
@@ -496,6 +496,35 @@ const SignUpTaller = ({navigation}) => {
     return true;
   };
 
+  // Observación 1.4.6: la dirección y el estado del comprobante se llenan
+  // solos, pero solo si el taller aún no los escribió.
+  const [domicilioAviso, setDomicilioAviso] = useState('');
+  const formRef = useRef(f);
+  formRef.current = f;
+  const usarDomicilio = domicilio => {
+    const direccion = String(domicilio?.direccion || '').replace(/\s+/g, ' ').trim();
+    const estado = ESTADOS.some(e => e.value === domicilio?.estado) ? domicilio.estado : '';
+    const actual = formRef.current;
+    const llenarDireccion = direccion.length >= 8 && String(actual.direccion || '').trim().length < 8;
+    const llenarEstado = !!estado && !actual.estado;
+    if (!llenarDireccion && !llenarEstado) return;
+    setF(prev => ({
+      ...prev,
+      ...(llenarDireccion && String(prev.direccion || '').trim().length < 8 ? {direccion} : {}),
+      ...(llenarEstado && !prev.estado ? {estado} : {}),
+    }));
+    // Con la dirección escrita se busca el pin en el mapa, como si la tecleara.
+    if (llenarDireccion) direccionEditadaRef.current = true;
+    setTouched(prev => ({...prev, ...(llenarDireccion ? {direccion: true} : {}), ...(llenarEstado ? {estado: true} : {})}));
+    setDomicilioAviso(
+      llenarDireccion && llenarEstado
+        ? 'Llenamos la dirección y el estado con los datos de tu RIF. Revísalos y agrega una referencia (ej: frente a la plaza).'
+        : llenarDireccion
+          ? 'Llenamos la dirección con los datos de tu RIF. Revísala y agrega una referencia (ej: frente a la plaza).'
+          : 'Elegimos el estado según tu RIF. Revisa que sea el correcto.',
+    );
+  };
+
   const compararConLeido = leido => {
     const soloNumeros = t => onlyDigits(t);
     const mismaLetra = leido.startsWith('?') || leido[0] === f.rifPrefijo;
@@ -534,10 +563,11 @@ const SignUpTaller = ({navigation}) => {
         const documento = await archivoABase64(rifDocUri);
         const {data} = await api.post(
           '/usuarios/validarRifDocumento',
-          {rif: rifDeclarado, nombre: f.nombre.trim(), documento},
+          {rif: rifDeclarado, nombre: f.nombre.trim(), documento, domicilio: true},
           {timeout: 45000},
         );
         if (cancelado) return;
+        usarDomicilio(data?.domicilio);
         const leido = /^[A-Z?]-\d{8}-\d$/.test(data?.rifDocumento || '') ? data.rifDocumento : '';
         rifLeidoRef.current = {uri: rifDocUri, texto: leido};
         if (!leido) {
@@ -860,11 +890,14 @@ const SignUpTaller = ({navigation}) => {
                     rifCheck.estado === 'no_coincide' && {color: C.error},
                   ]}>
                   {rifCheck.estado === 'revisando'
-                    ? 'Leyendo el número de tu RIF…'
+                    ? 'Leyendo tu RIF…'
                     : rifCheck.estado === 'verificado'
                       ? `✓ ${rifCheck.mensaje}`
                       : rifCheck.mensaje}
                 </Text>
+              ) : null}
+              {d.key === 'rifIdFiscal' && file && domicilioAviso ? (
+                <Text style={[st.docHelp, {marginTop: 4, color: C.ok}]}>✓ También llenamos tu dirección y estado con el RIF: revísalos abajo.</Text>
               ) : null}
               {d.key === 'rifIdFiscal' && file && rifCheck.estado === 'no_coincide' && rifCheck.leido ? (
                 <TouchableOpacity
@@ -938,6 +971,9 @@ const SignUpTaller = ({navigation}) => {
         }}
         onBlur={touch('direccion')} error={show('direccion')}
         ok={touched.direccion && !errores.direccion} multiline inputStyle={{minHeight: 56, textAlignVertical: 'top'}} />
+      {domicilioAviso ? (
+        <Text style={[st.help, {marginTop: -8, marginBottom: 12, color: C.ok}]}>✓ {domicilioAviso}</Text>
+      ) : null}
 
       <Text style={st.label}>Ubicación en el mapa</Text>
       {tienePin ? (
@@ -1000,7 +1036,6 @@ const SignUpTaller = ({navigation}) => {
   );
 
   const cupo = planGratis?.cantidad_servicios;
-  const metodosMarcados = METODOS_PAGO.reduce((acc, m) => ({...acc, [m.value]: f.metodosPago.includes(m.value)}), {});
   const paso3 = (
     <>
       <StepHeader step={3} total={TOTAL} savedLabel="Se guarda automáticamente" title="Especialidades" subtitle="Selecciona las áreas principales que trabaja tu negocio y los servicios que haces. El primero que elijas será tu especialidad destacada." />
@@ -1023,26 +1058,15 @@ const SignUpTaller = ({navigation}) => {
       ) : null}
       {show('categorias') ? <Text style={st.err}>{show('categorias')}</Text> : null}
 
-      <Text style={[st.label, {marginTop: 16}]}>Métodos de pago que aceptas <Text style={st.opt}>(opcional)</Text></Text>
-      <Text style={st.help}>Marca los que recibes. Si quieres, escribe de una vez los datos para que te paguen.</Text>
-      <MetodosPago
-        seleccion={metodosMarcados}
-        datos={f.metodosPagoDatos}
-        onChange={(sel, datos) =>
-          setF(prev => ({
-            ...prev,
-            metodosPago: METODOS_PAGO.filter(m => sel[m.value]).map(m => m.value),
-            metodosPagoDatos: datos,
-          }))
-        }
-      />
-
       <Card style={{marginTop: 12, backgroundColor: '#F2F4FF', borderColor: '#D9DEFA'}}>
         <Text style={st.cardTitle}>Tu plan gratuito</Text>
         <Text style={st.cardBody}>
           {cupo ? `Incluye hasta ${cupo} servicios publicados` : 'Incluye tus primeros servicios publicados'}
           {planGratis?.vigencia ? ` durante ${planGratis.vigencia} días` : ''}. Empieza a contar cuando aprobemos tu negocio;
           el plan pago lo eliges después, cuando el gratuito esté por vencer.
+        </Text>
+        <Text style={[st.cardBody, {marginTop: 6}]}>
+          Los métodos de pago, el horario y tus redes los completas después en tu perfil.
         </Text>
       </Card>
 
