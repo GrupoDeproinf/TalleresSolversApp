@@ -242,8 +242,8 @@ const Progreso = ({ paso }) => (
 );
 
 /** Fila del resumen del paso 3, con acceso directo para corregir. */
-const FilaResumen = ({ etiqueta, valor, onEditar }) => (
-  <View style={s.filaResumen}>
+const FilaResumen = ({ etiqueta, valor, onEditar, ultima }) => (
+  <View style={[s.filaResumen, ultima && { borderBottomWidth: 0 }]}>
     <View style={{ flex: 1 }}>
       <AppText variant="caption" color={colors.muted}>
         {etiqueta}
@@ -618,7 +618,7 @@ const SolicitudServicio = () => {
         </Card>
       ) : null}
 
-      <AppText variant="subtitle" style={s.etiqueta}>
+      <AppText variant="subtitle" style={[s.etiqueta, !(nombreServicio || nombreTaller) && { marginTop: 0 }]}>
         Tu vehículo
       </AppText>
       {cargandoVehiculos && !vehiculos.length ? (
@@ -628,14 +628,14 @@ const SolicitudServicio = () => {
       ) : errorVehiculos && !vehiculos.length ? (
         <Banner text={errorVehiculos} actionLabel="Reintentar" onAction={cargarVehiculos} />
       ) : !vehiculos.length ? (
-        <Card style={s.sinVehiculo} onPress={() => navigation.navigate('VehiclesScreen')} accessibilityLabel="Agregar vehículo">
+        <Card style={[s.sinVehiculo, falta && !vehicle && s.campoError, { borderWidth: 1.5, borderColor: falta && !vehicle ? colors.error : 'transparent' }]} onPress={() => navigation.navigate('VehiclesScreen')} accessibilityLabel="Agregar vehículo">
           <View style={s.vehiculoIcono}>
             <Plus size={22} color={colors.navy} strokeWidth={2.4} />
           </View>
           <View style={{ flex: 1 }}>
             <AppText variant="subtitle">Agrega tu vehículo</AppText>
             <AppText variant="caption" color={colors.muted}>
-              Lo necesitamos para que el taller sepa qué carro va a atender. Al guardarlo vuelves aquí.
+              Lo necesitamos para que el taller sepa qué carro va a atender.
             </AppText>
           </View>
         </Card>
@@ -847,7 +847,7 @@ const SolicitudServicio = () => {
           valor={locationManuallyModified ? 'Marcada en el mapa' : 'Tu ubicación actual'}
           onEditar={() => irAPaso(2)}
         />
-        <FilaResumen etiqueta="Urgencia" valor={urgencia} onEditar={() => irAPaso(2)} />
+        <FilaResumen etiqueta="Urgencia" valor={urgencia} onEditar={() => irAPaso(2)} ultima />
       </Card>
     </>
   );
