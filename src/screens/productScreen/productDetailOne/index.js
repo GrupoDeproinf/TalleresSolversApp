@@ -1131,6 +1131,8 @@ const ProductDetailOne = ({ navigation }) => {
         visible={emergencyModalVisible}
         onClose={() => setEmergencyModalVisible(false)}
         uidTaller={tallerDetailUid}
+        nombreTaller={dataTaller?.nombre || dataTaller?.nombre_taller || ''}
+        servicio={{categoriaId: DataService?.uid_categoria, nombre: DataService?.nombre_servicio}}
       />
 
       {renderLoading ? (

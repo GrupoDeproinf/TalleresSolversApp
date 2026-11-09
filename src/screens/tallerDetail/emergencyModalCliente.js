@@ -513,7 +513,7 @@ const VehicleSelectionModalContent = ({ onClose, onSelectVehicle }) => {
  * @param {() => void} onClose — al cerrar modal (backdrop o botones)
  * @param {string} [uidTaller] — uid del taller (desde detalle); se envía a SolicitudServicio
  */
-export default function TallerDetailEmergencyModal({ visible, onClose, uidTaller }) {
+export default function TallerDetailEmergencyModal({ visible, onClose, uidTaller, nombreTaller, servicio }) {
   const navigation = useNavigation();
   const [step, setStep] = useState('options');
   const [checkingActiveSolicitud, setCheckingActiveSolicitud] = useState(false);
@@ -522,8 +522,26 @@ export default function TallerDetailEmergencyModal({ visible, onClose, uidTaller
     if (!visible) {
       setStep('options');
       setCheckingActiveSolicitud(false);
+      return;
     }
+    // Sin pasos intermedios: se revisa si ya hay una solicitud en espera y se
+    // abre el formulario (el vehículo se elige dentro del formulario).
+    handleOpenVehicleSelection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  const irAlFormulario = () => {
+    onClose();
+    setStep('options');
+    const params = {};
+    if (uidTaller != null && String(uidTaller).trim() !== '') {
+      params.uid_taller = String(uidTaller).trim();
+      if (nombreTaller) params.nombre_taller = String(nombreTaller).trim();
+    }
+    if (servicio?.categoriaId) params.categoriaId = String(servicio.categoriaId);
+    if (servicio?.nombre) params.nombre_servicio = String(servicio.nombre).trim();
+    navigation.navigate('SolicitudServicio', params);
+  };
 
   const handleClose = () => {
     onClose();
@@ -537,7 +555,7 @@ export default function TallerDetailEmergencyModal({ visible, onClose, uidTaller
       const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
       const uid = userInfo?.uid ?? userInfo?.id;
       if (!uid) {
-        setStep('vehicle');
+        irAlFormulario();
         return;
       }
 
@@ -557,10 +575,10 @@ export default function TallerDetailEmergencyModal({ visible, onClose, uidTaller
       if (singleItem?.id) {
         setStep('blocked');
       } else {
-        setStep('vehicle');
+        irAlFormulario();
       }
     } catch (_error) {
-      setStep('vehicle');
+      irAlFormulario();
     } finally {
       setCheckingActiveSolicitud(false);
     }
@@ -589,11 +607,17 @@ export default function TallerDetailEmergencyModal({ visible, onClose, uidTaller
           alignItems: 'center',
         }}>
         {step === 'options' && (
-          <EmergencyModalContent
-            onClose={handleClose}
-            onSolicitarServicio={handleOpenVehicleSelection}
-            checkingActiveSolicitud={checkingActiveSolicitud}
-          />
+          <View
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: 20,
+              paddingVertical: 24,
+              paddingHorizontal: 32,
+              alignItems: 'center',
+            }}>
+            <ActivityIndicator size="large" color="#1F2344" />
+            <Text style={{ marginTop: 12, fontSize: 15, color: '#1F2344' }}>Un momento…</Text>
+          </View>
         )}
         {step === 'vehicle' && (
           <VehicleSelectionModalContent

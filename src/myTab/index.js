@@ -589,6 +589,18 @@ const EmergencyModalProvider = ({ children }) => {
     setStep('options');
   };
 
+  // Sin pasos intermedios: al tocar Emergencia se revisa si ya hay una
+  // solicitud en espera y se abre el formulario (el vehículo se elige ahí).
+  const irAlFormulario = () => {
+    handleClose();
+    navigation.navigate('SolicitudServicio');
+  };
+
+  useEffect(() => {
+    if (visible) handleOpenVehicleSelection();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible]);
+
   const handleOpenVehicleSelection = async () => {
     try {
       setCheckingActiveSolicitud(true);
@@ -596,7 +608,7 @@ const EmergencyModalProvider = ({ children }) => {
       const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
       const uid = userInfo?.uid ?? userInfo?.id;
       if (!uid) {
-        setStep('vehicle');
+        irAlFormulario();
         return;
       }
 
@@ -616,10 +628,10 @@ const EmergencyModalProvider = ({ children }) => {
       if (singleItem?.id) {
         setStep('blocked');
       } else {
-        setStep('vehicle');
+        irAlFormulario();
       }
     } catch (_error) {
-      setStep('vehicle');
+      irAlFormulario();
     } finally {
       setCheckingActiveSolicitud(false);
     }
@@ -650,11 +662,17 @@ const EmergencyModalProvider = ({ children }) => {
             alignItems: 'center',
           }}>
           {step === 'options' && (
-            <EmergencyModalContent
-              onClose={handleClose}
-              onSolicitarServicio={handleOpenVehicleSelection}
-              checkingActiveSolicitud={checkingActiveSolicitud}
-            />
+            <View
+              style={{
+                backgroundColor: '#FFFFFF',
+                borderRadius: 20,
+                paddingVertical: 24,
+                paddingHorizontal: 32,
+                alignItems: 'center',
+              }}>
+              <ActivityIndicator size="large" color="#1F2344" />
+              <Text style={{ marginTop: 12, fontSize: 15, color: '#1F2344' }}>Un momento…</Text>
+            </View>
           )}
           {step === 'vehicle' && (
             <VehicleSelectionModalContent

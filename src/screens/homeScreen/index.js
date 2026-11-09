@@ -466,6 +466,7 @@ const HomeScreen = () => {
 
   const [firstName, setFirstName] = useState('');
   const [solicitudActiva, setSolicitudActiva] = useState(null);
+  const [solicitudRevisada, setSolicitudRevisada] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -476,7 +477,7 @@ const HomeScreen = () => {
           const u = j ? JSON.parse(j) : null;
           if (!active || !u) return;
           setFirstName(String(u?.nombre || '').trim().split(/\s+/)[0] || '');
-          if (!u?.uid) return;
+          if (!u?.uid || u?.typeUser !== 'Cliente') return;
           const r = await api.post('usuarios/getSolicitudesByUsuario', {
             uid_usuario: u.uid,
             solo_ultima: true,
@@ -489,9 +490,15 @@ const HomeScreen = () => {
               : Array.isArray(raw) && raw.length > 0
               ? raw[0]
               : null;
-          if (active) setSolicitudActiva(item);
+          if (active) {
+            setSolicitudActiva(item);
+            setSolicitudRevisada(true);
+          }
         } catch (_) {
-          if (active) setSolicitudActiva(null);
+          if (active) {
+            setSolicitudActiva(null);
+            setSolicitudRevisada(true);
+          }
         }
       })();
       return () => {
@@ -770,6 +777,26 @@ const HomeScreen = () => {
                 </AppText>
               </View>
               <ChevronRight color={colors.yellow} size={22} strokeWidth={2.5} />
+            </View>
+          </Card>
+        ) : solicitudRevisada && !debouncedQuery ? (
+          // Atajo para quien no sabe qué taller elegir: describe el problema y
+          // los talleres cercanos le mandan su propuesta.
+          <Card
+            style={homeStyles.pedirCard}
+            onPress={() => navigation.navigate('SolicitudServicio')}
+            accessibilityLabel="Pedir presupuestos a talleres cercanos">
+            <View style={homeStyles.activeRow}>
+              <View style={homeStyles.pedirIcono}>
+                <Wrench color={colors.navy} size={22} strokeWidth={2.2} />
+              </View>
+              <View style={{flex: 1}}>
+                <AppText variant="subtitle">¿No sabes qué taller elegir?</AppText>
+                <AppText variant="caption" color={colors.muted}>
+                  Cuéntanos qué le pasa a tu carro y los talleres cercanos te mandan su precio.
+                </AppText>
+              </View>
+              <ChevronRight color={colors.navy} size={22} strokeWidth={2.5} />
             </View>
           </Card>
         ) : null}
@@ -2002,6 +2029,20 @@ const homeStyles = StyleSheet.create({
     borderColor: colors.navy,
   },
   activeRow: {flexDirection: 'row', alignItems: 'center', gap: space.s},
+  pedirCard: {
+    marginHorizontal: space.m,
+    borderWidth: 1.5,
+    borderColor: colors.yellow,
+  },
+  pedirIcono: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.yellow,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: space.xs,
+  },
 });
 
 const appAlertModalStyles = StyleSheet.create({

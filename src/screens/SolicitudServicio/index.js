@@ -1,29 +1,64 @@
+// Solicitud de servicio del conductor (Fase 1 de la mejora de experiencia).
+//
+// Tres pasos cortos en vez de una pantalla larga:
+//   1. Tu carro y qué necesita (vehículo, categoría, descripción, fotos)
+//   2. Dónde y qué tan urgente
+//   3. Revisar y enviar
+// Después, una pantalla que explica qué pasa ahora y lleva a seguir la solicitud.
+//
+// Se abre desde la pestaña Emergencia, desde un servicio o desde un taller.
+// Parámetros opcionales: vehicle, uid_taller, nombre_taller, categoriaId,
+// nombre_servicio (llegan desde el servicio o el taller para no repetir datos).
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
-  Text,
   ScrollView,
-  TouchableOpacity,
+  Pressable,
   TextInput,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   PermissionsAndroid,
   Image,
   Modal,
+  StyleSheet,
+  BackHandler,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import Icons from 'react-native-vector-icons/FontAwesome';
+import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import { WebView } from 'react-native-webview';
 import Geolocation from '@react-native-community/geolocation';
 import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
-import DocumentPicker from 'react-native-document-picker';
-import Icons2 from 'react-native-vector-icons/Ionicons';
 import { Dropdown } from 'react-native-element-dropdown';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import appColors from '../../themes/appColors';
+import {
+  ArrowLeft,
+  Car,
+  Camera,
+  Image as ImageIcon,
+  MapPin,
+  Pencil,
+  Plus,
+  Send,
+  X,
+  CheckCircle2,
+  ClipboardList,
+  Bell,
+  HandCoins,
+} from 'lucide-react-native';
+import {
+  AppText,
+  Banner,
+  BottomSheet,
+  Button,
+  Card,
+  colors,
+  space,
+  radius,
+  fonts,
+  shadow,
+  TOUCH,
+} from '../../ui';
 import styles from './style.css';
 import api from '../../../axiosInstance';
 
@@ -141,11 +176,6 @@ window.flyToLocation=function(lat,lng){
 
 const MIN_DESCRIPCION = 20;
 const MAX_DESCRIPCION = 125;
-const URGENCIA_OPTIONS = [
-  { value: 'Normal', label: 'Normal' },
-  { value: 'Urgente', label: 'Urgente' },
-  { value: 'Emergencia', label: 'Emergencia' },
-];
 
 /** Primera letra en mayúscula, resto en minúsculas (por etiqueta de categoría). */
 const sentenceCase = raw => {
@@ -167,61 +197,147 @@ const tituloDesdeDescripcion = texto => {
   return `${corte.slice(0, corte.lastIndexOf(' ') > 20 ? corte.lastIndexOf(' ') : 50)}…`;
 };
 
+
+const URGENCIAS = [
+  { value: 'Normal', label: 'Normal', ayuda: 'Puedo esperar unos días' },
+  { value: 'Urgente', label: 'Urgente', ayuda: 'Lo necesito lo antes posible' },
+  { value: 'Emergencia', label: 'Emergencia', ayuda: 'El carro no anda o me dejó accidentado' },
+];
+
+const PASOS = [
+  { titulo: '¿Qué necesita tu carro?', corto: 'El problema' },
+  { titulo: '¿Dónde y qué tan urgente?', corto: 'Ubicación' },
+  { titulo: 'Revisa y envía', corto: 'Enviar' },
+];
+
+const nombreVehiculo = v =>
+  [v?.vehiculo_marca, v?.vehiculo_modelo].filter(Boolean).join(' ') || 'Vehículo';
+const detalleVehiculo = v =>
+  [v?.vehiculo_anio, v?.vehiculo_placa || v?.placa, v?.KM ? `${v.KM} km` : '']
+    .map(x => String(x || '').trim())
+    .filter(Boolean)
+    .join(' · ');
+
+const leerUsuario = async () => {
+  try {
+    const json = await AsyncStorage.getItem('@userInfo');
+    return json ? JSON.parse(json) : null;
+  } catch (_) {
+    return null;
+  }
+};
+
+/** Barra de progreso de 3 tramos con el nombre del paso. */
+const Progreso = ({ paso }) => (
+  <View style={s.progreso} accessibilityLabel={`Paso ${paso} de ${PASOS.length}`}>
+    <View style={s.progresoBarras}>
+      {PASOS.map((_, i) => (
+        <View key={i} style={[s.progresoTramo, i < paso && s.progresoTramoOn]} />
+      ))}
+    </View>
+    <AppText variant="caption" color={colors.onNavyMuted}>
+      Paso {paso} de {PASOS.length} · {PASOS[paso - 1].corto}
+    </AppText>
+  </View>
+);
+
+/** Fila del resumen del paso 3, con acceso directo para corregir. */
+const FilaResumen = ({ etiqueta, valor, onEditar }) => (
+  <View style={s.filaResumen}>
+    <View style={{ flex: 1 }}>
+      <AppText variant="caption" color={colors.muted}>
+        {etiqueta}
+      </AppText>
+      <AppText variant="body" numberOfLines={3}>
+        {valor}
+      </AppText>
+    </View>
+    {onEditar ? (
+      <Pressable
+        onPress={onEditar}
+        hitSlop={8}
+        accessibilityRole="button"
+        accessibilityLabel={`Cambiar ${etiqueta.toLowerCase()}`}
+        style={s.editar}>
+        <Pencil size={16} color={colors.navy} strokeWidth={2.2} />
+        <AppText variant="caption">Cambiar</AppText>
+      </Pressable>
+    ) : null}
+  </View>
+);
+
 const SolicitudServicio = () => {
   const navigation = useNavigation();
   const route = useRoute();
-  const vehicle = route.params?.vehicle ?? null;
-  const uid_taller = route.params?.uid_taller ?? null;
+  const params = route.params || {};
+  const uid_taller = String(params.uid_taller || '').trim() || null;
+  const nombreTaller = String(params.nombre_taller || '').trim();
+  const nombreServicio = String(params.nombre_servicio || '').trim();
 
+  const [paso, setPaso] = useState(1);
+  const [intento, setIntento] = useState(0); // para mostrar qué falta al tocar Continuar
+
+  // Paso 1
+  const [vehiculos, setVehiculos] = useState(params.vehicle ? [params.vehicle] : []);
+  const [vehicle, setVehicle] = useState(params.vehicle || null);
+  const [cargandoVehiculos, setCargandoVehiculos] = useState(!params.vehicle);
+  const [errorVehiculos, setErrorVehiculos] = useState('');
   const [categoriaOptions, setCategoriaOptions] = useState([]);
-  const [nombreSolicitud, setNombreSolicitud] = useState('');
-  const [categoriaId, setCategoriaId] = useState('');
-  const [descripcion, setDescripcion] = useState('');
-  const [fotos, setFotos] = useState([]);
-
-  const [photoModalVisible, setPhotoModalVisible] = useState(false);
-  const [photoModalTarget, setPhotoModalTarget] = useState('');
-  const [urgencia, setUrgencia] = useState('Normal');
   const [loadingCategories, setLoadingCategories] = useState(true);
-  const [sending, setSending] = useState(false);
-  const [confirmModalVisible, setConfirmModalVisible] = useState(false);
-  const [successModalVisible, setSuccessModalVisible] = useState(false);
+  const [categoriaId, setCategoriaId] = useState(String(params.categoriaId || ''));
+  const [descripcion, setDescripcion] = useState(nombreServicio ? `${nombreServicio}. ` : '');
+  const [fotos, setFotos] = useState([]);
+  const [photoModalVisible, setPhotoModalVisible] = useState(false);
+
+  // Paso 2
+  const [urgencia, setUrgencia] = useState('Normal');
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const locationWebViewRef = useRef(null);
-  const [mapSelection, setMapSelection] = useState({
-    latitude: 10.4806,
-    longitude: -66.9036,
-  });
+  const [mapSelection, setMapSelection] = useState({ latitude: 10.4806, longitude: -66.9036 });
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [buscandoUbicacion, setBuscandoUbicacion] = useState(true);
   const [locationManuallyModified, setLocationManuallyModified] = useState(false);
 
-  const descripcionLength = (descripcion || '').trim().length;
-  const descripcionValid =
-    descripcionLength >= MIN_DESCRIPCION && descripcionLength <= MAX_DESCRIPCION;
+  // Envío
+  const [sending, setSending] = useState(false);
+  const [errorEnvio, setErrorEnvio] = useState('');
+  const [enviada, setEnviada] = useState(false);
 
-  const setCurrentLocationAsDefault = useCallback(async () => {
+  const descripcionLength = (descripcion || '').trim().length;
+  const descripcionValid = descripcionLength >= MIN_DESCRIPCION && descripcionLength <= MAX_DESCRIPCION;
+
+  // ── Datos ────────────────────────────────────────────────────────────────
+  const cargarVehiculos = useCallback(async () => {
     try {
-      if (selectedLocation) return;
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
+      setCargandoVehiculos(true);
+      setErrorVehiculos('');
+      const user = await leerUsuario();
+      const uid = user?.uid ?? user?.id ?? '';
+      if (!uid) {
+        setErrorVehiculos('No encontramos tu sesión. Vuelve a iniciar sesión.');
+        return;
       }
-      Geolocation.getCurrentPosition(
-        position => {
-          const current = {
-            latitude: Number(position.coords.latitude.toFixed(6)),
-            longitude: Number(position.coords.longitude.toFixed(6)),
-          };
-          setMapSelection(current);
-          setSelectedLocation(current);
-        },
-        () => {},
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 10000 },
-      );
-    } catch (_) {}
-  }, [selectedLocation]);
+      const response = await api.post('usuarios/getVehiculosByUsuarioUid', { uid });
+      const data = response?.data;
+      const lista = Array.isArray(data) ? data : data?.data ?? [];
+      setVehiculos(lista);
+      setVehicle(actual => {
+        if (actual && lista.some(v => v.id === actual.id)) return actual;
+        return lista.find(v => v.por_defecto === true) || lista[0] || null;
+      });
+    } catch (err) {
+      setErrorVehiculos('No pudimos cargar tus vehículos. Revisa tu conexión.');
+    } finally {
+      setCargandoVehiculos(false);
+    }
+  }, []);
+
+  // Al volver de "Mis vehículos" (por ejemplo, tras agregar uno) se recarga la lista.
+  useFocusEffect(
+    useCallback(() => {
+      cargarVehiculos();
+    }, [cargarVehiculos]),
+  );
 
   const fetchCategories = useCallback(async () => {
     try {
@@ -229,18 +345,11 @@ const SolicitudServicio = () => {
       const response = await api.get('/usuarios/getActiveCategories', {
         headers: { 'Content-Type': 'application/json' },
       });
-      const result = response?.data;
-      const list = result?.categories ?? [];
-      const options = list
-        .filter((c) => c.id && c.nombre)
-        .map((c) => ({
-          label: sentenceCase(c.nombre),
-          value: c.id,
-        }));
-      setCategoriaOptions(options);
-      if (options.length && !categoriaId) setCategoriaId(options[0].value);
+      const list = response?.data?.categories ?? [];
+      setCategoriaOptions(
+        list.filter(c => c.id && c.nombre).map(c => ({ label: sentenceCase(c.nombre), value: c.id })),
+      );
     } catch (err) {
-      console.error('Error cargando categorías:', err);
       setCategoriaOptions([]);
     } finally {
       setLoadingCategories(false);
@@ -251,34 +360,91 @@ const SolicitudServicio = () => {
     fetchCategories();
   }, [fetchCategories]);
 
-  useEffect(() => {
-    setCurrentLocationAsDefault();
-  }, [setCurrentLocationAsDefault]);
-
-  const fileToBase64 = uri =>
-    new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.onload = () => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(xhr.response);
-      };
-      xhr.onerror = reject;
-      xhr.open('GET', uri);
-      xhr.responseType = 'blob';
-      xhr.send();
-    });
-
-  const applyPhotoResult = (target, uri, b64) => {
-    if (target === 'foto') {
-      setFotos(prev => [...prev, { uri, base64: b64 }].slice(0, 5));
+  const tomarUbicacionActual = useCallback(async () => {
+    setBuscandoUbicacion(true);
+    try {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          setBuscandoUbicacion(false);
+          return;
+        }
+      }
+      Geolocation.getCurrentPosition(
+        position => {
+          const current = {
+            latitude: Number(position.coords.latitude.toFixed(6)),
+            longitude: Number(position.coords.longitude.toFixed(6)),
+          };
+          setMapSelection(current);
+          setSelectedLocation(prev => prev || current);
+          setBuscandoUbicacion(false);
+        },
+        () => setBuscandoUbicacion(false),
+        { enableHighAccuracy: true, timeout: 12000, maximumAge: 10000 },
+      );
+    } catch (_) {
+      setBuscandoUbicacion(false);
     }
+  }, []);
+
+  useEffect(() => {
+    tomarUbicacionActual();
+  }, [tomarUbicacionActual]);
+
+  // ── Navegación entre pasos ──────────────────────────────────────────────
+  const faltaEnPaso = n => {
+    if (n === 1) {
+      if (!vehicle) return 'Elige el vehículo (o agrega uno).';
+      if (!categoriaId) return 'Elige qué tipo de servicio necesitas.';
+      if (descripcionLength < MIN_DESCRIPCION)
+        return `Cuéntanos un poco más del problema (mínimo ${MIN_DESCRIPCION} letras).`;
+      return '';
+    }
+    if (n === 2) {
+      if (!selectedLocation) return 'Marca en el mapa dónde está el carro.';
+      return '';
+    }
+    return '';
   };
 
-  const openPhotoOptions = target => {
-    setPhotoModalTarget(target);
-    setPhotoModalVisible(true);
+  const scrollRef = useRef(null);
+  const irAPaso = n => {
+    setIntento(0);
+    setErrorEnvio('');
+    setPaso(n);
+    requestAnimationFrame(() => scrollRef.current?.scrollTo({ y: 0, animated: false }));
+  };
+
+  const continuar = () => {
+    if (faltaEnPaso(paso)) {
+      setIntento(i => i + 1);
+      return;
+    }
+    irAPaso(paso + 1);
+  };
+
+  const atras = useCallback(() => {
+    if (paso > 1) {
+      irAPaso(paso - 1);
+      return true;
+    }
+    navigation.goBack();
+    return true;
+  }, [paso, navigation]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (enviada) return undefined;
+      const sub = BackHandler.addEventListener('hardwareBackPress', atras);
+      return () => sub.remove();
+    }, [atras, enviada]),
+  );
+
+  // ── Fotos ───────────────────────────────────────────────────────────────
+  const agregarFotos = assets => {
+    const nuevas = (assets || []).filter(a => a?.uri).map(a => ({ uri: a.uri, base64: a.base64 || '' }));
+    if (nuevas.length) setFotos(prev => [...prev, ...nuevas].slice(0, 5));
   };
 
   const handlePickGallery = () => {
@@ -288,81 +454,33 @@ const SolicitudServicio = () => {
         { mediaType: 'photo', includeBase64: true, selectionLimit: 5 - fotos.length, quality: 0.4, maxWidth: 1024, maxHeight: 1024 },
         response => {
           if (response.didCancel || response.errorCode) return;
-          (response.assets || []).forEach(a => {
-            if (a.uri) applyPhotoResult(photoModalTarget, a.uri, a.base64 || '');
-          });
+          agregarFotos(response.assets);
         },
       );
     }, 400);
   };
 
-  const handlePickCamera = async () => {
+  const handlePickCamera = () => {
     setPhotoModalVisible(false);
     setTimeout(async () => {
       if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-        );
+        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
       }
       launchCamera(
         { mediaType: 'photo', includeBase64: true, quality: 0.4, maxWidth: 1024, maxHeight: 1024 },
         response => {
-          if (response.didCancel || response.error) return;
-          const asset = response.assets?.[0];
-          if (asset?.uri) applyPhotoResult(photoModalTarget, asset.uri, asset.base64 || '');
+          if (response.didCancel || response.errorCode) return;
+          agregarFotos(response.assets);
         },
       );
     }, 400);
   };
 
-  const handlePickDocument = () => {
-    setPhotoModalVisible(false);
-    setTimeout(async () => {
-      try {
-        const res = await DocumentPicker.pickSingle({
-          type: [DocumentPicker.types.allFiles],
-        });
-        const b64 = await fileToBase64(res.uri);
-        applyPhotoResult(photoModalTarget, res.uri, b64);
-      } catch (e) {
-        if (!DocumentPicker.isCancel(e)) console.warn(e);
-      }
-    }, 400);
-  };
+  const removePhoto = index => setFotos(prev => prev.filter((_, i) => i !== index));
 
-  const addPhoto = () => {
-    launchImageLibrary(
-      {
-        mediaType: 'photo',
-        selectionLimit: 5 - fotos.length,
-        includeBase64: true,
-        quality: 0.4,
-        maxWidth: 1024,
-        maxHeight: 1024,
-      },
-      response => {
-        if (response.didCancel || response.errorCode) return;
-        const newItems =
-          (response.assets || [])
-            .map(a => ({
-              uri: a.uri,
-              base64: a.base64 || '',
-            }))
-            .filter(item => !!item.uri) || [];
-        if (!newItems.length) return;
-        setFotos(prev => [...prev, ...newItems].slice(0, 5));
-      },
-    );
-  };
-
-  const removePhoto = (index) => {
-    setFotos((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const canSubmit = descripcionValid && categoriaId && vehicle && selectedLocation;
-
-  const handleLocationMessage = (event) => {
+  // ── Mapa ────────────────────────────────────────────────────────────────
+  const handleLocationMessage = event => {
     try {
       const msg = JSON.parse(event.nativeEvent.data);
       if (msg.type === 'confirm') {
@@ -373,15 +491,13 @@ const SolicitudServicio = () => {
       } else if (msg.type === 'requestLocation') {
         Geolocation.getCurrentPosition(
           pos => {
-            const lat = pos.coords.latitude;
-            const lng = pos.coords.longitude;
             locationWebViewRef.current?.injectJavaScript(
-              `window.flyToLocation(${lat}, ${lng}); true;`
+              `window.flyToLocation(${pos.coords.latitude}, ${pos.coords.longitude}); true;`,
             );
           },
           () => {
             locationWebViewRef.current?.injectJavaScript(
-              `var b=document.getElementById('locate-btn');if(b)b.classList.remove('loading'); true;`
+              `var b=document.getElementById('locate-btn');if(b)b.classList.remove('loading'); true;`,
             );
           },
           { enableHighAccuracy: true, timeout: 10000, maximumAge: 5000 },
@@ -390,42 +506,22 @@ const SolicitudServicio = () => {
     } catch (_) {}
   };
 
-
+  // ── Envío ───────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
-    if (!canSubmit) return;
-    if (!descripcionValid) {
-      Alert.alert(
-        'Revisa el formulario',
-        'La descripción del problema debe tener entre 20 y 125 caracteres.',
-      );
+    const falta = faltaEnPaso(1) || faltaEnPaso(2);
+    if (falta) {
+      setErrorEnvio(falta);
       return;
     }
-    if (!selectedLocation) {
-      Alert.alert(
-        'Ubicación requerida',
-        'Selecciona tu ubicación en el mapa para poder enviar la solicitud.',
-      );
-      return;
-    }
-    setConfirmModalVisible(false);
     setSending(true);
+    setErrorEnvio('');
     try {
-      let nombre_usuario = '';
-      let uid_usuario = '';
-      let phone = '';
-      try {
-        const jsonValue = await AsyncStorage.getItem('@userInfo');
-        const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-        nombre_usuario = (user?.nombre || user?.name || '').trim() || '';
-        uid_usuario = (user?.uid ?? user?.id ?? '').toString().trim() || '';
-        phone = (user?.phone || user?.telefono || '').toString().trim() || '';
-      } catch (_) {}
+      const user = await leerUsuario();
       const payload = {
-        nombre_usuario,
-        uid_usuario,
-        phone_usuario: phone,
-        // Req. 006: un solo campo. El título de la solicitud sale del
-        // comienzo de la descripción (lo usan las listas de los talleres).
+        nombre_usuario: String(user?.nombre || user?.name || '').trim(),
+        uid_usuario: String(user?.uid ?? user?.id ?? '').trim(),
+        phone_usuario: String(user?.phone || user?.telefono || '').trim(),
+        // Req. 006: un solo campo. El título sale del comienzo de la descripción.
         nombreSolicitud: tituloDesdeDescripcion(descripcion),
         vehiculo: vehicle || null,
         categoriaId,
@@ -434,298 +530,383 @@ const SolicitudServicio = () => {
         latitude: selectedLocation?.latitude ?? null,
         longitude: selectedLocation?.longitude ?? null,
         fotos: (fotos || []).map(f => f.base64).filter(Boolean),
-        ...(uid_taller != null && String(uid_taller).trim() !== ''
-          ? { uid_taller: String(uid_taller).trim() }
-          : {}),
+        ...(uid_taller ? { uid_taller } : {}),
       };
-      console.log('payload', payload);
       await api.post('usuarios/saveSolicitud', payload);
-      setSuccessModalVisible(true);
+      setEnviada(true);
     } catch (err) {
-      console.error('Error enviando solicitud:', err);
-      Alert.alert('Error', err?.response?.data?.message || err?.message || 'No se pudo enviar la solicitud.');
+      setErrorEnvio(
+        err?.response?.data?.message || 'No pudimos enviar tu solicitud. Revisa tu conexión e inténtalo de nuevo.',
+      );
     } finally {
       setSending(false);
     }
   };
 
-  const goToHome = () => {
-    setSuccessModalVisible(false);
+  const irAlInicio = () => navigation.reset({ index: 0, routes: [{ name: 'DrawerScreen' }] });
+  const verMiSolicitud = () => {
     navigation.reset({ index: 0, routes: [{ name: 'DrawerScreen' }] });
+    setTimeout(() => navigation.navigate('DrawerScreen', { screen: 'MisSolicitudes' }), 150);
   };
 
-  const vehicleLabel = vehicle
-    ? [vehicle.vehiculo_marca, vehicle.vehiculo_modelo].filter(Boolean).join(' ') || 'Vehículo'
-    : '';
-  const vehicleSummaryWithYear =
-    vehicleLabel && vehicle?.vehiculo_anio
-      ? `${vehicleLabel} (${vehicle.vehiculo_anio})`
-      : vehicleLabel || '—';
-  const categoryLabel =
-    categoriaOptions.find((c) => c.value === categoriaId)?.label ?? '—';
-  const descripcionPreview =
-    (descripcion || '').trim().length > 80
-      ? `${(descripcion || '').trim().slice(0, 80)}...`
-      : (descripcion || '').trim() || '—';
-  const locationPreview = selectedLocation
-    ? `${selectedLocation.latitude}, ${selectedLocation.longitude}`
-    : 'No seleccionada';
+  const categoryLabel = categoriaOptions.find(c => c.value === categoriaId)?.label || '';
+  const destino = uid_taller
+    ? nombreTaller || 'el taller que elegiste'
+    : categoryLabel
+    ? `los talleres de ${categoryLabel.toLowerCase()} cerca de ti`
+    : 'los talleres cerca de ti';
+  const falta = intento > 0 ? faltaEnPaso(paso) : '';
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} activeOpacity={0.7}>
-          <Icons name="angle-left" size={24} color={appColors.primary} />
-        </TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.headerTitle}>Solicitud de servicio</Text>
-          <Text style={styles.headerSubtitle}>Completa los datos para enviar tu solicitud</Text>
+  // ── Pantalla final ──────────────────────────────────────────────────────
+  if (enviada) {
+    const pasosSiguientes = [
+      {
+        icon: Bell,
+        texto: uid_taller
+          ? `${nombreTaller || 'El taller'} recibe tu solicitud ahora mismo.`
+          : 'Los talleres cerca de ti reciben tu solicitud ahora mismo.',
+      },
+      { icon: HandCoins, texto: 'Te mandan su propuesta con precio y fecha. Te avisamos con una notificación.' },
+      { icon: ClipboardList, texto: 'Comparas las propuestas en "Mis solicitudes" y aceptas la que prefieras.' },
+    ];
+    return (
+      <View style={[s.pantalla, { backgroundColor: colors.card }]}>
+        <ScrollView contentContainerStyle={s.finalContenido}>
+          <View style={s.finalIcono}>
+            <CheckCircle2 size={56} color={colors.ok} strokeWidth={2} />
+          </View>
+          <AppText variant="display" style={s.centro} accessibilityRole="header">
+            ¡Solicitud enviada!
+          </AppText>
+          <AppText variant="body" color={colors.muted} style={[s.centro, { marginTop: space.s }]}>
+            La enviamos a {destino}.
+          </AppText>
+
+          <AppText variant="subtitle" style={{ marginTop: space.xl, marginBottom: space.m }}>
+            ¿Qué pasa ahora?
+          </AppText>
+          {pasosSiguientes.map(({ icon: Icon, texto }, i) => (
+            <View key={i} style={s.siguiente}>
+              <View style={s.siguienteIcono}>
+                <Icon size={20} color={colors.navy} strokeWidth={2.2} />
+              </View>
+              <AppText variant="body" style={{ flex: 1 }}>
+                {texto}
+              </AppText>
+            </View>
+          ))}
+        </ScrollView>
+        <View style={s.pie}>
+          <Button title="Ver mi solicitud" variant="accent" onPress={verMiSolicitud} />
+          <Button title="Ir al inicio" variant="ghost" onPress={irAlInicio} style={{ marginTop: space.s }} />
         </View>
       </View>
+    );
+  }
 
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}>
+  // ── Pasos ───────────────────────────────────────────────────────────────
+  const paso1 = (
+    <>
+      {nombreServicio || nombreTaller ? (
+        <Card style={s.contexto}>
+          <AppText variant="caption" color={colors.muted}>
+            {uid_taller ? 'Le pides a' : 'Servicio'}
+          </AppText>
+          <AppText variant="subtitle" numberOfLines={2}>
+            {[nombreServicio, uid_taller ? nombreTaller : ''].filter(Boolean).join(' · ')}
+          </AppText>
+        </Card>
+      ) : null}
+
+      <AppText variant="subtitle" style={s.etiqueta}>
+        Tu vehículo
+      </AppText>
+      {cargandoVehiculos && !vehiculos.length ? (
+        <View style={s.cargando}>
+          <ActivityIndicator color={colors.navy} />
+        </View>
+      ) : errorVehiculos && !vehiculos.length ? (
+        <Banner text={errorVehiculos} actionLabel="Reintentar" onAction={cargarVehiculos} />
+      ) : !vehiculos.length ? (
+        <Card style={s.sinVehiculo} onPress={() => navigation.navigate('VehiclesScreen')} accessibilityLabel="Agregar vehículo">
+          <View style={s.vehiculoIcono}>
+            <Plus size={22} color={colors.navy} strokeWidth={2.4} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <AppText variant="subtitle">Agrega tu vehículo</AppText>
+            <AppText variant="caption" color={colors.muted}>
+              Lo necesitamos para que el taller sepa qué carro va a atender. Al guardarlo vuelves aquí.
+            </AppText>
+          </View>
+        </Card>
+      ) : (
+        <View style={{ gap: space.s }}>
+          {vehiculos.map(v => {
+            const on = vehicle?.id === v.id;
+            return (
+              <Pressable
+                key={v.id || nombreVehiculo(v)}
+                onPress={() => setVehicle(v)}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: on }}
+                style={[s.opcion, on && s.opcionOn]}>
+                <View style={[s.vehiculoIcono, on && { backgroundColor: colors.yellow }]}>
+                  <Car size={22} color={colors.navy} strokeWidth={2.2} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <AppText variant="subtitle" numberOfLines={1}>
+                    {nombreVehiculo(v)}
+                  </AppText>
+                  {detalleVehiculo(v) ? (
+                    <AppText variant="caption" color={colors.muted} numberOfLines={1}>
+                      {detalleVehiculo(v)}
+                    </AppText>
+                  ) : null}
+                </View>
+                <View style={[s.radio, on && s.radioOn]}>{on ? <View style={s.radioPunto} /> : null}</View>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+
+      <AppText variant="subtitle" style={s.etiqueta}>
+        Tipo de servicio
+      </AppText>
+      {loadingCategories ? (
+        <View style={s.cargando}>
+          <ActivityIndicator color={colors.navy} />
+        </View>
+      ) : (
+        <Dropdown
+          data={categoriaOptions}
+          labelField="label"
+          valueField="value"
+          placeholder="Elige una categoría"
+          searchPlaceholder="Buscar…"
+          value={categoriaId}
+          onChange={item => setCategoriaId(item?.value ?? '')}
+          style={[s.campo, falta && !categoriaId && s.campoError]}
+          placeholderStyle={s.campoPlaceholder}
+          selectedTextStyle={s.campoTexto}
+          itemTextStyle={s.campoTexto}
+          inputSearchStyle={s.campoTexto}
+          search={categoriaOptions.length > 8}
+        />
+      )}
+
+      <AppText variant="subtitle" style={s.etiqueta}>
+        ¿Qué le pasa o qué necesitas?
+      </AppText>
+      <TextInput
+        style={[s.campo, s.campoMultilinea, falta && !descripcionValid && s.campoError]}
+        value={descripcion}
+        onChangeText={t => setDescripcion(t && t.length > MAX_DESCRIPCION ? t.slice(0, MAX_DESCRIPCION) : t)}
+        placeholder="Ej: suenan los frenos al detenerme, o: cambio de aceite y filtro"
+        placeholderTextColor={colors.placeholder}
+        multiline
+        textAlignVertical="top"
+        accessibilityLabel="Describe el problema"
+      />
+      <AppText
+        variant="caption"
+        color={descripcionLength > 0 && descripcionLength < MIN_DESCRIPCION ? colors.warn : colors.muted}
+        style={{ marginTop: space.xs }}>
+        {descripcionLength < MIN_DESCRIPCION
+          ? `Mínimo ${MIN_DESCRIPCION} letras · te faltan ${MIN_DESCRIPCION - descripcionLength}`
+          : `${descripcionLength} de ${MAX_DESCRIPCION}`}
+      </AppText>
+
+      <AppText variant="subtitle" style={s.etiqueta}>
+        Fotos <AppText variant="caption" color={colors.muted}>(opcional, hasta 5)</AppText>
+      </AppText>
+      <AppText variant="caption" color={colors.muted} style={{ marginBottom: space.s }}>
+        Una foto del problema ayuda al taller a darte un precio más exacto.
+      </AppText>
+      <View style={s.fotos}>
+        {fotos.map((foto, index) => (
+          <View key={`${foto.uri}-${index}`}>
+            <Image source={{ uri: foto.uri }} style={s.foto} resizeMode="cover" />
+            <Pressable
+              style={s.fotoQuitar}
+              onPress={() => removePhoto(index)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel={`Quitar foto ${index + 1}`}>
+              <X size={14} color="#FFFFFF" strokeWidth={3} />
+            </Pressable>
+          </View>
+        ))}
+        {fotos.length < 5 ? (
+          <Pressable
+            style={s.fotoAgregar}
+            onPress={() => setPhotoModalVisible(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Agregar foto">
+            <Camera size={24} color={colors.navy} strokeWidth={2} />
+          </Pressable>
+        ) : null}
+      </View>
+    </>
+  );
+
+  const paso2 = (
+    <>
+      <AppText variant="subtitle" style={[s.etiqueta, { marginTop: 0 }]}>
+        ¿Dónde está el carro?
+      </AppText>
+      <Card style={[s.ubicacion, falta && !selectedLocation && s.campoError]}>
+        <View style={[s.vehiculoIcono, selectedLocation && { backgroundColor: colors.okBg }]}>
+          {buscandoUbicacion && !selectedLocation ? (
+            <ActivityIndicator color={colors.navy} />
+          ) : (
+            <MapPin size={22} color={selectedLocation ? colors.ok : colors.navy} strokeWidth={2.2} />
+          )}
+        </View>
+        <View style={{ flex: 1 }}>
+          <AppText variant="subtitle">
+            {selectedLocation
+              ? locationManuallyModified
+                ? 'Ubicación marcada en el mapa'
+                : 'Usaremos tu ubicación actual'
+              : buscandoUbicacion
+              ? 'Buscando tu ubicación…'
+              : 'Falta la ubicación'}
+          </AppText>
+          <AppText variant="caption" color={colors.muted}>
+            {selectedLocation
+              ? 'Así los talleres saben qué tan lejos estás.'
+              : 'Márcala en el mapa para que te lleguen talleres cercanos.'}
+          </AppText>
+        </View>
+      </Card>
+      <Button
+        title={selectedLocation ? 'Ajustar en el mapa' : 'Marcar en el mapa'}
+        variant="secondary"
+        size="m"
+        icon={MapPin}
+        onPress={() => setLocationModalVisible(true)}
+        style={{ marginTop: space.s }}
+      />
+
+      <AppText variant="subtitle" style={s.etiqueta}>
+        ¿Qué tan urgente es?
+      </AppText>
+      <View style={{ gap: space.s }}>
+        {URGENCIAS.map(op => {
+          const on = urgencia === op.value;
+          const tono = op.value === 'Emergencia' ? colors.error : op.value === 'Urgente' ? colors.warn : colors.navy;
+          return (
+            <Pressable
+              key={op.value}
+              onPress={() => setUrgencia(op.value)}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: on }}
+              style={[s.opcion, on && s.opcionOn, on && { borderColor: tono }]}>
+              <View style={{ flex: 1 }}>
+                <AppText variant="subtitle" color={on ? tono : colors.text}>
+                  {op.label}
+                </AppText>
+                <AppText variant="caption" color={colors.muted}>
+                  {op.ayuda}
+                </AppText>
+              </View>
+              <View style={[s.radio, on && { borderColor: tono }]}>
+                {on ? <View style={[s.radioPunto, { backgroundColor: tono }]} /> : null}
+              </View>
+            </Pressable>
+          );
+        })}
+      </View>
+    </>
+  );
+
+  const paso3 = (
+    <>
+      <Card style={s.destino}>
+        <Send size={20} color={colors.navy} strokeWidth={2.2} />
+        <AppText variant="body" style={{ flex: 1 }}>
+          Se enviará a <AppText variant="subtitle">{destino}</AppText>.
+        </AppText>
+      </Card>
+      <Card style={{ paddingVertical: space.xs }}>
+        <FilaResumen
+          etiqueta="Vehículo"
+          valor={[nombreVehiculo(vehicle), detalleVehiculo(vehicle)].filter(Boolean).join(' · ')}
+          onEditar={() => irAPaso(1)}
+        />
+        <FilaResumen etiqueta="Tipo de servicio" valor={categoryLabel || '—'} onEditar={() => irAPaso(1)} />
+        <FilaResumen etiqueta="Qué necesitas" valor={(descripcion || '').trim()} onEditar={() => irAPaso(1)} />
+        <FilaResumen
+          etiqueta="Fotos"
+          valor={fotos.length ? `${fotos.length} ${fotos.length === 1 ? 'foto' : 'fotos'}` : 'Sin fotos'}
+          onEditar={() => irAPaso(1)}
+        />
+        <FilaResumen
+          etiqueta="Ubicación"
+          valor={locationManuallyModified ? 'Marcada en el mapa' : 'Tu ubicación actual'}
+          onEditar={() => irAPaso(2)}
+        />
+        <FilaResumen etiqueta="Urgencia" valor={urgencia} onEditar={() => irAPaso(2)} />
+      </Card>
+    </>
+  );
+
+  return (
+    <View style={s.pantalla}>
+      <View style={s.cabecera}>
+        <View style={s.cabeceraFila}>
+          <Pressable
+            onPress={atras}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={paso > 1 ? 'Paso anterior' : 'Volver'}
+            style={s.atras}>
+            <ArrowLeft size={24} color={colors.onNavy} strokeWidth={2.2} />
+          </Pressable>
+          <AppText variant="title" color={colors.onNavy} style={{ flex: 1 }} accessibilityRole="header">
+            {PASOS[paso - 1].titulo}
+          </AppText>
+        </View>
+        <Progreso paso={paso} />
+      </View>
+
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
+          ref={scrollRef}
           style={{ flex: 1 }}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={s.contenido}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
-          {vehicle && (
-            <View style={styles.vehicleCard}>
-              <View style={styles.vehicleIconWrap}>
-                <MaterialCommunityIcons name="car-side" size={26} color={appColors.primary} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.vehicleTitle}>{vehicleLabel}</Text>
-                <Text style={styles.vehicleSub}>
-                  {[vehicle.vehiculo_anio, vehicle.KM].filter(Boolean).join(' · ') || 'Vehículo seleccionado'} {vehicle.KM ? `KM` : ''}
-                </Text>
-              </View>
-            </View>
-          )}
-
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Datos de la solicitud</Text>
-
-            <Text style={styles.label}>
-              Categoría <Text style={styles.labelRequired}>*</Text>
-            </Text>
-            {loadingCategories ? (
-              <View style={{ paddingVertical: 16, alignItems: 'center' }}>
-                <ActivityIndicator size="small" color={appColors.primary} />
-              </View>
-            ) : (
-              <Dropdown
-                data={categoriaOptions}
-                labelField="label"
-                valueField="value"
-                placeholder="Selecciona la categoría del servicio"
-                value={categoriaId}
-                onChange={(item) => setCategoriaId(item?.value ?? '')}
-                style={styles.dropdown}
-                placeholderStyle={styles.dropdownPlaceholder}
-                selectedTextStyle={styles.dropdownSelectedText}
-                search={true}
-              />
-            )}
-
-            <Text style={[styles.label, { marginTop: 18 }]}>
-              ¿Qué necesita tu vehículo? <Text style={styles.labelRequired}>*</Text>
-            </Text>
-            <TextInput
-              style={[styles.input, styles.inputMultiline]}
-              value={descripcion}
-              onChangeText={text =>
-                setDescripcion(
-                  text && text.length > MAX_DESCRIPCION
-                    ? text.slice(0, MAX_DESCRIPCION)
-                    : text,
-                )
-              }
-              placeholder="Ej: Cambio de aceite y filtro; o: suenan los frenos al detenerme (mínimo 20 caracteres)"
-              placeholderTextColor="#9CA3AF"
-              multiline
-              numberOfLines={4}
-            />
-            <Text
-              style={[
-                styles.charCount,
-                ((descripcionLength > 0 && descripcionLength < MIN_DESCRIPCION) ||
-                  descripcionLength > MAX_DESCRIPCION) &&
-                  styles.charCountError,
-              ]}>
-              {descripcionLength} / {MAX_DESCRIPCION} caracteres
-            </Text>
-
-            <Text style={[styles.label, { marginTop: 18 }]}>Fotos (opcional)</Text>
-            <Text style={{ fontSize: 13, color: '#6B7280', marginBottom: 6 }}>
-              Añade hasta 5 fotos para que podamos evaluar mejor tu solicitud.
-            </Text>
-            <View style={styles.photoRow}>
-              {fotos.map((foto, index) => (
-                <View key={index} style={{ position: 'relative' }}>
-                  <Image source={{ uri: foto.uri }} style={styles.photoThumb} resizeMode="cover" />
-                  <TouchableOpacity
-                    style={styles.photoRemove}
-                    onPress={() => removePhoto(index)}
-                    activeOpacity={0.8}>
-                    <Text style={{ color: '#FFF', fontSize: 14, fontWeight: '700' }}>×</Text>
-                  </TouchableOpacity>
-                </View>
-              ))}
-              {fotos.length < 5 && (
-                <TouchableOpacity style={styles.photoAddBtn} onPress={() => openPhotoOptions('foto')} activeOpacity={0.8}>
-                  <MaterialCommunityIcons name="camera-plus" size={28} color={appColors.primary} />
-                </TouchableOpacity>
-              )}
-            </View>
-
-            <Text style={[styles.label, { marginTop: 20 }]}>
-              Ubicación actual <Text style={styles.labelRequired}>*</Text>
-            </Text>
-            <View style={styles.locationCard}>
-              <View style={[styles.locationBadge, selectedLocation && { backgroundColor: '#DCFCE7' }]}>
-                <MaterialCommunityIcons
-                  name={selectedLocation ? 'map-marker-check' : 'map-marker-radius'}
-                  size={18}
-                  color={selectedLocation ? '#16A34A' : '#2D3261'}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={styles.locationTitle}>Ubicación del servicio</Text>
-                  {selectedLocation && (
-                    <View style={[
-                      styles.locationTakenBadge,
-                      locationManuallyModified && { backgroundColor: '#DBEAFE' },
-                    ]}>
-                      <Text style={[
-                        styles.locationTakenText,
-                        locationManuallyModified && { color: '#1D4ED8' },
-                      ]}>
-                        {locationManuallyModified ? 'Modificada' : 'Tomada'}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.locationCoords} numberOfLines={1}>
-                  {selectedLocation ? 'Ubicación capturada correctamente' : 'Aún no has seleccionado una ubicación'}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.locationSelectBtn}
-                onPress={() => setLocationModalVisible(true)}
-                activeOpacity={0.85}>
-                <Text style={styles.locationSelectBtnText}>
-                  {selectedLocation ? 'Cambiar' : 'Seleccionar'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            <Text style={[styles.label, { marginTop: 20 }]}>Urgencia</Text>
-            <View style={styles.urgenciaRow}>
-              {URGENCIA_OPTIONS.map((opt) => {
-                const isSelected = urgencia === opt.value;
-                const isUrgente = opt.value === 'Urgente';
-                const isEmergencia = opt.value === 'Emergencia';
-                return (
-                  <TouchableOpacity
-                    key={opt.value}
-                    style={[
-                      styles.urgenciaOption,
-                      isSelected && styles.urgenciaOptionSelected,
-                      isSelected && isUrgente && styles.urgenciaOptionUrgente,
-                      isSelected && isEmergencia && styles.urgenciaOptionEmergencia,
-                    ]}
-                    onPress={() => setUrgencia(opt.value)}
-                    activeOpacity={0.8}>
-                    <Text
-                      style={[
-                        styles.urgenciaLabel,
-                        isSelected && isEmergencia && { color: appColors.red },
-                        isSelected && isUrgente && !isEmergencia && { color: '#EA580C' },
-                      ]}>
-                      {opt.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-          </View>
-
-          <TouchableOpacity
-            style={[styles.submitBtn, (!canSubmit || sending) && styles.submitBtnDisabled]}
-            onPress={() => canSubmit && setConfirmModalVisible(true)}
-            disabled={!canSubmit || sending}
-            activeOpacity={0.85}>
-            {sending ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <Text style={styles.submitBtnText}>Enviar solicitud</Text>
-            )}
-          </TouchableOpacity>
+          {paso === 1 ? paso1 : paso === 2 ? paso2 : paso3}
         </ScrollView>
+
+        <View style={s.pie}>
+          {falta || errorEnvio ? (
+            <AppText variant="caption" color={colors.error} style={s.falta} accessibilityLiveRegion="polite">
+              {falta || errorEnvio}
+            </AppText>
+          ) : null}
+          {paso < PASOS.length ? (
+            <Button title="Continuar" variant="accent" onPress={continuar} />
+          ) : (
+            <Button title="Enviar solicitud" variant="accent" icon={Send} loading={sending} onPress={handleSubmit} />
+          )}
+        </View>
       </KeyboardAvoidingView>
 
-      <Modal
-        visible={confirmModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setConfirmModalVisible(false)}>
-        <View style={styles.confirmOverlay}>
-          <View style={styles.confirmCard}>
-            <View style={styles.confirmIconWrap}>
-              <MaterialCommunityIcons name="car" size={44} color="#FFD60A" />
-            </View>
-            <Text style={styles.confirmTitle}>Resumen de tu solicitud</Text>
-            <Text style={styles.confirmSubtitle}>
-              Revisa los datos antes de confirmar. ¿Deseas crear esta solicitud?
-            </Text>
-            <View style={styles.confirmSummary}>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Vehículo</Text>
-                <Text style={styles.confirmValue} numberOfLines={1}>{vehicleSummaryWithYear}</Text>
-              </View>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Categoría</Text>
-                <Text style={styles.confirmValue} numberOfLines={1}>{categoryLabel}</Text>
-              </View>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Urgencia</Text>
-                <Text style={styles.confirmValue}>{urgencia}</Text>
-              </View>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Ubicación</Text>
-                <Text style={styles.confirmValue} numberOfLines={2}>{locationPreview}</Text>
-              </View>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Fotos</Text>
-                <Text style={styles.confirmValue}>{fotos.length} {fotos.length === 1 ? 'foto' : 'fotos'}</Text>
-              </View>
-              <View style={styles.confirmRow}>
-                <Text style={styles.confirmLabel}>Descripción</Text>
-                <Text style={styles.confirmValue} numberOfLines={3}>{descripcionPreview}</Text>
-              </View>
-            </View>
-            <View style={styles.confirmActions}>
-              <TouchableOpacity
-                style={styles.confirmCancelBtn}
-                onPress={() => setConfirmModalVisible(false)}
-                activeOpacity={0.8}>
-                <Text style={styles.confirmCancelText}>Cancelar</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.confirmSubmitBtn}
-                onPress={() => handleSubmit()}
-                activeOpacity={0.85}>
-                <Text style={styles.confirmSubmitText}>Sí, crear solicitud</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+      <BottomSheet visible={photoModalVisible} onClose={() => setPhotoModalVisible(false)} title="Agregar foto">
+        <View style={s.hojaFila}>
+          <Pressable style={s.hojaOpcion} onPress={handlePickCamera} accessibilityRole="button">
+            <Camera size={28} color={colors.navy} strokeWidth={2} />
+            <AppText variant="subtitle">Tomar foto</AppText>
+          </Pressable>
+          <Pressable style={s.hojaOpcion} onPress={handlePickGallery} accessibilityRole="button">
+            <ImageIcon size={28} color={colors.navy} strokeWidth={2} />
+            <AppText variant="subtitle">Galería</AppText>
+          </Pressable>
         </View>
-      </Modal>
+      </BottomSheet>
 
       <Modal
         visible={locationModalVisible}
@@ -733,18 +914,19 @@ const SolicitudServicio = () => {
         animationType="slide"
         onRequestClose={() => setLocationModalVisible(false)}>
         <View style={{ flex: 1, backgroundColor: '#1D1E56' }}>
-          {/* Header */}
           <View style={styles.mapFullScreenHeader}>
-            <TouchableOpacity
+            <Pressable
               onPress={() => setLocationModalVisible(false)}
               style={styles.mapSheetCloseBtn}
-              activeOpacity={0.8}>
+              accessibilityRole="button"
+              accessibilityLabel="Cerrar mapa">
               <MaterialCommunityIcons name="close" size={22} color="#FFFFFF" />
-            </TouchableOpacity>
-            <Text style={styles.mapFullScreenTitle}>Selecciona tu ubicación</Text>
+            </Pressable>
+            <AppText variant="subtitle" color={colors.onNavy}>
+              ¿Dónde está el carro?
+            </AppText>
             <View style={{ width: 36 }} />
           </View>
-          {/* Mapbox WebView */}
           <WebView
             ref={locationWebViewRef}
             style={{ flex: 1 }}
@@ -762,74 +944,153 @@ const SolicitudServicio = () => {
           />
         </View>
       </Modal>
-
-      <Modal
-        visible={successModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={goToHome}>
-        <View style={styles.successOverlay}>
-          <View style={styles.successCard}>
-            <View style={styles.successIconWrap}>
-              <MaterialCommunityIcons name="check-circle" size={52} color="#11A679" />
-            </View>
-            <Text style={styles.successTitle}>¡Solicitud creada!</Text>
-            <Text style={styles.successMessage}>
-              Tu solicitud de servicio ha sido registrada correctamente. Te contactaremos pronto.
-            </Text>
-            <TouchableOpacity style={styles.successBtn} onPress={goToHome} activeOpacity={0.85}>
-              <Text style={styles.successBtnText}>Ir al inicio</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
-      {/* ── Modal selector de foto ────────────────────────────────────────── */}
-      <Modal
-        visible={photoModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setPhotoModalVisible(false)}>
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15,23,68,0.55)' }}>
-          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setPhotoModalVisible(false)} />
-          <View style={{
-            backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28,
-            paddingHorizontal: 24, paddingTop: 12,
-            paddingBottom: Platform.OS === 'ios' ? 40 : 28,
-          }}>
-            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#CBD5E1', alignSelf: 'center', marginBottom: 22 }} />
-            <Text style={{ fontSize: 17, fontWeight: '800', color: '#1F2344', textAlign: 'center', marginBottom: 6 }}>
-              Adjuntar imagen o archivo
-            </Text>
-            <Text style={{ fontSize: 12, color: '#6B7280', textAlign: 'center', lineHeight: 18, marginBottom: 28 }}>
-              Seleccione una opción para capturar{'\n'}la imagen y comprobar el documento
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
-              {[
-                { label: 'Documento', icon: 'document-attach-outline', onPress: handlePickDocument },
-                { label: 'Galería',   icon: 'images-outline',          onPress: handlePickGallery },
-                { label: 'Cámara',    icon: 'camera-outline',          onPress: handlePickCamera },
-              ].map(({ label, icon, onPress }) => (
-                <TouchableOpacity key={label} onPress={onPress} activeOpacity={0.75}
-                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20,
-                    borderRadius: 18, backgroundColor: '#F0F1FA', borderWidth: 1.5, borderColor: '#2D3261' }}>
-                  <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: '#2D3261',
-                    alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-                    <Icons2 name={icon} size={26} color="#FFD60A" />
-                  </View>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#1F2344', textAlign: 'center' }}>{label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <TouchableOpacity onPress={() => setPhotoModalVisible(false)}
-              style={{ paddingVertical: 14, borderRadius: 16, backgroundColor: '#F0F1FA', alignItems: 'center' }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#1F2344' }}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 };
+
+const s = StyleSheet.create({
+  pantalla: { flex: 1, backgroundColor: colors.bg },
+  centro: { textAlign: 'center' },
+  cabecera: {
+    backgroundColor: colors.navy,
+    paddingTop: space.s,
+    paddingHorizontal: space.m,
+    paddingBottom: space.m,
+  },
+  cabeceraFila: { flexDirection: 'row', alignItems: 'center', gap: space.s },
+  atras: { width: TOUCH, height: TOUCH, alignItems: 'center', justifyContent: 'center', marginLeft: -space.s },
+  progreso: { marginTop: space.m, gap: space.s },
+  progresoBarras: { flexDirection: 'row', gap: space.xs },
+  progresoTramo: { flex: 1, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.18)' },
+  progresoTramoOn: { backgroundColor: colors.yellow },
+  contenido: { padding: space.m, paddingBottom: space.xl },
+  etiqueta: { marginTop: space.l, marginBottom: space.s },
+  cargando: { paddingVertical: space.m, alignItems: 'center' },
+  contexto: { gap: 2 },
+  opcion: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.m,
+    minHeight: 64,
+    padding: space.m,
+    borderRadius: radius.m,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+  },
+  opcionOn: { borderColor: colors.navy, backgroundColor: '#F7F8FF' },
+  vehiculoIcono: {
+    width: TOUCH,
+    height: TOUCH,
+    borderRadius: TOUCH / 2,
+    backgroundColor: colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radio: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioOn: { borderColor: colors.navy },
+  radioPunto: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.navy },
+  sinVehiculo: { flexDirection: 'row', alignItems: 'center', gap: space.m },
+  campo: {
+    minHeight: 52,
+    borderRadius: radius.m,
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    backgroundColor: colors.card,
+    paddingHorizontal: space.m,
+  },
+  campoMultilinea: {
+    minHeight: 110,
+    paddingTop: space.m,
+    paddingBottom: space.m,
+    fontFamily: fonts.regular,
+    fontSize: 15,
+    lineHeight: 22,
+    color: colors.text,
+  },
+  campoError: { borderColor: colors.error },
+  campoPlaceholder: { fontFamily: fonts.regular, fontSize: 15, color: colors.placeholder },
+  campoTexto: { fontFamily: fonts.regular, fontSize: 15, color: colors.text },
+  fotos: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s },
+  foto: { width: 76, height: 76, borderRadius: radius.s, backgroundColor: colors.skeleton },
+  fotoQuitar: {
+    position: 'absolute',
+    top: -6,
+    right: -6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: colors.navy,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fotoAgregar: {
+    width: 76,
+    height: 76,
+    borderRadius: radius.s,
+    borderWidth: 1.5,
+    borderStyle: 'dashed',
+    borderColor: colors.navy,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.card,
+  },
+  ubicacion: { flexDirection: 'row', alignItems: 'center', gap: space.m, borderWidth: 1.5, borderColor: 'transparent' },
+  destino: { flexDirection: 'row', alignItems: 'center', gap: space.m, marginBottom: space.m, backgroundColor: colors.infoBg },
+  filaResumen: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.m,
+    paddingVertical: space.m,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.border,
+  },
+  editar: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: TOUCH, paddingLeft: space.s },
+  pie: {
+    paddingHorizontal: space.m,
+    paddingTop: space.m,
+    paddingBottom: Platform.OS === 'ios' ? space.l : space.m,
+    backgroundColor: colors.card,
+    ...shadow.bar,
+  },
+  falta: { marginBottom: space.s, textAlign: 'center' },
+  hojaFila: { flexDirection: 'row', gap: space.m, paddingBottom: space.l },
+  hojaOpcion: {
+    flex: 1,
+    alignItems: 'center',
+    gap: space.s,
+    paddingVertical: space.l,
+    borderRadius: radius.l,
+    backgroundColor: colors.bg,
+  },
+  finalContenido: { padding: space.l, paddingTop: space.xxl },
+  finalIcono: {
+    alignSelf: 'center',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: colors.okBg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: space.l,
+  },
+  siguiente: { flexDirection: 'row', alignItems: 'center', gap: space.m, marginBottom: space.m },
+  siguienteIcono: {
+    width: TOUCH,
+    height: TOUCH,
+    borderRadius: TOUCH / 2,
+    backgroundColor: colors.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
 
 export default SolicitudServicio;

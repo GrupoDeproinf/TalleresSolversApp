@@ -1101,6 +1101,7 @@ const TallerDetail = () => {
         visible={emergencyModalVisible}
         onClose={() => setEmergencyModalVisible(false)}
         uidTaller={resolvedTallerId}
+        nombreTaller={taller?.nombre || taller?.nombre_taller || ''}
       />
     </View>
   );
