@@ -8,7 +8,8 @@
 //
 // Se abre desde la pestaña Emergencia, desde un servicio o desde un taller.
 // Parámetros opcionales: vehicle, uid_taller, nombre_taller, categoriaId,
-// nombre_servicio (llegan desde el servicio o el taller para no repetir datos).
+// nombre_servicio (llegan desde el servicio o el taller para no repetir datos),
+// urgencia ('Emergencia' cuando se entra por el botón Emergencia).
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
@@ -290,7 +291,10 @@ const SolicitudServicio = () => {
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
 
   // Paso 2
-  const [urgencia, setUrgencia] = useState('Normal');
+  // Desde el botón Emergencia la urgencia arranca en Emergencia (se puede cambiar).
+  const [urgencia, setUrgencia] = useState(
+    URGENCIAS.some(u => u.value === params.urgencia) ? params.urgencia : 'Normal',
+  );
   const [locationModalVisible, setLocationModalVisible] = useState(false);
   const locationWebViewRef = useRef(null);
   const [mapSelection, setMapSelection] = useState({ latitude: 10.4806, longitude: -66.9036 });

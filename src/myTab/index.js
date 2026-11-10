@@ -593,7 +593,7 @@ const EmergencyModalProvider = ({ children }) => {
   // solicitud en espera y se abre el formulario (el vehículo se elige ahí).
   const irAlFormulario = () => {
     handleClose();
-    navigation.navigate('SolicitudServicio');
+    navigation.navigate('SolicitudServicio', {urgencia: 'Emergencia'});
   };
 
   useEffect(() => {
