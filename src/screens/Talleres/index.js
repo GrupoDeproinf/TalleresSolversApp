@@ -14,6 +14,7 @@ import {
   StatusBar,
   Image,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import { cerrarSesionFirebase } from '../../utils/sesionSegura';
@@ -87,6 +88,8 @@ const getCurrentLocation = async () => {
 };
 
 const STATUS_DOT = {
+  'En espera por aprobación': { color: '#F59E0B', label: 'En revisión' },
+  'En espera de documentos': { color: '#3B82F6', label: 'Esperando documentos' },
   Aprobado: { color: '#22C55E', label: 'Aprobado' },
   Pendiente: { color: '#F59E0B', label: 'Pendiente' },
   Rechazado: { color: '#EF4444', label: 'Rechazado' },
@@ -198,6 +201,17 @@ const PLAN_OPTS = [
   {key: 'sin_plan',  label: 'Sin plan'},
 ];
 
+const planVencido = t => t?.subscripcion_actual?.status === 'Vencido';
+const ESTATUS_OPTS = [
+  {key: 'por_atender', label: 'Por atender', test: t => ['En espera por aprobación', 'En espera de documentos'].includes(t.status)},
+  {key: 'revision', label: 'En revisión', test: t => t.status === 'En espera por aprobación'},
+  {key: 'documentos', label: 'Esperando documentos', test: t => t.status === 'En espera de documentos'},
+  {key: 'aprobado', label: 'Aprobados', test: t => t.status === 'Aprobado'},
+  {key: 'rechazado', label: 'Rechazados', test: t => t.status === 'Rechazado'},
+  {key: 'vencido', label: 'Plan vencido', test: planVencido},
+  {key: 'todos', label: 'Todos', test: () => true},
+];
+
 const FECHA_OPTS = [
   {key: 'nuevo', label: 'Más nuevo'},
   {key: 'viejo', label: 'Más viejo'},
@@ -229,6 +243,9 @@ const TalleresContainer = ({navigation}) => {
   const [filterFechaDia, setFilterFechaDia]   = useState(null);
 
   const [showDatePicker, setShowDatePicker] = useState(false);
+  // Mientras llega la lista no se muestra "No se encontraron negocios".
+  const [cargando, setCargando] = useState(true);
+  const [estatusRapido, setEstatusRapido] = useState('por_atender');
   const [refreshing, setRefreshing] = useState(false);
 
   const spinAnim = useRef(new Animated.Value(0)).current;
@@ -292,12 +309,20 @@ const TalleresContainer = ({navigation}) => {
 
   const getData = async () => {
     try {
+      await getDataInterno();
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  const getDataInterno = async () => {
+    try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
       try {
         const response = await api.post(
           '/usuarios/getTalleres',
-          {estado: user.estado},
+          {estado: user.estado, todos: true},
           {headers: {'Content-Type': 'application/json'}},
         );
         if (response.status === 200) {
@@ -444,6 +469,17 @@ const TalleresContainer = ({navigation}) => {
     navigationScreen.navigate('FormTaller', {uid: item.uid});
   };
 
+  const opcionEstatus = ESTATUS_OPTS.find(o => o.key === estatusRapido) || ESTATUS_OPTS[0];
+  const listaVisible = useMemo(
+    () => filteredData.filter(opcionEstatus.test),
+    [filteredData, opcionEstatus],
+  );
+  const conteoEstatus = useMemo(() => {
+    const c = {};
+    ESTATUS_OPTS.forEach(o => { c[o.key] = filteredData.filter(o.test).length; });
+    return c;
+  }, [filteredData]);
+
   const modalActiveCount = [
     ...filterEstados,
     ...filterStatus,
@@ -471,7 +507,7 @@ const TalleresContainer = ({navigation}) => {
           </TouchableOpacity>
           <View style={styles.headerTitleWrap}>
             <Text style={styles.headerTitle}>Negocios</Text>
-            <Text style={styles.headerSubtitle}>¡Encuentra el negocio perfecto para ti!</Text>
+            <Text style={styles.headerSubtitle}>Gestión y validación de negocios registrados</Text>
           </View>
           <TouchableOpacity
             style={styles.headerRefreshBtn}
@@ -512,18 +548,64 @@ const TalleresContainer = ({navigation}) => {
         </TouchableOpacity>
       </View>
 
+      {/* ── FILTRO RÁPIDO POR ESTATUS ── */}
+      <View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 8, gap: 8}}>
+          {ESTATUS_OPTS.map(o => {
+            const on = o.key === estatusRapido;
+            return (
+              <TouchableOpacity
+                key={o.key}
+                onPress={() => setEstatusRapido(o.key)}
+                activeOpacity={0.85}
+                accessibilityRole="tab"
+                accessibilityState={{selected: on}}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  minHeight: 40,
+                  paddingHorizontal: 14,
+                  borderRadius: 999,
+                  borderWidth: 1,
+                  borderColor: on ? '#1D1E56' : '#E3E6F0',
+                  backgroundColor: on ? '#1D1E56' : '#FFFFFF',
+                }}>
+                <Text style={{color: on ? '#FFD60A' : '#1D1E56', fontWeight: on ? '800' : '600', fontSize: 14}}>
+                  {o.label}
+                  {cargando ? '' : ` (${conteoEstatus[o.key] || 0})`}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
       {/* ── LIST ── */}
       <FlatList
-        data={filteredData}
+        data={listaVisible}
         keyExtractor={(item, idx) => String(item.uid || item.id || idx)}
         renderItem={({item}) => <TallerCard item={item} onPress={handleCardPress} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <View style={styles.emptyWrap}>
-            <Icons5 name="store-slash" size={40} color="#C7CBEF" />
-            <Text style={styles.emptyText}>No se encontraron negocios</Text>
-          </View>
+          cargando ? (
+            <View style={styles.emptyWrap}>
+              <ActivityIndicator size="large" color="#1D1E56" />
+              <Text style={styles.emptyText}>Cargando negocios…</Text>
+            </View>
+          ) : (
+            <View style={styles.emptyWrap}>
+              <Icons5 name="store-slash" size={40} color="#C7CBEF" />
+              <Text style={styles.emptyText}>
+                {estatusRapido === 'todos' && !filterNombre && modalActiveCount === 0
+                  ? 'No se encontraron negocios'
+                  : 'No hay negocios con estos filtros'}
+              </Text>
+            </View>
+          )
         }
       />
 

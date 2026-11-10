@@ -365,6 +365,8 @@ const FormTaller = () => {
   const [successModalType, setSuccessModalType] = useState(null); // null | 'aprobado' | 'rechazado'
   const [uidTaller, setuidTaller] = useState('');
   const [dataTaller, setdataTaller] = useState(null);
+  // Servicios cargados: { total, publicados } o null mientras se consulta.
+  const [conteoServicios, setConteoServicios] = useState(null);
   const [saving, setSaving] = useState(false);
   const [imgFullscreen, setImgFullscreen] = useState(null);
 
@@ -382,6 +384,14 @@ const FormTaller = () => {
       setIsEditing(false);
       setuidTaller(uid);
       getData(uid);
+      setConteoServicios(null);
+      api
+        .post('/usuarios/getServicesByTalleruid', {uid_taller: uid})
+        .then(r => {
+          const lista = Array.isArray(r?.data?.services) ? r.data.services : [];
+          setConteoServicios({total: lista.length, publicados: lista.filter(x => x?.estatus === true).length});
+        })
+        .catch(() => setConteoServicios({total: 0, publicados: 0}));
     }, [route.params?.uid]),
   );
 
@@ -911,6 +921,33 @@ const FormTaller = () => {
             <Icons5 name="map-marker-alt" size={10} color="rgba(255,255,255,0.5)" />
             <Text style={styles.profileSubtitle}> {estadoSelected}</Text>
           </View>
+        ) : null}
+
+        {/* Servicios cargados: para saber si ya está listo para aprobarse */}
+        {conteoServicios ? (
+          <TouchableOpacity
+            onPress={() => navigation.navigate('ServiciosContainer', {uid_taller: uidTaller, nombre_taller: NameTaller})}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={`${conteoServicios.total} servicios cargados. Ver servicios`}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              alignSelf: 'center',
+              marginTop: 10,
+              minHeight: 36,
+              paddingHorizontal: 14,
+              borderRadius: 999,
+              backgroundColor: conteoServicios.total > 0 ? 'rgba(34,197,94,0.18)' : 'rgba(245,158,11,0.22)',
+            }}>
+            <Icons5 name={conteoServicios.total > 0 ? 'check-circle' : 'exclamation-circle'} size={12} color={conteoServicios.total > 0 ? '#86EFAC' : '#FCD34D'} />
+            <Text style={{color: '#FFFFFF', fontWeight: '700', fontSize: 13}}>
+              {conteoServicios.total === 0
+                ? '  Sin servicios cargados'
+                : `  ${conteoServicios.total} servicio${conteoServicios.total === 1 ? '' : 's'} cargado${conteoServicios.total === 1 ? '' : 's'}${conteoServicios.publicados ? ` · ${conteoServicios.publicados} publicado${conteoServicios.publicados === 1 ? '' : 's'}` : ''}`}
+            </Text>
+            <Icons5 name="chevron-right" size={10} color="rgba(255,255,255,0.7)" style={{marginLeft: 6}} />
+          </TouchableOpacity>
         ) : null}
 
         {/* Divider */}
