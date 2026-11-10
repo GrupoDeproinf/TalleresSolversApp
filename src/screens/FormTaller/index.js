@@ -21,6 +21,7 @@ import React, {useState, useCallback, useRef} from 'react';
 import PhoneInput from '../../ui/PhoneInput';
 import {mostrarTelefono} from '../../utils/telefono';
 import {OPCIONES_HORA} from '../../utils/taller';
+import {areasDeEspecialidades} from '../../utils/areasServicio';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Icons from 'react-native-vector-icons/FontAwesome';
 import Icons5 from 'react-native-vector-icons/FontAwesome5';
@@ -365,6 +366,7 @@ const FormTaller = () => {
   const [successModalType, setSuccessModalType] = useState(null); // null | 'aprobado' | 'rechazado'
   const [uidTaller, setuidTaller] = useState('');
   const [dataTaller, setdataTaller] = useState(null);
+  const scrollRef = useRef(null);
   // Servicios cargados: { total, publicados } o null mientras se consulta.
   const [conteoServicios, setConteoServicios] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -710,7 +712,17 @@ const FormTaller = () => {
 
   const onAccionEditarUsuario = () => {
     setAccionesModalVisible(false);
-    setIsEditing(v => !v);
+    const entrando = !isEditing;
+    setIsEditing(entrando);
+    // Antes la lista quedaba a media altura porque los campos cambian de
+    // tamaño al volverse editables. Se vuelve arriba para empezar por el inicio.
+    if (entrando) setTimeout(() => scrollRef.current?.scrollTo({y: 0, animated: true}), 80);
+  };
+
+  // Tocar un documento vacío fuera de edición entra en edición y abre el selector.
+  const subirDocumento = onSelect => {
+    if (!isEditing) setIsEditing(true);
+    onSelect();
   };
 
   const onAccionAprobar = () => {
@@ -868,11 +880,17 @@ const FormTaller = () => {
     }
 
     return (
-      <View key={label} style={styles.docEmptyCell}>
-        <Icons5 name="file-alt" size={20} color="#D1D5DB" />
+      <TouchableOpacity
+        key={label}
+        style={styles.docEmptyCell}
+        onPress={() => subirDocumento(onSelect)}
+        accessibilityRole="button"
+        accessibilityLabel={`Subir ${label}`}
+        activeOpacity={0.8}>
+        <Icons5 name="file-alt" size={20} color="#9CA3AF" />
         <Text style={styles.docEmptyCellLabel} numberOfLines={1}>{label}</Text>
-        <Text style={styles.docEmptyCellSub}>Sin archivo</Text>
-      </View>
+        <Text style={styles.docEmptyCellSub}>Sin archivo · Toca para subir</Text>
+      </TouchableOpacity>
     );
   };
 
@@ -989,10 +1007,23 @@ const FormTaller = () => {
       {/* ── Content ─────────────────────────────────────────────────────── */}
       {profileLoaded && uidTaller ? (
         <ScrollView
+          ref={scrollRef}
           style={{flex: 1}}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
+
+          {isEditing ? (
+            <View
+              accessibilityLiveRegion="polite"
+              style={{flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFF7D6', borderRadius: 14, padding: 14, marginBottom: 12}}>
+              <Icons5 name="pen" size={14} color="#8A6D00" />
+              <Text style={{flex: 1, color: '#5C4A00', fontSize: 14, lineHeight: 20}}>
+                <Text style={{fontWeight: '800'}}>Modo edición. </Text>
+                Cambia lo que necesites y toca Guardar arriba.
+              </Text>
+            </View>
+          ) : null}
 
           {/* ── Información general ─────────────────────────────────────── */}
           <View style={styles.section}>
@@ -1003,6 +1034,11 @@ const FormTaller = () => {
               isEditing={isEditing}>
               <EditInput value={Nombre} onChangeText={setNombre} />
             </FieldBlock>
+            {dataTaller?.responsable ? (
+              <FieldBlock label="Responsable" value={dataTaller.responsable} isEditing={false}>
+                <View />
+              </FieldBlock>
+            ) : null}
             <FieldBlock
               label="RIF"
               value={`${selectedPrefix}${cedula}`}
@@ -1038,34 +1074,6 @@ const FormTaller = () => {
               value={email}
               isEditing={isEditing}>
               <EditInput value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" editable={false} />
-            </FieldBlock>
-            <FieldBlock
-              label="Registro comercial"
-              value={RegComercial}
-              isEditing={isEditing}>
-              <EditInput value={RegComercial} onChangeText={setRegComercial} keyboardType="numeric" />
-            </FieldBlock>
-            <FieldBlock
-              label="Agente autorizado"
-              value={checked === 'si' ? 'Sí' : 'No'}
-              isEditing={isEditing}
-              vertical>
-              <View style={styles.segmentedWrap}>
-                <TouchableOpacity
-                  style={[styles.segmentedBtn, checked === 'si' && styles.segmentedBtnActive]}
-                  onPress={() => isEditing && setChecked('si')}
-                  activeOpacity={isEditing ? 0.8 : 1}>
-                  <Icons5 name="check" size={13} color={checked === 'si' ? '#FFFFFF' : '#9CA3AF'} style={{marginRight: 6}} />
-                  <Text style={[styles.segmentedBtnText, checked === 'si' && styles.segmentedBtnTextActive]}>Sí</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.segmentedBtn, checked === 'no' && styles.segmentedBtnNo]}
-                  onPress={() => isEditing && setChecked('no')}
-                  activeOpacity={isEditing ? 0.8 : 1}>
-                  <Icons name="times" size={13} color={checked === 'no' ? '#FFFFFF' : '#9CA3AF'} style={{marginRight: 6}} />
-                  <Text style={[styles.segmentedBtnText, checked === 'no' && styles.segmentedBtnTextActive]}>No</Text>
-                </TouchableOpacity>
-              </View>
             </FieldBlock>
           </View>
 
@@ -1172,12 +1180,14 @@ const FormTaller = () => {
               isEditing={isEditing}>
               <PhoneInput compact value={phone} onChange={setPhone} />
             </FieldBlock>
-            <FieldBlock
-              label="WhatsApp"
-              value={mostrarTelefono(whats)}
-              isEditing={isEditing}>
-              <PhoneInput compact value={whats} onChange={setwhats} />
-            </FieldBlock>
+            {String(whats || '').replace(/\D/g, '').slice(-10) !== String(phone || '').replace(/\D/g, '').slice(-10) && whats ? (
+              <FieldBlock
+                label="WhatsApp (registro anterior)"
+                value={mostrarTelefono(whats)}
+                isEditing={isEditing}>
+                <PhoneInput compact value={whats} onChange={setwhats} />
+              </FieldBlock>
+            ) : null}
           </View>
 
           {/* ── Presence / Redes ────────────────────────────────────────── */}
@@ -1207,24 +1217,29 @@ const FormTaller = () => {
           <View style={styles.section}>
             <SectionHeader title="Detalles del negocio" />
             <FieldBlock
-              label="Características"
+              label="Descripción"
               value={Caracteristicas}
               isEditing={isEditing}
               vertical>
               <EditInput value={Caracteristicas} onChangeText={setCaracteristicas} multiline height={120} />
             </FieldBlock>
-            <FieldBlock
-              label="Experiencia"
-              value={Experiencia}
-              isEditing={isEditing}>
-              <EditInput value={Experiencia} onChangeText={setExperiencia} />
-            </FieldBlock>
-            <FieldBlock
-              label="Seguro"
-              value={seguro}
-              isEditing={isEditing}>
-              <EditInput value={seguro} onChangeText={setseguro} />
-            </FieldBlock>
+            {areasDeEspecialidades(dataTaller?.especialidades).length ? (
+              <View style={{marginTop: 4}}>
+                <Text style={{fontSize: 11, fontWeight: '700', color: '#9CA3AF', letterSpacing: 0.6, marginBottom: 8}}>
+                  ESPECIALIDADES
+                </Text>
+                <View style={{flexDirection: 'row', flexWrap: 'wrap', gap: 8}}>
+                  {areasDeEspecialidades(dataTaller?.especialidades)
+                    .map(c => String((c && (c.nombre || c.name)) || (typeof c === 'string' ? c : '')).trim())
+                    .filter(Boolean)
+                    .map((n, i) => (
+                      <View key={`${n}-${i}`} style={{backgroundColor: i === 0 ? '#FFD60A' : '#EEF0F8', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 6}}>
+                        <Text style={{color: '#1F2344', fontWeight: i === 0 ? '800' : '600', fontSize: 13}}>{n}</Text>
+                      </View>
+                    ))}
+                </View>
+              </View>
+            ) : null}
           </View>
 
           {/* ── Métodos de pago ─────────────────────────────────────────── */}
@@ -1344,12 +1359,25 @@ const FormTaller = () => {
           {/* ── Documentos ──────────────────────────────────────────────── */}
           <View style={styles.section}>
             <SectionHeader title="Documentos" />
+            {[rifIdFiscalLocalUri, fotoFrenteTallerLocalUri, fotoInternaTallerLocalUri, logotipoNegocioLocalUri, permisoOperacionLocalUri].some(Boolean) ? (
+              <View style={{flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#E8F7EE', borderRadius: 12, padding: 12, marginBottom: 12}}>
+                <Icons5 name="check-circle" size={14} color="#15803D" />
+                <Text style={{flex: 1, color: '#14532D', fontSize: 13, lineHeight: 18}}>
+                  Documento listo. Toca <Text style={{fontWeight: '800'}}>Guardar</Text> arriba para subirlo. Con RIF, frente e interior el negocio pasa solo a "En revisión".
+                </Text>
+              </View>
+            ) : null}
             <View style={styles.docGrid}>
-              {docThumb({label: 'RIF / ID Fiscal',        url: rifIdFiscalUrl,       localUri: rifIdFiscalLocalUri,       onSelect: () => openPhotoOptions(setRifIdFiscalBase64,       setRifIdFiscalLocalUri)})}
-              {docThumb({label: 'Permiso de operación',   url: permisoOperacionUrl,  localUri: permisoOperacionLocalUri,  onSelect: () => openPhotoOptions(setPermisoOperacionBase64,  setPermisoOperacionLocalUri)})}
-              {docThumb({label: 'Logotipo',               url: logotipoNegocioUrl,   localUri: logotipoNegocioLocalUri,   onSelect: () => openPhotoOptions(setLogotipoNegocioBase64,   setLogotipoNegocioLocalUri)})}
-              {docThumb({label: 'Foto frente',            url: fotoFrenteTallerUrl,  localUri: fotoFrenteTallerLocalUri,  onSelect: () => openPhotoOptions(setFotoFrenteTallerBase64,  setFotoFrenteTallerLocalUri)})}
-              {docThumb({label: 'Foto interna',           url: fotoInternaTallerUrl, localUri: fotoInternaTallerLocalUri, onSelect: () => openPhotoOptions(setFotoInternaTallerBase64, setFotoInternaTallerLocalUri)})}
+              {/* Los del registro actual: RIF, frente, interior y logo. El
+                  permiso de operación ya no se pide: solo se muestra si un
+                  registro anterior lo tiene. */}
+              {docThumb({label: 'RIF',                    url: rifIdFiscalUrl,       localUri: rifIdFiscalLocalUri,       onSelect: () => openPhotoOptions(setRifIdFiscalBase64,       setRifIdFiscalLocalUri)})}
+              {docThumb({label: 'Frente del taller',      url: fotoFrenteTallerUrl,  localUri: fotoFrenteTallerLocalUri,  onSelect: () => openPhotoOptions(setFotoFrenteTallerBase64,  setFotoFrenteTallerLocalUri)})}
+              {docThumb({label: 'Interior del taller',    url: fotoInternaTallerUrl, localUri: fotoInternaTallerLocalUri, onSelect: () => openPhotoOptions(setFotoInternaTallerBase64, setFotoInternaTallerLocalUri)})}
+              {docThumb({label: 'Logo',                   url: logotipoNegocioUrl,   localUri: logotipoNegocioLocalUri,   onSelect: () => openPhotoOptions(setLogotipoNegocioBase64,   setLogotipoNegocioLocalUri)})}
+              {permisoOperacionUrl || permisoOperacionLocalUri
+                ? docThumb({label: 'Permiso de operación', url: permisoOperacionUrl, localUri: permisoOperacionLocalUri, onSelect: () => openPhotoOptions(setPermisoOperacionBase64, setPermisoOperacionLocalUri)})
+                : null}
             </View>
           </View>
 
