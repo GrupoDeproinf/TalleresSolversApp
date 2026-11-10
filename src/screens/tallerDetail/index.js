@@ -17,6 +17,7 @@ import {
   Modal,
   AppState,
   Platform,
+  Pressable,
 } from "react-native";
 import { useRoute, useNavigation, useFocusEffect } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -36,7 +37,10 @@ import {
   CreditCard,
   Wallet,
   Banknote,
+  Store,
 } from "lucide-react-native";
+import { AppText, Tag, Card, TallerCard, TallerCardSkeleton, colors, space, radius, shadow } from "../../ui";
+import { Galeria, Seccion, Valoracion, MetodosPago, Horario, listaImagenes } from "../../ui/detalle";
 import api from "../../../axiosInstance";
 import MapboxNavigation from "../../commonComponents/MapboxNavigation";
 import ArrivedModal from "../../commonComponents/ArrivedModal";
@@ -47,7 +51,7 @@ import useLocationPermission from "../../hooks/useLocationPermission";
 import LocationPermissionModal from "../../commonComponents/LocationPermissionModal";
 import ContactBar, { CONTACT_BAR_SPACE } from "../../ui/ContactBar";
 import { llamar, abrirWhatsApp, puedeLlamar, puedeWhatsApp } from "../../utils/contacto";
-import { openState, openHint, tallerPhone, tallerWhatsApp, precioDesde } from "../../utils/taller";
+import { openState, openHint, tallerPhone, tallerWhatsApp, precioDesde, sentenceCase, firstImage, formatPrice, priceValue } from "../../utils/taller";
 import {areasDeEspecialidades} from '../../utils/areasServicio';
 
 const { width } = Dimensions.get("window");
@@ -328,6 +332,7 @@ const TallerDetail = () => {
   const [emergencyModalVisible, setEmergencyModalVisible] = useState(false);
   const [dataComments, setDataComments] = useState([]);
   const [dataAverage, setDataAverage] = useState(0);
+  const [verTodasEspecialidades, setVerTodasEspecialidades] = useState(false);
 
   const recomputeFabVisibilidad = useCallback(async () => {
     try {
@@ -667,333 +672,222 @@ const TallerDetail = () => {
     );
   }
 
+  const zonaTallerTexto = [taller?.municipio, taller?.estado].map(v => String(v || '').trim()).filter(Boolean).join(', ');
+  const logoTallerUri = resolveUri(taller?.logotipoNegocio) || resolveUri(taller?.image_perfil);
+  const fotosTaller = listaImagenes(
+    taller?.fotoFrenteTaller,
+    taller?.fotoInternaTaller,
+    taller?.image_perfil,
+    taller?.galeria,
+    taller?.instalaciones_images,
+  );
+  const telefonos = [telefonoA, telefonoB].filter(t => t && t !== '—');
+  const verResenasTaller = () =>
+    navigation.navigate('RatingScreen', {
+      dataComments,
+      dataAverage,
+      id: resolvedTallerId,
+      dataTotal: taller,
+      type: 'taller',
+    });
+
   return (
-    <View style={styles.container}>
+    <View style={td.pantalla}>
       <StatusBar barStyle="light-content" backgroundColor="#1D1E56" />
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: CONTACT_BAR_SPACE + space.l }}>
+        <Galeria imagenes={fotosTaller} onBack={() => navigation.goBack()} />
 
-      <View style={styles.topNav}>
-        <View style={styles.topNavCircle1} />
-        <View style={styles.topNavCircle2} />
-        <View style={styles.topNavRow}>
-          <TouchableOpacity style={styles.topNavBackBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
-            <ArrowLeft size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-          <Text style={styles.topNavTitle}>Perfil del negocio</Text>
-        </View>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        <View style={styles.hero}>
-          <Image source={heroImageSource} style={styles.heroImage} />
-          <View style={styles.heroOverlay} />
-          <View style={styles.heroBottom}>
-            <View style={styles.heroBadgeRow}>
-              {abierto === "open" ? (
-                <Text style={styles.activeBadge}>ABIERTO</Text>
-              ) : abierto === "closed" ? (
-                <Text style={[styles.activeBadge, styles.closedBadge]}>CERRADO</Text>
-              ) : null}
-              <Text style={styles.estadoBadge}>{estadoTaller}</Text>
-            </View>
-            <Text style={styles.heroName}>{tallerNombre}</Text>
-            <Text style={styles.heroRif}>RIF: {rif}</Text>
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 2 }}>
-            <Text style={styles.cardTitle}>Información del Negocio</Text>
-            <TouchableOpacity
-              activeOpacity={0.85}
-              onPress={() =>
-                navigation.navigate('RatingScreen', {
-                  dataComments: dataComments,
-                  dataAverage: dataAverage,
-                  id: resolvedTallerId,
-                  dataTotal: taller,
-                  type: 'taller',
-                })
-              }
-              style={{
-                backgroundColor: '#FFD60A',
-                borderRadius: 999,
-                paddingHorizontal: 12,
-                paddingVertical: 6,
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 4,
-              }}>
-              <Text style={{ color: '#6F5C00', fontSize: 13, fontWeight: '800' }}>
-                ★ {dataComments.length > 0 ? String(dataAverage) : '—'}
-              </Text>
-              <Text style={{ color: '#6F5C00', fontSize: 16, fontWeight: '900', lineHeight: 16 }}>›</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.infoItem}>
-            <MapPin size={16} color="#1F2344" />
-            <View style={styles.infoTextWrap}>
-              <Text style={styles.infoLabel}>Dirección</Text>
-              <Text style={styles.infoValue}>{direccion}</Text>
-            </View>
-          </View>
-          <View style={styles.infoItem}>
-            <Mail size={16} color="#1F2344" />
-            <View style={styles.infoTextWrap}>
-              <Text style={styles.infoLabel}>Correo electrónico</Text>
-              <Text style={styles.infoValue}>{correo}</Text>
-            </View>
-          </View>
-          <View style={styles.infoItem}>
-            <Phone size={16} color="#1F2344" />
-            <View style={styles.infoTextWrap}>
-              <Text style={styles.infoLabel}>Teléfonos</Text>
-              <Text style={styles.infoValue}>{telefonoA}</Text>
-              {telefonoB ? <Text style={styles.infoValue}>{telefonoB}</Text> : null}
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Instalaciones</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.installationRow}>
-            {instalacionesImages.map((img, idx) => (
-              <TouchableOpacity
-                key={`instalacion-${idx}`}
-                activeOpacity={0.9}
-                onPress={() => openInstalacionImage(img)}
-                style={idx > 0 ? { marginLeft: 10 } : null}>
-                <Image source={img} style={styles.installationImage} />
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {especialidades.length ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Especialidades</Text>
-            <View style={{flexDirection: "row", flexWrap: "wrap", marginTop: 4}}>
-              {especialidades.map((n, i) => (
-                <View
-                  key={n}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    backgroundColor: i === 0 ? "#FFD60A" : "#EEF0F8",
-                    borderRadius: 999,
-                    paddingHorizontal: 12,
-                    paddingVertical: 6,
-                    marginRight: 8,
-                    marginBottom: 8,
-                  }}>
-                  <Text style={{color: "#1F2344", fontWeight: i === 0 ? "800" : "600", fontSize: 13}}>{n}</Text>
+        <View style={td.cuerpo}>
+          <View style={td.encabezado}>
+            <View style={td.filaNombre}>
+              {logoTallerUri ? (
+                <Image source={{ uri: logoTallerUri }} style={td.logo} />
+              ) : (
+                <View style={[td.logo, td.logoVacio]}>
+                  <Store size={22} color={colors.navy} strokeWidth={2.2} />
                 </View>
-              ))}
-            </View>
-          </View>
-        ) : null}
-
-        {caracteristicasTaller ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Sobre el negocio</Text>
-            <View style={styles.infoItem}>
-              <View style={styles.infoTextWrapNoIcon}>
-                <Text style={styles.infoValue}>{caracteristicasTaller}</Text>
+              )}
+              <View style={{ flex: 1 }}>
+                <AppText variant="title" accessibilityRole="header">
+                  {tallerNombre}
+                </AppText>
+                {zonaTallerTexto ? (
+                  <AppText variant="caption" color={colors.muted}>
+                    {zonaTallerTexto}
+                  </AppText>
+                ) : null}
               </View>
             </View>
-          </View>
-        ) : null}
 
-        {showHorarioAtencion ? (
-          <View style={styles.card}>
-            <Text style={styles.cardTitle}>Horario de atención</Text>
-            {horarioAtencionDisplay.plain !== "" ? (
-              <View style={styles.infoItem}>
-                <View style={styles.infoTextWrapNoIcon}>
-                  <Text style={styles.infoValue}>{horarioAtencionDisplay.plain}</Text>
-                </View>
+            <View style={td.filaEstado}>
+              <Valoracion comentarios={dataComments} onPress={dataComments.length ? verResenasTaller : undefined} />
+              {abierto === 'open' ? (
+                <Tag label="Abierto ahora" tone="ok" />
+              ) : abierto === 'closed' ? (
+                <Tag label="Cerrado" tone="error" />
+              ) : null}
+            </View>
+
+            {especialidades.length ? (
+              <View style={td.tags}>
+                {(verTodasEspecialidades ? especialidades : especialidades.slice(0, 6)).map((n, i) => (
+                  <Tag key={n} label={n} tone={i === 0 ? 'warn' : 'info'} />
+                ))}
+                {especialidades.length > 6 ? (
+                  <Pressable
+                    onPress={() => setVerTodasEspecialidades(v => !v)}
+                    accessibilityRole="button"
+                    hitSlop={8}
+                    style={td.masTags}>
+                    <AppText variant="caption" style={{ textDecorationLine: 'underline' }}>
+                      {verTodasEspecialidades ? 'Ver menos' : `+${especialidades.length - 6} más`}
+                    </AppText>
+                  </Pressable>
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+
+          {/* Lo que el conductor viene a buscar: los servicios, arriba. */}
+          <View style={{ marginTop: space.l }}>
+            <AppText variant="subtitle" style={{ marginBottom: space.s }} accessibilityRole="header">
+              Servicios{tallerServices.length ? ` (${tallerServices.length})` : ''}
+            </AppText>
+            {loadingServices ? (
+              <View style={{ gap: space.s }}>
+                <TallerCardSkeleton />
+                <TallerCardSkeleton />
+              </View>
+            ) : tallerServices.length ? (
+              <View style={{ gap: space.s }}>
+                {tallerServices.map((service, idx) => {
+                  const serviceUid = service?.uid_servicio || service?.id;
+                  return (
+                    <TallerCard
+                      key={`${serviceUid || 'servicio'}-${idx}`}
+                      title={sentenceCase(service?.nombre_servicio || service?.nombre) || 'Servicio'}
+                      imageUri={firstImage(service?.service_image)}
+                      tag={sentenceCase(service?.nombre_categoria || service?.categoria) || undefined}
+                      price={formatPrice(priceValue(service))}
+                      onPress={() =>
+                        serviceUid &&
+                        navigation.navigate('ProductDetailOne', { uid: serviceUid, typeUser: typeUserForDetail })
+                      }
+                    />
+                  );
+                })}
               </View>
             ) : (
-              horarioAtencionDisplay.rows.map(row => (
-                <View style={styles.horarioRow} key={row.key}>
-                  <Text style={styles.horarioDayLabel}>{row.label}</Text>
-                  <Text style={styles.horarioTimeText}>{row.time}</Text>
-                </View>
-              ))
+              <Card>
+                <AppText variant="body" color={colors.muted}>
+                  Este negocio aún no publicó servicios. Puedes escribirle o pedirle un presupuesto con
+                  "Solicitar servicio".
+                </AppText>
+              </Card>
             )}
           </View>
-        ) : null}
 
-        {activePaymentMethods.length > 0 && (
-          <View style={styles.paymentCard}>
-            <Text style={styles.paymentTitle}>Métodos de Pago</Text>
-            <View style={styles.paymentGrid}>
-              {activePaymentMethods.map(m => (
-                <View style={styles.paymentItem} key={m.id}>
-                  <PaymentMethodIcon icon={m.icon} />
-                  <Text style={styles.paymentText}>{m.name}</Text>
-                </View>
-              ))}
+          {caracteristicasTaller ? (
+            <Seccion titulo="Sobre el negocio">
+              <AppText variant="body">{caracteristicasTaller}</AppText>
+            </Seccion>
+          ) : null}
+
+          {showHorarioAtencion ? (
+            <Seccion titulo="Horario de atención">
+              <Horario filas={horarioAtencionDisplay.rows} texto={horarioAtencionDisplay.plain} />
+            </Seccion>
+          ) : null}
+
+          {activePaymentMethods.length > 0 ? (
+            <Seccion titulo="Formas de pago">
+              <MetodosPago metodos={taller?.metodos_pago} />
+              {activePaymentMethods
+                .map(m => ({ m, datos: datosParaMostrar(m.id, taller?.metodos_pago_datos) }))
+                .filter(x => x.datos.length)
+                .map(({ m, datos }) => (
+                  <View key={`datos-${m.id}`} style={td.datosPago}>
+                    <AppText variant="caption" color={colors.muted}>
+                      {m.name}
+                    </AppText>
+                    {datos.map(dp => (
+                      <AppText key={dp.label} variant="body" selectable>
+                        {dp.label}: {dp.valor}
+                      </AppText>
+                    ))}
+                  </View>
+                ))}
+            </Seccion>
+          ) : null}
+
+          <Seccion titulo="Dónde queda">
+            <View style={td.fila}>
+              <MapPin size={20} color={colors.navy} strokeWidth={2.2} />
+              <View style={{ flex: 1 }}>
+                <AppText variant="body">{direccion}</AppText>
+                {zonaTallerTexto ? (
+                  <AppText variant="caption" color={colors.muted}>
+                    {zonaTallerTexto}
+                  </AppText>
+                ) : null}
+              </View>
             </View>
-            {/* Datos que el taller dejó para que le paguen (opcionales) */}
-            {activePaymentMethods
-              .map(m => ({m, datos: datosParaMostrar(m.id, taller?.metodos_pago_datos)}))
-              .filter(x => x.datos.length)
-              .map(({m, datos}) => (
-                <View key={`datos-${m.id}`} style={{marginTop: 12, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#EEF0F6'}}>
-                  <Text style={[styles.paymentText, {fontWeight: '700', marginBottom: 4}]}>{m.name}</Text>
-                  {datos.map(d => (
-                    <Text key={d.label} style={styles.paymentText} selectable>
-                      {d.label}: {d.valor}
-                    </Text>
+          </Seccion>
+
+          <Seccion titulo="Contacto">
+            <View style={{ gap: space.s }}>
+              {telefonos.length ? (
+                <View style={td.fila}>
+                  <Phone size={20} color={colors.navy} strokeWidth={2.2} />
+                  <AppText variant="body" style={{ flex: 1 }} selectable>
+                    {telefonos.join('  ·  ')}
+                  </AppText>
+                </View>
+              ) : null}
+              {correo && correo !== '—' ? (
+                <Pressable
+                  onPress={handleEmail}
+                  accessibilityRole="link"
+                  accessibilityLabel={`Escribir a ${correo}`}
+                  style={td.fila}>
+                  <Mail size={20} color={colors.navy} strokeWidth={2.2} />
+                  <AppText variant="body" style={{ flex: 1 }} numberOfLines={1}>
+                    {correo}
+                  </AppText>
+                </Pressable>
+              ) : null}
+              {redes.length ? (
+                <View style={td.redes}>
+                  {redes.map(r => (
+                    <Pressable
+                      key={r.clave}
+                      onPress={() => handleSocialMedia(r.clave, r.url)}
+                      accessibilityRole="link"
+                      accessibilityLabel={`Abrir ${r.clave}`}
+                      style={({ pressed }) => [td.red, pressed && { opacity: 0.7 }]}>
+                      {r.clave === 'Instagram' ? (
+                        <Instagram size={18} color={colors.navy} strokeWidth={2.2} />
+                      ) : r.clave === 'Facebook' ? (
+                        <Facebook size={18} color={colors.navy} strokeWidth={2.2} />
+                      ) : (
+                        <Youtube size={18} color={colors.navy} strokeWidth={2.2} />
+                      )}
+                      <AppText variant="caption">{r.clave}</AppText>
+                    </Pressable>
                   ))}
                 </View>
-              ))}
-          </View>
-        )}
-
-        {redes.length ? (
-        <View style={styles.card}>
-          <Text style={styles.cardTitlePlain}>Síguenos</Text>
-          <View style={styles.socialGrid}>
-            {taller?.LinkInstagram ? (
-            <TouchableOpacity
-              style={[styles.socialRow, styles.socialRowHalf]}
-              onPress={() => handleSocialMedia("Instagram", taller?.LinkInstagram)}
-              activeOpacity={0.85}>
-              <View style={styles.socialLeft}>
-                <View style={[styles.socialIconWrap, { backgroundColor: "#E4405F" }]}>
-                  <Instagram size={15} color="#FFFFFF" />
-                </View>
-                <Text style={styles.socialText}>Instagram</Text>
-              </View>
-              <ChevronRight size={16} color="#6B7280" />
-            </TouchableOpacity>
-            ) : null}
-            {taller?.LinkFacebook ? (
-            <TouchableOpacity
-              style={[styles.socialRow, styles.socialRowHalf]}
-              onPress={() => handleSocialMedia("Facebook", taller?.LinkFacebook)}
-              activeOpacity={0.85}>
-              <View style={styles.socialLeft}>
-                <View style={[styles.socialIconWrap, { backgroundColor: "#1877F2" }]}>
-                  <Facebook size={15} color="#FFFFFF" />
-                </View>
-                <Text style={styles.socialText}>Facebook</Text>
-              </View>
-              <ChevronRight size={16} color="#6B7280" />
-            </TouchableOpacity>
-            ) : null}
-            {taller?.LinkTiktok ? (
-            <TouchableOpacity
-              style={[styles.socialRow, styles.socialRowFull]}
-              onPress={() => handleSocialMedia("TikTok", taller?.LinkTiktok)}
-              activeOpacity={0.85}>
-              <View style={styles.socialLeft}>
-                <View style={[styles.socialIconWrap, { backgroundColor: "#1F2344" }]}>
-                  <Youtube size={15} color="#FFFFFF" />
-                </View>
-                <Text style={styles.socialText}>TikTok</Text>
-              </View>
-              <ChevronRight size={16} color="#6B7280" />
-            </TouchableOpacity>
-            ) : null}
-          </View>
-        </View>
-        ) : null}
-
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Servicios de este negocio</Text>
-          <Text style={styles.servicesSubtitle}>
-            Explora los servicios activos y disponibles para atender tu vehiculo.
-          </Text>
-          {loadingServices ? (
-            <View style={styles.servicesLoadingWrap}>
-              <ActivityIndicator size="small" color="#1F2344" />
-              <Text style={styles.servicesLoadingText}>Cargando servicios...</Text>
+              ) : null}
             </View>
-          ) : tallerServices.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.servicesRow}>
-              {tallerServices.map((service, idx) => {
-                const _svcUri = resolveUri(service?.service_image);
-                const serviceImage = _svcUri
-                  ? { uri: _svcUri }
-                  : require("../../assets/noimageNew.png");
-                const serviceUid = service?.uid_servicio || service?.id;
-                const precioServicio = precioDesde(service?.precio, service?.tarifa);
-                const categoriaServicio =
-                  service?.nombre_categoria || service?.categoria || service?.subcategoria || "";
-                const puntuacionServicio =
-                  service?.puntuacion != null && service?.puntuacion !== ""
-                    ? String(service.puntuacion)
-                    : null;
-                return (
-                  <View
-                    key={`${service?.id || service?.uid_servicio || "service"}-${idx}`}
-                    style={[styles.serviceCard, idx > 0 && { marginLeft: 10 }]}>
-                    <Image source={serviceImage} style={styles.serviceCardImage} />
-                    <View style={styles.serviceCardBody}>
-                      <Text style={styles.serviceCardTitle} numberOfLines={1}>
-                        {service?.nombre_servicio || service?.nombre || "Servicio"}
-                      </Text>
-                      {(categoriaServicio || puntuacionServicio) ? (
-                        <View style={styles.serviceMetaRow}>
-                          {categoriaServicio ? (
-                            <View style={styles.serviceMetaChip}>
-                              <Text style={styles.serviceMetaChipText} numberOfLines={1}>
-                                {categoriaServicio}
-                              </Text>
-                            </View>
-                          ) : null}
-                          {puntuacionServicio ? (
-                            <View style={styles.serviceScoreChip}>
-                              <Text style={styles.serviceScoreChipText}>★ {puntuacionServicio}</Text>
-                            </View>
-                          ) : null}
-                        </View>
-                      ) : null}
-                      <Text style={styles.serviceCardPrice} numberOfLines={1}>
-                        {precioServicio}
-                      </Text>
-                      <Text style={styles.serviceCardDesc} numberOfLines={2}>
-                        {service?.descripcion || "Servicio disponible en este taller."}
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.serviceDetailBtn}
-                        activeOpacity={0.9}
-                        onPress={() => {
-                          if (!serviceUid) return;
-                          navigation.navigate("ProductDetailOne", {
-                            uid: serviceUid,
-                            typeUser: typeUserForDetail,
-                          });
-                        }}>
-                        <Text style={styles.serviceDetailBtnText}>Ver detalle</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                );
-              })}
-            </ScrollView>
-          ) : (
-            <View style={styles.servicesEmpty}>
-              <Text style={styles.servicesEmptyText}>Este negocio aun no tiene servicios cargados.</Text>
-            </View>
-          )}
-        </View>
+          </Seccion>
 
-        {/* <View style={styles.scheduleCard}>
-          <Clock size={24} color="#705D00" />
-          <Text style={styles.scheduleTitle}>Horario de Atención</Text>
-          <Text style={styles.scheduleText}>
-            {taller?.horario || "Lunes a Viernes: 8:00 AM - 5:00 PM\nSábados: 9:00 AM - 1:00 PM"}
-          </Text>
-        </View> */}
+          {rif && rif !== '—' ? (
+            <AppText variant="caption" color={colors.muted} style={td.rif}>
+              RIF {rif}
+            </AppText>
+          ) : null}
+        </View>
       </ScrollView>
 
       <MapboxNavigation
@@ -1618,6 +1512,37 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.28,
     shadowRadius: 8,
   },
+});
+
+const td = StyleSheet.create({
+  pantalla: { flex: 1, backgroundColor: colors.bg },
+  cuerpo: { paddingHorizontal: space.m },
+  encabezado: {
+    backgroundColor: colors.card,
+    borderRadius: radius.l,
+    padding: space.m,
+    marginTop: -space.l,
+    ...shadow.card,
+  },
+  filaNombre: { flexDirection: "row", alignItems: "center", gap: space.m },
+  logo: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.bg },
+  logoVacio: { alignItems: "center", justifyContent: "center" },
+  filaEstado: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: space.s, marginTop: space.m },
+  tags: { flexDirection: "row", flexWrap: "wrap", gap: space.s, marginTop: space.m },
+  fila: { flexDirection: "row", alignItems: "center", gap: space.s, minHeight: 32 },
+  datosPago: { marginTop: space.m, paddingTop: space.s, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  redes: { flexDirection: "row", flexWrap: "wrap", gap: space.s },
+  red: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.xs,
+    minHeight: 40,
+    paddingHorizontal: space.m,
+    borderRadius: radius.pill,
+    backgroundColor: colors.bg,
+  },
+  rif: { textAlign: "center", marginTop: space.l },
+  masTags: { minHeight: 32, justifyContent: "center", paddingHorizontal: space.xs },
 });
 
 export default TallerDetail;

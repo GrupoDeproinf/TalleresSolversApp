@@ -2261,17 +2261,29 @@ const VehicleAddStepper = () => {
           <View style={styles.footerCardInsideSticky}>
             {step === 1 ? (
               <View style={styles.footerButtonRow}>
+                {/* Fase 2: con placa, marca, modelo, año y km ya se puede guardar.
+                    La ficha técnica y los documentos quedan como opcionales. */}
                 <TouchableOpacity
                   style={[vehicleFormStyles.btn, vehicleFormStyles.btnSecondary]}
-                  onPress={() => navigation.goBack()}
+                  onPress={handleContinue}
+                  accessibilityLabel="Agregar ficha técnica y documentos (opcional)"
                   activeOpacity={0.8}>
-                  <Text style={vehicleFormStyles.btnTextSecondary}>Cancelar</Text>
+                  <Text style={vehicleFormStyles.btnTextSecondary}>Más datos</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[vehicleFormStyles.btn, vehicleFormStyles.btnPrimary]}
-                  onPress={handleContinue}
+                  style={[
+                    vehicleFormStyles.btn,
+                    vehicleFormStyles.btnPrimary,
+                    saving && vehicleFormStyles.btnDisabled,
+                  ]}
+                  onPress={() => validateStep1() && handleSubmit()}
+                  disabled={saving}
                   activeOpacity={0.8}>
-                  <Text style={vehicleFormStyles.btnTextPrimary}>Continuar</Text>
+                  {saving ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={vehicleFormStyles.btnTextPrimary}>Guardar</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             ) : step === 2 ? (

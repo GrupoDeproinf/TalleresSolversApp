@@ -53,7 +53,7 @@ import useLocationPermission from '../../../hooks/useLocationPermission';
 import LocationPermissionModal from '../../../commonComponents/LocationPermissionModal';
 import ContactBar, { CONTACT_BAR_SPACE } from '../../../ui/ContactBar';
 import { llamar, abrirWhatsApp, puedeLlamar, puedeWhatsApp } from '../../../utils/contacto';
-import { openHint, tallerPhone, tallerWhatsApp, precioDesde } from '../../../utils/taller';
+import { openHint, openState, tallerPhone, tallerWhatsApp, precioDesde, sentenceCase, firstImage, formatPrice, priceValue } from '../../../utils/taller';
 import {
   ArrowLeft,
   ChevronRight,
@@ -62,7 +62,11 @@ import {
   Megaphone,
   MessageCircle,
   Phone,
+  ShieldCheck,
+  Store,
 } from 'lucide-react-native';
+import { AppText, Tag, TallerCard, colors, space, radius, shadow, TOUCH } from '../../../ui';
+import { Galeria, Seccion, Valoracion, MetodosPago, metodosActivos, Horario, listaImagenes } from '../../../ui/detalle';
 
 /** `metodos_pago` viene como objeto { efectivo: true, ... }, no como array. */
 function hasActivePaymentMethods(metodosPago) {
@@ -730,236 +734,177 @@ const ProductDetailOne = ({ navigation }) => {
     });
   };
 
+  const nombreServicio = String(DataService?.nombre || DataService?.nombre_servicio || '').trim() || 'Servicio';
+  const nombreTallerVisible = String(dataTaller?.nombre || dataTaller?.nombre_taller || '').trim();
+  const estadoAbierto = openState(dataTaller?.horarios_atencion);
+  const precioTexto = precioDesde(DataService?.precio, DataService?.tarifa);
+  const garantiaTexto = String(DataService?.garantia || '').trim();
+  const descripcionTexto = String(DataService?.descripcion || '').trim();
+  const direccionTaller = String(
+    dataTaller?.Direccion || dataTaller?.direccion || dataTaller?.ubicacion?.direccion || '',
+  ).trim();
+  const zonaTaller = [dataTaller?.municipio, dataTaller?.estado].map(v => String(v || '').trim()).filter(Boolean).join(', ');
+  const categorias = [
+    DataService?.nombre_categoria || DataService?.categoria,
+    Array.isArray(DataService?.subcategoria) ? DataService.subcategoria[0]?.nombre_subcategoria : DataService?.subcategoria,
+  ]
+    .map(v => (typeof v === 'string' ? sentenceCase(v.trim()) : ''))
+    .filter((v, i, a) => v && a.findIndex(x => x.toLowerCase() === v.toLowerCase()) === i);
+  const idActual = DataService?.uid_servicio || DataService?.id;
+  const parecidos = (Array.isArray(dataProductCategory) ? dataProductCategory : [])
+    .filter(s => (s?.uid_servicio || s?.id) && (s?.uid_servicio || s?.id) !== idActual)
+    .slice(0, 4);
+  const logoTaller = firstImage(dataTaller?.logotipoNegocio) || firstImage(dataTaller?.image_perfil);
+
+  const verResenas = () =>
+    navigation.navigate('RatingScreen', {
+      dataComments,
+      dataAverage,
+      id: DataService?.id,
+      dataTotal: DataService,
+    });
+
   return (
-    <View
-      style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle }]}>
+    <View style={sd.pantalla}>
       <ScrollView
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
-        stickyHeaderIndices={[0]}
-        contentContainerStyle={{ paddingBottom: CONTACT_BAR_SPACE }}
-        style={[commonStyles.commonContainer, { backgroundColor: bgFullStyle }]}>
-        <View style={styles.topNav}>
-          <View style={styles.topNavCircle1} />
-          {/* <View style={styles.topNavCircle2} /> */}
-          <View style={styles.topNavLeft}>
-            <TouchableOpacity
-              onPress={() => navigation.goBack('')}
-              style={styles.topNavBackBtn}>
-              <View>
-                <ArrowLeft size={22} color="#FFEA00" />
-              </View>
-            </TouchableOpacity>
-            <Text style={styles.topNavTitle}>Detalle del servicio</Text>
-          </View>
-          <View style={styles.topNavSpacer} />
-        </View>
-        <View>
-          <View style={styles.hero}>
-            <Image source={heroImageSource} style={styles.heroImage} />
-            <View style={styles.heroOverlay} />
-            <View style={styles.heroBottom}>
-              <View style={styles.heroBadgeRow}>
-                <Text style={styles.activeBadge}>ACTIVO</Text>
-                <Text style={styles.estadoBadge}>
-                  {dataTaller?.estado || 'SIN ESTADO'}
-                </Text>
-              </View>
-              <Text style={styles.heroName} numberOfLines={2}>
-                {DataService.nombre
-                  ? DataService.nombre
-                  : DataService?.nombre_servicio}
-              </Text>
-              <TouchableOpacity
-                style={[
-                  styles.heroTallerBadge,
-                  !tallerDetailUid && styles.heroTallerBadgeDisabled,
-                ]}
+        contentContainerStyle={{ paddingBottom: CONTACT_BAR_SPACE + space.l }}>
+        <Galeria
+          imagenes={listaImagenes(DataService?.service_image)}
+          onBack={() => navigation.goBack()}
+        />
+
+        <View style={sd.cuerpo}>
+          {/* Encabezado: qué es, quién lo hace, cómo lo califican y si está abierto */}
+          <View style={sd.encabezado}>
+            <AppText variant="title" accessibilityRole="header">
+              {sentenceCase(nombreServicio)}
+            </AppText>
+
+            {nombreTallerVisible ? (
+              <Pressable
                 onPress={goToTallerDetail}
-                activeOpacity={0.82}
                 disabled={!tallerDetailUid}
                 accessibilityRole="button"
-                accessibilityLabel="Ver perfil del taller">
-                <Text style={styles.heroTallerBadgeText} numberOfLines={1}>
-                  {dataTaller?.nombre || 'TALLER'}
-                </Text>
-                {!!tallerDetailUid && (
-                  <ChevronRight
-                    size={18}
-                    color="#FFD60A"
-                    strokeWidth={2.5}
-                    style={styles.heroTallerBadgeChevron}
-                  />
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-          <View style={[external.mh_20, styles.mainCard]}>
-            <View style={styles.serviceMetaRow}>
-              <View style={styles.priceInlineRow}>
-                <Text style={styles.priceInlineLabel}>DESDE:</Text>
-                <Text style={styles.priceInlineValue} numberOfLines={1}>
-                  {precioVisible === 'Por consultar' ? precioVisible : `Ref. ${precioVisible}`}
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.ratingPill}
-                onPress={() =>
-                  navigation.navigate('RatingScreen', {
-                    dataComments: dataComments,
-                    dataAverage: dataAverage,
-                    id: DataService?.id,
-                    dataTotal: DataService,
-                  })
-                }>
-                <View style={styles.ratingPillRow}>
-                  <Text style={styles.ratingPillText}>
-                    ★ {String(dataAverage || 0)}
-                  </Text>
-                  <Text style={styles.ratingPillArrow}>›</Text>
-                </View>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.infoBlockCard}>
-              <Text style={styles.infoBlockTitle}>Descripcion</Text>
-              <Text style={styles.infoBlockText}>
-                {DataService?.descripcion && String(DataService.descripcion).trim() !== ''
-                  ? String(DataService.descripcion)
-                  : 'Sin descripcion disponible.'}
-              </Text>
-            </View>
-
-            <BrandData DataService={DataService} />
-
-
-            <View style={styles.infoBlockCard}>
-              <Text style={styles.infoBlockTitle}>Garantia</Text>
-              <Text style={styles.infoBlockText}>
-                {DataService?.garantia && String(DataService.garantia).trim() !== ''
-                  ? String(DataService.garantia)
-                  : 'Sin garantia disponible.'}
-              </Text>
-            </View>
-          </View>
-
-        </View>
-
-        {showHorarioAtencion ? (
-          <View style={[external.mh_20, styles.horarioSectionWrap]}>
-            <View style={styles.horarioSectionHeader}>
-              <Clock size={18} color="#1F2344" />
-              <Text style={styles.horarioSectionTitle}>Horario de atención</Text>
-            </View>
-            {horarioAtencionDisplay.plain !== '' ? (
-              <Text style={styles.horarioSectionPlain}>
-                {horarioAtencionDisplay.plain}
-              </Text>
-            ) : (
-              horarioAtencionDisplay.rows.map(row => (
-                <View key={row.key} style={styles.horarioRow}>
-                  <Text style={styles.horarioDayLabel}>{row.label}</Text>
-                  <Text style={styles.horarioTimeText}>{row.time}</Text>
-                </View>
-              ))
-            )}
-          </View>
-        ) : null}
-
-        {hasActivePaymentMethods(dataTaller?.metodos_pago) && (
-          <View style={[external.mh_20, styles.paymentSectionWrap]}>
-            <IconProduct data={dataTaller.metodos_pago} />
-          </View>
-        )}
-
-        <View style={[external.mh_20, external.mt_20]}>
-          <View style={styles.similaresTitleWrap}>
-            <Text style={styles.similaresSectionTitle}>PRODUCTOS SIMILARES</Text>
-          </View>
-          {Array.isArray(dataProductCategory) && dataProductCategory.length > 0 ? (
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.similaresRow}>
-              {dataProductCategory.map((service, idx) => {
-                const firstImageFromArray =
-                  Array.isArray(service?.service_image) && service.service_image.length > 0
-                    ? service.service_image[0]
-                    : null;
-                const singleImage =
-                  typeof service?.service_image === 'string' ? service.service_image : null;
-                const imageUriCandidate = firstImageFromArray || singleImage;
-                const hasValidImage =
-                  typeof imageUriCandidate === 'string' && imageUriCandidate.trim() !== '';
-                const serviceImage =
-                  hasValidImage
-                    ? { uri: imageUriCandidate.trim() }
-                    : require('../../../assets/noimageNew.png');
-                const serviceUid = service?.uid_servicio || service?.id;
-                const precioServicio = precioDesde(service?.precio, service?.tarifa);
-                const categoriaServicio =
-                  service?.nombre_categoria || service?.categoria || service?.subcategoria || '';
-                const puntuacionServicio =
-                  service?.puntuacion != null && service?.puntuacion !== ''
-                    ? String(service.puntuacion)
-                    : '0';
-
-                return (
-                  <View
-                    key={`${service?.id || service?.uid_servicio || 'service'}-${idx}`}
-                    style={[styles.similarServiceCard, idx > 0 && { marginLeft: 10 }]}>
-                    <Image source={serviceImage} style={styles.similarServiceImage} />
-                    <View style={styles.similarServiceBody}>
-                      <Text style={styles.similarServiceTitle} numberOfLines={1}>
-                        {service?.nombre_servicio || service?.nombre || 'Servicio'}
-                      </Text>
-                      {(categoriaServicio || puntuacionServicio) ? (
-                        <View style={styles.similarMetaRow}>
-                          {categoriaServicio ? (
-                            <View style={styles.similarMetaChip}>
-                              <Text style={styles.similarMetaChipText} numberOfLines={1}>
-                                {categoriaServicio}
-                              </Text>
-                            </View>
-                          ) : null}
-                          <View style={styles.similarScoreChip}>
-                            <Text style={styles.similarScoreChipText}>★ {puntuacionServicio}</Text>
-                          </View>
-                        </View>
-                      ) : null}
-                      <Text style={styles.similarServicePrice} numberOfLines={1}>
-                        {precioServicio}
-                      </Text>
-                      <Text style={styles.similarServiceDesc} numberOfLines={2}>
-                        {service?.descripcion || 'Servicio disponible en este taller.'}
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.similarDetailBtn}
-                        activeOpacity={0.9}
-                        onPress={async () => {
-                          if (!serviceUid) return;
-                          scrollRef.current?.scrollTo({ y: 0, animated: true });
-                          // setRenderLoading(true);
-                          await getDataFirst(serviceUid);
-                          InteractionManager.runAfterInteractions(() => {
-                            requestAnimationFrame(() => {
-                              requestAnimationFrame(() => {
-                                setRenderLoading(false);
-                              });
-                            });
-                          });
-                        }}>
-                        <Text style={styles.similarDetailBtnText}>Ver detalle</Text>
-                      </TouchableOpacity>
-                    </View>
+                accessibilityLabel={`Ver el taller ${nombreTallerVisible}`}
+                style={({ pressed }) => [sd.taller, pressed && { opacity: 0.7 }]}>
+                {logoTaller ? (
+                  <Image source={{ uri: logoTaller }} style={sd.tallerLogo} />
+                ) : (
+                  <View style={[sd.tallerLogo, sd.tallerLogoVacio]}>
+                    <Store size={18} color={colors.navy} strokeWidth={2.2} />
                   </View>
-                );
-              })}
-            </ScrollView>
-          ) : (
-            <View style={styles.similaresEmpty}>
-              <Text style={styles.similaresEmptyText}>No hay productos similares disponibles.</Text>
+                )}
+                <View style={{ flex: 1 }}>
+                  <AppText variant="subtitle" numberOfLines={1}>
+                    {nombreTallerVisible}
+                  </AppText>
+                  <AppText variant="caption" color={colors.muted}>
+                    Ver taller y todos sus servicios
+                  </AppText>
+                </View>
+                <ChevronRight size={20} color={colors.navy} strokeWidth={2.4} />
+              </Pressable>
+            ) : null}
+
+            <View style={sd.filaEstado}>
+              <Valoracion comentarios={dataComments} onPress={dataComments.length ? verResenas : undefined} />
+              {estadoAbierto === 'open' ? (
+                <Tag label="Abierto ahora" tone="ok" />
+              ) : estadoAbierto === 'closed' ? (
+                <Tag label="Cerrado" tone="error" />
+              ) : null}
             </View>
-          )}
+          </View>
+
+          {/* Precio y garantía */}
+          <View style={sd.precio}>
+            <AppText variant="caption" color={colors.onNavyMuted}>
+              Precio
+            </AppText>
+            <AppText variant="title" color={colors.onNavy}>
+              {precioTexto}
+            </AppText>
+            {garantiaTexto ? (
+              <View style={sd.garantia}>
+                <ShieldCheck size={16} color={colors.yellow} strokeWidth={2.2} />
+                <AppText variant="caption" color={colors.onNavy}>
+                  Garantía: {garantiaTexto}
+                </AppText>
+              </View>
+            ) : null}
+            <AppText variant="caption" color={colors.onNavyMuted} style={{ marginTop: space.s }}>
+              El precio final lo confirma el taller al revisar tu carro.
+            </AppText>
+          </View>
+
+          <Seccion titulo="Sobre este servicio">
+            <AppText variant="body" color={descripcionTexto ? colors.text : colors.muted}>
+              {descripcionTexto || 'El taller no agregó una descripción. Escríbele para más detalles.'}
+            </AppText>
+            {categorias.length ? (
+              <View style={sd.tags}>
+                {categorias.map(c => (
+                  <Tag key={c} label={c} tone="info" />
+                ))}
+              </View>
+            ) : null}
+          </Seccion>
+
+          {showHorarioAtencion ? (
+            <Seccion titulo="Horario de atención">
+              <Horario filas={horarioAtencionDisplay.rows} texto={horarioAtencionDisplay.plain} />
+            </Seccion>
+          ) : null}
+
+          {metodosActivos(dataTaller?.metodos_pago).length ? (
+            <Seccion titulo="Formas de pago">
+              <MetodosPago metodos={dataTaller?.metodos_pago} />
+            </Seccion>
+          ) : null}
+
+          {direccionTaller || zonaTaller ? (
+            <Seccion titulo="Dónde queda">
+              <View style={sd.direccion}>
+                <MapPin size={20} color={colors.navy} strokeWidth={2.2} />
+                <View style={{ flex: 1 }}>
+                  {direccionTaller ? <AppText variant="body">{direccionTaller}</AppText> : null}
+                  {zonaTaller ? (
+                    <AppText variant="caption" color={colors.muted}>
+                      {zonaTaller}
+                    </AppText>
+                  ) : null}
+                </View>
+              </View>
+            </Seccion>
+          ) : null}
+
+          {parecidos.length ? (
+            <View style={{ marginTop: space.l }}>
+              <AppText variant="subtitle" style={{ marginBottom: space.s }} accessibilityRole="header">
+                Otros servicios parecidos
+              </AppText>
+              <View style={{ gap: space.s }}>
+                {parecidos.map(s => {
+                  const uid = s?.uid_servicio || s?.id;
+                  const t = s?.taller || {};
+                  return (
+                    <TallerCard
+                      key={uid}
+                      title={sentenceCase(s?.nombre_servicio || s?.nombre) || 'Servicio'}
+                      subtitle={sentenceCase(t?.nombre || t?.nombre_taller || s?.nombre_taller) || undefined}
+                      imageUri={firstImage(s?.service_image) || firstImage(t?.image_perfil)}
+                      tag={sentenceCase(s?.nombre_categoria || s?.categoria) || undefined}
+                      price={formatPrice(priceValue(s))}
+                      open={t?.horarios_atencion ? openState(t.horarios_atencion) : undefined}
+                      onPress={() => navigation.push('ProductDetailOne', { uid })}
+                    />
+                  );
+                })}
+              </View>
+            </View>
+          ) : null}
         </View>
       </ScrollView>
 
@@ -1209,6 +1154,40 @@ const stylesImage = StyleSheet.create({
     shadowOpacity: 0.28,
     shadowRadius: 8,
   },
+});
+
+const sd = StyleSheet.create({
+  pantalla: { flex: 1, backgroundColor: colors.bg },
+  cuerpo: { paddingHorizontal: space.m },
+  encabezado: {
+    backgroundColor: colors.card,
+    borderRadius: radius.l,
+    padding: space.m,
+    marginTop: -space.l,
+    ...shadow.card,
+  },
+  taller: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: space.m,
+    minHeight: TOUCH,
+    marginTop: space.m,
+    padding: space.s,
+    borderRadius: radius.m,
+    backgroundColor: colors.bg,
+  },
+  tallerLogo: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.card },
+  tallerLogoVacio: { alignItems: "center", justifyContent: "center" },
+  filaEstado: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: space.s, marginTop: space.m },
+  precio: {
+    backgroundColor: colors.navy,
+    borderRadius: radius.l,
+    padding: space.m,
+    marginTop: space.m,
+  },
+  garantia: { flexDirection: "row", alignItems: "center", gap: space.xs, marginTop: space.s },
+  tags: { flexDirection: "row", flexWrap: "wrap", gap: space.s, marginTop: space.m },
+  direccion: { flexDirection: "row", gap: space.s },
 });
 
 export default ProductDetailOne;

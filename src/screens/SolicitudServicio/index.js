@@ -632,14 +632,14 @@ const SolicitudServicio = () => {
       ) : errorVehiculos && !vehiculos.length ? (
         <Banner text={errorVehiculos} actionLabel="Reintentar" onAction={cargarVehiculos} />
       ) : !vehiculos.length ? (
-        <Card style={[s.sinVehiculo, falta && !vehicle && s.campoError, { borderWidth: 1.5, borderColor: falta && !vehicle ? colors.error : 'transparent' }]} onPress={() => navigation.navigate('VehiclesScreen')} accessibilityLabel="Agregar vehículo">
+        <Card style={[s.sinVehiculo, falta && !vehicle && s.campoError, { borderWidth: 1.5, borderColor: falta && !vehicle ? colors.error : 'transparent' }]} onPress={() => navigation.navigate('VehicleAddStepper')} accessibilityLabel="Agregar vehículo">
           <View style={s.vehiculoIcono}>
             <Plus size={22} color={colors.navy} strokeWidth={2.4} />
           </View>
           <View style={{ flex: 1 }}>
             <AppText variant="subtitle">Agrega tu vehículo</AppText>
             <AppText variant="caption" color={colors.muted}>
-              Lo necesitamos para que el taller sepa qué carro va a atender.
+              Solo placa, marca, modelo, año y kilometraje. Al guardarlo vuelves aquí.
             </AppText>
           </View>
         </Card>
