@@ -29,6 +29,8 @@ import {useNavigation, useRoute, useFocusEffect} from '@react-navigation/native'
 import {useValues} from '../../../App';
 import api from '../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Button as UIButton, colors as ui} from '../../ui';
+import {Check, X as XIcon, CircleAlert} from 'lucide-react-native';
 import styles from './style.css';
 import TextInputs from '../../commonComponents/textInputs';
 import {WebView} from 'react-native-webview';
@@ -797,6 +799,19 @@ const FormTaller = () => {
   const mapLng = typeof lng === 'number' ? lng : Number(lng);
   const showMap = Number.isFinite(mapLat) && Number.isFinite(mapLng);
 
+  // Lo que el certificador revisa antes de aprobar, a la vista y en orden.
+  const revision = [
+    {key: 'rif', label: 'Número de RIF', ok: !!String(cedula || '').trim()},
+    {key: 'docRif', label: 'Foto del RIF', ok: !!(rifIdFiscalUrl || rifIdFiscalLocalUri)},
+    {key: 'frente', label: 'Foto del frente', ok: !!(fotoFrenteTallerUrl || fotoFrenteTallerLocalUri)},
+    {key: 'interior', label: 'Foto del interior', ok: !!(fotoInternaTallerUrl || fotoInternaTallerLocalUri)},
+    {key: 'ubicacion', label: 'Ubicación en el mapa', ok: !!locationPicked},
+    ...(conteoServicios ? [{key: 'servicios', label: 'Al menos un servicio', ok: conteoServicios.total > 0}] : []),
+  ];
+  const revisionOk = revision.filter(r => r.ok).length;
+  const porDecidir = ['En espera por aprobación', 'En espera de documentos', 'Pendiente'].includes(dataTaller?.status);
+  const statusLabel = STATUS_LABEL[dataTaller?.status] || dataTaller?.status || '';
+
   const statusColor =
     dataTaller?.status === 'Aprobado' ? '#22C55E'
     : dataTaller?.status === 'Rechazado' ? '#EF4444'
@@ -915,7 +930,7 @@ const FormTaller = () => {
           {dataTaller?.status ? (
             <View style={[styles.statusBadge, {backgroundColor: statusColor}]}>
               <Text style={[styles.statusBadgeText, {color: statusTextColor}]}>
-                {dataTaller.status.toUpperCase()}
+                {statusLabel}
               </Text>
             </View>
           ) : null}
@@ -1012,6 +1027,30 @@ const FormTaller = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled">
+
+          {!isEditing && porDecidir ? (
+            <View style={fx.revision} accessibilityRole="summary">
+              <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 8}}>
+                <Text style={fx.revisionTitulo}>Antes de aprobar</Text>
+                <Text style={[fx.revisionConteo, revisionOk === revision.length && {color: ui.ok}]}>
+                  {revisionOk} de {revision.length}
+                </Text>
+              </View>
+              {revision.map(r => (
+                <View key={r.key} style={fx.revisionFila} accessibilityLabel={`${r.label}: ${r.ok ? 'listo' : 'falta'}`}>
+                  {r.ok ? (
+                    <Check size={18} color={ui.ok} strokeWidth={2.6} />
+                  ) : (
+                    <CircleAlert size={18} color={ui.warn} strokeWidth={2.4} />
+                  )}
+                  <Text style={[fx.revisionTexto, !r.ok && {color: ui.warn}]}>
+                    {r.label}
+                    {r.ok ? '' : ' · falta'}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          ) : null}
 
           {isEditing ? (
             <View
@@ -1385,6 +1424,31 @@ const FormTaller = () => {
         </ScrollView>
       ) : null}
 
+      {/* ── Aprobar / rechazar a la vista (antes solo en "Acciones") ─────── */}
+      {profileLoaded && uidTaller && !isEditing && porDecidir ? (
+        <View style={[fx.barra, {paddingBottom: Math.max(insets.bottom, 12)}]}>
+          <UIButton
+            title="Rechazar"
+            variant="secondary"
+            icon={XIcon}
+            onPress={onAccionRechazar}
+            style={{flex: 1}}
+          />
+          <UIButton
+            title="Aprobar"
+            variant="success"
+            icon={Check}
+            onPress={onAccionAprobar}
+            style={{flex: 1.4}}
+            accessibilityLabel={
+              revisionOk < revision.length
+                ? `Aprobar. Faltan ${revision.length - revisionOk} puntos por revisar`
+                : 'Aprobar'
+            }
+          />
+        </View>
+      ) : null}
+
       {/* ── Modal: imagen fullscreen ────────────────────────────────────── */}
       <Modal
         transparent
@@ -1568,7 +1632,9 @@ const FormTaller = () => {
             </Text>
             <Text style={styles.confirmBody}>
               {tipoAccion === 'Aprobar'
-                ? 'El negocio será aprobado y se notificará al propietario.'
+                ? revisionOk < revision.length
+                  ? `Ojo: falta ${revision.filter(r => !r.ok).map(r => r.label.toLowerCase()).join(', ')}. Si apruebas igual, el negocio quedará activo y se notificará al propietario.`
+                  : 'El negocio será aprobado y se notificará al propietario.'
                 : 'El negocio será rechazado y se notificará al propietario.'}
             </Text>
 
@@ -1589,8 +1655,22 @@ const FormTaller = () => {
                   scrollEnabled
                   blurOnSubmit={false}
                 />
+                <View style={fx.motivos}>
+                  {MOTIVOS_RAPIDOS.filter(m => !motivoRechazo.includes(m)).map(m => (
+                    <TouchableOpacity
+                      key={m}
+                      onPress={() =>
+                        setMotivoRechazo(prev => (prev.trim() ? `${prev.trim()} ${m}.` : `${m}.`))
+                      }
+                      style={fx.motivo}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Agregar motivo: ${m}`}>
+                      <Text style={fx.motivoTexto}>+ {m}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
                 {!motivoRechazo.trim() && (
-                  <Text style={styles.confirmInputHint}>Este campo es obligatorio para rechazar.</Text>
+                  <Text style={styles.confirmInputHint}>Escribe el motivo o toca uno de arriba. El dueño lo verá para corregirlo.</Text>
                 )}
               </View>
             )}
@@ -1834,3 +1914,55 @@ const FormTaller = () => {
 };
 
 export default FormTaller;
+
+const STATUS_LABEL = {
+  'En espera por aprobación': 'En revisión',
+  'En espera de documentos': 'Esperando documentos',
+  Aprobado: 'Aprobado',
+  Rechazado: 'Rechazado',
+  Pendiente: 'Pendiente',
+};
+
+// Motivos frecuentes para no escribirlos cada vez; se pueden combinar y editar.
+const MOTIVOS_RAPIDOS = [
+  'La foto del RIF no se lee',
+  'El RIF no coincide con el negocio',
+  'Faltan fotos del frente o del interior',
+  'La ubicación no corresponde',
+  'Faltan datos de contacto',
+];
+
+const fx = StyleSheet.create({
+  revision: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E3E5EE',
+  },
+  revisionTitulo: {flex: 1, fontSize: 16, fontWeight: '700', color: '#1F2344'},
+  revisionConteo: {fontSize: 14, fontWeight: '700', color: '#955800'},
+  revisionFila: {flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 30},
+  revisionTexto: {fontSize: 14, color: '#1F2344'},
+  barra: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E3E5EE',
+  },
+  motivos: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10},
+  motivo: {
+    minHeight: 36,
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: '#F4F5F9',
+    borderWidth: 1,
+    borderColor: '#E3E5EE',
+  },
+  motivoTexto: {fontSize: 13, color: '#1F2344', fontWeight: '600'},
+});

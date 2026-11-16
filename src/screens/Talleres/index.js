@@ -15,7 +15,11 @@ import {
   Image,
   ScrollView,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
+import {CircleUserRound, KeyRound, LifeBuoy, LogOut} from 'lucide-react-native';
+import {AppText, Banner, BottomSheet, colors, space} from '../../ui';
+import {Avatar, GrupoMenu, FilaMenu, abrirSoporte, confirmarCerrarSesion} from '../../ui/cuenta';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import { cerrarSesionFirebase } from '../../utils/sesionSegura';
 import DatePicker from 'react-native-date-picker';
@@ -55,6 +59,30 @@ const isSameDay = (d1, d2) => {
     d1.getDate()     === d2.getDate()
   );
 };
+
+/** Solo la fecha (sin hora): la hora no le dice nada al certificador. */
+const soloFecha = date =>
+  date ? date.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'}) : null;
+
+/** "hoy", "hace 1 día", "hace 5 días". */
+const haceDias = date => {
+  if (!date) return null;
+  const dias = Math.floor((Date.now() - date.getTime()) / 86400000);
+  if (dias <= 0) return 'hoy';
+  return `hace ${dias} ${dias === 1 ? 'día' : 'días'}`;
+};
+
+/** Minúsculas y sin acentos, para buscar "jose" y encontrar "José". */
+const normalizar = v =>
+  String(v || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+/** Solo dígitos, para buscar teléfonos y RIF con o sin guiones. */
+const digitos = v => String(v || '').replace(/\D/g, '');
+
+const ESPERANDO = ['En espera por aprobación', 'En espera de documentos'];
 
 const toRad = v => (v * Math.PI) / 180;
 const calcularDistanciaKm = (lat1, lng1, lat2, lng2) => {
@@ -103,7 +131,10 @@ const TallerCard = ({item, onPress}) => {
   const suscripcion = item.subscripcion_actual || null;
   const suscripcionActiva = suscripcion?.status === 'Aprobado';
   const createdDate = parseCreatedAt(item.createdAt);
-  const createdLabel = formatDate(createdDate);
+  const createdLabel = ESPERANDO.includes(item.status)
+    ? `Registrado ${haceDias(createdDate)}`
+    : soloFecha(createdDate);
+  const planEstado = suscripcion?.status === 'Aprobado' ? 'activo' : String(suscripcion?.status || '').toLowerCase();
 
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(item)} activeOpacity={0.88}>
@@ -128,8 +159,8 @@ const TallerCard = ({item, onPress}) => {
           {suscripcion?.nombre ? (
             <View style={[styles.cardPlanBadge, {backgroundColor: suscripcionActiva ? '#E3F2FD' : '#FEF9C3'}]}>
               <Text style={[styles.cardPlanText, {color: suscripcionActiva ? '#1565C0' : '#B45309'}]}>
-                {suscripcion.nombre}{' '}
-                <Text style={styles.cardPlanStatus}>({suscripcion.status})</Text>
+                {suscripcion.nombre}
+                {planEstado ? <Text style={styles.cardPlanStatus}>{` · ${planEstado}`}</Text> : null}
               </Text>
             </View>
           ) : (
@@ -247,6 +278,9 @@ const TalleresContainer = ({navigation}) => {
   const [cargando, setCargando] = useState(true);
   const [estatusRapido, setEstatusRapido] = useState('por_atender');
   const [refreshing, setRefreshing] = useState(false);
+  const [errorCarga, setErrorCarga] = useState(false);
+  const [cuentaVisible, setCuentaVisible] = useState(false);
+  const [yo, setYo] = useState(null);
 
   const spinAnim = useRef(new Animated.Value(0)).current;
   const spin = spinAnim.interpolate({inputRange: [0, 1], outputRange: ['0deg', '360deg']});
@@ -326,6 +360,7 @@ const TalleresContainer = ({navigation}) => {
           {headers: {'Content-Type': 'application/json'}},
         );
         if (response.status === 200) {
+          setErrorCarga(false);
           const location = await getCurrentLocation();
           const withDistance = response.data.map(item => {
             const lat = Number(item?.ubicacion?.lat);
@@ -353,12 +388,12 @@ const TalleresContainer = ({navigation}) => {
           setFilteredData([]);
         }
       } catch {
-        setdataTalleres([]);
-        setFilteredData([]);
+        // Sin conexión o error del servidor: se conserva lo que ya estaba en
+        // pantalla y se avisa, en vez de decir que no hay negocios.
+        setErrorCarga(true);
       }
     } catch {
-      setdataTalleres([]);
-      setFilteredData([]);
+      setErrorCarga(true);
     }
   };
 
@@ -366,8 +401,15 @@ const TalleresContainer = ({navigation}) => {
     let result = [...source];
 
     if (nombre.trim()) {
-      const q = nombre.toLowerCase();
-      result = result.filter(t => t.nombre?.toLowerCase().includes(q));
+      const q = normalizar(nombre.trim());
+      const qd = digitos(nombre);
+      result = result.filter(
+        t =>
+          normalizar(t.nombre).includes(q) ||
+          normalizar(t.responsable || t.nombre_responsable).includes(q) ||
+          normalizar(t.email).includes(q) ||
+          (qd.length >= 4 && (digitos(t.rif).includes(qd) || digitos(t.phone).includes(qd))),
+      );
     }
     if (estados && estados.length > 0) {
       result = result.filter(t => estados.includes(t.estado));
@@ -465,6 +507,23 @@ const TalleresContainer = ({navigation}) => {
     setShowFilterModal(true);
   };
 
+  const abrirCuenta = async () => {
+    try {
+      const v = await AsyncStorage.getItem('@userInfo');
+      setYo(v ? JSON.parse(v) : null);
+    } catch {
+      setYo(null);
+    }
+    setCuentaVisible(true);
+  };
+
+  const cerrarSesion = async () => {
+    setCuentaVisible(false);
+    try { await AsyncStorage.removeItem('@userInfo'); } catch {}
+    await cerrarSesionFirebase();
+    try { await AsyncStorage.removeItem('userToken'); navigationScreen.replace('Login'); } catch {}
+  };
+
   const handleCardPress = item => {
     navigationScreen.navigate('FormTaller', {uid: item.uid});
   };
@@ -498,12 +557,13 @@ const TalleresContainer = ({navigation}) => {
         <View style={styles.headerCircle1} />
         <View style={styles.headerCircle2} />
         <View style={styles.headerRow}>
-          <TouchableOpacity style={styles.headerLogoutBtn} onPress={async () => {
-            try { await AsyncStorage.removeItem('@userInfo'); } catch {}
-            await cerrarSesionFirebase();
-            try { await AsyncStorage.removeItem('userToken'); navigationScreen.replace('Login'); } catch {}
-          }} activeOpacity={0.8}>
-            <Icons name="sign-out" size={18} color="#FFFFFF" />
+          <TouchableOpacity
+            style={styles.headerLogoutBtn}
+            onPress={abrirCuenta}
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Mi cuenta">
+            <CircleUserRound size={22} color="#FFFFFF" strokeWidth={2.2} />
           </TouchableOpacity>
           <View style={styles.headerTitleWrap}>
             <Text style={styles.headerTitle}>Negocios</Text>
@@ -512,7 +572,9 @@ const TalleresContainer = ({navigation}) => {
           <TouchableOpacity
             style={styles.headerRefreshBtn}
             onPress={triggerRefresh}
-            activeOpacity={0.8}>
+            activeOpacity={0.8}
+            accessibilityRole="button"
+            accessibilityLabel="Actualizar la lista">
             <Animated.View style={{transform: [{rotate: spin}]}}>
               <Icons5 name="sync-alt" size={16} color="#FFFFFF" />
             </Animated.View>
@@ -526,7 +588,7 @@ const TalleresContainer = ({navigation}) => {
           <Icons5 name="search" size={14} color="#9BA6B8" />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por nombre..."
+            placeholder="Nombre, RIF o teléfono"
             placeholderTextColor="#9BA6B8"
             value={filterNombre}
             onChangeText={handleSearchChange}
@@ -590,8 +652,20 @@ const TalleresContainer = ({navigation}) => {
         renderItem={({item}) => <TallerCard item={item} onPress={handleCardPress} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={triggerRefresh} tintColor="#1D1E56" />}
+        ListHeaderComponent={
+          errorCarga ? (
+            <Banner
+              tone="warn"
+              text={dataTalleres.length ? 'No pudimos actualizar la lista. Revisa tu conexión.' : 'No pudimos cargar los negocios. Revisa tu conexión.'}
+              actionLabel="Reintentar"
+              onAction={triggerRefresh}
+              style={{marginBottom: space.m}}
+            />
+          ) : null
+        }
         ListEmptyComponent={
-          cargando ? (
+          errorCarga && !dataTalleres.length ? null : cargando ? (
             <View style={styles.emptyWrap}>
               <ActivityIndicator size="large" color="#1D1E56" />
               <Text style={styles.emptyText}>Cargando negocios…</Text>
@@ -823,6 +897,36 @@ const TalleresContainer = ({navigation}) => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
+
+      {/* ── MI CUENTA ── */}
+      <BottomSheet visible={cuentaVisible} onClose={() => setCuentaVisible(false)} title="Mi cuenta">
+        <View style={{flexDirection: 'row', alignItems: 'center', gap: space.m}}>
+          <Avatar uri={yo?.image_perfil} size={56} />
+          <View style={{flex: 1}}>
+            <AppText variant="subtitle" numberOfLines={1}>
+              {yo?.nombre || 'Certificador'}
+            </AppText>
+            <AppText variant="caption" color={colors.muted} numberOfLines={1}>
+              {[yo?.email, yo?.estado].filter(Boolean).join(' · ') || 'Certificador de Solvers'}
+            </AppText>
+          </View>
+        </View>
+        <GrupoMenu style={{marginTop: space.m}}>
+          <FilaMenu
+            icon={KeyRound}
+            titulo="Cambiar contraseña"
+            ayuda="Te enviamos un enlace a tu correo"
+            onPress={() => {
+              setCuentaVisible(false);
+              navigationScreen.navigate('ForgetPassword');
+            }}
+          />
+          <FilaMenu icon={LifeBuoy} titulo="Soporte" ayuda="Escríbenos por WhatsApp" externo onPress={abrirSoporte} />
+        </GrupoMenu>
+        <GrupoMenu style={{marginTop: space.m, marginBottom: space.l}}>
+          <FilaMenu icon={LogOut} titulo="Cerrar sesión" peligro onPress={() => confirmarCerrarSesion(cerrarSesion)} />
+        </GrupoMenu>
+      </BottomSheet>
     </View>
   );
 };

@@ -1,20 +1,32 @@
-import { Image, Pressable, Text, View, ImageBackground, Linking, Alert, ScrollView, Dimensions } from 'react-native';
-import React, { useState, useEffect, useCallback } from 'react';
-import { profileData, profileDataAdmin, profileDataTaller } from '../../data/profileData';
-import styles from './style.css';
-import { useNavigation } from '@react-navigation/native';
-import { useValues } from '../../../App';
+// Mi perfil (conductor, taller y administrador).
+// Rediseño con el sistema visual de la app: cabecera con foto y datos, el
+// menú agrupado por tema y las acciones delicadas (cerrar sesión, borrar
+// cuenta) separadas del resto y con confirmación.
+import React, {useState, useEffect, useCallback} from 'react';
+import {View, ScrollView, Linking, Alert, StyleSheet, RefreshControl} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {
+  User,
+  Store,
+  Heart,
+  Car,
+  Tag as TagIcon,
+  KeyRound,
+  LifeBuoy,
+  LogOut,
+  Trash2,
+  BarChart3,
+  Camera,
+} from 'lucide-react-native';
 
-import notImageFound from '../../assets/noimageold.jpeg';
 import api from '../../../axiosInstance';
-import Icons from 'react-native-vector-icons/FontAwesome5';
-import Icons2 from 'react-native-vector-icons/AntDesign';
-import { Banner } from '../../ui';
-import { cerrarSesionFirebase } from '../../utils/sesionSegura';
+import {AppText, Banner, Button, Tag, colors, space, radius} from '../../ui';
+import {Avatar, GrupoMenu, FilaMenu, abrirSoporte, confirmarCerrarSesion} from '../../ui/cuenta';
+import {cerrarSesionFirebase} from '../../utils/sesionSegura';
 
-const SOLVERS_WEB_SIGN_IN =
-  'https://app.solversapp.com/sign-in?redirectUrl=/';
+const SOLVERS_WEB_SIGN_IN = 'https://app.solversapp.com/sign-in?redirectUrl=/';
 
 const TIPOS_CON_PERFIL = ['Cliente', 'Taller'];
 
@@ -26,36 +38,43 @@ const esUsuarioNoEncontrado = error => {
   return status === 404 || /no se encontr/i.test(String(msg));
 };
 
+const vacio = v => v == null || String(v).trim() === '';
+
+/** Qué le falta al perfil para estar completo (solo datos que se ven o se usan). */
+const faltantes = u => {
+  const f = [];
+  if (vacio(u.image_perfil)) f.push('la foto');
+  if (vacio(u.phone)) f.push('el teléfono');
+  if (u.typeUser === 'Cliente' && vacio(u.cedula)) f.push('la cédula');
+  return f;
+};
+
+const listaHumana = arr =>
+  arr.length <= 1 ? arr.join('') : `${arr.slice(0, -1).join(', ')} y ${arr[arr.length - 1]}`;
+
+/** Estado de la cuenta del taller, en palabras del dueño. */
+const estadoTaller = u => {
+  const cuenta = String(u.status || '');
+  const plan = u.subscripcion_actual || null;
+  const planStatus = String(plan?.status || '');
+  if (cuenta === 'Rechazado') return {label: 'Cuenta rechazada', tone: 'error'};
+  if (cuenta && cuenta !== 'Aprobado') return {label: 'En revisión', tone: 'warn'};
+  if (!plan?.nombre) return {label: 'Sin plan', tone: 'neutral'};
+  if (planStatus === 'Aprobado') return {label: `Plan ${plan.nombre}`, tone: 'ok'};
+  if (planStatus === 'Vencido') return {label: `Plan ${plan.nombre} vencido`, tone: 'error', vencido: true};
+  return {label: `Plan ${plan.nombre} · ${planStatus || 'pendiente'}`, tone: 'warn'};
+};
+
 const ProfileScreen = () => {
   const navigation = useNavigation();
-  const screenHeight = Dimensions.get('window').height;
-  const screenWidth = Dimensions.get('window').width;
-  const [infoUser, setinfoUser] = useState(
-    {
-      uid: "",
-      nombre: "",
-      cedula: "",
-      phone: "",
-      typeUser: ""
-    }
-  );
-
-  const [imagePerfil, setimagePerfil] = useState("");
+  const insets = useSafeAreaInsets();
+  const [infoUser, setinfoUser] = useState({uid: '', nombre: '', cedula: '', phone: '', typeUser: ''});
+  const [imagePerfil, setimagePerfil] = useState('');
   // null | 'no_encontrada' (la cuenta ya no existe) | 'sin_conexion'
   const [avisoPerfil, setAvisoPerfil] = useState(null);
-
-  const handleLogout = async () => {
-    try {
-      await AsyncStorage.removeItem('userToken');
-      await cerrarSesionFirebase();
-      navigation.replace('Login');
-    } catch (error) {
-      console.warn('Error logging out:', error);
-    }
-  };
-
-
-  const navigationScreen = useNavigation();
+  // Hasta tener los datos del servidor no se dice qué falta en el perfil.
+  const [cargado, setCargado] = useState(false);
+  const [refrescando, setRefrescando] = useState(false);
 
   const getData = useCallback(async () => {
     let user = null;
@@ -69,20 +88,19 @@ const ProfileScreen = () => {
     // Primero lo que ya está guardado en la sesión: el menú correcto aparece
     // al instante y también sin conexión.
     if (user && typeof user === 'object') {
-      setinfoUser(prev => ({ ...prev, ...user }));
+      setinfoUser(prev => ({...prev, ...user}));
       if (user.image_perfil) setimagePerfil(user.image_perfil);
     }
     if (!user?.uid) return;
 
     try {
-      const response = await api.post('/usuarios/getUserByUid', {
-        uid: user.uid,
-      });
+      const response = await api.post('/usuarios/getUserByUid', {uid: user.uid});
       const userData = response?.data?.userData;
       if (response.status === 200 && userData) {
-        setinfoUser(prev => ({ ...prev, ...userData }));
+        setinfoUser(prev => ({...prev, ...userData}));
         setimagePerfil(userData.image_perfil || '');
         setAvisoPerfil(null);
+        setCargado(true);
       }
     } catch (error) {
       if (esUsuarioNoEncontrado(error)) {
@@ -96,277 +114,267 @@ const ProfileScreen = () => {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = navigationScreen.addListener('focus', () => {
+    const unsubscribe = navigation.addListener('focus', () => {
       getData();
     });
+    return unsubscribe;
+  }, [navigation, getData]);
 
-    return unsubscribe; // Limpia el listener cuando el componente se desmonta
-  }, [navigationScreen, getData]);
+  const refrescar = async () => {
+    setRefrescando(true);
+    await getData();
+    setRefrescando(false);
+  };
 
-  const {
-    viewRTLStyle,
-    textRTLStyle,
-    imageRTLStyle,
-    t,
-  } = useValues();
-
-
-  const removePropertyFromStorage = async () => {
+  const cerrarSesion = async () => {
     try {
       await AsyncStorage.removeItem('@userInfo');
     } catch (error) {
       console.warn('Error removing item:', error);
     }
-  };
-
-  const cerrarSesion = () => {
-    removePropertyFromStorage();
-    handleLogout();
-  };
-
-  const handleMainOptionPress = async (item) => {
-    if (item.id === 2 && infoUser.typeUser === 'Taller') {
-      try {
-        await Linking.openURL(SOLVERS_WEB_SIGN_IN);
-      } catch (e) {
-        Alert.alert(
-          'Solvers',
-          'No se pudo abrir el enlace. Comprueba tu conexión e inténtalo de nuevo.',
-        );
-      }
-      return;
+    try {
+      await AsyncStorage.removeItem('userToken');
+      await cerrarSesionFirebase();
+      navigation.replace('Login');
+    } catch (error) {
+      console.warn('Error logging out:', error);
     }
+  };
 
-    if (item.id === 8) {
-      Alert.alert(
-        "Confirmación",
-        "¿Estás seguro de que deseas eliminar tu cuenta?",
-        [
-          {
-            text: "Cancelar",
-            style: "cancel",
+  const borrarCuenta = () => {
+    Alert.alert(
+      'Borrar tu cuenta',
+      'Se eliminan tu cuenta y tus datos de Solvers. No se puede deshacer.',
+      [
+        {text: 'Cancelar', style: 'cancel'},
+        {
+          text: 'Borrar cuenta',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const jsonValue = await AsyncStorage.getItem('@userInfo');
+              const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+              await api.post('/usuarios/deleteUserFromAuth', {uid: user?.uid});
+              cerrarSesion();
+            } catch (error) {
+              Alert.alert('Solvers', 'No pudimos eliminar tu cuenta. Revisa tu conexión e inténtalo de nuevo.');
+            }
           },
-          {
-            text: "Eliminar",
-            onPress: async () => {
-              try {
-                const jsonValue = await AsyncStorage.getItem('@userInfo');
-                const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-                try {
-                  await api.post('/usuarios/deleteUserFromAuth', {
-                    uid: user.uid,
-                  });
-
-                  removePropertyFromStorage();
-                  handleLogout();
-
-                } catch (error) {
-                  Alert.alert(
-                    'Solvers',
-                    'No pudimos eliminar tu cuenta. Revisa tu conexión e inténtalo de nuevo.',
-                  );
-                }
-
-              } catch (e) {
-                console.warn(e);
-              }
-            },
-            style: "destructive",
-          },
-        ],
-        { cancelable: false }
-      );
-      return false;
-    }
-
-    if (item.id === 6) {
-      cerrarSesion();
-    } else {
-      if (infoUser.typeUser == "Taller") {
-        if (item.screenName == "EditProfile") {
-          // Perfil del negocio en una sola pantalla (antes: editor de 7 pasos).
-          navigation.navigate('PerfilNegocio');
-        } else if (item.screenName == "Dashboard") {
-          // Req. 006: las métricas del negocio en su propia pantalla.
-          navigation.navigate('EstadisticasNegocio');
-        } else {
-          navigation.navigate(item.screenName);
-        }
-      } else {
-        navigation.navigate(item.screenName);
-      }
-    }
-
-    if (item.id === 7) {
-      Linking.openURL(item.screenName);
-    }
+        },
+      ],
+      {cancelable: true},
+    );
   };
 
-  const handleAdminOptionPress = (item) => {
-    if (item.id === 6) {
-      cerrarSesion();
-    } else {
-      navigation.navigate(item.screenName);
+  const abrirPanelWeb = async () => {
+    try {
+      await Linking.openURL(SOLVERS_WEB_SIGN_IN);
+    } catch (e) {
+      Alert.alert('Solvers', 'No se pudo abrir el enlace. Comprueba tu conexión e inténtalo de nuevo.');
     }
   };
-
-  const renderMenuIcon = (item) => {
-    let iconName = 'circle';
-
-    if (item.id === 0) iconName = 'user-circle';
-    else if (item.id === 2) iconName = 'heart';
-    else if (item.id === 10) iconName = 'car-side';
-    else if (item.id === 3) iconName = 'tags';
-    else if (item.id === 5) iconName = 'key';
-    else if (item.id === 7) iconName = 'life-ring';
-    else if (item.id === 8) iconName = 'trash-alt';
-    else if (item.id === 6) iconName = 'sign-out-alt';
-
-    return <Icons name={iconName} size={18} color="#FFD60A" />;
-  };
-
-  const renderOptionCard = (item, index, onPressHandler) => (
-    <Pressable
-      key={index}
-      onPress={() => onPressHandler(item)}
-      accessibilityRole="button"
-      accessibilityLabel={t(item.title)}
-      style={({ pressed }) => [
-        styles.optionCardOuter,
-        pressed && styles.optionCardOuterPressed,
-      ]}>
-      <View
-        style={styles.optionCardInner}>
-        <View style={[styles.optionRow, { flexDirection: viewRTLStyle }]}>
-          {infoUser.typeUser == "Taller" && item.id === 2 ? (
-            <View style={styles.optionIconWrap}>
-              <Icons2 name="dashboard" size={18} color="#FFD60A" />
-            </View>
-          ) : (
-            <View style={styles.optionIconWrap}>
-              {renderMenuIcon(item)}
-            </View>
-          )}
-
-          <View style={styles.optionTitleWrap}>
-            <Text
-              style={[
-                styles.titleText,
-                { textAlign: textRTLStyle },
-              ]}
-              numberOfLines={2}>
-              {t(item.title)}
-            </Text>
-          </View>
-          <View style={styles.optionArrowWrap}>
-            <View style={{ transform: [{ scale: imageRTLStyle }] }}>
-              <Icons name="chevron-right" size={14} color="#1F2344" />
-            </View>
-          </View>
-        </View>
-      </View>
-    </Pressable>
-  );
 
   const esCliente = infoUser.typeUser === 'Cliente';
   const esTaller = infoUser.typeUser === 'Taller';
-  const tipoVisible = esCliente
-    ? 'Conductor'
-    : esTaller
-    ? 'Taller'
-    : infoUser.typeUser || 'Administrador';
+  const esAdmin = !esCliente && !esTaller;
+
+  // Perfil del negocio en una sola pantalla (antes: editor de 7 pasos).
+  const irAEditar = () => navigation.navigate(esTaller ? 'PerfilNegocio' : 'EditProfile');
+
+  const tipoVisible = esCliente ? 'Conductor' : esTaller ? 'Taller' : infoUser.typeUser || 'Administrador';
+  const estado = esTaller ? estadoTaller(infoUser) : null;
+  const pendientes = cargado && !esAdmin ? faltantes({...infoUser, image_perfil: imagePerfil}) : [];
 
   return (
-    <View style={styles.screenRoot}>
-      <View style={styles.perimeterTopArea}>
-        <View style={styles.headerCircle1} />
-        <View style={styles.headerCircle2} />
-        <View style={styles.perimeterHeaderBlock}>
-          <Text style={styles.perimeterTitle}>Mi Perfil</Text>
-          <Text style={styles.perimeterSubtitle}>
-            Administra tu información y accesos de forma rápida.
-          </Text>
-        </View>
+    <View style={s.pantalla}>
+      <View style={[s.header, {paddingTop: insets.top + space.m}]}>
+        <AppText variant="title" color={colors.onNavy} accessibilityRole="header">
+          Mi perfil
+        </AppText>
       </View>
 
-      <View
-        style={[
-          styles.perimeterBottomSheet,
-          {
-            width: screenWidth,
-            height: screenHeight * 0.69,
-          },
-        ]}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.perimeterScrollContent}>
-          <View style={styles.profileCard}>
-            <View style={styles.avatarFrameOuter}>
-              <View style={styles.avatarFrameInner}>
-                {imagePerfil == null || imagePerfil == "" ? (
-                  <Image
-                    resizeMode="cover"
-                    style={styles.imgStyle}
-                    source={notImageFound}
-                  />
-                ) : (
-                  <ImageBackground
-                    resizeMode="cover"
-                    style={styles.imgStyle}
-                    source={{ uri: imagePerfil }}
-                  />
-                )}
+      <ScrollView
+        style={s.scroll}
+        contentContainerStyle={s.contenido}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={colors.navy} />}>
+        {/* ── Quién eres ── */}
+        <View style={s.tarjeta}>
+          <View style={s.fila}>
+            <View>
+              <Avatar
+                uri={imagePerfil}
+                size={72}
+                onPress={esAdmin ? undefined : irAEditar}
+                label={esTaller ? 'Editar el perfil del negocio' : 'Editar tu perfil'}
+              />
+              {!esAdmin && !imagePerfil ? (
+                <View style={s.camara} pointerEvents="none">
+                  <Camera size={14} color={colors.navy} strokeWidth={2.4} />
+                </View>
+              ) : null}
+            </View>
+            <View style={{flex: 1, gap: 2}}>
+              <AppText variant="subtitle" numberOfLines={2}>
+                {infoUser.nombre || 'Usuario'}
+              </AppText>
+              <AppText variant="caption" color={colors.muted} numberOfLines={1}>
+                {infoUser.email || 'Sin correo registrado'}
+              </AppText>
+              <View style={s.etiquetas}>
+                <Tag label={tipoVisible} tone="info" />
+                {estado ? <Tag label={estado.label} tone={estado.tone} /> : null}
               </View>
             </View>
-            <Text style={styles.nameText} numberOfLines={2}>{infoUser.nombre || 'Usuario'}</Text>
-            <Text style={styles.emailText} numberOfLines={1}>{infoUser.email || 'Sin correo registrado'}</Text>
-            <View style={styles.userTypeBadge}>
-              <Text style={styles.userTypeBadgeText}>{tipoVisible}</Text>
-            </View>
           </View>
-
-          {avisoPerfil === 'no_encontrada' ? (
-            <Banner
-              tone="error"
-              text="No encontramos tu cuenta en Solvers. Puede que se haya eliminado. Inicia sesión de nuevo."
-              actionLabel="Iniciar sesión"
-              onAction={cerrarSesion}
-              style={{ marginBottom: 12 }}
-            />
-          ) : avisoPerfil === 'sin_conexion' ? (
-            <Banner
-              tone="warn"
-              text="No pudimos actualizar tus datos. Revisa tu conexión."
-              actionLabel="Reintentar"
-              onAction={getData}
-              style={{ marginBottom: 12 }}
+          {!esAdmin ? (
+            <Button
+              title={esTaller ? 'Editar perfil del negocio' : 'Editar mi perfil'}
+              variant="secondary"
+              size="m"
+              onPress={irAEditar}
+              style={{marginTop: space.m}}
             />
           ) : null}
+        </View>
 
-          <View style={styles.menuSection}>
-            {!esCliente && !esTaller
-              ? profileDataAdmin.map((item, index) =>
-                renderOptionCard(item, `admin-${index}`, handleAdminOptionPress),
-              )
-              : null}
-            {esCliente
-              ? profileData
-                .filter(item => item.id !== 3)
-                .map((item, index) =>
-                  renderOptionCard(item, `user-${index}`, handleMainOptionPress),
-                )
-              : null}
+        {avisoPerfil === 'no_encontrada' ? (
+          <Banner
+            tone="error"
+            text="No encontramos tu cuenta en Solvers. Puede que se haya eliminado. Inicia sesión de nuevo."
+            actionLabel="Iniciar sesión"
+            onAction={cerrarSesion}
+            style={s.aviso}
+          />
+        ) : avisoPerfil === 'sin_conexion' ? (
+          <Banner
+            tone="warn"
+            text="No pudimos actualizar tus datos. Revisa tu conexión."
+            actionLabel="Reintentar"
+            onAction={getData}
+            style={s.aviso}
+          />
+        ) : pendientes.length ? (
+          <Banner
+            tone="info"
+            text={`Te falta ${listaHumana(pendientes)}. Con el perfil completo ${
+              esTaller ? 'los conductores confían más en tu negocio' : 'los talleres te atienden más rápido'
+            }.`}
+            actionLabel="Completar"
+            onAction={irAEditar}
+            style={s.aviso}
+          />
+        ) : null}
 
-            {esTaller
-              ? profileDataTaller.map((item, index) =>
-                  renderOptionCard(item, `taller-${index}`, handleMainOptionPress),
-                )
-              : null}
-          </View>
-        </ScrollView>
-      </View>
+        {/* ── Menú ── */}
+        {esCliente ? (
+          <GrupoMenu titulo="Tu cuenta">
+            <FilaMenu icon={User} titulo="Datos personales" ayuda="Nombre, cédula, teléfono y foto" onPress={irAEditar} />
+            <FilaMenu
+              icon={Car}
+              titulo="Mis vehículos"
+              ayuda="Tus carros y sus mantenimientos"
+              onPress={() => navigation.navigate('VehiclesScreen')}
+            />
+            <FilaMenu
+              icon={Heart}
+              titulo="Mis intereses"
+              ayuda="Servicios y talleres que guardaste"
+              onPress={() => navigation.navigate('OrderHistory')}
+            />
+          </GrupoMenu>
+        ) : null}
+
+        {esTaller ? (
+          <GrupoMenu titulo="Tu negocio">
+            <FilaMenu
+              icon={Store}
+              titulo="Perfil del negocio"
+              ayuda="Datos, horario, fotos y documentos"
+              onPress={irAEditar}
+            />
+            <FilaMenu
+              icon={TagIcon}
+              titulo="Planes"
+              ayuda={estado?.vencido ? 'Tu plan venció: renuévalo aquí' : 'Tu plan y renovaciones'}
+              onPress={() => navigation.navigate('Planes')}
+            />
+            <FilaMenu
+              icon={BarChart3}
+              titulo="Panel web"
+              ayuda="Estadísticas completas, en el navegador"
+              externo
+              onPress={abrirPanelWeb}
+            />
+            <FilaMenu
+              icon={Car}
+              titulo="Mis vehículos"
+              ayuda="Si también usas Solvers como conductor"
+              onPress={() => navigation.navigate('VehiclesScreen')}
+            />
+          </GrupoMenu>
+        ) : null}
+
+        <GrupoMenu titulo="Seguridad y ayuda">
+          {!esAdmin ? (
+            <FilaMenu
+              icon={KeyRound}
+              titulo="Cambiar contraseña"
+              ayuda="Te enviamos un enlace a tu correo"
+              onPress={() => navigation.navigate('ForgetPassword')}
+            />
+          ) : null}
+          <FilaMenu icon={LifeBuoy} titulo="Soporte" ayuda="Escríbenos por WhatsApp" externo onPress={abrirSoporte} />
+        </GrupoMenu>
+
+        <GrupoMenu>
+          <FilaMenu icon={LogOut} titulo="Cerrar sesión" peligro onPress={() => confirmarCerrarSesion(cerrarSesion)} />
+        </GrupoMenu>
+
+        {!esAdmin ? (
+          <Button
+            title="Borrar mi cuenta"
+            variant="ghost"
+            size="m"
+            icon={Trash2}
+            onPress={borrarCuenta}
+            style={{marginTop: space.l, alignSelf: 'center'}}
+          />
+        ) : null}
+      </ScrollView>
     </View>
   );
 };
+
+const s = StyleSheet.create({
+  pantalla: {flex: 1, backgroundColor: colors.bg},
+  header: {
+    backgroundColor: colors.navy,
+    paddingHorizontal: space.m,
+    paddingBottom: space.xl + space.l,
+    borderBottomLeftRadius: radius.l,
+    borderBottomRightRadius: radius.l,
+  },
+  // La tarjeta de arriba se monta sobre la franja azul.
+  scroll: {flex: 1, marginTop: -(space.xl + space.s)},
+  contenido: {paddingHorizontal: space.m, paddingBottom: space.xxl * 2},
+  tarjeta: {backgroundColor: colors.card, borderRadius: radius.l, padding: space.m},
+  fila: {flexDirection: 'row', alignItems: 'center', gap: space.m},
+  etiquetas: {flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginTop: space.xs},
+  camara: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.yellow,
+    borderWidth: 2,
+    borderColor: colors.card,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  aviso: {marginTop: space.m},
+});
 
 export default ProfileScreen;
