@@ -1,1106 +1,462 @@
+// Datos personales del conductor.
+//
+// Rediseño con las mismas piezas del registro y del perfil del negocio:
+// - La cédula y el estado son opcionales. El registro nuevo no los pide, y
+//   antes esta pantalla los exigía: el conductor no podía ni cambiar su foto,
+//   y el error solo decía "validar formulario".
+// - Cada error dice qué campo es y cómo arreglarlo.
+// - "Guardar" se activa solo si hay cambios, y avisa al salir sin guardar.
+// - La foto se elige de la galería o la cámara (antes también aceptaba
+//   cualquier archivo, y la "X" no la borraba de verdad).
+// Los talleres editan su perfil en PerfilNegocio.
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
-  Text,
-  TouchableOpacity,
   View,
+  Text,
   ScrollView,
+  TouchableOpacity,
   StyleSheet,
-  Image,
-  Alert,
-  Platform,
+  ActivityIndicator,
   KeyboardAvoidingView,
-  Modal,
+  Platform,
+  Alert,
   PermissionsAndroid,
-  TextInput,
 } from 'react-native';
-import React, { useState, useEffect } from 'react';
-import PhoneInput from '../../../ui/PhoneInput';
-import {validarTelefonoPais} from '../../../utils/telefono';
-import { phoneMo, smithaWilliams, smithaWilliamsMail } from '../../../constant';
-import { commonStyles } from '../../../style/commonStyle.css';
-import { external } from '../../../style/external.css';
-import styles from './style.css';
-import TextInputs from '../../../commonComponents/textInputs';
-import appColors from '../../../themes/appColors';
-import { Call } from '../../../utils/icon';
-import { Email } from '../../../assets/icons/email';
-import { windowHeight } from '../../../themes/appConstant';
-import { useValues } from '../../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Icons from 'react-native-vector-icons/FontAwesome';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {Dropdown} from 'react-native-element-dropdown';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
+import {Camera, Image as ImageIcon} from 'lucide-react-native';
+
 import api from '../../../../axiosInstance';
-
-import { launchImageLibrary, launchCamera } from 'react-native-image-picker';
-import DocumentPicker from 'react-native-document-picker';
-import Icons2 from 'react-native-vector-icons/Ionicons';
-import { Dropdown } from 'react-native-element-dropdown';
+import {C, Field, PrimaryButton, Banner} from '../../../components/registro/ui';
+import {validarNombre, validarTelefono, normalizarTelefono} from '../../../components/registro/validators';
+import PhoneInput from '../../../ui/PhoneInput';
+import {BottomSheet} from '../../../ui';
+import {Avatar} from '../../../ui/cuenta';
 import {splitDocumentId} from '../../../utils/documentId';
-import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
+import {sanitizeUserInfo} from '../../../utils/sanitizeUserInfo';
 
-const DARK_BLUE = '#1F2344';
-const YELLOW = '#FFD60A';
+const ESTADOS = [
+  'Amazonas', 'Anzoátegui', 'Apure', 'Aragua', 'Barinas', 'Bolívar', 'Carabobo',
+  'Cojedes', 'Delta Amacuro', 'Distrito Capital', 'Falcón', 'Guárico', 'La Guaira',
+  'Lara', 'Mérida', 'Miranda', 'Monagas', 'Nueva Esparta', 'Portuguesa', 'Sucre',
+  'Táchira', 'Trujillo', 'Yaracuy', 'Zulia',
+].map(e => ({label: e, value: e}));
 
-const EditProfile = ({ navigation }) => {
-  const [nameValue, setNameValue] = useState(smithaWilliams);
-  const [emailValue, setEmailValue] = useState(smithaWilliamsMail);
-  const [phoneValue, setPhoneValue] = useState(phoneMo);
-  const [buttonColor, setButtonColor] = useState('#848688');
+// Documentos de una persona: venezolano, extranjero o pasaporte.
+const PREFIJOS_PERSONA = ['V', 'E', 'P'];
 
-  //
+const OPCIONES_FOTO = {mediaType: 'photo', includeBase64: true, maxWidth: 1024, maxHeight: 1024, quality: 0.8};
 
+const formularioDesde = u => {
+  const [prefijo, numero] = splitDocumentId(u?.cedula);
+  return {
+    nombre: String(u?.nombre || ''),
+    prefijo: prefijo || 'V',
+    cedula: String(numero || '').replace(/\D/g, ''),
+    phone: String(u?.phone || ''),
+    estado: String(u?.estado || ''),
+  };
+};
+
+const EditProfile = ({navigation}) => {
+  const [uid, setUid] = useState('');
   const [email, setEmail] = useState('');
-  const [cedula, setcedula] = useState(0);
-  const [Nombre, setNombre] = useState('');
-  const [phone, setPhone] = useState(0);
-  const [emailError, setEmailError] = useState('');
-  const [cedulaError, setcedulaError] = useState('');
-  const [NombreError, setNombreError] = useState('');
-  const [phoneError, setPhoneError] = useState('');
-  const [isEmailTyping, setEmailTyping] = useState(false);
-  const [iscedulaTyping, setcedulaTyping] = useState(false);
-  const [NombreTyping, setNombreTyping] = useState(false);
-  const [isCallTyping, setCallTyping] = useState(false);
+  const [original, setOriginal] = useState(null);
+  const [f, setF] = useState(null);
+  const [foto, setFoto] = useState({uri: '', base64: '', anterior: ''});
+  const [cargando, setCargando] = useState(true);
+  const [guardando, setGuardando] = useState(false);
+  const [guardado, setGuardado] = useState(false);
+  const [hojaFoto, setHojaFoto] = useState(false);
+  const [tocado, setTocado] = useState({});
+  const [banner, setBanner] = useState({type: 'error', text: ''});
 
-  const [NameTaller, setNameTaller] = useState('');
-  const [isSelected, setSelection] = useState(false);
+  const set = (k, v) => {
+    setGuardado(false);
+    setF(prev => ({...prev, [k]: v}));
+  };
+  const tocar = k => () => setTocado(t => ({...t, [k]: true}));
 
-  const [Direccion, setDireccion] = useState('');
-  const [DireccionError, setDireccionError] = useState('');
-  const [DireccionTyping, setDireccionTyping] = useState(false);
-
-  const [RegComercial, setRegComercial] = useState('');
-  const [RegComercialError, setRegComercialError] = useState('');
-  const [RegComercialTyping, setRegComercialTyping] = useState(false);
-
-  const [Caracteristicas, setCaracteristicas] = useState('');
-  const [CaracteristicasError, setCaracteristicasError] = useState('');
-  const [CaracteristicasTyping, setCaracteristicasTyping] = useState(false);
-
-  const [Tarifa, setTarifa] = useState('');
-  const [TarifaError, setTarifaError] = useState('');
-  const [TarifaTyping, setTarifaTyping] = useState(false);
-
-  const [Experiencia, setExperiencia] = useState('');
-  const [ExperienciaError, setExperienciaError] = useState('');
-  const [ExperienciaTyping, setExperienciaTyping] = useState(false);
-
-  const [LinkFacebook, setLinkFacebook] = useState('');
-  const [LinkFacebookError, setLinkFacebookError] = useState('');
-  const [LinkFacebookTyping, setLinkFacebookTyping] = useState(false);
-
-  const [LinkInstagram, setLinkInstagram] = useState('');
-  const [LinkInstagramError, setLinkInstagramError] = useState('');
-  const [LinkInstagramTyping, setLinkInstagramTyping] = useState(false);
-
-  const [LinkTiktok, setLinkTiktok] = useState('');
-  const [LinkTiktokError, setLinkTiktokError] = useState('');
-  const [LinkTiktokTyping, setLinkTiktokTyping] = useState(false);
-
-  const [Garantia, setGarantia] = useState('');
-  const [GarantiaError, setGarantiaError] = useState('');
-  const [GarantiaTyping, setGarantiaTyping] = useState(false);
-
-  const [seguro, setseguro] = useState('');
-  const [seguroError, setseguroError] = useState('');
-  const [seguroTyping, setseguroTyping] = useState(false);
-
-  // *******************************************
-
-  const [checked, setChecked] = useState('no'); // Valor i
-
-  const [disabledInput, setdisabledInput] = useState(false);
-
-  const navigation2 = useNavigation();
-  const route = useRoute();
-  const insets = useSafeAreaInsets();
-
-  const [isCheckedName, setisCheckedName] = useState(false);
-  const [isRif, setisRif] = useState(false);
-
-  const [isCheckedDireccion, setisCheckedDireccion] = useState(false);
-  const [isCheckedRegistroComercial, setisCheckedRegistroComercial] =
-    useState(false);
-  const [isCheckedTelefono, setisCheckedTelefono] = useState(false);
-  const [isCheckedEmail, setisCheckedEmail] = useState(false);
-  const [isCheckedCaracteristicas, setisCheckedCaracteristicas] =
-    useState(false);
-  const [isCheckedExperiencia, setisCheckedExperiencia] = useState(false);
-  const [isCheckedFacebook, setisCheckedFacebook] = useState(false);
-  const [isCheckedInstagram, setisCheckedInstagram] = useState(false);
-  const [isCheckedTiktok, setisCheckedTiktok] = useState(false);
-  const [isCheckedSeguro, setisCheckedSeguro] = useState(false);
-
-  const [modalVisible, setModalVisible] = useState(false);
-
-  const [uidprofile, setuidprofile] = useState('');
-  const [typeUser, settypeUser] = useState('');
-
-  const [selectedPrefix, setSelectedPrefix] = useState('J-'); // Default value 'J'
-  const [isGetOtpDisabled, setGetOtpDisabled] = useState(false);
-
-  // *******************************************
-
-  const [imagePerfil, setimagePerfil] = useState("");
-  const [base64, setBase64] = useState(null);
-
-  const [photoModalVisible, setPhotoModalVisible] = useState(false);
-  const [photoModalTarget, setPhotoModalTarget] = useState('');
-
-  const [imageFirts, setimageFirts] = useState("");
-
-  const [estadoSelected, setestadoSelected] = useState('');
-
-  const [estadosVenezuela, setEstadosVenezuela] = useState([
-    { label: 'Seleccione un estado', value: '' },
-    { label: 'Amazonas', value: 'Amazonas' },
-    { label: 'Anzoátegui', value: 'Anzoátegui' },
-    { label: 'Apure', value: 'Apure' },
-    { label: 'Aragua', value: 'Aragua' },
-    { label: 'Barinas', value: 'Barinas' },
-    { label: 'Bolívar', value: 'Bolívar' },
-    { label: 'Carabobo', value: 'Carabobo' },
-    { label: 'Cojedes', value: 'Cojedes' },
-    { label: 'Delta Amacuro', value: 'Delta Amacuro' },
-    { label: 'Distrito Capital', value: 'Distrito Capital' },
-    { label: 'Falcón', value: 'Falcón' },
-    { label: 'Guárico', value: 'Guárico' },
-    { label: 'Lara', value: 'Lara' },
-    { label: 'La Guaira', value: 'La Guaira' },
-    { label: 'Mérida', value: 'Mérida' },
-    { label: 'Miranda', value: 'Miranda' },
-    { label: 'Monagas', value: 'Monagas' },
-    { label: 'Nueva Esparta', value: 'Nueva Esparta' },
-    { label: 'Portuguesa', value: 'Portuguesa' },
-    { label: 'Sucre', value: 'Sucre' },
-    { label: 'Táchira', value: 'Táchira' },
-    { label: 'Trujillo', value: 'Trujillo' },
-    { label: 'Yaracuy', value: 'Yaracuy' },
-    { label: 'Zulia', value: 'Zulia' }
-  ]);
-
-
-  useEffect(() => {
-    getData();
-  }, []);
-
-  const getData = async () => {
+  const cargar = useCallback(async () => {
+    setCargando(true);
+    setBanner({type: 'error', text: ''});
     try {
-      const jsonValue = await AsyncStorage.getItem('@userInfo');
-      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-      if (!user?.uid) {
+      const raw = await AsyncStorage.getItem('@userInfo');
+      const local = raw ? JSON.parse(raw) : {};
+      if (local?.typeUser === 'Taller') {
+        // El negocio tiene su propia pantalla.
+        navigation.replace('PerfilNegocio');
         return;
       }
-      // console.log('valor del storage1234', user.cedula);  // removido: PII
+      const id = String(local?.uid || '');
+      setUid(id);
+      let datos = local;
+      try {
+        const {data} = await api.post('/usuarios/getUserByUid', {uid: id});
+        if (data?.userData) datos = {...local, ...data.userData};
+      } catch (e) {
+        // Sin conexión: se muestra lo último guardado en el teléfono.
+      }
+      const form = formularioDesde(datos);
+      setEmail(String(datos?.email || ''));
+      setFoto({uri: datos?.image_perfil || '', base64: '', anterior: datos?.image_perfil || ''});
+      setOriginal(form);
+      setF(form);
+    } catch (e) {
+      setBanner({type: 'error', text: 'No pudimos cargar tus datos. Revisa tu conexión e intenta de nuevo.'});
+    } finally {
+      setCargando(false);
+    }
+  }, [navigation]);
 
-      setuidprofile(user.uid);
-      settypeUser(user.typeUser);
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  const errores = useMemo(() => {
+    if (!f) return {};
+    const ced = f.cedula.trim();
+    return {
+      nombre: validarNombre(f.nombre, 'tu nombre y apellido'),
+      phone: validarTelefono(f.phone),
+      cedula: ced && (ced.length < 5 || ced.length > 10) ? 'Revisa el número: debe tener entre 5 y 10 dígitos.' : '',
+    };
+  }, [f]);
+
+  const tel = v => normalizarTelefono(v || '');
+  const hayCambios = useMemo(() => {
+    if (!f || !original) return false;
+    return (
+      !!foto.base64 ||
+      f.nombre.trim() !== original.nombre.trim() ||
+      tel(f.phone) !== tel(original.phone) ||
+      f.estado !== original.estado ||
+      (f.cedula.trim() ? `${f.prefijo}${f.cedula}` : '') !== (original.cedula ? `${original.prefijo}${original.cedula}` : '')
+    );
+  }, [f, original, foto.base64]);
+
+  // Solo se valida lo que cambió: un dato viejo con otro formato que el
+  // conductor no tocó no le impide guardar su foto, por ejemplo.
+  const primerError = !f || !original
+    ? ''
+    : [
+        f.nombre.trim() !== original.nombre.trim() ? errores.nombre : '',
+        tel(f.phone) !== tel(original.phone) ? errores.phone : '',
+        f.cedula !== original.cedula ? errores.cedula : '',
+      ].find(Boolean);
+
+  const guardar = async () => {
+    if (!uid || !hayCambios || guardando) return;
+    if (primerError) {
+      setTocado({nombre: true, phone: true, cedula: true});
+      setBanner({type: 'error', text: primerError});
+      return;
+    }
+    setGuardando(true);
+    setBanner({type: 'error', text: ''});
+    const phone = tel(f.phone);
+    try {
+      // El teléfono no puede estar en otra cuenta (el servidor responde 409).
+      if (phone !== tel(original.phone)) {
+        try {
+          await api.post('/home/validatePhone', {phone, uid});
+        } catch (e) {
+          if (e?.response?.status === 409) {
+            setTocado(t => ({...t, phone: true}));
+            throw {amable: 'Ese teléfono ya está registrado en otra cuenta. Usa otro número.'};
+          }
+          throw e;
+        }
+      }
+      const cedula = f.cedula.trim() ? `${f.prefijo}-${f.cedula.trim()}` : '';
+      const anteriorNombre = foto.anterior ? String(foto.anterior).split('/').pop() : '';
+      const datos = {
+        Nombre: f.nombre.trim(),
+        cedula,
+        phone,
+        typeUser: 'Cliente',
+        email,
+        uid,
+        estado: f.estado,
+        base64: foto.base64 || '',
+        imageTodelete: foto.base64 && anteriorNombre ? anteriorNombre : '',
+      };
+      await api.post('/usuarios/UpdateClient', datos, {timeout: 30000});
+      // El servidor no devuelve el enlace de la foto nueva: se vuelve a leer.
+      let nuevaFoto = null;
+      if (foto.base64) {
+        try {
+          const {data} = await api.post('/usuarios/getUserByUid', {uid});
+          nuevaFoto = data?.userData?.image_perfil || null;
+        } catch (e) {
+          nuevaFoto = null;
+        }
+      }
 
       try {
-        // Hacer la solicitud POST utilizando Axios
-        const response = await api.post('/usuarios/getUserByUid', {
-          // uid: "U4pZah0wgbMuuGBU5dVCdiolNmr2",
-          uid: user.uid,
+        const raw = await AsyncStorage.getItem('@userInfo');
+        const prev = raw ? JSON.parse(raw) : {};
+        const {base64, imageTodelete, Nombre, ...resto} = datos;
+        const fusion = sanitizeUserInfo({
+          ...prev,
+          ...resto,
+          nombre: Nombre,
+          ...(nuevaFoto ? {image_perfil: nuevaFoto} : {}),
         });
-
-        // Verificar la respuesta del servidor
-        const result = response.data;
-
-        if (result.message === 'Usuario encontrado') {
-          // console.log('Este es el usuario encontrado', result.userData);  // removido: PII
-
-          setNameTaller(result.userData.nombre);
-
-          setNombre(result.userData.nombre || '');
-
-          if (result.userData.typeUser === 'Taller') {
-            let typeID = splitDocumentId(result.userData.rif);
-            setcedula(typeID[1] || '');
-            setSelectedPrefix(typeID[0] + '-');
-          } else if (result.userData.typeUser === 'Cliente') {
-            let typeID = splitDocumentId(result.userData.cedula);
-            // console.log('typeID[1]', typeID[1]);  // removido: PII
-            setcedula(typeID[1] || '');
-            setSelectedPrefix(typeID[0] + '-');
-          }
-
-          setEmail(result.userData.email || '');
-          setPhone(result.userData.phone || '');
-          setDireccion(result.userData.Direccion || '');
-          setRegComercial(result.userData.RegComercial || '');
-          setCaracteristicas(result.userData.Caracteristicas || '');
-          setTarifa(result.userData.Tarifa || '');
-          setExperiencia(result.userData.Experiencia || '');
-          setLinkFacebook(result.userData.LinkFacebook || '');
-          setLinkInstagram(result.userData.LinkInstagram || '');
-          setLinkTiktok(result.userData.LinkTiktok || '');
-          setGarantia(result.userData.Garantia || '');
-          setseguro(result.userData.seguro || '');
-
-          setimagePerfil(result.userData.image_perfil || '');
-
-          setimageFirts(result.userData.image_perfil || '')
-
-          setestadoSelected(result.userData.estado || '');
-
-        } else {
-          console.warn('Usuario no encontrado');
-        }
-      } catch (error) {
-        if (error.response) {
-          console.error('Error en la solicitud:', error.response.statusText);
-        } else {
-          console.error('Error en la solicitud:', error.message);
-        }
+        await AsyncStorage.setItem('@userInfo', JSON.stringify(fusion));
+      } catch (e) {
+        // Si falla el guardado local, Mi perfil igual lo trae del servidor.
       }
 
-
-      // setinfoUser(user)
+      setOriginal(f);
+      setFoto(p => ({uri: nuevaFoto || p.uri, base64: '', anterior: nuevaFoto || p.uri}));
+      setGuardado(true);
+      setBanner({type: 'ok', text: 'Listo, guardamos tus datos.'});
     } catch (e) {
-      // error reading value
-      console.log(e);
+      setBanner({
+        type: 'error',
+        text: e?.amable || e?.response?.data?.message || 'No pudimos guardar. Revisa tu conexión y toca Guardar de nuevo.',
+      });
+    } finally {
+      setGuardando(false);
     }
   };
 
-  const getImageName = (url) => url.split('/').pop();
-
-  const validateEmail = () => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setEmailError('Dirección de correo incorrecta');
-      return false;
+  const salir = () => {
+    if (!hayCambios) {
+      navigation.goBack();
+      return;
     }
-    setEmailError('');
-    return true;
+    Alert.alert('Cambios sin guardar', '¿Quieres salir sin guardar los cambios?', [
+      {text: 'Seguir editando', style: 'cancel'},
+      {text: 'Salir sin guardar', style: 'destructive', onPress: () => navigation.goBack()},
+    ]);
   };
 
-  const validatePhone = () => {
-    // Teléfono con país: Venezuela 10 dígitos sin 0; otros países según su largo.
-    const msg = validarTelefonoPais(phone ? String(phone) : '');
-    setPhoneError(msg);
-    return !msg;
+  const usarFoto = r => {
+    if (r?.didCancel || r?.errorCode) return;
+    const a = r?.assets?.[0];
+    if (!a?.base64) return;
+    setGuardado(false);
+    setFoto(p => ({...p, uri: a.uri, base64: a.base64}));
   };
 
-  const onHandleChange = async () => {
-    console.log("Aquiiii");
-    console.log(typeUser);
-
-    setGetOtpDisabled(true);
-
-    if (typeUser == "Cliente") {
-      const isPhoneValid = validatePhone();
-      const isEmailValid = validateEmail();
-
-      if (
-        isPhoneValid === true &&
-        isEmailValid === true &&
-        Nombre != '' &&
-        cedula != 0 &&
-        cedula != '' &&
-        estadoSelected !== ''
-      ) {
-        try {
-          // Validar si el número de teléfono ya existe en el servidor
-          const phoneValidationResponse = await api.post('/home/validatePhone', {
-            phone,
-            uid: uidprofile,
-          });
-
-          const emailValidationResponse = await api.post('/home/validateEmail', {
-            email,
-            uid: uidprofile,
-          });
-
-          if (
-            phoneValidationResponse.status === 200 &&
-            phoneValidationResponse.data.valid === true &&
-            emailValidationResponse.status === 200 &&
-            emailValidationResponse.data.valid === true
-          ) {
-            const infoUserCreated = {
-              Nombre: Nombre,
-              cedula: selectedPrefix + "" + cedula,
-              phone: phone?.replace(/\s+/g, ""),
-              typeUser: 'Cliente',
-              email: email,
-              uid: uidprofile,
-              estado: estadoSelected,
-              base64: base64 == null || base64 == undefined || base64 == '' ? "" : base64,
-              imageTodelete: imageFirts != "" && imageFirts != undefined ? base64 == null || base64 == undefined || base64 == '' ? "" : getImageName(imageFirts) : ""
-            };
-
-            // console.log(infoUserCreated);  // removido: datos sensibles
-
-            try {
-              // Hacer la solicitud POST utilizando Axios
-              const response = await api.post('/usuarios/UpdateClient', infoUserCreated);
-
-              // Verificar la respuesta del servidor
-              console.log(response);
-
-              if (response.status === 200) {
-                const result = response.data;
-                console.log(result);
-
-                try {
-                  const existing = await AsyncStorage.getItem('@userInfo');
-                  const prev = existing ? JSON.parse(existing) : {};
-                  // APP-05: se conserva la mezcla de la base nueva, pero pasa
-                  // por sanitizeUserInfo para no guardar la contrasena.
-                  const merged = sanitizeUserInfo({
-                    ...prev,
-                    ...infoUserCreated,
-                    uid: uidprofile,
-                    typeUser: 'Cliente',
-                  });
-                  await AsyncStorage.setItem(
-                    '@userInfo',
-                    JSON.stringify(merged),
-                  );
-                } catch (e) {
-                  console.error('Error al guardar en AsyncStorage:', e);
-                }
-
-                setNombre('');
-                setcedula(0);
-                setEmail('');
-                setPhone(0);
-                setSelectedPrefix('J-');
-
-                showToast('Usuario actualizado exitosamente');
-                setGetOtpDisabled(false);
-                navigation.goBack('');
-              } else {
-                const errorText = response.data;
-                console.error('Error al guardar el usuario:', errorText.message || errorText);
-                setGetOtpDisabled(false);
-                showToast(errorText.message || 'Error inesperado en la actualización');
-              }
-            } catch (error) {
-              if (error.response) {
-                console.error('Error en la solicitud:', error.response.data.message || error.response.statusText);
-                setGetOtpDisabled(false);
-                showToast(error.response.data.message || 'Error inesperado en la actualización');
-              } else {
-                console.error('Error en la solicitud:', error.message);
-                setGetOtpDisabled(false);
-              }
-            }
-          } else {
-            setGetOtpDisabled(false);
-            showToast('El número de teléfono o el correo electrónico ya está registrado.');
-          }
-        } catch (error) {
-          setGetOtpDisabled(false);
-          if (error.response) {
-            console.error(
-              'Error en la solicitud:',
-              error.response.data.message || error.response.statusText
-            );
-            showToast(error.response.data.message || 'Error en la solicitud');
-          } else {
-            console.error('Error en la solicitud:', error.message);
-            showToast('Error en la solicitud');
-          }
-        }
-      } else {
-        setGetOtpDisabled(false);
-        showToast('Error al crear al usuario, por favor validar formulario');
-      }
-    } else {
-      setGetOtpDisabled(false);
-    }
+  const desdeGaleria = () => {
+    setHojaFoto(false);
+    setTimeout(() => launchImageLibrary({...OPCIONES_FOTO, selectionLimit: 1}, usarFoto), 400);
   };
 
-  const { bgFullStyle, textColorStyle, iconColorStyle, isDark, t, textRTLStyle } = useValues();
-
-
-
-  const showToast = text => {
-    // ToastAndroid.show(text, ToastAndroid.SHORT);
-    Alert.alert('Solvers Informa', text);
-  };
-
-  const fileToBase64 = uri =>
-    new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.onload = () => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result.split(',')[1]);
-        reader.onerror = reject;
-        reader.readAsDataURL(xhr.response);
-      };
-      xhr.onerror = reject;
-      xhr.open('GET', uri);
-      xhr.responseType = 'blob';
-      xhr.send();
-    });
-
-  const applyPhotoResult = (target, uri, b64) => {
-    if (target === 'imagen') {
-      setimagePerfil(uri);
-      setBase64(b64);
-    }
-  };
-
-  const openPhotoOptions = target => {
-    setPhotoModalTarget(target);
-    setPhotoModalVisible(true);
-  };
-
-  const handlePickGallery = () => {
-    setPhotoModalVisible(false);
-    setTimeout(() => {
-      launchImageLibrary(
-        { mediaType: 'photo', includeBase64: true, selectionLimit: 1 },
-        response => {
-          if (response.didCancel || response.error) return;
-          const asset = response.assets?.[0];
-          if (asset) applyPhotoResult(photoModalTarget, asset.uri, asset.base64);
-        },
-      );
-    }, 400);
-  };
-
-  const handlePickCamera = async () => {
-    setPhotoModalVisible(false);
+  const desdeCamara = () => {
+    setHojaFoto(false);
     setTimeout(async () => {
       if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.CAMERA,
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) return;
+        const ok = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
+        if (ok !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Solvers', 'Para tomar la foto, permite el uso de la cámara en los ajustes del teléfono.');
+          return;
+        }
       }
-      launchCamera(
-        { mediaType: 'photo', includeBase64: true },
-        response => {
-          if (response.didCancel || response.error) return;
-          const asset = response.assets?.[0];
-          if (asset) applyPhotoResult(photoModalTarget, asset.uri, asset.base64);
-        },
-      );
+      launchCamera({...OPCIONES_FOTO, cameraType: 'front'}, usarFoto);
     }, 400);
   };
 
-  const handlePickDocument = () => {
-    setPhotoModalVisible(false);
-    setTimeout(async () => {
-      try {
-        const res = await DocumentPicker.pickSingle({
-          type: [DocumentPicker.types.allFiles],
-        });
-        const b64 = await fileToBase64(res.uri);
-        applyPhotoResult(photoModalTarget, res.uri, b64);
-      } catch (e) {
-        if (!DocumentPicker.isCancel(e)) console.warn(e);
-      }
-    }, 400);
-  };
-
-  const selectImage = () => {
-    launchImageLibrary({ mediaType: 'photo', includeBase64: true }, response => {
-      if (response.didCancel) {
-      } else if (response.error) {
-      } else {
-        const source = { uri: response.assets[0].uri };
-        const base64Data = response.assets[0].base64;
-        setimagePerfil(source.uri);
-        setBase64(base64Data);
-      }
-    });
-  };
-
-  const clearImage = () => {
-    setimagePerfil('');
-    setBase64(null);
-  };
-
-  const isCliente = typeUser === 'Cliente';
-  const showEditForm = isCliente;
-
-  const totalStepsClienteEdit = 6;
-  let completedStepsCliente = 0;
-  if (imagePerfil) completedStepsCliente += 1;
-  if ((Nombre || '').trim() !== '') completedStepsCliente += 1;
-  if (
-    (String(cedula) || '').trim() !== '' &&
-    cedula !== 0 &&
-    cedula !== ''
-  ) {
-    completedStepsCliente += 1;
-  }
-  if ((email || '').trim() !== '') completedStepsCliente += 1;
-  if ((estadoSelected || '').trim() !== '') completedStepsCliente += 1;
-  if ((phone || '').toString().trim() !== '' && phone !== 0) {
-    completedStepsCliente += 1;
-  }
-  const progressCliente = Math.round(
-    (completedStepsCliente / totalStepsClienteEdit) * 100,
-  );
-
-  let progressClienteText = 'Comienza completando tus datos básicos.';
-  if (progressCliente >= 30 && progressCliente < 60) {
-    progressClienteText = '¡Vas muy bien! Sigue completando tu registro.';
-  } else if (progressCliente >= 60 && progressCliente < 90) {
-    progressClienteText = '¡Ya casi terminas! Solo faltan algunos campos.';
-  } else if (progressCliente >= 90) {
-    progressClienteText = '¡Excelente! Tu perfil está casi completo.';
-  }
+  const ver = k => (tocado[k] ? errores[k] : '');
+  const prefijos = PREFIJOS_PERSONA.includes(f?.prefijo) ? PREFIJOS_PERSONA : [...PREFIJOS_PERSONA, f?.prefijo].filter(Boolean);
 
   return (
-    <View
-      style={[styles.signUpLikeRoot, { backgroundColor: bgFullStyle, padding: 30 }]}>
-      <View
-        style={{
-          marginHorizontal: -30,
-          marginTop: -30,
-          marginBottom: 16,
-          backgroundColor: DARK_BLUE,
-          borderBottomLeftRadius: 50,
-          borderBottomRightRadius: 50,
-          overflow: 'hidden',
-          paddingTop: 0,
-          paddingBottom: 0,
-          paddingHorizontal: 30,
-          alignItems: 'center',
-          borderLeftWidth: 2,
-          borderRightWidth: 2,
-          borderLeftColor: YELLOW,
-          borderRightColor: YELLOW,
-        }}>
-        <View
-          style={{
-            width: '100%',
-            flexDirection: 'row',
-            alignItems: 'center',
-            paddingTop: insets.top + 8,
-            paddingBottom: 8,
-            paddingHorizontal: 0,
-          }}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            activeOpacity={0.85}
-            style={styles.signUpLikeHeaderBackBtn}
-            accessibilityRole="button"
-            accessibilityLabel="Volver">
-            <Icons name="angle-left" size={22} color={YELLOW} />
-          </TouchableOpacity>
-          <View style={styles.signUpLikeHeaderTitleSlot} pointerEvents="box-none">
-            <Text
-              style={styles.signUpLikeHeaderTitleText}
-              numberOfLines={2}>
-              Mi cuenta
-              <Text style={styles.signUpLikeHeaderTitleType}>
-                {' '}
-                ({typeUser || '…'})
-              </Text>
-            </Text>
-          </View>
-          <View style={{ width: 42 }} />
-        </View>
-        <Text
-          style={{
-            fontSize: 20,
-            color: '#E5E7EB',
-            lineHeight: 28,
-            marginBottom: 12,
-            marginTop: 4,
-            textAlign: 'center',
-            paddingHorizontal: 8,
-          }}>
-          Actualiza tus datos cuando lo necesites.
-        </Text>
-        {isCliente ? (
-          <View
-            style={{
-              width: '100%',
-              marginHorizontal: -30,
-              height: 10,
-              backgroundColor: DARK_BLUE,
-              overflow: 'hidden',
-            }}>
-            <View
-              style={{
-                width: `${progressCliente}%`,
-                height: '100%',
-                backgroundColor: YELLOW,
-              }}
-            />
-          </View>
-        ) : null}
+    <SafeAreaView style={st.safe} edges={['top', 'bottom']}>
+      <View style={st.header}>
+        <TouchableOpacity onPress={salir} style={st.back} accessibilityRole="button" accessibilityLabel="Volver">
+          <Ionicons name="chevron-back" size={26} color={C.navy} />
+        </TouchableOpacity>
+        <Text style={st.headerTitle}>Datos personales</Text>
+        <View style={st.back} />
       </View>
 
-      {showEditForm && isCliente ? (
-        <KeyboardAvoidingView
-          style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-          <View
-            style={{
-              flexDirection: 'row',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 0,
-              marginTop: 0,
-              paddingHorizontal: 4,
-            }}>
-            <Text style={{ fontSize: 13, color: DARK_BLUE }}>
-              {progressClienteText}
+      {cargando || !f ? (
+        <View style={st.centro}>
+          {cargando ? (
+            <ActivityIndicator color={C.navy} />
+          ) : (
+            <Banner type="error" text={banner.text} actionLabel="Reintentar" onAction={cargar} />
+          )}
+        </View>
+      ) : (
+        <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView contentContainerStyle={st.body} keyboardShouldPersistTaps="handled">
+            {/* Foto */}
+            <View style={st.fotoBloque}>
+              <View>
+                <Avatar uri={foto.uri} size={96} onPress={() => setHojaFoto(true)} label="Cambiar foto de perfil" />
+                <View style={st.fotoBadge} pointerEvents="none">
+                  <Camera size={16} color={C.navy} strokeWidth={2.4} />
+                </View>
+              </View>
+              <TouchableOpacity onPress={() => setHojaFoto(true)} style={st.fotoLink} accessibilityRole="button">
+                <Text style={st.fotoLinkTexto}>{foto.uri ? 'Cambiar foto' : 'Agregar foto'}</Text>
+              </TouchableOpacity>
+              {foto.base64 ? <Text style={st.nota}>Foto nueva lista. Toca Guardar para subirla.</Text> : null}
+            </View>
+
+            <Field
+              label="Nombre y apellido"
+              value={f.nombre}
+              onChangeText={v => set('nombre', v)}
+              onBlur={tocar('nombre')}
+              error={ver('nombre')}
+              autoCapitalize="words"
+              textContentType="name"
+            />
+
+            <PhoneInput
+              label="Teléfono"
+              value={f.phone}
+              onChange={v => set('phone', v)}
+              onBlur={tocar('phone')}
+              error={ver('phone')}
+              help="Los talleres te contactan a este número."
+            />
+
+            <Text style={st.label}>
+              Cédula <Text style={st.opcional}>(opcional)</Text>
             </Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: DARK_BLUE }}>
-              {progressCliente}%
+            <View style={st.cedulaFila}>
+              <Dropdown
+                style={st.prefijo}
+                data={prefijos.map(p => ({label: `${p}-`, value: p}))}
+                labelField="label"
+                valueField="value"
+                value={f.prefijo}
+                selectedTextStyle={{color: C.text, fontSize: 16}}
+                onChange={i => set('prefijo', i.value)}
+                accessibilityLabel="Tipo de documento"
+              />
+              <Field
+                style={{flex: 1, marginBottom: 0}}
+                placeholder="12345678"
+                value={f.cedula}
+                onChangeText={v => set('cedula', v.replace(/\D/g, '').slice(0, 10))}
+                onBlur={tocar('cedula')}
+                keyboardType="number-pad"
+                accessibilityLabel="Número de cédula"
+              />
+            </View>
+            {ver('cedula') ? (
+              <Text style={st.err}>{ver('cedula')}</Text>
+            ) : (
+              <Text style={st.ayuda}>Algunos talleres la piden para emitir la factura.</Text>
+            )}
+
+            <Text style={st.label}>
+              Estado donde vives <Text style={st.opcional}>(opcional)</Text>
             </Text>
-          </View>
-          <ScrollView
-            style={{ flex: 1 }}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              paddingBottom: Math.max(insets.bottom, 8) + 72,
-            }}>
-            <View style={{ paddingHorizontal: 4, paddingBottom: 0 }}>
-              <View
-                style={[styles.signUpLikeCard, styles.signUpLikeCardFirst]}>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: '600',
-                    color: '#111827',
-                    marginBottom: 4,
-                  }}>
-                  Tu identidad
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: '#6B7280',
-                    marginBottom: 12,
-                  }}>
-                  Actualiza tu foto y datos básicos.
-                </Text>
-                <View
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                  }}>
-                  <View
-                    style={{
-                      flex: 1,
-                      alignItems: 'center',
-                      marginRight: 12,
-                    }}>
-                    
-                    {imagePerfil != null && String(imagePerfil).trim() !== '' ? (
-                      <View style={stylesImage.imageContainer}>
-                        <Image
-                          source={{ uri: imagePerfil }}
-                          style={{ width: 90, height: 90, borderRadius: 45 }}
-                        />
-                        <TouchableOpacity
-                          style={stylesImage.closeButton}
-                          onPress={clearImage}>
-                          <Text style={stylesImage.closeButtonText}>X</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <View
-                        style={{
-                          width: 90,
-                          height: 90,
-                          borderRadius: 45,
-                          backgroundColor: '#EEF2FF',
-                          borderWidth: 1,
-                          borderColor: 'rgba(45, 50, 97, 0.25)',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                        }}>
-                        <Icons name="user" size={34} color="#2D3261" />
-                      </View>
-                    )}
-                  </View>
-                  <View style={{ flex: 2 }}>
-                    <TouchableOpacity
-                      style={[
-                        stylesImage.button,
-                        {
-                          borderWidth: 1,
-                          borderColor: '#2D3261',
-                          borderStyle: 'dotted',
-                          borderRadius: 999,
-                          backgroundColor: '#FFF',
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          paddingVertical: 10,
-                          paddingHorizontal: 14,
-                        },
-                      ]}
-                      onPress={() => openPhotoOptions('imagen')}>
-                      <Icons name="camera" size={16} color="#2D3261" />
-                      <Text
-                        style={[
-                          stylesImage.buttonText,
-                          {
-                            marginLeft: 8,
-                            color: '#2D3261',
-                            fontSize: 13,
-                            fontWeight: '600',
-                          },
-                        ]}>
-                        Subir foto de perfil
-                      </Text>
-                    </TouchableOpacity>
-                    <Text
-                      style={{
-                        marginTop: 6,
-                        fontSize: 11,
-                        color: '#9CA3AF',
-                      }}>
-                      JPG o PNG, máximo 5MB.
-                    </Text>
-                  </View>
-                </View>
-              </View>
+            <Dropdown
+              style={st.dropdown}
+              data={ESTADOS}
+              labelField="label"
+              valueField="value"
+              value={f.estado}
+              placeholder="Elige el estado"
+              placeholderStyle={{color: '#9AA0B4', fontSize: 16}}
+              selectedTextStyle={{color: C.text, fontSize: 16}}
+              search
+              searchPlaceholder="Buscar…"
+              onChange={i => set('estado', i.value)}
+            />
+            <Text style={st.ayuda}>Te mostramos primero los talleres de tu zona.</Text>
 
-              <View style={styles.signUpLikeCard}>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: '600',
-                    color: '#111827',
-                    marginBottom: 4,
-                  }}>
-                  Datos personales
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: '#6B7280',
-                    marginBottom: 12,
-                  }}>
-                  Información básica de tu cuenta.
-                </Text>
-                <TextInputs
-                  keyboardType="default"
-                  autoCapitalize="words"
-                  formCardMode={true}
-                  title="Nombre y Apellido"
-                  placeHolder="Ingrese su nombre y apellido"
-                  value={Nombre}
-                  textDecorationLine={isCheckedName ? 'line-through' : 'none'}
-                  onChangeText={text => {
-                    setNombre(text);
-                    setNombreError(
-                      text.trim() === '' ? 'Nombre es requerido' : '',
-                    );
-                  }}
-                  onBlur={() => {}}
-                  icon={<Icons name="user" size={20} color="#9BA6B8" />}
-                />
-                {NombreError !== '' && (
-                  <Text style={styles.errorStyle}>{NombreError}</Text>
-                )}
-
-                <View style={{ marginTop: 10 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#1F2937', marginBottom: 4 }}>
-                    Documento de Identidad
-                  </Text>
-                  <View style={{ flexDirection: 'row', marginTop: 8, marginBottom: 4, alignItems: 'flex-start' }}>
-                    <View style={{
-                      width: 76,
-                      borderWidth: 1,
-                      borderColor: '#CBD5E1',
-                      borderRadius: 12,
-                      backgroundColor: '#FFFFFF',
-                      height: 52,
-                      justifyContent: 'center',
-                    }}>
-                      <Dropdown
-                        style={{
-                          width: '100%',
-                          borderWidth: 0,
-                          paddingHorizontal: 10,
-                          backgroundColor: 'transparent',
-                          height: 52,
-                        }}
-                        placeholderStyle={{ color: '#6B7280', fontSize: 13 }}
-                        selectedTextStyle={{ color: '#111827', fontSize: 13 }}
-                        data={[
-                          { label: 'C-', value: 'C-' },
-                          { label: 'E-', value: 'E-' },
-                          { label: 'G-', value: 'G-' },
-                          { label: 'J-', value: 'J-' },
-                          { label: 'P-', value: 'P-' },
-                          { label: 'V-', value: 'V-' },
-                        ]}
-                        labelField="label"
-                        valueField="value"
-                        placeholder="V-"
-                        value={selectedPrefix}
-                        onChange={item => setSelectedPrefix(item.value)}
-                      />
-                    </View>
-                    <View style={{
-                      flex: 1,
-                      marginLeft: 8,
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      borderWidth: 1,
-                      borderColor: '#CBD5E1',
-                      borderRadius: 12,
-                      backgroundColor: '#FFFFFF',
-                      height: 52,
-                      paddingHorizontal: 12,
-                      minWidth: 0,
-                    }}>
-                      <Icons name="id-card-o" size={20} color="#9BA6B8" />
-                      <TextInput
-                        value={String(cedula || '')}
-                        placeholder="Número de cédula"
-                        placeholderTextColor="#9BA6B8"
-                        keyboardType="numeric"
-                        onChangeText={text => {
-                          const numericText = text.replace(/[^0-9]/g, '');
-                          if (numericText.length <= 10) {
-                            setcedula(numericText);
-                            setcedulaTyping(true);
-                            if (numericText.trim() === '') {
-                              setcedulaError('Documento es requerido');
-                            } else {
-                              setcedulaError('');
-                            }
-                          }
-                        }}
-                        onBlur={() => setcedulaTyping(false)}
-                        style={{ flex: 1, marginLeft: 10, fontSize: 14, color: '#111827', minWidth: 0 }}
-                      />
-                    </View>
-                  </View>
-                  {cedulaError !== '' && (
-                    <Text style={styles.errorStyle}>{cedulaError}</Text>
-                  )}
-                </View>
-
-                <TextInputs
-                  title="Correo Electrónico"
-                  formCardMode={true}
-                  keyboardType={'email-address'}
-                  value={email}
-                  editable={false}
-                  textDecorationLine={isCheckedEmail ? 'line-through' : 'none'}
-                  placeHolder="Ingrese su email"
-                  onChangeText={text => {
-                    setEmail(text);
-                    setEmailTyping(true);
-                    setEmailError(text.trim() === '' ? 'Email es requerido' : '');
-                  }}
-                  onBlur={() => setEmailTyping(false)}
-                  icon={
-                    <Email
-                      color={isEmailTyping ? '#051E47' : appColors.subtitle}
-                    />
-                  }
-                />
-
-                <View style={{ marginTop: 8 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#1F2937', marginBottom: 4 }}>
-                    Estado
-                  </Text>
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      marginTop: 10,
-                      marginBottom: 10,
-                      alignItems: 'center',
-                    }}>
-                    <View
-                      style={{
-                        width: '100%',
-                        borderWidth: 1,
-                        borderColor: '#CBD5E1',
-                        borderRadius: 12,
-                        backgroundColor: '#FFFFFF',
-                        height: 52,
-                        justifyContent: 'center',
-                        paddingHorizontal: 8,
-                      }}>
-                      <Dropdown
-                        style={{
-                          width: '100%',
-                          borderWidth: 0,
-                          paddingHorizontal: 4,
-                          backgroundColor: 'transparent',
-                          height: 42,
-                        }}
-                        placeholderStyle={{
-                          color: '#6B7280',
-                          fontSize: 13,
-                        }}
-                        selectedTextStyle={{
-                          color: '#111827',
-                          fontSize: 13,
-                        }}
-                        data={estadosVenezuela}
-                        labelField="label"
-                        valueField="value"
-                        placeholder="Seleccione un estado"
-                        value={estadoSelected}
-                        search={true}
-                        onChange={item => setestadoSelected(item.value)}
-                      />
-                    </View>
-                  </View>
-                </View>
-              </View>
-
-              <View
-                style={[styles.signUpLikeCard, styles.signUpLikeCardSoft]}>
-                <Text
-                  style={{
-                    fontSize: 13,
-                    fontWeight: '600',
-                    color: '#111827',
-                    marginBottom: 4,
-                  }}>
-                  Contacto
-                </Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: '#6B7280',
-                    marginBottom: 12,
-                  }}>
-                  Número al que podamos contactarte.
-                </Text>
-                <PhoneInput
-                  label="Número telefónico"
-                  value={phone ? String(phone) : ''}
-                  onChange={v => {
-                    setPhone(v);
-                    setPhoneError('');
-                  }}
-                  onBlur={validatePhone}
-                  error={phoneError}
-                />
-              </View>
+            <View style={st.soloLectura}>
+              <Text style={st.soloLecturaTexto}>Correo: {email || '—'}</Text>
+              <Text style={st.soloLecturaNota}>Es con el que inicias sesión. Para cambiarlo, escríbenos por soporte.</Text>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
-      ) : null}
+      )}
 
-      {showEditForm ? (
-        <View
-          style={[
-            styles.saveFooterCliente,
-            {paddingBottom: insets.bottom + 4, backgroundColor: bgFullStyle},
-          ]}>
-          <TouchableOpacity
-            activeOpacity={0.88}
-            disabled={isGetOtpDisabled}
-            onPress={onHandleChange}
-            style={[
-              styles.saveFooterBtn,
-              isGetOtpDisabled && styles.saveFooterBtnDisabled,
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel="Guardar cambios">
-            <Icons
-              name="floppy-o"
-              size={18}
-              color={isGetOtpDisabled ? '#051E47' : appColors.screenBg}
-            />
-            <Text
-              style={[
-                styles.saveFooterBtnText,
-                isGetOtpDisabled && styles.saveFooterBtnTextDisabled,
-              ]}>
-              Guardar cambios
-            </Text>
+      {/* El aviso va junto al botón para que siempre se vea. */}
+      <View style={st.footer}>
+        {banner.text && f && !(banner.type === 'ok' && hayCambios) ? (
+          <View style={{marginBottom: 8}}>
+            <Banner type={banner.type} text={banner.text} />
+          </View>
+        ) : null}
+        <PrimaryButton
+          title={guardando ? 'Guardando…' : guardado && !hayCambios ? 'Guardado' : hayCambios ? 'Guardar cambios' : 'Sin cambios'}
+          done={guardado && !hayCambios}
+          onPress={guardar}
+          loading={guardando}
+          disabled={!hayCambios || guardando || cargando}
+        />
+      </View>
+
+      <BottomSheet visible={hojaFoto} onClose={() => setHojaFoto(false)} title="Foto de perfil">
+        <View style={st.hojaFila}>
+          <TouchableOpacity style={st.hojaOpcion} onPress={desdeCamara} accessibilityRole="button">
+            <Camera size={26} color={C.navy} strokeWidth={2.2} />
+            <Text style={st.hojaTexto}>Tomar foto</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={st.hojaOpcion} onPress={desdeGaleria} accessibilityRole="button">
+            <ImageIcon size={26} color={C.navy} strokeWidth={2.2} />
+            <Text style={st.hojaTexto}>Elegir de la galería</Text>
           </TouchableOpacity>
         </View>
-      ) : null}
-
-      {/* ── Modal selector de foto ────────────────────────────────────────── */}
-      <Modal
-        visible={photoModalVisible}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setPhotoModalVisible(false)}>
-        <View style={{ flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(15,23,68,0.55)' }}>
-          <TouchableOpacity style={{ flex: 1 }} activeOpacity={1} onPress={() => setPhotoModalVisible(false)} />
-          <View style={{
-            backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28,
-            paddingHorizontal: 24, paddingTop: 12,
-            paddingBottom: Platform.OS === 'ios' ? 40 : 28,
-          }}>
-            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#CBD5E1', alignSelf: 'center', marginBottom: 22 }} />
-            <Text style={{ fontSize: 17, fontWeight: '800', color: '#1F2344', textAlign: 'center', marginBottom: 6 }}>
-              Adjuntar imagen o archivo
-            </Text>
-            <Text style={{ fontSize: 12, color: '#6B7280', textAlign: 'center', lineHeight: 18, marginBottom: 28 }}>
-              Seleccione una opción para capturar{'\n'}la imagen y comprobar el documento
-            </Text>
-            <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
-              {[
-                { label: 'Documento', icon: 'document-attach-outline', onPress: handlePickDocument },
-                { label: 'Galería',   icon: 'images-outline',          onPress: handlePickGallery },
-                { label: 'Cámara',    icon: 'camera-outline',          onPress: handlePickCamera },
-              ].map(({ label, icon, onPress }) => (
-                <TouchableOpacity key={label} onPress={onPress} activeOpacity={0.75}
-                  style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 20,
-                    borderRadius: 18, backgroundColor: '#F0F1FA', borderWidth: 1.5, borderColor: '#2D3261' }}>
-                  <View style={{ width: 52, height: 52, borderRadius: 14, backgroundColor: '#2D3261',
-                    alignItems: 'center', justifyContent: 'center', marginBottom: 10 }}>
-                    <Icons2 name={icon} size={26} color="#FFD60A" />
-                  </View>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#1F2344', textAlign: 'center' }}>{label}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <TouchableOpacity onPress={() => setPhotoModalVisible(false)}
-              style={{ paddingVertical: 14, borderRadius: 16, backgroundColor: '#F0F1FA', alignItems: 'center' }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#1F2344' }}>Cancelar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </View>
+      </BottomSheet>
+    </SafeAreaView>
   );
 };
 
-export default EditProfile;
-
-const stylesImage = StyleSheet.create({
-  button: {
-    padding: 10,
-    borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  buttonText: {
-    color: 'white',
-    fontWeight: 'bold',
-  },
-  imageContainer: {
-    position: 'relative',
-    marginTop: 20,
-  },
-  closeButton: {
+const st = StyleSheet.create({
+  safe: {flex: 1, backgroundColor: '#FFFFFF'},
+  header: {flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 8, height: 52},
+  back: {width: 44, height: 44, alignItems: 'center', justifyContent: 'center'},
+  headerTitle: {fontSize: 16, fontWeight: '700', color: C.navy},
+  centro: {flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20},
+  body: {paddingHorizontal: 20, paddingBottom: 24},
+  fotoBloque: {alignItems: 'center', marginTop: 8, marginBottom: 20},
+  fotoBadge: {
     position: 'absolute',
-    top: 5,
-    right: 5,
-    backgroundColor: 'red',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
-    justifyContent: 'center',
+    right: 0,
+    bottom: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: C.yellow,
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  closeButtonText: {
-    color: 'white',
-    fontWeight: 'bold',
-    fontSize: 16,
+  fotoLink: {minHeight: 44, justifyContent: 'center', paddingHorizontal: 12},
+  fotoLinkTexto: {fontSize: 15, fontWeight: '700', color: C.blue},
+  nota: {fontSize: 13, color: C.ok, fontWeight: '600'},
+  label: {fontSize: 15, fontWeight: '700', color: C.navy, marginBottom: 8},
+  opcional: {fontSize: 13, fontWeight: '500', color: C.muted},
+  ayuda: {fontSize: 13, color: C.muted, marginTop: 6, marginBottom: 16},
+  err: {fontSize: 13, color: C.error, marginTop: 6, marginBottom: 16, fontWeight: '600'},
+  cedulaFila: {flexDirection: 'row', alignItems: 'center', gap: 8},
+  prefijo: {width: 84, minHeight: 52, borderRadius: 14, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, paddingHorizontal: 12},
+  dropdown: {minHeight: 52, borderRadius: 14, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, paddingHorizontal: 14},
+  soloLectura: {backgroundColor: C.bg, borderRadius: 14, padding: 14, marginTop: 4},
+  soloLecturaTexto: {fontSize: 15, color: C.text, fontWeight: '600', marginBottom: 2},
+  soloLecturaNota: {fontSize: 13, color: C.muted, marginTop: 4},
+  footer: {paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: C.border},
+  hojaFila: {flexDirection: 'row', gap: 12, marginTop: 8, marginBottom: 8},
+  hojaOpcion: {
+    flex: 1,
+    minHeight: 96,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: C.border,
+    backgroundColor: C.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 12,
   },
+  hojaTexto: {fontSize: 14, fontWeight: '700', color: C.navy, textAlign: 'center'},
 });
 
-const stylesMap = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-});
+export default EditProfile;

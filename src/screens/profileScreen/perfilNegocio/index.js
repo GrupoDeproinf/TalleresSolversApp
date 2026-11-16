@@ -3,7 +3,7 @@
 // Reemplaza al editor antiguo de 7 pasos ("Mi cuenta (Negocio)") con el mismo
 // diseño del registro. Solo se envía al servidor lo que el taller cambió, por
 // /usuarios/actualizarPerfilTaller, que no toca documentos ni estatus.
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  PermissionsAndroid,
 } from 'react-native';
+import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
+import {Camera, Image as ImageIcon} from 'lucide-react-native';
+import {BottomSheet} from '../../../ui';
+import {Avatar} from '../../../ui/cuenta';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Dropdown} from 'react-native-element-dropdown';
@@ -92,11 +97,13 @@ const formularioDesde = u => ({
   }, {}),
 });
 
+const OPCIONES_FOTO = {mediaType: 'photo', includeBase64: true, maxWidth: 1024, maxHeight: 1024, quality: 0.8};
+
 const iguales = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 
 // Título de sección con la marca "Pendiente" cuando al perfil le falta ese dato.
-const Seccion = ({titulo, pendiente}) => (
-  <View style={st.seccionFila}>
+const Seccion = ({titulo, pendiente, onLayout}) => (
+  <View style={st.seccionFila} onLayout={onLayout}>
     <Text style={[st.seccion, {marginTop: 0, marginBottom: 0, flexShrink: 1}]}>{titulo}</Text>
     {pendiente ? (
       <View style={st.pendiente} accessibilityLabel="Pendiente por completar">
@@ -117,8 +124,26 @@ const PerfilNegocio = ({navigation}) => {
   const [mapVisible, setMapVisible] = useState(false);
   const [tocado, setTocado] = useState({});
   const [banner, setBanner] = useState({type: 'error', text: ''});
+  const [guardado, setGuardado] = useState(false);
+  const [hojaFoto, setHojaFoto] = useState(false);
+  const [subiendoFoto, setSubiendoFoto] = useState(false);
+  // Posición de cada sección, para llevar al taller a lo que le falta.
+  const scrollRef = useRef(null);
+  const posiciones = useRef({});
+  const marcar = k => e => {
+    posiciones.current[k] = e.nativeEvent.layout.y;
+  };
+  const irA = k => {
+    const y = posiciones.current[k];
+    if (y != null) scrollRef.current?.scrollTo({y: Math.max(0, y - 12), animated: true});
+    if (k === 'ubicacion') setMapVisible(true);
+    if (k === 'logo') navigation.navigate('DocumentosTaller');
+  };
 
-  const set = (k, v) => setF(prev => ({...prev, [k]: v}));
+  const set = (k, v) => {
+    setGuardado(false);
+    setF(prev => ({...prev, [k]: v}));
+  };
   const tocar = k => () => setTocado(t => ({...t, [k]: true}));
 
   const cargar = useCallback(async () => {
@@ -236,6 +261,7 @@ const PerfilNegocio = ({navigation}) => {
       if (cambios.lat != null) fusion.ubicacion = {lat: cambios.lat, lng: cambios.lng};
       await AsyncStorage.setItem('@userInfo', JSON.stringify(fusion));
       setOriginal(f);
+      setGuardado(true);
       setBanner({type: 'ok', text: 'Guardamos los cambios de tu negocio.'});
     } catch (e) {
       setBanner({
@@ -245,6 +271,55 @@ const PerfilNegocio = ({navigation}) => {
     } finally {
       setGuardando(false);
     }
+  };
+
+  // La foto del negocio se sube apenas se elige: no depende de "Guardar".
+  const subirFoto = async r => {
+    if (r?.didCancel || r?.errorCode) return;
+    const a = r?.assets?.[0];
+    if (!a?.base64 || !uid) return;
+    setSubiendoFoto(true);
+    const anterior = String(usuario?.image_perfil || '').split('/').pop();
+    try {
+      await api.post('/usuarios/UpdateUsuariosAll', {uid, base64: a.base64, imageTodelete: anterior}, {timeout: 30000});
+      let url = a.uri;
+      try {
+        const {data} = await api.post('/usuarios/getUserByUid', {uid});
+        url = data?.userData?.image_perfil || url;
+      } catch (e) {
+        // Se muestra la foto elegida; el enlace llega en la próxima carga.
+      }
+      setUsuario(u => ({...u, image_perfil: url}));
+      try {
+        const raw = await AsyncStorage.getItem('@userInfo');
+        const local = raw ? JSON.parse(raw) : {};
+        await AsyncStorage.setItem('@userInfo', JSON.stringify({...local, image_perfil: url}));
+      } catch (e) {}
+      setBanner({type: 'ok', text: 'Actualizamos la foto de tu negocio.'});
+    } catch (e) {
+      setBanner({type: 'error', text: 'No pudimos subir la foto. Revisa tu conexión e intenta de nuevo.'});
+    } finally {
+      setSubiendoFoto(false);
+    }
+  };
+
+  const fotoDesdeGaleria = () => {
+    setHojaFoto(false);
+    setTimeout(() => launchImageLibrary({...OPCIONES_FOTO, selectionLimit: 1}, subirFoto), 400);
+  };
+
+  const fotoDesdeCamara = () => {
+    setHojaFoto(false);
+    setTimeout(async () => {
+      if (Platform.OS === 'android') {
+        const ok = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
+        if (ok !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('Solvers', 'Para tomar la foto, permite el uso de la cámara en los ajustes del teléfono.');
+          return;
+        }
+      }
+      launchCamera(OPCIONES_FOTO, subirFoto);
+    }, 400);
   };
 
   const salir = () => {
@@ -277,9 +352,22 @@ const PerfilNegocio = ({navigation}) => {
         </View>
       ) : (
         <KeyboardAvoidingView style={{flex: 1}} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <ScrollView contentContainerStyle={st.body} keyboardShouldPersistTaps="handled">
-            <Text style={st.title}>Tu negocio</Text>
-            <Text style={st.subtitle}>Lo que ven los conductores en Solvers.</Text>
+          <ScrollView ref={scrollRef} contentContainerStyle={st.body} keyboardShouldPersistTaps="handled">
+            <View style={st.fotoFila}>
+              <View>
+                <Avatar uri={usuario?.image_perfil} size={72} onPress={() => setHojaFoto(true)} label="Cambiar la foto del negocio" />
+                <View style={st.fotoBadge} pointerEvents="none">
+                  {subiendoFoto ? <ActivityIndicator size="small" color={C.navy} /> : <Camera size={14} color={C.navy} strokeWidth={2.4} />}
+                </View>
+              </View>
+              <View style={{flex: 1}}>
+                <Text style={st.title}>Tu negocio</Text>
+                <Text style={[st.subtitle, {marginBottom: 0}]}>Lo que ven los conductores en Solvers.</Text>
+                <TouchableOpacity onPress={() => setHojaFoto(true)} disabled={subiendoFoto} style={st.fotoLink} accessibilityRole="button">
+                  <Text style={st.fotoLinkTexto}>{subiendoFoto ? 'Subiendo foto…' : usuario?.image_perfil ? 'Cambiar foto' : 'Agregar foto'}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
             {pendientes.length ? (
               <View style={st.resumenPendiente}>
@@ -289,12 +377,17 @@ const PerfilNegocio = ({navigation}) => {
                     {pendientes.length === 1 ? 'Te falta 1 dato por completar' : `Te faltan ${pendientes.length} datos por completar`}
                   </Text>
                 </View>
-                <Text style={st.resumenTexto}>Un perfil completo genera más confianza y más contactos. Están marcados abajo:</Text>
+                <Text style={st.resumenTexto}>Un perfil completo genera más confianza y más contactos. Toca uno para ir a llenarlo:</Text>
                 <View style={st.chipsRow}>
                   {pendientes.map(c => (
-                    <View key={c.key} style={st.resumenChip}>
-                      <Text style={st.resumenChipTexto}>{c.label}</Text>
-                    </View>
+                    <TouchableOpacity
+                      key={c.key}
+                      style={st.resumenChip}
+                      onPress={() => irA(c.key)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Completar ${c.label}`}>
+                      <Text style={st.resumenChipTexto}>{c.label} ›</Text>
+                    </TouchableOpacity>
                   ))}
                 </View>
               </View>
@@ -309,7 +402,7 @@ const PerfilNegocio = ({navigation}) => {
               <Text style={st.soloLecturaNota}>Para cambiar el RIF o el correo, escríbenos por soporte.</Text>
             </View>
 
-            {falta('descripcion') ? <Seccion titulo="Descripción" pendiente /> : null}
+            {falta('descripcion') ? <Seccion titulo="Descripción" pendiente onLayout={marcar('descripcion')} /> : null}
             <Field label="Cuéntale a los conductores sobre tu negocio" placeholder="Ej: 15 años en frenos y suspensión, atendemos todas las marcas."
               value={f.descripcion} onChangeText={v => set('descripcion', v.slice(0, 400))} multiline
               inputStyle={{minHeight: 84, textAlignVertical: 'top'}} help={`${f.descripcion.length}/400`} />
@@ -319,7 +412,7 @@ const PerfilNegocio = ({navigation}) => {
             <PhoneInput label="Teléfono y WhatsApp" value={f.phone} onChange={v => set('phone', v)} onBlur={tocar('phone')} error={ver('phone')}
               help="Los conductores te llaman y te escriben a este número." />
 
-            <Text style={st.seccion}>Ubicación</Text>
+            <Text style={st.seccion} onLayout={marcar('ubicacion')}>Ubicación</Text>
             <Text style={st.label}>Estado</Text>
             <Dropdown
               style={[st.dropdown, ver('estado') ? {borderColor: C.error} : null]}
@@ -354,7 +447,7 @@ const PerfilNegocio = ({navigation}) => {
             </TouchableOpacity>
             <View style={{height: 16}} />
 
-            <Seccion titulo="Horario de atención" pendiente={falta('horario')} />
+            <Seccion titulo="Horario de atención" pendiente={falta('horario')} onLayout={marcar('horario')} />
             <View style={st.chipsRow}>
               {PRESETS.map(p => (
                 <Chip key={p.label} label={`+ ${p.label}`} onPress={() => {
@@ -387,14 +480,14 @@ const PerfilNegocio = ({navigation}) => {
             ))}
             {ver('horario') ? <Text style={st.err}>{ver('horario')}</Text> : null}
 
-            <Seccion titulo="Métodos de pago que aceptas" pendiente={falta('metodos')} />
+            <Seccion titulo="Métodos de pago que aceptas" pendiente={falta('metodos')} onLayout={marcar('metodos')} />
             <MetodosPago
               seleccion={f.metodos}
               datos={f.metodosDatos}
               onChange={(sel, datos) => setF(prev => ({...prev, metodos: sel, metodosDatos: datos}))}
             />
 
-            <Seccion titulo="Redes sociales" pendiente={falta('redes')} />
+            <Seccion titulo="Redes sociales" pendiente={falta('redes')} onLayout={marcar('redes')} />
             <Text style={st.notaRedes}>Opcional. Escribe tu usuario (@tunegocio) o el enlace. Solo se muestran en tu perfil las que llenes.</Text>
             <Field label="Instagram" placeholder="@tunegocio" value={f.instagram} onChangeText={v => set('instagram', v)}
               autoCapitalize="none" autoCorrect={false} keyboardType="url" />
@@ -413,20 +506,39 @@ const PerfilNegocio = ({navigation}) => {
               <Ionicons name="chevron-forward" size={20} color={C.muted} />
             </TouchableOpacity>
 
-            <View style={{height: 12}} />
-            <Banner type={banner.type} text={banner.text} />
           </ScrollView>
         </KeyboardAvoidingView>
       )}
 
+      {/* El aviso va junto al botón: antes quedaba al final del formulario y no se veía. */}
       <View style={st.footer}>
+        {banner.text && f && !(banner.type === 'ok' && hayCambios) ? (
+          <View style={{marginBottom: 8}}>
+            <Banner type={banner.type} text={banner.text} />
+          </View>
+        ) : null}
         <PrimaryButton
-          title={guardando ? 'Guardando…' : hayCambios ? 'Guardar cambios' : 'Sin cambios'}
+          done={guardado && !hayCambios}
+          title={guardando ? 'Guardando…' : guardado && !hayCambios ? 'Guardado' : hayCambios ? 'Guardar cambios' : 'Sin cambios'}
           onPress={guardar}
           loading={guardando}
           disabled={!hayCambios || guardando || cargando}
         />
       </View>
+
+      <BottomSheet visible={hojaFoto} onClose={() => setHojaFoto(false)} title="Foto del negocio">
+        <Text style={[st.mapSub, {marginBottom: 12}]}>Es la que ven los conductores en la lista. Puede ser el frente del taller o tu logo.</Text>
+        <View style={st.hojaFila}>
+          <TouchableOpacity style={st.hojaOpcion} onPress={fotoDesdeCamara} accessibilityRole="button">
+            <Camera size={26} color={C.navy} strokeWidth={2.2} />
+            <Text style={st.hojaTexto}>Tomar foto</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={st.hojaOpcion} onPress={fotoDesdeGaleria} accessibilityRole="button">
+            <ImageIcon size={26} color={C.navy} strokeWidth={2.2} />
+            <Text style={st.hojaTexto}>Elegir de la galería</Text>
+          </TouchableOpacity>
+        </View>
+      </BottomSheet>
 
       {f ? (
         <LocationPicker
@@ -479,6 +591,25 @@ const st = StyleSheet.create({
   resumenTexto: {fontSize: 14, color: C.text, marginBottom: 10},
   resumenChip: {backgroundColor: '#FFFFFF', borderRadius: 999, borderWidth: 1, borderColor: '#F0D46A', paddingHorizontal: 10, paddingVertical: 5, marginRight: 6, marginBottom: 6},
   resumenChipTexto: {fontSize: 13, fontWeight: '700', color: C.navy},
+  fotoFila: {flexDirection: 'row', alignItems: 'center', gap: 16, marginTop: 8, marginBottom: 18},
+  fotoBadge: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: C.yellow,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fotoLink: {minHeight: 36, justifyContent: 'center', alignSelf: 'flex-start'},
+  fotoLinkTexto: {fontSize: 15, fontWeight: '700', color: C.blue},
+  hojaFila: {flexDirection: 'row', gap: 12, marginBottom: 8},
+  hojaOpcion: {flex: 1, minHeight: 96, borderRadius: 16, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.bg, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12},
+  hojaTexto: {fontSize: 14, fontWeight: '700', color: C.navy, textAlign: 'center'},
   footer: {paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, borderTopWidth: 1, borderTopColor: C.border},
 });
 
