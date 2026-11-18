@@ -935,60 +935,20 @@ const ProductDetailOne = ({ navigation }) => {
         value={
           <TouchableOpacity
               onPress={async () => {
-
-                console.log("este es el dataTaller", dataTaller.phone)
-                console.log("este es el dataServices ", DataService?.nombre_servicio)
-
-                console.log("este es el phone", dataTaller?.phone)
-
-                // // Validar el número de teléfono
-                const phoneNumber = dataTaller?.whatsapp;
-                // const phoneNumber = dataTaller?.phone;
-                
-                if (!phoneNumber || phoneNumber === null || phoneNumber === '') {
-                  showToast('El número de teléfono no está disponible');
-                  return;
-                }
-
-                // Convertir a string para validar
-                const phoneString = String(phoneNumber).trim();
-                
-                // Validar que no empiece con 02
-                if (phoneString.startsWith('02')) {
-                  showToast('El número de teléfono no es válido');
-                  return;
-                }
-
-                // Validar que empiece con 04 o 4
-                if (!phoneString.startsWith('04') && !phoneString.startsWith('4')) {
-                  showToast('El número de teléfono no es válido');
-                  return;
-                }
-
-                try {
-                  await api.post('/home/notificarContactoTaller', {
+                // Un solo número: WhatsApp si lo hay, si no el teléfono (req. 005).
+                // abrirWhatsApp acepta 0412…, 412… y +58…, y avisa si no sirve.
+                const numero = dataTaller?.whatsapp || dataTaller?.phone;
+                const mensaje = `Hola, vi "${DataService?.nombre_servicio || 'su servicio'}" en Solvers y quiero más información.`;
+                const abierto = await abrirWhatsApp(numero, mensaje);
+                if (!abierto) return;
+                handleContact('WhatsApp');
+                saveServiceContactView('Contactar');
+                api
+                  .post('/home/notificarContactoTaller', {
                     uid_taller: DataService?.uid_taller,
                     nombre_servicio: DataService?.nombre_servicio || '',
-                  });
-
-                  console.log("notificacion enviada con exito")
-
-                  console.log("este es el phone", dataTaller?.phone)
-
-                  handleContact('WhatsApp');
-                  saveServiceContactView('Contactar');
-                  Linking.openURL(
-                    `https://wa.me/+58${phoneString}`,
-                  );
-                } catch (error) {
-                  console.log("este es el error de la notificacion", error);
-                  saveServiceContactView('Contactar');
-                  Linking.openURL(
-                    `https://wa.me/+58${phoneString}`,
-                  );
-                }
-
-
+                  })
+                  .catch(() => {});
               }}
               style={styles.footerActionButton}>
               <MessageCircle size={20} color="#FFD60A" />

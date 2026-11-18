@@ -21,7 +21,6 @@ const LoaderScreen = ({ navigation }) => {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-      console.log("Userrrr", user)
 
       if (user) {
         // navigation.replace('DrawerScreen');
@@ -34,24 +33,26 @@ const LoaderScreen = ({ navigation }) => {
         else {
           try {
             // Hacer la solicitud POST utilizando Axios
+            if (!user?.uid || !user?.typeUser) {
+              throw new Error('Sesión guardada incompleta');
+            }
             const response = await api.post('/usuarios/getUserByUid', {
               uid: user.uid,
             });
 
             // Verificar la respuesta del servidor
             const result = response.data;
-            console.log("Este es el usuario encontrado", result);
 
             if (result.message === "Usuario encontrado") {
               try {
                 const jsonValue = JSON.stringify(sanitizeUserInfo(result.userData));
-                console.log(jsonValue);
                 await AsyncStorage.setItem('@userInfo', jsonValue);
 
                 goToProfile(result.userData.typeUser, result.userData.status);
               } catch (e) {
-                console.error(e);
-                navigation.navigate('LoaderScreen');
+                // No se pudo guardar (p. ej. disco lleno): se entra igual con
+                // los datos recibidos, sin volver a cargar en bucle.
+                goToProfile(result.userData.typeUser, result.userData.status);
               }
             } else {
               navigation.replace('Login');
@@ -61,7 +62,9 @@ const LoaderScreen = ({ navigation }) => {
             // Sin señal o con el servidor caído se entra con lo guardado en
             // el teléfono: antes se mandaba al login a quien ya tenía sesión.
             const status = error?.response?.status;
-            if (status === 404 || status === 401 || !user?.typeUser) {
+            if (status === 404 || status === 401 || !user?.uid || !user?.typeUser) {
+              // Cuenta inexistente o sesión dañada: se borra para no dejar datos viejos.
+              await AsyncStorage.removeItem('@userInfo').catch(() => {});
               navigation.replace('Login');
             } else {
               goToProfile(user.typeUser, user.status);

@@ -413,6 +413,7 @@ const SolicitudServicio = () => {
   };
 
   const scrollRef = useRef(null);
+  const enviandoRef = useRef(false);
   const irAPaso = n => {
     setIntento(0);
     setErrorEnvio('');
@@ -512,11 +513,14 @@ const SolicitudServicio = () => {
 
   // ── Envío ───────────────────────────────────────────────────────────────
   const handleSubmit = async () => {
+    // Bloqueo inmediato: dos toques en Enviar no crean dos solicitudes.
+    if (enviandoRef.current) return;
     const falta = faltaEnPaso(1) || faltaEnPaso(2);
     if (falta) {
       setErrorEnvio(falta);
       return;
     }
+    enviandoRef.current = true;
     setSending(true);
     setErrorEnvio('');
     try {
@@ -536,13 +540,15 @@ const SolicitudServicio = () => {
         fotos: (fotos || []).map(f => f.base64).filter(Boolean),
         ...(uid_taller ? { uid_taller } : {}),
       };
-      await api.post('usuarios/saveSolicitud', payload);
+      // Con fotos y mala señal puede tardar: más margen que el normal.
+      await api.post('usuarios/saveSolicitud', payload, { timeout: 60000 });
       setEnviada(true);
     } catch (err) {
       setErrorEnvio(
         err?.response?.data?.message || 'No pudimos enviar tu solicitud. Revisa tu conexión e inténtalo de nuevo.',
       );
     } finally {
+      enviandoRef.current = false;
       setSending(false);
     }
   };

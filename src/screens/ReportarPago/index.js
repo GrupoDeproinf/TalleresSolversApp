@@ -15,7 +15,7 @@ import {
   Alert,
   PermissionsAndroid,
 } from 'react-native';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { sanitizeUserInfo } from '../../utils/sanitizeUserInfo';
 import { successfullyReset } from '../../constant';
 import { external } from '../../style/external.css';
@@ -161,6 +161,7 @@ const ReportarPago = ({ navigation }) => {
   };
 
   const navigationScreen = useNavigation();
+  const activandoGratisRef = useRef(false);
   const route = useRoute();
   /** true si se llegó desde PlanesRegistro con param enviado desde Mis planes. */
   const fromPlanesTaller = route.params?.fromPlanesTaller === true;
@@ -561,17 +562,35 @@ const ReportarPago = ({ navigation }) => {
   // "Probar gratis": antes volvía a iniciar sesión con la contraseña guardada
   // (que ya no se guarda) y fallaba en silencio. La sesión ya está abierta.
   const goToServices = async () => {
+    if (activandoGratisRef.current) return;
+    let user = null;
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
-      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-      await api.post('/usuarios/AsociarPlan', {uid: user?.uid, plan_uid: 'gratis'});
+      user = jsonValue != null ? JSON.parse(jsonValue) : null;
+    } catch (e) {
+      user = null;
+    }
+    if (!user?.uid) {
+      await AsyncStorage.removeItem('@userInfo').catch(() => {});
+      showToast('Tu sesión venció. Inicia sesión de nuevo.');
+      navigationScreen.reset({index: 0, routes: [{name: 'Login'}]});
+      return;
+    }
+    activandoGratisRef.current = true;
+    try {
+      await api.post('/usuarios/AsociarPlan', {uid: user.uid, plan_uid: 'gratis'});
+      let actualizado = false;
       try {
-        const {data} = await api.post('/usuarios/getUserByUid', {uid: user?.uid});
+        const {data} = await api.post('/usuarios/getUserByUid', {uid: user.uid});
         if (data?.userData) {
           await AsyncStorage.setItem('@userInfo', JSON.stringify(sanitizeUserInfo({...user, ...data.userData})));
+          actualizado = true;
         }
       } catch (e) {
-        // Se usa lo guardado; la próxima carga trae el plan nuevo.
+        actualizado = false;
+      }
+      if (!actualizado) {
+        showToast('Activamos tu plan. Si aún no lo ves, cierra y vuelve a abrir la app.');
       }
       navigationScreen.navigate('FormService', {uid: '', fromRegistro: true});
     } catch (error) {
@@ -580,6 +599,8 @@ const ReportarPago = ({ navigation }) => {
           ? 'No pudimos activar el plan gratis. Intenta de nuevo o escríbenos por soporte.'
           : 'No hay conexión. Revisa tu internet e intenta de nuevo.',
       );
+    } finally {
+      activandoGratisRef.current = false;
     }
   };
 

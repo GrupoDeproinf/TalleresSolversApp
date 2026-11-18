@@ -363,7 +363,6 @@ const SignIn = ({navigation}) => {
           throw new Error('Respuesta de inicio de sesión incompleta');
         }
         await abrirSesionFirebase(result.customToken);
-        console.log('Este es el usuario nuevo ', result); // Aquí puedes manejar la respuesta
 
         if (
           result.message === 'Usuario autenticado exitosamente' ||
@@ -390,14 +389,12 @@ const SignIn = ({navigation}) => {
 
                 try {
                   const token = await messaging().getToken();
-                  console.log("FCM token certificador:", token);
                   try{
                     const response2 = await api.post('/usuarios/UpdateUsuariosAll', {
                       uid: result?.userData?.uid,
                       token: token,
                     });
 
-                    console.log('Este es el usuario nuevo ', response2); 
                   }  catch (error) {
                     console.error("Error en actualizar el usuario:", error);
                   }
@@ -415,7 +412,6 @@ const SignIn = ({navigation}) => {
                 ...userData,
               }),
             );
-            console.log(jsonValue);
             await AsyncStorage.setItem('@userInfo', jsonValue);
           } catch (e) {
             console.log(e);

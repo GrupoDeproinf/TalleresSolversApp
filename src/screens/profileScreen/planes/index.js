@@ -84,12 +84,17 @@ const Planscreen = () => {
     // quedaba en esta pantalla. La sesión ya está abierta; solo se refrescan
     // los datos del usuario con el plan nuevo.
     if (activandoGratisRef.current) return;
+    if (!infoUser?.uid) {
+      showToast('Aún estamos cargando tus datos. Intenta de nuevo en unos segundos.');
+      return;
+    }
     activandoGratisRef.current = true;
     try {
       await api.post('/usuarios/AsociarPlan', {
         uid: infoUser.uid,
         plan_uid: 'gratis',
       });
+      let actualizado = false;
       try {
         const {data} = await api.post('/usuarios/getUserByUid', {uid: infoUser.uid});
         if (data?.userData) {
@@ -98,9 +103,13 @@ const Planscreen = () => {
             '@userInfo',
             JSON.stringify(sanitizeUserInfo({...previo, ...data.userData})),
           );
+          actualizado = true;
         }
       } catch (e) {
-        // Si no se pudo refrescar, la pantalla de carga vuelve a leer el perfil.
+        actualizado = false;
+      }
+      if (!actualizado) {
+        showToast('Activamos tu plan. Si aún no lo ves, cierra y vuelve a abrir la app.');
       }
       navigationScreen.navigate('LoaderScreen');
     } catch (error) {

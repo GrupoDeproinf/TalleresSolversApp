@@ -25,13 +25,15 @@ const ForgetPassword = ({ navigation }) => {
   const [isGetOtpDisabled, setGetOtpDisabled] = useState(true);
   const [isButtonPressed, setButtonPressed] = useState(false);
   const [isEmailTyping, setEmailTyping] = useState(false);
+  const [conSesion, setConSesion] = useState(false);
 
   // Si se llega desde "Cambiar contraseña" (con sesión), el correo ya va escrito.
   useEffect(() => {
     AsyncStorage.getItem('@userInfo')
       .then(v => {
-        const correo = v ? JSON.parse(v)?.email : '';
-        if (correo) setEmail(prev => prev || String(correo));
+        const u = v ? JSON.parse(v) : null;
+        if (u?.uid) setConSesion(true);
+        if (u?.email) setEmail(prev => prev || String(u.email));
       })
       .catch(() => {});
   }, []);
@@ -70,7 +72,7 @@ const ForgetPassword = ({ navigation }) => {
       );
       setGetOtpDisabled(false);
       // Con sesión iniciada se vuelve al perfil; sin sesión, al login.
-      if (navigation.canGoBack()) navigation.goBack();
+      if (conSesion && navigation.canGoBack()) navigation.goBack();
       else navigation.navigate('Login');
     } catch (error) {
       if (error.code === 'auth/user-not-found') {

@@ -1099,6 +1099,8 @@ const VehicleAddStepper = () => {
   const [step, setStep] = useState(1); // 1: Vehículo, 2: Manual digital, 3: Documentos
   const [form, setForm] = useState(DEFAULT_VALUES);
   const [saving, setSaving] = useState(false);
+  // Bloqueo inmediato: dos toques en Guardar no crean el vehículo dos veces.
+  const guardandoRef = useRef(false);
   const [tipoVehiculoOptions, setTipoVehiculoOptions] = useState([]);
   const [loadingTipos, setLoadingTipos] = useState(false);
   const [datePickerModal, setDatePickerModal] = useState({
@@ -1502,6 +1504,10 @@ const VehicleAddStepper = () => {
     if (!marca) return Alert.alert('Campo requerido', 'La marca del vehículo es obligatoria.'), false;
     if (!modelo) return Alert.alert('Campo requerido', 'El modelo del vehículo es obligatorio.'), false;
     if (!anio) return Alert.alert('Campo requerido', 'El año del vehículo es obligatorio.'), false;
+    const anioNum = parseInt(anio, 10);
+    const anioMax = new Date().getFullYear() + 1;
+    if (!(anioNum >= 1950 && anioNum <= anioMax))
+      return Alert.alert('Revisa el año', `Escribe el año con 4 cifras, entre 1950 y ${anioMax}.`), false;
     if (!km)
       return Alert.alert('Campo requerido', 'El kilometraje del vehículo es obligatorio.'), false;
     return true;
@@ -1513,12 +1519,17 @@ const VehicleAddStepper = () => {
   };
 
   const handleSubmit = async () => {
+    if (guardandoRef.current) return;
     const placa = (form.vehiculo_placa || '').trim();
     const marca = (form.vehiculo_marca || '').trim();
     const modelo = (form.vehiculo_modelo || '').trim();
     const anio = (form.vehiculo_anio || '').trim();
     const km = (form.KM || '').trim();
 
+    if (!validateStep1()) {
+      setStep(1);
+      return;
+    }
     if (!placa || !marca || !modelo || !anio || !km) {
       Alert.alert('Faltan datos', 'Completa la información del vehículo en el Paso 1.');
       setStep(1);
@@ -1638,16 +1649,20 @@ const VehicleAddStepper = () => {
       trimestres_fecha_vencimiento: safeDate(form.doc_trim_vencimiento),
     };
 
+    guardandoRef.current = true;
     setSaving(true);
     try {
       await api.post('usuarios/saveOrUpdateVehiculo', payload);
       Alert.alert('¡Listo!', 'Tu vehículo se guardó correctamente.', [{text: 'Entendido'}]);
       navigation.goBack();
     } catch (err) {
-      const errorMsg =
-        err?.response?.data?.message ?? err?.message ?? 'No se pudo guardar el vehículo.';
-      Alert.alert('Error', errorMsg);
+      // Sin conexión axios dice "Network Error": se explica en español.
+      const errorMsg = err?.response
+        ? err.response.data?.message || 'No pudimos guardar el vehículo. Intenta de nuevo.'
+        : 'No hay conexión. Revisa tu internet y toca Guardar de nuevo; no perdiste lo que escribiste.';
+      Alert.alert('No se guardó', errorMsg);
     } finally {
+      guardandoRef.current = false;
       setSaving(false);
     }
   };
