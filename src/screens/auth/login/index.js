@@ -149,6 +149,38 @@ const syncLoginUserFcmWithBackend = async userData => {
   return base;
 };
 
+
+/** Mensaje claro para cada error del inicio de sesión. */
+const mensajeErrorLogin = error => {
+  if (!error?.response) {
+    const sinRed =
+      !!error?.request ||
+      error?.code === 'ECONNABORTED' ||
+      /network|timeout/i.test(String(error?.code || error?.message || ''));
+    return sinRed
+      ? 'No hay conexión. Revisa tus datos o el wifi e intenta de nuevo.'
+      : 'No pudimos iniciar sesión en este momento. Intenta de nuevo en unos minutos.';
+  }
+  const status = error.response.status;
+  const detalle = String(error.response.data?.error || error.response.data?.message || '');
+  if (/too-many-requests/i.test(detalle)) {
+    return 'Hiciste muchos intentos seguidos. Espera unos minutos o toca "Olvidé mi contraseña".';
+  }
+  if (/invalid-credential|wrong-password|invalid-password|invalid-login/i.test(detalle) || status === 401) {
+    return 'El correo o la contraseña no coinciden. Revísalos o toca "Olvidé mi contraseña".';
+  }
+  if (/user-not-found|no encontrado/i.test(detalle) || status === 404) {
+    return 'No hay una cuenta con ese correo. Revisa que esté bien escrito o toca "Crear cuenta".';
+  }
+  if (/user-disabled/i.test(detalle)) {
+    return 'Esta cuenta está desactivada. Escríbenos por soporte para ayudarte.';
+  }
+  if (/invalid-email/i.test(detalle)) {
+    return 'Revisa el correo: debe ser como nombre@gmail.com';
+  }
+  return 'No pudimos iniciar sesión en este momento. Intenta de nuevo en unos minutos.';
+};
+
 const LoginSubmitButton = ({
   onPress,
   disabled,
@@ -160,6 +192,8 @@ const LoginSubmitButton = ({
     onPress={onPress}
     disabled={disabled}
     activeOpacity={0.8}
+    accessibilityRole="button"
+    accessibilityState={{disabled: !!disabled, busy: !!disabled}}
     style={[
       ls.loginBtn,
       {
@@ -180,7 +214,7 @@ const LoginSubmitButton = ({
           color: disabled ? colors.titleText : colors.screenBg,
         },
       ]}>
-      Iniciar sesión
+      {disabled ? 'Entrando…' : 'Iniciar sesión'}
     </Text>
   </TouchableOpacity>
 );
@@ -212,6 +246,7 @@ const SignIn = ({navigation}) => {
   const layout = useLoginLayout();
   const insets = useSafeAreaInsets();
   const scrollRef = useRef(null);
+  const enviandoRef = useRef(false);
   const [keyboardInset, setKeyboardInset] = useState(0);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -286,8 +321,8 @@ const SignIn = ({navigation}) => {
   
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setEmailError('Invalid email address');
+    if (!emailRegex.test(email.trim())) {
+      setEmailError('Revisa el correo: debe ser como nombre@gmail.com');
       return false;
     } else {
       setEmailError('');
@@ -297,7 +332,7 @@ const SignIn = ({navigation}) => {
 
   const validatePassword = () => {
     if (password.length < 6) {
-      setPasswordError('Password must be at least 6 characters');
+      setPasswordError('La contraseña tiene al menos 6 caracteres.');
       return false;
     } else {
       setPasswordError('');
@@ -306,23 +341,28 @@ const SignIn = ({navigation}) => {
   };
 
   const onHandleChange = async () => {
-    console.log("Aquiiiii")
+    // Bloqueo inmediato: dos toques rápidos no lanzan dos inicios de sesión.
+    if (enviandoRef.current) return;
 
     const isEmailValid = validateEmail();
     const isPasswordValid = validatePassword();
-    setSignInDisabled(true);
 
     if (isEmailValid && isPasswordValid) {
+      enviandoRef.current = true;
+      setSignInDisabled(true);
       try {
         // Hacer la solicitud POST utilizando Axios
         const response = await api.post('/usuarios/authenticateUser', {
-          email: email.toLowerCase(),
+          email: email.trim().toLowerCase(),
           password: password,
         });
 
         // Verificar la respuesta del servidor
         const result = response.data; // Los datos vienen directamente de response.data
-        await abrirSesionFirebase(result?.customToken);
+        if (!result?.customToken || !result?.userData) {
+          throw new Error('Respuesta de inicio de sesión incompleta');
+        }
+        await abrirSesionFirebase(result.customToken);
         console.log('Este es el usuario nuevo ', result); // Aquí puedes manejar la respuesta
 
         if (
@@ -389,41 +429,15 @@ const SignIn = ({navigation}) => {
         } else {
           setSignInDisabled(false);
           
-          showToast(
-            'No se ha encontrado el usuario, por favor validar formulario',
-          );
+          showToast('No pudimos iniciar sesión. Intenta de nuevo.');
         }
       } catch (error) {
-        if (error.response) {
-          // La solicitud se hizo y el servidor respondió con un código de estado
-          console.error('Error en la solicitud1:', error.response.data);
-          console.error('Error en la solicitud2:', error.response.data.error);
-          console.error('Error en la solicitud3:', error.response.data.message);
-
-          if (error?.response?.data?.error == "Firebase: Error (auth/invalid-credential)."){
-            showToast(
-              'Credenciales incorrectas, por favor validar formulario',
-            );
-          } else if (error?.response?.data?.error == "Firebase: Error (auth/user-not-found)."){
-            showToast(
-              'Usuario no encontrado, por favor validar formulario',
-            );
-          } else if (error?.response?.data?.error == "Firebase: Error (auth/wrong-password)."){
-            showToast(
-              'Contraseña incorrecta, por favor validar formulario',
-            );
-          } 
-          
-          setSignInDisabled(false);
-          // showToast(
-          //   'Error al encontrar al usuario, por favor validar formulario',
-          // );
-        } else {
-          // La solicitud fue hecha pero no se recibió respuesta
-          console.error('Error en la solicitud:', error);
-          setSignInDisabled(false);
-          showToast('Usuario no encontrado, por favor validar formulario');
-        }
+        // Siempre se le dice algo al usuario (antes varios errores no
+        // mostraban nada y sin conexión decía "Usuario no encontrado").
+        setSignInDisabled(false);
+        showToast(mensajeErrorLogin(error));
+      } finally {
+        enviandoRef.current = false;
       }
     } else {
       setSignInDisabled(false);
@@ -694,7 +708,7 @@ const SignIn = ({navigation}) => {
                       setEmail(text);
                       setEmailTyping(true);
                       if (text.trim() === '') {
-                        setEmailError('Email is requerido');
+                        setEmailError('Escribe tu correo.');
                       } else {
                         setEmailError('');
                       }
@@ -710,7 +724,7 @@ const SignIn = ({navigation}) => {
                     }
                   />
                   {emailError !== '' && (
-                    <Text style={styles.errorStyle}>{emailError}</Text>
+                    <Text style={styles.errorStyle} accessibilityLiveRegion="polite">{emailError}</Text>
                   )}
                   <TextInputs
                     dismissKeyboardOnPressOutside={false}
@@ -747,7 +761,7 @@ const SignIn = ({navigation}) => {
                     }
                   />
                   {passwordError !== '' && (
-                    <Text style={styles.errorStyle}>{passwordError}</Text>
+                    <Text style={styles.errorStyle} accessibilityLiveRegion="polite">{passwordError}</Text>
                   )}
                   <TouchableOpacity
                     style={loginStyles.forgotWrap}

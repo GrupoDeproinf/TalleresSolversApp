@@ -16,6 +16,7 @@ import styles from './style.css';
 import { useValues } from '../../../../App';
 import api from '../../../../axiosInstance';
 import auth from '@react-native-firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 
 const ForgetPassword = ({ navigation }) => {
@@ -25,10 +26,21 @@ const ForgetPassword = ({ navigation }) => {
   const [isButtonPressed, setButtonPressed] = useState(false);
   const [isEmailTyping, setEmailTyping] = useState(false);
 
+  // Si se llega desde "Cambiar contraseña" (con sesión), el correo ya va escrito.
+  useEffect(() => {
+    AsyncStorage.getItem('@userInfo')
+      .then(v => {
+        const correo = v ? JSON.parse(v)?.email : '';
+        if (correo) setEmail(prev => prev || String(correo));
+      })
+      .catch(() => {});
+  }, []);
+
   const validateEmail = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setEmailError('Formato de email incorrecto');
+    if (!emailRegex.test(email.trim())) {
+      // Con el campo vacío no se muestra el error: solo se desactiva el botón.
+      setEmailError(email.trim() ? 'Revisa el correo: debe ser como nombre@gmail.com' : ' ');
     } else {
       setEmailError('');
       setGetOtpDisabled(false)
@@ -51,10 +63,15 @@ const ForgetPassword = ({ navigation }) => {
     console.log("Aquiii++++++++++++++++++++++")
 
     try {
-      await auth().sendPasswordResetEmail(email);
-      Alert.alert('¡Listo!', 'Revisa tu correo para recuperar tu contraseña.');
+      await auth().sendPasswordResetEmail(email.trim().toLowerCase());
+      Alert.alert(
+        '¡Listo!',
+        'Te enviamos un enlace para crear una contraseña nueva. Si no lo ves en unos minutos, revisa la carpeta de spam o correo no deseado.',
+      );
       setGetOtpDisabled(false);
-      navigation.navigate('Login');
+      // Con sesión iniciada se vuelve al perfil; sin sesión, al login.
+      if (navigation.canGoBack()) navigation.goBack();
+      else navigation.navigate('Login');
     } catch (error) {
       if (error.code === 'auth/user-not-found') {
         Alert.alert('Error', 'No existe una cuenta con ese correo.');

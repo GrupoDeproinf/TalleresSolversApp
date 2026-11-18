@@ -16,6 +16,7 @@ import {
   PermissionsAndroid,
 } from 'react-native';
 import React, { useEffect, useState } from 'react';
+import { sanitizeUserInfo } from '../../utils/sanitizeUserInfo';
 import { successfullyReset } from '../../constant';
 import { external } from '../../style/external.css';
 import appColors from '../../themes/appColors';
@@ -557,82 +558,30 @@ const ReportarPago = ({ navigation }) => {
   const frutas = ['Manzana', 'Banana', 'Naranja'];
 
 
+  // "Probar gratis": antes volvía a iniciar sesión con la contraseña guardada
+  // (que ya no se guarda) y fallaba en silencio. La sesión ya está abierta.
   const goToServices = async () => {
-
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
+      await api.post('/usuarios/AsociarPlan', {uid: user?.uid, plan_uid: 'gratis'});
       try {
-        const response = await api.post('/usuarios/AsociarPlan', {
-          uid: user.uid,
-          plan_uid: 'gratis'
-        });
-
-
-        try {
-          // Hacer la solicitud POST utilizando Axios
-          const response = await api.post('/usuarios/authenticateUser', {
-            email: user.email.toLowerCase(),
-            password: user.password,
-          });
-
-          // Verificar la respuesta del servidor
-          const result = response.data; // Los datos vienen directamente de response.data
-
-          if (
-            result.message === 'Usuario autenticado exitosamente' ||
-            result.message === 'Usuario autenticado exitosamente como Admin'
-          ) {
-            try {
-              const jsonValue = JSON.stringify(result.userData);
-              console.log(jsonValue);
-              await AsyncStorage.setItem('@userInfo', jsonValue);
-            } catch (e) {
-              console.log(e);
-            }
-
-            navigationScreen.navigate('FormService', { uid: '', fromRegistro: true });
-          } else {
-
-            showToast(
-              'No se ha encontrado el usuario, por favor validar formulario',
-            );
-          }
-        } catch (error) {
-          if (error.response) {
-            if (error?.response?.data?.error == "Firebase: Error (auth/invalid-credential).") {
-              showToast(
-                'Credenciales incorrectas, por favor validar formulario',
-              );
-            } else if (error?.response?.data?.error == "Firebase: Error (auth/user-not-found).") {
-              showToast(
-                'Usuario no encontrado, por favor validar formulario',
-              );
-            } else if (error?.response?.data?.error == "Firebase: Error (auth/wrong-password).") {
-              showToast(
-                'Contraseña incorrecta, por favor validar formulario',
-              );
-            }
-          } else {
-            // La solicitud fue hecha pero no se recibió respuesta
-            console.error('Error en la solicitud:', error);
-            showToast('Usuario no encontrado, por favor validar formulario');
-          }
+        const {data} = await api.post('/usuarios/getUserByUid', {uid: user?.uid});
+        if (data?.userData) {
+          await AsyncStorage.setItem('@userInfo', JSON.stringify(sanitizeUserInfo({...user, ...data.userData})));
         }
-      } catch (error) {
-        console.error('Error en la solicitud:', error.message);
+      } catch (e) {
+        // Se usa lo guardado; la próxima carga trae el plan nuevo.
       }
-
-    } catch (e) {
-      // error reading value
-      console.log(e);
+      navigationScreen.navigate('FormService', {uid: '', fromRegistro: true});
+    } catch (error) {
+      showToast(
+        error?.response
+          ? 'No pudimos activar el plan gratis. Intenta de nuevo o escríbenos por soporte.'
+          : 'No hay conexión. Revisa tu internet e intenta de nuevo.',
+      );
     }
-
-
-
-
-
-  }
+  };
 
   return (
     <>
@@ -953,7 +902,7 @@ const ReportarPago = ({ navigation }) => {
                 { fontSize: fontSizes.FONT19 },
               ]}>
               {
-                'Estamos verificando su pago en breve podra iniciar la publicacion de sus servicios.'
+                'Estamos verificando tu pago. En breve podrás publicar tus servicios.'
               }
             </Text>
             <View style={[external.mt_20]}>

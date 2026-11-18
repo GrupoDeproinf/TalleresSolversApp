@@ -74,6 +74,8 @@ const SignUpCliente = ({navigation}) => {
     password: validarPassword(form.password),
   };
   const isValid = !Object.values(errors).some(Boolean);
+  const verificando = dispEmail === 'checking' || dispPhone === 'checking';
+  const registrandoRef = useRef(false);
   const show = k => (touched[k] ? errors[k] : '');
   const set = k => v => setForm(f => ({...f, [k]: v}));
   const touch = k => () => setTouched(t => ({...t, [k]: true}));
@@ -89,6 +91,8 @@ const SignUpCliente = ({navigation}) => {
   };
 
   const registrar = async () => {
+    // Bloqueo inmediato: dos toques en "Acepto" no crean dos cuentas.
+    if (registrandoRef.current) return;
     setTermsVisible(false);
     // El enlace "Términos y Condiciones" también abre el modal: si aún faltan
     // datos, "Acepto" no debe crear la cuenta, solo marcar lo que falta.
@@ -96,6 +100,7 @@ const SignUpCliente = ({navigation}) => {
       onCrear();
       return;
     }
+    registrandoRef.current = true;
     setLoading(true);
     setBannerError('');
     const email = form.email.trim().toLowerCase();
@@ -140,6 +145,7 @@ const SignUpCliente = ({navigation}) => {
     } catch (err) {
       setBannerError(err?.friendly || mensajeDeError(err, 'No pudimos crear tu cuenta. Intenta de nuevo.'));
     } finally {
+      registrandoRef.current = false;
       setLoading(false);
     }
   };
@@ -214,7 +220,13 @@ const SignUpCliente = ({navigation}) => {
             textContentType="newPassword"
           />
 
-          <PrimaryButton title="Crear cuenta" onPress={onCrear} loading={loading} style={{marginTop: 8}} />
+          <PrimaryButton
+            title={verificando ? 'Verificando datos…' : 'Crear cuenta'}
+            onPress={onCrear}
+            loading={loading}
+            disabled={verificando}
+            style={{marginTop: 8}}
+          />
 
           <Text style={st.legal}>
             Al crear tu cuenta aceptas los{' '}

@@ -50,7 +50,7 @@ const TallerInfoScreen = ({ route, navigation }) => {
       const msg =
         e?.response?.data?.message ||
         e?.message ||
-        'No se pudo cargar la informacion del taller.';
+        'No se pudo cargar la información del taller.';
       setError(msg);
       setTallerData(null);
     } finally {
@@ -98,7 +98,7 @@ const TallerInfoScreen = ({ route, navigation }) => {
         {loading ? (
           <View style={styles.centerCard}>
             <ActivityIndicator size="large" color={appColors.primary} />
-            <Text style={styles.centerText}>Cargando informacion del negocio...</Text>
+            <Text style={styles.centerText}>Cargando información del negocio…</Text>
           </View>
         ) : error ? (
           <View style={styles.centerCard}>

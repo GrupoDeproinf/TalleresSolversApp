@@ -164,14 +164,16 @@ const HomeScreen = () => {
       const uid = user?.uid ?? user?.id ?? '';
       if (!uid) {
         setVehiclesReminderList([]);
-        return;
+        return [];
       }
       const res = await api.post('usuarios/getVehiculosByUsuarioUid', {uid});
       const data = res?.data;
       const list = Array.isArray(data) ? data : data?.data ?? [];
       setVehiclesReminderList(list);
+      return list;
     } catch (e) {
       setVehiclesReminderList([]);
+      return null;
     } finally {
       setVehiclesReminderLoading(false);
     }
@@ -432,10 +434,16 @@ const HomeScreen = () => {
             setVehiclePickerModalVisible(false);
             return;
           }
+          // Lanzamiento: a quien aún no tiene vehículos (o si no hay
+          // conexión) no se le abre un aviso de kilometraje vacío al entrar.
+          const vehiculos = await loadUserVehiclesForReminder();
+          if (!active || !Array.isArray(vehiculos) || vehiculos.length === 0) {
+            setVehiclePickerModalVisible(false);
+            return;
+          }
           setReminderDoNotShowAgain(false);
           setVehiclePickerModalVisible(true);
           void markReminderShown('km', uid);
-          await loadUserVehiclesForReminder();
         } catch (_) {}
       })();
       return () => {

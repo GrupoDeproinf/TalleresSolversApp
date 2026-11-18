@@ -57,13 +57,15 @@ const LoaderScreen = ({ navigation }) => {
               navigation.replace('Login');
             }
           } catch (error) {
-            // Manejo de errores
-            if (error.response) {
-              console.error('Error en la solicitud:', error.response.statusText);
+            // Solo se pide iniciar sesión si la cuenta ya no existe (404).
+            // Sin señal o con el servidor caído se entra con lo guardado en
+            // el teléfono: antes se mandaba al login a quien ya tenía sesión.
+            const status = error?.response?.status;
+            if (status === 404 || status === 401 || !user?.typeUser) {
+              navigation.replace('Login');
             } else {
-              console.error('Error en la solicitud:', error.message);
+              goToProfile(user.typeUser, user.status);
             }
-            navigation.replace('Login');
           }
 
         }
@@ -72,58 +74,35 @@ const LoaderScreen = ({ navigation }) => {
       }
 
     } catch (e) {
-      // error reading value
-      console.log(e)
+      // Datos guardados ilegibles: se pide iniciar sesión en vez de quedarse
+      // en la pantalla de carga para siempre.
+      await AsyncStorage.removeItem('@userInfo').catch(() => {});
+      navigation.replace('Login');
     }
   };
 
 
 
+  // Navega sin esperas artificiales y siempre tiene una salida: un tipo de
+  // cuenta desconocido o vacío ya no deja la pantalla de carga para siempre.
   const goToProfile = (typeUser, status) => {
-    if (typeUser == "Cliente") {
-      console.log("**************************************")
-      console.log("Es Cliente")
-      console.log("*************************************")
-      const timer = setTimeout(() => {
+    switch (typeUser) {
+      case 'Cliente':
+      case 'Admin':
         navigation.replace('DrawerScreen');
-      }, 1000);
-      return () => clearTimeout(timer);
-
-    } else if (typeUser == "Taller") {
-      console.log("**************************************")
-      console.log("Es Taller")
-      console.log("*************************************")
-      if (status == 'Pendiente') { // status == 'En espera por aprobación'
-        const timer = setTimeout(() => {
-          navigation.replace('TallerProfileScreen');
-        }, 1000);
-        return () => clearTimeout(timer);
-      } else {
-        const timer = setTimeout(() => {
-          navigation.replace('DrawerScreen');
-        }, 1000);
-        return () => clearTimeout(timer);
-      }
-    } else if (typeUser == "Admin") {
-      console.log("**************************************")
-      console.log("Es Admin")
-      console.log("*************************************")
-      const timer = setTimeout(() => {
-        navigation.replace('DrawerScreen');
-      }, 1000);
-      return () => clearTimeout(timer);
-
-    } else if (typeUser == "Certificador") {
-      console.log("**************************************")
-      console.log("Es Certificador")
-      console.log("*************************************")
-      const timer = setTimeout(() => {
+        break;
+      case 'Taller':
+        navigation.replace(status === 'Pendiente' ? 'TallerProfileScreen' : 'DrawerScreen');
+        break;
+      case 'Certificador':
         navigation.replace('TalleresContainer');
-      }, 1000);
-      return () => clearTimeout(timer);
-
+        break;
+      default:
+        AsyncStorage.removeItem('@userInfo')
+          .catch(() => {})
+          .finally(() => navigation.replace('Login'));
     }
-  }
+  };
 
 
   const { isDark } = useValues();

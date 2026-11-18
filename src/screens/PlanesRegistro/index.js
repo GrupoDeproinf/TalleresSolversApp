@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
+import { sanitizeUserInfo } from '../../utils/sanitizeUserInfo';
 import { useEffect } from 'react';
 import {
   View,
@@ -35,6 +36,7 @@ const PlanesRegistro = () => {
   const [showPruebaGratisModal, setShowPruebaGratisModal] = useState(false);
 
   const navigationScreen = useNavigation();
+  const activandoGratisRef = useRef(false);
 
   useEffect(() => {
     getData();
@@ -95,83 +97,42 @@ const PlanesRegistro = () => {
   }
 
   const handlePruebaGratis = async () => {
-    console.log('aquinsdjnfskdnfmsnd');
-
-    console.log('infoUser', infoUser.uid);
-    console.log('planGratis', planGratis);
-
-    console.log('infoUser.email', infoUser.email);
-    console.log('infoUser.password', infoUser.password);
-
-
+    // Antes se volvía a iniciar sesión con la contraseña guardada en el
+    // teléfono, que ya no se guarda: fallaba en silencio y el taller se
+    // quedaba en esta pantalla. La sesión ya está abierta; solo se refrescan
+    // los datos del usuario con el plan nuevo.
+    if (activandoGratisRef.current) return;
+    activandoGratisRef.current = true;
     try {
-      const response = await api.post('/usuarios/AsociarPlan', {
+      await api.post('/usuarios/AsociarPlan', {
         uid: infoUser.uid,
-        plan_uid: 'gratis'
+        plan_uid: 'gratis',
       });
-
-
       try {
-        // Hacer la solicitud POST utilizando Axios
-        const response = await api.post('/usuarios/authenticateUser', {
-          email: infoUser.email.toLowerCase(),
-          password: infoUser.password,
-        });
-
-        // Verificar la respuesta del servidor
-        const result = response.data; // Los datos vienen directamente de response.data
-
-        if (
-          result.message === 'Usuario autenticado exitosamente' ||
-          result.message === 'Usuario autenticado exitosamente como Admin'
-        ) {
-          try {
-            const jsonValue = JSON.stringify(result.userData);
-            console.log(jsonValue);
-            await AsyncStorage.setItem('@userInfo', jsonValue);
-          } catch (e) {
-            console.log(e);
-          }
-
-          if (fromPlanesTaller) {
-              navigationScreen.navigate('LoaderScreen');
-            } else {
-              navigationScreen.navigate('FormService', { uid: '', fromRegistro: true });
-            }
-        } else {
-          
-          showToast(
-            'No se ha encontrado el usuario, por favor validar formulario',
+        const {data} = await api.post('/usuarios/getUserByUid', {uid: infoUser.uid});
+        if (data?.userData) {
+          const previo = JSON.parse((await AsyncStorage.getItem('@userInfo')) || '{}');
+          await AsyncStorage.setItem(
+            '@userInfo',
+            JSON.stringify(sanitizeUserInfo({...previo, ...data.userData})),
           );
         }
-      } catch (error) {
-        if (error.response) {
-          if (error?.response?.data?.error == "Firebase: Error (auth/invalid-credential)."){
-            showToast(
-              'Credenciales incorrectas, por favor validar formulario',
-            );
-          } else if (error?.response?.data?.error == "Firebase: Error (auth/user-not-found)."){
-            showToast(
-              'Usuario no encontrado, por favor validar formulario',
-            );
-          } else if (error?.response?.data?.error == "Firebase: Error (auth/wrong-password)."){
-            showToast(
-              'Contraseña incorrecta, por favor validar formulario',
-            );
-          } 
-        } else {
-          // La solicitud fue hecha pero no se recibió respuesta
-          console.error('Error en la solicitud:', error);
-          showToast('Usuario no encontrado, por favor validar formulario');
-        }
+      } catch (e) {
+        // Si no se pudo refrescar, la pantalla de carga vuelve a leer el perfil.
       }
-
-
-
-      // navigationScreen.navigate('Login');
-      
+      if (fromPlanesTaller) {
+        navigationScreen.navigate('LoaderScreen');
+      } else {
+        navigationScreen.navigate('FormService', {uid: '', fromRegistro: true});
+      }
     } catch (error) {
-      console.error('Error en la solicitud:', error.message);
+      showToast(
+        error?.response
+          ? 'No pudimos activar el plan gratis. Intenta de nuevo o escríbenos por soporte.'
+          : 'No hay conexión. Revisa tu internet e intenta de nuevo.',
+      );
+    } finally {
+      activandoGratisRef.current = false;
     }
   };
 
