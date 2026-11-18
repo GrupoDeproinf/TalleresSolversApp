@@ -405,6 +405,7 @@ const SolicitudServicio = () => {
       );
     } catch (_) {
       setBuscandoUbicacion(false);
+      setErrorUbicacion('No pudimos obtener tu ubicación. Activa el GPS e intenta de nuevo, o márcala en el mapa.');
     }
   }, []);
 

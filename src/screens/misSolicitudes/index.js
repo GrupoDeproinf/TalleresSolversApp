@@ -588,7 +588,8 @@ const MisSolicitudesScreen = () => {
             try {
               await api.post('usuarios/updateSolicitudStatus', { uid_solicitud: sol.id, status: 'Cancelado' });
               seleccionRef.current = null;
-              loadSolicitudes();
+              // Se espera la recarga para que no se pueda cancelar de nuevo la vieja.
+              await loadSolicitudes();
             } catch (e) {
               Alert.alert('No se pudo cancelar', 'Revisa tu conexión e inténtalo de nuevo.');
             } finally {
