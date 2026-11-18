@@ -278,7 +278,6 @@ const PerimeterMapScreen = () => {
     try {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue ? JSON.parse(jsonValue) : null;
-      console.log('Usuario obtenido:', user);
       if (user) setUserInfo(user);
     } catch (e) {
       console.error('Error al obtener el usuario:', e);
@@ -395,18 +394,17 @@ const PerimeterMapScreen = () => {
 
   useEffect(() => {
     const fetchNearbyTalleres = async () => {
-      if (!location || !userInfo?.estado) return;
+      // El estado del usuario no hace falta (el servidor busca por distancia).
+      // Antes se exigía, y los conductores del registro nuevo, que no tienen
+      // estado, veían el mapa siempre vacío.
+      if (!location) return;
 
       setIsLoadingTalleres(true);
 
       try {
-        console.log('🔍 Buscando negocios cercanos...');
-        console.log('📍 Ubicación:', location);
-        console.log('🏢 Estado:', userInfo.estado);
-        console.log('📏 Radio:', searchRadius);
 
         const response = await api.post('/distance/getNearbyWithCategories', {
-          estado: userInfo?.estado,
+          estado: userInfo?.estado || '',
           lat: location?.latitude,
           lng: location?.longitude,
           radio: searchRadius || 5, // Valor por defecto si no hay radio seleccionado
@@ -419,11 +417,12 @@ const PerimeterMapScreen = () => {
         }
         setTalleres(lista);
       } catch (error) {
-        console.error('❌ Error al obtener negocios cercanos:', error);
 
         // Mostrar mensaje de error más específico
-        if (error.response) {
-          console.error('Error del servidor:', error.response.data);
+        if (error.response?.status === 404) {
+          // El servidor responde 404 cuando no hay talleres en el radio: no es
+          // un error, se muestra la lista vacía con la sugerencia de ampliarlo.
+        } else if (error.response) {
           Alert.alert(
             'Error del servidor',
             'No se pudieron obtener los negocios cercanos. Inténtalo de nuevo más tarde.',
@@ -616,7 +615,7 @@ const PerimeterMapScreen = () => {
                 navigation={navigation}
               />
             ))
-          ) : location && userInfo?.estado ? (
+          ) : location ? (
             <View style={{
               alignItems: 'center',
               padding: 20
@@ -640,7 +639,7 @@ const PerimeterMapScreen = () => {
               padding: 20
             }}>
               <Text style={{ color: '#94A3B8', fontSize: 16, textAlign: 'center' }}>
-                {!location ? 'Obtén tu ubicación para ver negocios cercanos' : 'Selecciona un estado para buscar negocios'}
+                Activa tu ubicación para ver los negocios cercanos
               </Text>
             </View>
           )}
