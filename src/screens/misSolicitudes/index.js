@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { View, ScrollView, Image, Alert, Pressable, RefreshControl, StyleSheet } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -22,6 +22,7 @@ import {
   Banner,
   EmptyState,
   Segmented,
+  Chip,
   BottomSheet,
   TallerCardSkeleton,
   colors,
@@ -40,37 +41,51 @@ const mapBackendStatusToInternal = statusText => {
   if (normalized.includes('espera') && (normalized.includes('aprobación') || normalized.includes('aprobacion'))) {
     return 'enviada';
   }
-  if (normalized.includes('respuesta')) {
-    return 'con_respuestas';
+  // Primero los estados finales: "Inspección aceptada" contiene "inspecc" y
+  // antes se trataba como una propuesta que todavía se podía elegir.
+  if (normalized.includes('cancel')) {
+    return 'cancelada';
   }
-  if (normalized.includes('cotiz')) {
-    return 'cotizada';
-  }
-  if (normalized.includes('inspecc')) {
-    return 'inspeccion_previa';
-  }
-  if (normalized.includes('aceptad')) {
-    return 'aceptada';
+  if (normalized.includes('venc') || normalized.includes('expir')) {
+    return 'expirada';
   }
   if (normalized.includes('rechaz')) {
     return 'rechazada';
   }
-  if (normalized.includes('cancel')) {
-    return 'cancelada';
+  if (normalized.includes('aceptad')) {
+    return 'aceptada';
   }
-  if (normalized.includes('expir')) {
-    return 'expirada';
+  if (normalized.includes('inspecc')) {
+    return 'inspeccion_previa';
+  }
+  if (normalized.includes('cotiz')) {
+    return 'cotizada';
+  }
+  if (normalized.includes('respuesta')) {
+    return 'con_respuestas';
   }
 
   return 'enviada';
 };
 
+/** Fecha de Firestore ({_seconds} o {seconds}), ISO o milisegundos. */
+const parseFecha = v => {
+  if (!v) return null;
+  if (typeof v === 'object' && typeof v._seconds === 'number') return new Date(v._seconds * 1000);
+  if (typeof v === 'object' && typeof v.seconds === 'number') return new Date(v.seconds * 1000);
+  if (typeof v === 'string' || typeof v === 'number') {
+    const d = new Date(v);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+};
+
 const formatFechaSolicitud = fecha_solicitud => {
-  if (!fecha_solicitud || typeof fecha_solicitud._seconds !== 'number') {
+  const fechaDate = parseFecha(fecha_solicitud);
+  if (!fechaDate) {
     return { fechaTexto: '', fechaDate: null };
   }
 
-  const fechaDate = new Date(fecha_solicitud._seconds * 1000);
   const dia = fechaDate.getDate().toString().padStart(2, '0');
   const mes = (fechaDate.getMonth() + 1).toString().padStart(2, '0');
   const anio = fechaDate.getFullYear();
@@ -118,15 +133,16 @@ const mapItemToSolicitud = item => {
 
 const mapPropuestaToCard = (p, solicitudEnEspera) => {
   const fechaRaw = p.fecha_propuesta || p.fecha_solicitud || p.fecha;
-  const { fechaTexto, fechaDate } = fechaRaw && typeof fechaRaw._seconds === 'number'
-    ? formatFechaSolicitud(fechaRaw)
-    : { fechaTexto: p.fecha_texto || '', fechaDate: null };
+  const parsed = formatFechaSolicitud(fechaRaw);
+  const fechaTexto = parsed.fechaTexto || p.fecha_texto || '';
+  const fechaDate = parsed.fechaDate;
   const vehiculo = p.vehiculo || solicitudEnEspera?.vehiculo || '';
   const vehiculoStr = typeof vehiculo === 'string'
     ? vehiculo
     : (vehiculo.vehiculo_marca || '') + ' ' + (vehiculo.vehiculo_modelo || '') + (vehiculo.vehiculo_anio ? ` (${vehiculo.vehiculo_anio})` : '');
   return {
-    id: p.id || p.uid || String(Math.random()),
+    // Sin id no se puede elegir ni rechazar: esas se descartan al cargar.
+    id: p.id || p.uid || null,
     nombreSolicitud: p.nombre_servicio || p.nombre_solicitud || solicitudEnEspera?.nombreSolicitud || 'Propuesta',
     codigo: p.codigo_solicitud || solicitudEnEspera?.codigo || '',
     estado: mapBackendStatusToInternal(p.status),
@@ -162,6 +178,8 @@ const fechaCorta = d => {
 const precioPropuesta = item => priceValue({ precio: item?.precio_estimado });
 
 const ACCIONABLES = ['cotizada', 'inspeccion_previa'];
+// Estados en los que la solicitud ya no está "en curso".
+const TERMINALES = ['aceptada', 'rechazada', 'cancelada', 'expirada'];
 
 const VISTAS = [
   { value: 'activa', label: 'En curso' },
@@ -306,6 +324,14 @@ const MisSolicitudesScreen = () => {
   // { id, accion: 'elegir' | 'rechazar' } de la propuesta en curso.
   const [accionEnCurso, setAccionEnCurso] = useState(null);
   const [cancelando, setCancelando] = useState(false);
+  const [errorPropuestas, setErrorPropuestas] = useState('');
+  // Todas las solicitudes abiertas (antes solo se veía la última).
+  const [activas, setActivas] = useState([]);
+  const seleccionRef = useRef(null);
+  // Cada carga lleva un número: si el usuario cambió de pestaña mientras
+  // llegaba la respuesta, la respuesta vieja se descarta.
+  const pedidoRef = useRef(0);
+  const cancelandoRef = useRef(false);
   const [elegido, setElegido] = useState(null); // { nombre_taller, uid_taller, esInspeccion }
 
   const leerUid = async () => {
@@ -315,91 +341,99 @@ const MisSolicitudesScreen = () => {
   };
 
   const loadSolicitudes = useCallback(async () => {
+    const yo = ++pedidoRef.current;
+    const vigente = () => yo === pedidoRef.current;
     try {
       setLoading(true);
       setError('');
+      setErrorPropuestas('');
       const uid = await leerUid();
+      if (!vigente()) return;
       if (!uid) {
         setSolicitudEnEsperaData(null);
+        setActivas([]);
         setSolicitudes([]);
         setError('No pudimos identificar tu cuenta. Cierra sesión y vuelve a entrar.');
         return;
       }
 
-      const response = await api.post('usuarios/getSolicitudesByUsuario', {
+      const listRes = await api.post('usuarios/getSolicitudesByUsuario', {
         uid_usuario: uid,
-        solo_ultima: true,
-        status: 'En espera por aprobación',
+        solo_ultima: false,
       });
-      const raw = response.data;
-      const singleItem =
-        raw && typeof raw === 'object' && !Array.isArray(raw) && raw.id
-          ? raw
-          : Array.isArray(raw) && raw.length > 0
-          ? raw[0]
-          : null;
+      if (!vigente()) return;
+      // El servidor no las ordena: de la más nueva a la más vieja.
+      const todas = (Array.isArray(listRes.data) ? listRes.data : [])
+        .filter(x => x?.id)
+        .map(mapItemToSolicitud)
+        .sort((a, b) => (b.fechaDate?.getTime() || 0) - (a.fechaDate?.getTime() || 0));
+      const abiertas = todas.filter(s => !TERMINALES.includes(s.estado));
+      const elegida = abiertas.find(s => s.id === seleccionRef.current) || abiertas[0] || null;
+      seleccionRef.current = elegida?.id || null;
+      // Sin solicitud abierta se muestran las propuestas de la última que no
+      // se canceló ni venció (para ver el taller elegido).
+      const base = elegida || todas.find(s => !['cancelada', 'expirada'].includes(s.estado)) || null;
+      setActivas(abiertas);
+      setSolicitudEnEsperaData(elegida);
 
-      let uid_solicitud = singleItem?.id ?? null;
-      const mappedTop = singleItem ? mapItemToSolicitud(singleItem) : null;
-      setSolicitudEnEsperaData(mappedTop);
-      if (!singleItem) {
-        // Sin solicitud en espera: se muestran las propuestas de la última.
+      if (base) {
         try {
-          const listRes = await api.post('usuarios/getSolicitudesByUsuario', {
-            uid_usuario: uid,
-            solo_ultima: false,
-          });
-          const list = Array.isArray(listRes.data) ? listRes.data : [];
-          const ultima = list.length > 0 ? list[0] : null;
-          // Una solicitud cancelada no muestra propuestas en "En curso".
-          const ultimaCancelada = mapBackendStatusToInternal(ultima?.status) === 'cancelada';
-          uid_solicitud = ultima && !ultimaCancelada ? ultima.id : null;
-        } catch (_) {
-          uid_solicitud = null;
-        }
-      }
-
-      if (uid_solicitud) {
-        try {
-          const propuestasRes = await api.post('usuarios/getPropuestasBySolicitud', { uid_solicitud });
+          const propuestasRes = await api.post('usuarios/getPropuestasBySolicitud', { uid_solicitud: base.id });
+          if (!vigente()) return;
           const lista = Array.isArray(propuestasRes.data) ? propuestasRes.data : [];
-          setSolicitudes(lista.map(p => mapPropuestaToCard(p, mappedTop)));
+          setSolicitudes(lista.filter(p => p?.id || p?.uid).map(p => mapPropuestaToCard(p, base)));
         } catch (_e) {
-          setSolicitudes([]);
+          if (!vigente()) return;
+          // Se conserva lo que ya se veía y se avisa, en vez de decir "sin propuestas".
+          setErrorPropuestas('No pudimos cargar las propuestas. Desliza hacia abajo para reintentar.');
         }
       } else {
         setSolicitudes([]);
       }
     } catch (e) {
-      setSolicitudEnEsperaData(null);
-      setSolicitudes([]);
+      if (!vigente()) return;
       setError('No pudimos cargar tus solicitudes. Revisa tu conexión.');
     } finally {
-      setLoading(false);
+      if (vigente()) setLoading(false);
     }
   }, []);
 
+  const elegirSolicitud = id => {
+    if (id === seleccionRef.current) return;
+    seleccionRef.current = id;
+    setSolicitudes([]);
+    loadSolicitudes();
+  };
+
   const loadAceptadas = useCallback(async () => {
+    const yo = ++pedidoRef.current;
+    const vigente = () => yo === pedidoRef.current;
     try {
       setLoading(true);
       setError('');
       const uid = await leerUid();
+      if (!vigente()) return;
       if (!uid) {
         setSolicitudes([]);
         setError('No pudimos identificar tu cuenta. Cierra sesión y vuelve a entrar.');
         return;
       }
       // Se incluyen también las inspecciones aceptadas (antes no aparecían).
-      const [a, b] = await Promise.all(
+      const resultados = await Promise.allSettled(
         ['Aceptada', 'Inspección aceptada'].map(status =>
           api
             .post('usuarios/getSolicitudesByUsuario', { uid_usuario: uid, status })
-            .then(r => (Array.isArray(r.data) ? r.data : r.data?.id ? [r.data] : []))
-            .catch(() => []),
+            .then(r => (Array.isArray(r.data) ? r.data : r.data?.id ? [r.data] : [])),
         ),
       );
+      if (!vigente()) return;
+      const fallidas = resultados.filter(r => r.status === 'rejected').length;
+      if (fallidas === resultados.length) throw new Error('sin conexión');
+      if (fallidas) setError('Puede que falten algunas: no pudimos cargarlas todas. Desliza para reintentar.');
       const vistos = new Set();
-      const lista = [...a, ...b].filter(x => x?.id && !vistos.has(x.id) && vistos.add(x.id));
+      const lista = resultados
+        .flatMap(r => (r.status === 'fulfilled' ? r.value : []))
+        .filter(x => x?.id && !vistos.has(x.id) && vistos.add(x.id));
       setSolicitudes(
         lista.map(p => ({
           ...mapPropuestaToCard(p, null),
@@ -409,35 +443,48 @@ const MisSolicitudesScreen = () => {
         })),
       );
     } catch (e) {
-      setSolicitudes([]);
+      if (!vigente()) return;
       setError('No pudimos cargar tus solicitudes aceptadas. Revisa tu conexión.');
     } finally {
-      setLoading(false);
+      if (vigente()) setLoading(false);
     }
   }, []);
 
   const loadCanceladas = useCallback(async () => {
+    const yo = ++pedidoRef.current;
+    const vigente = () => yo === pedidoRef.current;
     try {
       setLoading(true);
       setError('');
       const uid = await leerUid();
+      if (!vigente()) return;
       if (!uid) {
         setSolicitudes([]);
         setError('No pudimos identificar tu cuenta. Cierra sesión y vuelve a entrar.');
         return;
       }
-      const response = await api.post('usuarios/getSolicitudesByUsuario', {
-        uid_usuario: uid,
-        status: 'Cancelado',
-      });
-      const data = response.data;
-      const list = Array.isArray(data) ? data : data && typeof data === 'object' && data.id ? [data] : [];
+      // También las vencidas (nadie respondió a tiempo), con su propia etiqueta.
+      const resultados = await Promise.allSettled(
+        ['Cancelado', 'Vencido'].map(status =>
+          api
+            .post('usuarios/getSolicitudesByUsuario', { uid_usuario: uid, status })
+            .then(r => (Array.isArray(r.data) ? r.data : r.data?.id ? [r.data] : [])),
+        ),
+      );
+      if (!vigente()) return;
+      const fallidas = resultados.filter(r => r.status === 'rejected').length;
+      if (fallidas === resultados.length) throw new Error('sin conexión');
+      if (fallidas) setError('Puede que falten algunas: no pudimos cargarlas todas. Desliza para reintentar.');
+      const vistos = new Set();
+      const list = resultados
+        .flatMap(r => (r.status === 'fulfilled' ? r.value : []))
+        .filter(x => x?.id && !vistos.has(x.id) && vistos.add(x.id));
       setSolicitudes(list.map(mapItemToSolicitud));
     } catch (e) {
-      setSolicitudes([]);
+      if (!vigente()) return;
       setError('No pudimos cargar tus solicitudes canceladas. Revisa tu conexión.');
     } finally {
-      setLoading(false);
+      if (vigente()) setLoading(false);
     }
   }, []);
 
@@ -454,7 +501,9 @@ const MisSolicitudesScreen = () => {
 
   const cambiarVista = v => {
     if (v === vista) return;
+    pedidoRef.current += 1; // descarta respuestas de la pestaña anterior
     setSolicitudes([]);
+    setError('');
     setVista(v);
   };
 
@@ -467,6 +516,7 @@ const MisSolicitudesScreen = () => {
   const verTaller = uid => uid && navigation.navigate('TallerDetail', { tallerId: uid });
 
   const elegirPropuesta = item => {
+    if (!item?.id || accionEnCurso) return;
     const esInspeccion = item.estado === 'inspeccion_previa';
     const nombre = item.nombre_taller || 'este taller';
     Alert.alert(
@@ -496,9 +546,10 @@ const MisSolicitudesScreen = () => {
   };
 
   const rechazarPropuesta = item => {
+    if (!item?.id || accionEnCurso) return;
     Alert.alert(
       '¿Rechazar esta propuesta?',
-      `${item.nombre_taller || 'El taller'} no podrá atender esta solicitud. No se puede deshacer.`,
+      `La propuesta de ${item.nombre_taller || 'este taller'} quedará rechazada y no podrás recuperarla.`,
       [
         { text: 'Volver', style: 'cancel' },
         {
@@ -521,6 +572,7 @@ const MisSolicitudesScreen = () => {
   };
 
   const cancelarSolicitud = sol => {
+    if (!sol?.id || cancelandoRef.current) return;
     Alert.alert(
       '¿Cancelar la solicitud?',
       'Los talleres ya no podrán enviarte propuestas para esta solicitud.',
@@ -530,13 +582,17 @@ const MisSolicitudesScreen = () => {
           text: 'Sí, cancelar',
           style: 'destructive',
           onPress: async () => {
+            if (cancelandoRef.current) return;
+            cancelandoRef.current = true;
             setCancelando(true);
             try {
               await api.post('usuarios/updateSolicitudStatus', { uid_solicitud: sol.id, status: 'Cancelado' });
+              seleccionRef.current = null;
               loadSolicitudes();
             } catch (e) {
               Alert.alert('No se pudo cancelar', 'Revisa tu conexión e inténtalo de nuevo.');
             } finally {
+              cancelandoRef.current = false;
               setCancelando(false);
             }
           },
@@ -574,6 +630,23 @@ const MisSolicitudesScreen = () => {
     }
     return (
       <>
+        {activas.length > 1 ? (
+          <View style={{ marginBottom: space.m }}>
+            <AppText variant="caption" color={colors.muted} style={{ marginBottom: space.xs }}>
+              Tienes {activas.length} solicitudes en curso. Toca una para ver sus propuestas.
+            </AppText>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {activas.map(s => (
+                <Chip
+                  key={s.id}
+                  label={s.codigo || sentenceCase(s.nombreSolicitud).slice(0, 24)}
+                  selected={s.id === solicitudEnEsperaData?.id}
+                  onPress={() => elegirSolicitud(s.id)}
+                />
+              ))}
+            </ScrollView>
+          </View>
+        ) : null}
         {solicitudEnEsperaData ? (
           <Card style={m.solicitud}>
             <View style={m.solicitudCabecera}>
@@ -632,6 +705,15 @@ const MisSolicitudesScreen = () => {
           </Card>
         ) : null}
 
+        {errorPropuestas ? (
+          <Banner
+            tone="warn"
+            text={errorPropuestas}
+            actionLabel="Reintentar"
+            onAction={loadSolicitudes}
+            style={{ marginTop: space.m }}
+          />
+        ) : null}
         {ordenActiva.length ? (
           <View style={{ marginTop: space.l }}>
             <AppText variant="subtitle" accessibilityRole="header">
@@ -639,7 +721,7 @@ const MisSolicitudesScreen = () => {
             </AppText>
             {pendientes.length > 1 && !hayElegida ? (
               <AppText variant="caption" color={colors.muted} style={{ marginTop: 2 }}>
-                Ordenadas de menor a mayor precio. Vencen a los 3 días.
+                Ordenadas de menor a mayor precio.
               </AppText>
             ) : null}
             <View style={{ gap: space.m, marginTop: space.s }}>
@@ -719,7 +801,7 @@ const MisSolicitudesScreen = () => {
                 <AppText variant="subtitle" style={{ flex: 1 }} numberOfLines={2}>
                   {sentenceCase(item.nombreSolicitud)}
                 </AppText>
-                <Tag label="Cancelada" tone="neutral" />
+                <Tag label={item.estado === 'expirada' ? 'Vencida' : 'Cancelada'} tone="neutral" />
               </View>
               <AppText variant="caption" color={colors.muted}>
                 {[item.codigo, fechaCorta(item.fechaDate)].filter(Boolean).join(' · ')}
@@ -757,8 +839,15 @@ const MisSolicitudesScreen = () => {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={colors.navy} />}>
         {error ? (
-          <Banner tone="error" text={error} actionLabel="Reintentar" onAction={() => cargarVista(vista)} />
-        ) : loading && !solicitudes.length && !solicitudEnEsperaData ? (
+          <Banner
+            tone="error"
+            text={error}
+            actionLabel="Reintentar"
+            onAction={() => cargarVista(vista)}
+            style={{ marginBottom: space.m }}
+          />
+        ) : null}
+        {error && !solicitudes.length && !solicitudEnEsperaData ? null : loading && !solicitudes.length && !solicitudEnEsperaData ? (
           <View style={{ gap: space.m }}>
             <TallerCardSkeleton />
             <TallerCardSkeleton />

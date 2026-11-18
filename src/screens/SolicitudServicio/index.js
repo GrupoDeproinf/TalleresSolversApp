@@ -24,6 +24,7 @@ import {
   Modal,
   StyleSheet,
   BackHandler,
+  Alert,
 } from 'react-native';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -288,6 +289,7 @@ const SolicitudServicio = () => {
   const [categoriaId, setCategoriaId] = useState(String(params.categoriaId || ''));
   const [descripcion, setDescripcion] = useState(nombreServicio ? `${nombreServicio}. ` : '');
   const [fotos, setFotos] = useState([]);
+  const descripcionInicial = useRef(nombreServicio ? `${nombreServicio}. ` : '');
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
 
   // Paso 2
@@ -306,6 +308,8 @@ const SolicitudServicio = () => {
   const [sending, setSending] = useState(false);
   const [errorEnvio, setErrorEnvio] = useState('');
   const [enviada, setEnviada] = useState(false);
+  const [errorCategorias, setErrorCategorias] = useState('');
+  const [errorUbicacion, setErrorUbicacion] = useState('');
 
   const descripcionLength = (descripcion || '').trim().length;
   const descripcionValid = descripcionLength >= MIN_DESCRIPCION && descripcionLength <= MAX_DESCRIPCION;
@@ -353,8 +357,10 @@ const SolicitudServicio = () => {
       setCategoriaOptions(
         list.filter(c => c.id && c.nombre).map(c => ({ label: sentenceCase(c.nombre), value: c.id })),
       );
+      setErrorCategorias('');
     } catch (err) {
       setCategoriaOptions([]);
+      setErrorCategorias('No pudimos cargar los tipos de servicio. Revisa tu conexión.');
     } finally {
       setLoadingCategories(false);
     }
@@ -366,11 +372,13 @@ const SolicitudServicio = () => {
 
   const tomarUbicacionActual = useCallback(async () => {
     setBuscandoUbicacion(true);
+    setErrorUbicacion('');
     try {
       if (Platform.OS === 'android') {
         const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
           setBuscandoUbicacion(false);
+          setErrorUbicacion('Permite el acceso a tu ubicación en los ajustes del teléfono, o márcala en el mapa.');
           return;
         }
       }
@@ -384,8 +392,16 @@ const SolicitudServicio = () => {
           setSelectedLocation(prev => prev || current);
           setBuscandoUbicacion(false);
         },
-        () => setBuscandoUbicacion(false),
-        { enableHighAccuracy: true, timeout: 12000, maximumAge: 10000 },
+        err => {
+          setBuscandoUbicacion(false);
+          setErrorUbicacion(
+            err?.code === 1
+              ? 'Permite el acceso a tu ubicación en los ajustes del teléfono, o márcala en el mapa.'
+              : 'No pudimos obtener tu ubicación. Activa el GPS e intenta de nuevo, o márcala en el mapa.',
+          );
+        },
+        // Sin alta precisión responde antes bajo techo y con poca señal.
+        { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 },
       );
     } catch (_) {
       setBuscandoUbicacion(false);
@@ -402,7 +418,7 @@ const SolicitudServicio = () => {
       if (!vehicle) return 'Elige el vehículo (o agrega uno).';
       if (!categoriaId) return 'Elige qué tipo de servicio necesitas.';
       if (descripcionLength < MIN_DESCRIPCION)
-        return `Cuéntanos un poco más del problema (mínimo ${MIN_DESCRIPCION} letras).`;
+        return `Cuéntanos un poco más del problema (mínimo ${MIN_DESCRIPCION} caracteres).`;
       return '';
     }
     if (n === 2) {
@@ -434,9 +450,19 @@ const SolicitudServicio = () => {
       irAPaso(paso - 1);
       return true;
     }
+    // Salir desde el paso 1 con datos escritos: se pregunta antes de perderlos.
+    const hayDatos =
+      String(descripcion || '').trim() !== descripcionInicial.current.trim() || !!(fotos && fotos.length);
+    if (hayDatos) {
+      Alert.alert('¿Salir de la solicitud?', 'Perderás lo que escribiste y las fotos.', [
+        { text: 'Seguir aquí', style: 'cancel' },
+        { text: 'Salir', style: 'destructive', onPress: () => navigation.goBack() },
+      ]);
+      return true;
+    }
     navigation.goBack();
     return true;
-  }, [paso, navigation]);
+  }, [paso, navigation, descripcion, fotos]);
 
   useFocusEffect(
     useCallback(() => {
@@ -525,6 +551,10 @@ const SolicitudServicio = () => {
     setErrorEnvio('');
     try {
       const user = await leerUsuario();
+      if (!String(user?.uid ?? user?.id ?? '').trim()) {
+        setErrorEnvio('Tu sesión venció. Cierra sesión y vuelve a entrar para enviar la solicitud.');
+        return;
+      }
       const payload = {
         nombre_usuario: String(user?.nombre || user?.name || '').trim(),
         uid_usuario: String(user?.uid ?? user?.id ?? '').trim(),
@@ -544,8 +574,11 @@ const SolicitudServicio = () => {
       await api.post('usuarios/saveSolicitud', payload, { timeout: 60000 });
       setEnviada(true);
     } catch (err) {
+      const expiro = !err?.response && (err?.code === 'ECONNABORTED' || /timeout/i.test(String(err?.message || '')));
       setErrorEnvio(
-        err?.response?.data?.message || 'No pudimos enviar tu solicitud. Revisa tu conexión e inténtalo de nuevo.',
+        expiro
+          ? 'La conexión tardó demasiado y no sabemos si llegó. Antes de reenviar, revisa en Solicitudes si ya aparece.'
+          : err?.response?.data?.message || 'No pudimos enviar tu solicitud. Revisa tu conexión e inténtalo de nuevo.',
       );
     } finally {
       enviandoRef.current = false;
@@ -554,10 +587,9 @@ const SolicitudServicio = () => {
   };
 
   const irAlInicio = () => navigation.reset({ index: 0, routes: [{ name: 'DrawerScreen' }] });
-  const verMiSolicitud = () => {
-    navigation.reset({ index: 0, routes: [{ name: 'DrawerScreen' }] });
-    setTimeout(() => navigation.navigate('DrawerScreen', { screen: 'MisSolicitudes' }), 150);
-  };
+  // Un solo paso: abre las pestañas directamente en "Solicitudes".
+  const verMiSolicitud = () =>
+    navigation.reset({ index: 0, routes: [{ name: 'DrawerScreen', params: { screen: 'MisSolicitudes' } }] });
 
   const categoryLabel = categoriaOptions.find(c => c.value === categoriaId)?.label || '';
   const destino = uid_taller
@@ -687,6 +719,8 @@ const SolicitudServicio = () => {
         <View style={s.cargando}>
           <ActivityIndicator color={colors.navy} />
         </View>
+      ) : errorCategorias && !categoriaOptions.length ? (
+        <Banner tone="warn" text={errorCategorias} actionLabel="Reintentar" onAction={fetchCategories} />
       ) : (
         <Dropdown
           data={categoriaOptions}
@@ -723,7 +757,7 @@ const SolicitudServicio = () => {
         color={descripcionLength > 0 && descripcionLength < MIN_DESCRIPCION ? colors.warn : colors.muted}
         style={{ marginTop: space.xs }}>
         {descripcionLength < MIN_DESCRIPCION
-          ? `Mínimo ${MIN_DESCRIPCION} letras · te faltan ${MIN_DESCRIPCION - descripcionLength}`
+          ? `Mínimo ${MIN_DESCRIPCION} caracteres · te faltan ${MIN_DESCRIPCION - descripcionLength}`
           : `${descripcionLength} de ${MAX_DESCRIPCION}`}
       </AppText>
 
@@ -790,6 +824,21 @@ const SolicitudServicio = () => {
           </AppText>
         </View>
       </Card>
+      {!selectedLocation && errorUbicacion ? (
+        <AppText variant="caption" color={colors.warn} style={{ marginTop: space.s }}>
+          {errorUbicacion}
+        </AppText>
+      ) : null}
+      {!selectedLocation && !buscandoUbicacion ? (
+        <Button
+          title="Usar mi ubicación actual"
+          variant="primary"
+          size="m"
+          icon={MapPin}
+          onPress={tomarUbicacionActual}
+          style={{ marginTop: space.s }}
+        />
+      ) : null}
       <Button
         title={selectedLocation ? 'Ajustar en el mapa' : 'Marcar en el mapa'}
         variant="secondary"
