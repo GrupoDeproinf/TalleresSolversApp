@@ -294,7 +294,10 @@ const HomeScreen = () => {
     setKmUpdateModalVisible(true);
   }, [selectedVehicleKey, vehiclesReminderList]);
 
+  // Bloqueo inmediato: dos toques en Guardar no envían el kilometraje dos veces.
+  const guardandoKmRef = useRef(false);
   const handleSaveKmReminder = useCallback(async () => {
+    if (guardandoKmRef.current) return;
     const digits = kmReminderDraft.replace(/\D/g, '');
     const kmNum = parseInt(digits, 10);
     if (!digits || !Number.isFinite(kmNum) || kmNum < 0) {
@@ -313,6 +316,7 @@ const HomeScreen = () => {
       showAppAlert('Sesión', 'No se encontró tu usuario o el vehículo.');
       return;
     }
+    guardandoKmRef.current = true;
     setSavingKmReminder(true);
     try {
       await api.post('usuarios/updateVehiculoKm', {
@@ -333,8 +337,12 @@ const HomeScreen = () => {
         err?.response?.data?.message ??
         (err?.response ? null : 'No hay conexión. Revisa tu internet e intenta de nuevo.') ??
         'No se pudo guardar. Intenta de nuevo.';
-      showAppAlert('Error', String(msg));
+      Keyboard.dismiss();
+      // El aviso se pinta al final de la pantalla: queda encima del formulario,
+      // que sigue abierto con lo escrito para reintentar.
+      showAppAlert('No pudimos guardar el kilometraje', String(msg));
     } finally {
+      guardandoKmRef.current = false;
       setSavingKmReminder(false);
     }
   }, [kmReminderDraft, selectedVehicleKey, loadUserVehiclesForReminder]);
@@ -392,13 +400,15 @@ const HomeScreen = () => {
 
           if (showMaintenancePopup) {
             setMaintenanceDueLoading(true);
-            const rows = await fetchHomeDueMaintenanceAlerts(
-              api,
-              uid,
-              getUserResponseData,
-            );
+            let rows = [];
+            try {
+              rows = await fetchHomeDueMaintenanceAlerts(api, uid, getUserResponseData);
+            } catch (_) {
+              rows = [];
+            } finally {
+              if (active) setMaintenanceDueLoading(false);
+            }
             if (!active) return;
-            setMaintenanceDueLoading(false);
             setMaintenanceDueRows(rows);
             if (rows.length > 0 && (await shouldShowReminder('maint', uid))) {
               setMaintenanceDoNotShowAgain(false);
@@ -485,7 +495,12 @@ const HomeScreen = () => {
           const u = j ? JSON.parse(j) : null;
           if (!active || !u) return;
           setFirstName(String(u?.nombre || '').trim().split(/\s+/)[0] || '');
-          if (!u?.uid || u?.typeUser !== 'Cliente') return;
+          if (!u?.uid || u?.typeUser !== 'Cliente') {
+            // Taller (o sin sesión): no hay solicitud de conductor que mostrar.
+            setSolicitudActiva(null);
+            setSolicitudRevisada(true);
+            return;
+          }
           const r = await api.post('usuarios/getSolicitudesByUsuario', {
             uid_usuario: u.uid,
             solo_ultima: true,
@@ -905,30 +920,6 @@ const HomeScreen = () => {
         )}
       </ScrollView>
 
-      {/* ── Modal de alerta genérico (reemplaza Alert.alert en toda la pantalla) ── */}
-      <Modal
-        visible={appAlertModal.visible}
-        transparent
-        animationType="fade"
-        statusBarTranslucent
-        onRequestClose={() => setAppAlertModal(a => ({...a, visible: false}))}>
-        <View style={appAlertModalStyles.overlay}>
-          <View style={appAlertModalStyles.card}>
-            <View style={appAlertModalStyles.iconCircle}>
-              <Bell color="#1F2344" size={26} strokeWidth={2.2} />
-            </View>
-            <Text style={appAlertModalStyles.title}>{appAlertModal.title}</Text>
-            <Text style={appAlertModalStyles.message}>{appAlertModal.message}</Text>
-            <TouchableOpacity
-              style={appAlertModalStyles.btn}
-              activeOpacity={0.85}
-              onPress={() => setAppAlertModal(a => ({...a, visible: false}))}>
-              <Text style={appAlertModalStyles.btnText}>Entendido</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
       {/* Modal GPS / permisos de ubicación — se muestra automáticamente al entrar */}
       <LocationPermissionModal
         visible={locPermModalVisible}
@@ -1168,7 +1159,7 @@ const HomeScreen = () => {
                     setKmUpdateModalVisible(false);
                     setVehiclePickerModalVisible(true);
                   }}>
-                  <Text style={vehicleReminderStyles.kmModalBtnGhostText}>Cerrar</Text>
+                  <Text style={vehicleReminderStyles.kmModalBtnGhostText}>Volver</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={vehicleReminderStyles.kmModalBtnPrimary}
@@ -1424,6 +1415,30 @@ const HomeScreen = () => {
           </View>
         </View>
       </Modal>
+      {/* ── Modal de alerta genérico (al final: queda encima de los demás) (reemplaza Alert.alert en toda la pantalla) ── */}
+      <Modal
+        visible={appAlertModal.visible}
+        transparent
+        animationType="fade"
+        statusBarTranslucent
+        onRequestClose={() => setAppAlertModal(a => ({...a, visible: false}))}>
+        <View style={appAlertModalStyles.overlay}>
+          <View style={appAlertModalStyles.card}>
+            <View style={appAlertModalStyles.iconCircle}>
+              <Bell color="#1F2344" size={26} strokeWidth={2.2} />
+            </View>
+            <Text style={appAlertModalStyles.title}>{appAlertModal.title}</Text>
+            <Text style={appAlertModalStyles.message}>{appAlertModal.message}</Text>
+            <TouchableOpacity
+              style={appAlertModalStyles.btn}
+              activeOpacity={0.85}
+              onPress={() => setAppAlertModal(a => ({...a, visible: false}))}>
+              <Text style={appAlertModalStyles.btnText}>Entendido</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
     </>
   );
 };
