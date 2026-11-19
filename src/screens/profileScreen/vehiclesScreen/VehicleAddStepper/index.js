@@ -975,6 +975,47 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'center',
   },
+  escaneoCard: {
+    marginTop: 12,
+    marginHorizontal: 16,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: '#FFF9DB',
+    borderWidth: 1,
+    borderColor: '#FFE58A',
+  },
+  escaneoHeader: {flexDirection: 'row', alignItems: 'flex-start'},
+  escaneoIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FFD60A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  escaneoTitle: {fontSize: 16, fontWeight: '800', color: '#1F2344'},
+  escaneoText: {fontSize: 13, lineHeight: 18, color: '#374151', marginTop: 2},
+  escaneoBotones: {flexDirection: 'row', marginTop: 12},
+  escaneoBtn: {
+    flex: 1,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginLeft: 8,
+  },
+  escaneoBtnPrimario: {backgroundColor: '#1F2344', borderColor: '#1F2344', marginLeft: 0},
+  escaneoBtnPrimarioText: {color: '#FFFFFF', fontWeight: '800', fontSize: 14},
+  escaneoBtnText: {color: '#1F2344', fontWeight: '700', fontSize: 14},
+  escaneoLeyendo: {flexDirection: 'row', alignItems: 'center', marginTop: 12, height: 44},
+  escaneoLeyendoText: {marginLeft: 10, fontSize: 14, fontWeight: '700', color: '#1F2344'},
+  escaneoMensaje: {marginTop: 10, fontSize: 13, lineHeight: 18},
+  escaneoMensajeOk: {color: '#166534'},
+  escaneoMensajeError: {color: '#B91C1C'},
   footerHint: {
     fontSize: 12,
     lineHeight: 16,
@@ -1295,6 +1336,133 @@ const VehicleAddStepper = () => {
     setForm(updater);
   };
   const updateField = (key, value) => editarForm(prev => ({...prev, [key]: value}));
+
+  // ── Escanear el certificado de circulación: la foto llena el formulario ──
+  const [escaneo, setEscaneo] = useState({estado: 'inactivo', mensaje: ''});
+  const escaneandoRef = useRef(false);
+  const sinAcentos = v =>
+    String(v || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .trim();
+
+  // Devuelve el formulario con los datos leídos (sin pisar lo ya escrito) y
+  // la lista de datos que se llenaron.
+  const mezclarDatosLeidos = (prev, datos, foto) => {
+    const llenados = [];
+    {
+      const next = {...prev};
+      const poner = (clave, valor, etiqueta) => {
+        if (valor == null || String(valor).trim() === '') return;
+        if (String(prev[clave] || '').trim() !== '') return; // no pisa lo que ya escribió
+        next[clave] = String(valor);
+        llenados.push(etiqueta);
+      };
+      poner('vehiculo_placa', datos.placa, 'placa');
+      poner('vehiculo_marca', datos.marca, 'marca');
+      poner('vehiculo_modelo', datos.modelo, 'modelo');
+      poner('vehiculo_anio', datos.anio, 'año');
+      poner('vehiculo_color', datos.color, 'color');
+      if (datos.tipo && !String(prev.uid_tipo_vehiculo || '').trim()) {
+        const opciones = tipoVehiculoOptions.length
+          ? tipoVehiculoOptions
+          : TIPO_VEHICULO_OPTIONS_FALLBACK;
+        const op = opciones.find(o => sinAcentos(o?.label) === sinAcentos(datos.tipo));
+        if (op) {
+          next.uid_tipo_vehiculo = String(op.value ?? '');
+          next.tipo_vehiculo = String(op.label ?? '');
+          llenados.push('tipo');
+        }
+      }
+      // La misma foto queda como frente del certificado de circulación.
+      if (
+        datos.documento === 'certificado_circulacion' &&
+        foto?.uri &&
+        !String(prev.doc_circ_frente_uri || '').trim()
+      ) {
+        next.doc_circ_frente_uri = foto.uri;
+        next.doc_circ_frente_b64 = foto.base64 || '';
+      }
+      return {next, llenados};
+    }
+  };
+
+  const leerDocumento = async asset => {
+    if (!asset?.base64) {
+      setEscaneo({estado: 'error', mensaje: 'No pudimos usar esa foto. Intenta con otra.'});
+      return;
+    }
+    escaneandoRef.current = true;
+    setEscaneo({estado: 'leyendo', mensaje: ''});
+    try {
+      const {data} = await api.post(
+        'usuarios/leerDocumentoVehiculo',
+        {imagen_base64: asset.base64},
+        {timeout: 60000},
+      );
+      const datos = data?.datos || {};
+      const {llenados} = mezclarDatosLeidos(form, datos, asset);
+      editarForm(prev => mezclarDatosLeidos(prev, datos, asset).next);
+      const faltaKm = !String(form.KM || '').trim();
+      setEscaneo({
+        estado: 'listo',
+        mensaje: llenados.length
+          ? `Llenamos: ${llenados.join(', ')}. Revisa que todo esté bien${faltaKm ? ' y escribe el kilometraje' : ''}.`
+          : 'Leímos el documento, pero esos datos ya estaban escritos. Revísalos.',
+      });
+      if (faltaKm) setCampoPendiente('km');
+    } catch (err) {
+      const msg = err?.response
+        ? err.response.data?.error || 'No pudimos leer el documento. Escribe los datos a mano.'
+        : 'No hay conexión. Revisa tu internet o escribe los datos a mano.';
+      setEscaneo({estado: 'error', mensaje: msg});
+    } finally {
+      escaneandoRef.current = false;
+    }
+  };
+
+  const escanearDocumento = origen => {
+    if (escaneandoRef.current) return;
+    const opciones = {
+      mediaType: 'photo',
+      includeBase64: true,
+      maxWidth: 1600,
+      maxHeight: 1600,
+      quality: 0.7,
+    };
+    const alElegir = response => {
+      if (response?.didCancel) return;
+      if (response?.errorCode) {
+        setEscaneo({
+          estado: 'error',
+          mensaje:
+            response.errorCode === 'camera_unavailable'
+              ? 'No hay cámara disponible. Elige la foto de la galería.'
+              : 'No pudimos abrir la foto. Revisa los permisos de la app.',
+        });
+        return;
+      }
+      leerDocumento(response?.assets?.[0]);
+    };
+    if (origen === 'galeria') {
+      launchImageLibrary({...opciones, selectionLimit: 1}, alElegir);
+      return;
+    }
+    (async () => {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.CAMERA);
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          setEscaneo({
+            estado: 'error',
+            mensaje: 'Sin permiso de cámara. Elige la foto de la galería.',
+          });
+          return;
+        }
+      }
+      launchCamera({...opciones, saveToPhotos: false}, alElegir);
+    })();
+  };
 
   const getPressurePair = () => parsePressurePair(form.presion_neumatico);
 
@@ -1761,6 +1929,58 @@ const VehicleAddStepper = () => {
             </Text>
           </View>
 
+
+          {step === 1 && !esEdicion ? (
+            <View style={styles.escaneoCard}>
+              <View style={styles.escaneoHeader}>
+                <View style={styles.escaneoIcon}>
+                  <IconsFA5 name="camera" size={18} color="#1F2344" />
+                </View>
+                <View style={{flex: 1}}>
+                  <Text style={styles.escaneoTitle}>Llénalo con una foto</Text>
+                  <Text style={styles.escaneoText}>
+                    Tómale foto al certificado de circulación y llenamos placa, marca, modelo, año y
+                    color por ti.
+                  </Text>
+                </View>
+              </View>
+              {escaneo.estado === 'leyendo' ? (
+                <View style={styles.escaneoLeyendo}>
+                  <ActivityIndicator size="small" color="#1F2344" />
+                  <Text style={styles.escaneoLeyendoText}>Leyendo el documento…</Text>
+                </View>
+              ) : (
+                <View style={styles.escaneoBotones}>
+                  <TouchableOpacity
+                    style={[styles.escaneoBtn, styles.escaneoBtnPrimario]}
+                    onPress={() => escanearDocumento('camara')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Tomar foto del certificado de circulación"
+                    activeOpacity={0.85}>
+                    <Text style={styles.escaneoBtnPrimarioText}>Tomar foto</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.escaneoBtn}
+                    onPress={() => escanearDocumento('galeria')}
+                    accessibilityRole="button"
+                    accessibilityLabel="Elegir foto del certificado de la galería"
+                    activeOpacity={0.85}>
+                    <Text style={styles.escaneoBtnText}>Elegir de la galería</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              {escaneo.mensaje ? (
+                <Text
+                  style={[
+                    styles.escaneoMensaje,
+                    escaneo.estado === 'error' ? styles.escaneoMensajeError : styles.escaneoMensajeOk,
+                  ]}
+                  accessibilityLiveRegion="polite">
+                  {escaneo.mensaje}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
 
           {step === 1 ? (
             <View style={styles.outerCard}>
