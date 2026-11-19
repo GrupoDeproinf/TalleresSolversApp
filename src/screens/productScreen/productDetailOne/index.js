@@ -13,7 +13,7 @@ import {
   InteractionManager,
   AppState,
 } from 'react-native';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { hora12 } from '../../../utils/taller';
 import BottomContainer from '../../../commonComponents/bottomContainer';
 import { commonStyles } from '../../../style/commonStyle.css';
@@ -467,11 +467,12 @@ const ProductDetailOne = ({ navigation }) => {
   const calculateAverageScore = comments => {
     if (!Array.isArray(comments) || comments.length === 0) return 0;
     const totalScore = comments.reduce(
-      (sum, comment) => sum + (comment?.puntuacion || 0),
+      // Number(): Firestore puede traer la puntuación como texto ("5"+"4" = "54").
+      (sum, comment) => sum + (Number(comment?.puntuacion) || 0),
       0,
     );
     const averageScore = totalScore / comments.length;
-    return Math.min(Math.max(Math.ceil(averageScore), 0), 5);
+    return Math.min(Math.max(Math.round(averageScore * 10) / 10, 0), 5);
   };
 
   const getCommentsByService = async service => {
@@ -574,7 +575,8 @@ const ProductDetailOne = ({ navigation }) => {
 
     const servicePayload = {
       id: DataService.uid_servicio || DataService.id,
-      nombre_servicio: data[0].nombre_servicio || '',
+      // Antes leía data[0], que nunca se cargaba: el contacto no se registraba.
+      nombre_servicio: DataService?.nombre_servicio || DataService?.nombre || '',
       precio: DataService?.precio || '',
       taller: dataTaller?.nombre || '',
       uid_servicio: DataService.id || '',
@@ -585,29 +587,11 @@ const ProductDetailOne = ({ navigation }) => {
       typeContact: typeContact,
     };
 
-    console.log('-----------------------------------------------------');
-    console.log('servicePayload', servicePayload);
-    console.log('-----------------------------------------------------');
-
     try {
-      // Realizar la solicitud al endpoint
-      const response = await api.post('/home/contactService', servicePayload);
-
-      // Si llegamos aquí, la solicitud fue exitosa
-      const responseData = response.data; // Axios ya procesa el JSON automáticamente
-      console.log('Servicio guardado exitosamente:', responseData);
+      await api.post('/home/contactService', servicePayload);
     } catch (error) {
-      // Manejar errores
-      if (error.response) {
-        // Errores del servidor (respuesta con error, por ejemplo, 400, 500)
-        console.error('Error del servidor:', error.response.data);
-      } else if (error.request) {
-        // La solicitud se realizó pero no hubo respuesta
-        console.error('No se recibió respuesta del servidor:', error.request);
-      } else {
-        // Otro tipo de error
-        console.error('Error al configurar la solicitud:', error.message);
-      }
+      // Solo el código: el error de axios lleva el nombre y correo del conductor.
+      console.warn('contactService:', error?.response?.status || error?.code || 'error');
     }
   };
 
@@ -625,8 +609,8 @@ const ProductDetailOne = ({ navigation }) => {
 
   // ── Calificación del servicio → Servicios/{uid}/calificaciones ────────────
   const handleRatingSubmit = async (puntuacion, comentario, etiquetas_rapidas) => {
-    setShowRating(false);
-    setLastRating(puntuacion);
+    if (enviandoCalificacionRef.current) return;
+    enviandoCalificacionRef.current = true;
     try {
       const json = await AsyncStorage.getItem('@userInfo');
       const user = json ? JSON.parse(json) : null;
@@ -643,11 +627,24 @@ const ProductDetailOne = ({ navigation }) => {
           email:  user?.email  || '',
         },
       });
+      // El formulario se cierra solo si se publicó: si falla, lo escrito no se pierde.
+      setLastRating(puntuacion);
+      setShowRating(false);
       setShowRatingSuccess(true);
+      return true;
     } catch (e) {
-      console.warn('[ProductDetailOne] Error al enviar calificación:', e);
+      Alert.alert(
+        'No se envió tu calificación',
+        e?.response
+          ? 'Intenta de nuevo en un momento.'
+          : 'No hay conexión. Revisa tu internet e intenta de nuevo.',
+      );
+      return false;
+    } finally {
+      enviandoCalificacionRef.current = false;
     }
   };
+  const enviandoCalificacionRef = useRef(false);
 
   const closeMapRutas = () => {
     setshowRuta(false);
@@ -684,6 +681,11 @@ const ProductDetailOne = ({ navigation }) => {
       showToast('Este taller no tiene WhatsApp registrado.');
       return;
     }
+    const servicio = String(DataService?.nombre_servicio || '').trim();
+    const msg = `Hola ${dataTaller?.nombre || ''}, vi ${servicio ? `su servicio "${servicio}"` : 'su taller'} en Solvers y quisiera más información.`;
+    // Primero se abre WhatsApp; al taller solo se le avisa si de verdad se abrió.
+    const abierto = await abrirWhatsApp(raw, msg.replace(/\s+/g, ' '));
+    if (!abierto) return;
     // El servidor avisa al taller: su token push ya no viaja a la app.
     api
       .post('/home/notificarContactoTaller', {
@@ -693,9 +695,6 @@ const ProductDetailOne = ({ navigation }) => {
       .catch(() => {});
     handleContact('WhatsApp').catch(() => {});
     saveServiceContactView('Whatsapp');
-    const servicio = String(DataService?.nombre_servicio || '').trim();
-    const msg = `Hola ${dataTaller?.nombre || ''}, vi ${servicio ? `su servicio "${servicio}"` : 'su taller'} en Solvers y quisiera más información.`;
-    abrirWhatsApp(raw, msg.replace(/\s+/g, ' '));
   };
 
   const stylesMap = StyleSheet.create({

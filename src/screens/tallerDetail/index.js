@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
+import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import {datosParaMostrar} from '../../components/registro/MetodosPago';
 import { hora12 } from "../../utils/taller";
 import {
@@ -484,16 +484,14 @@ const TallerDetail = () => {
 
   const fetchTallerServices = async () => {
 
-    console.log('tallerId', tallerId);
-    if (!tallerId) return;
+    // Se llega con tallerId, uid_taller o tallerData: antes solo servía tallerId
+    // y las otras entradas mostraban «aún no publicó servicios».
+    if (!resolvedTallerId) return;
     setLoadingServices(true);
-    console.log('tallerId', tallerId);
     try {
       const response = await api.post("/usuarios/getServicesByTallerUidTrue", {
-        uid: tallerId,
+        uid: resolvedTallerId,
       });
-
-      console.log('1231231231231ooeoeeresponse', response);
 
       const result = response?.data;
 
@@ -559,7 +557,7 @@ const TallerDetail = () => {
   };
 
   const tallerNombre =
-    taller?.nombre_taller || taller?.nombre || taller?.razon_social || "Workshop";
+    taller?.nombre_taller || taller?.nombre || taller?.razon_social || "Taller";
   const rif = taller?.rif || taller?.RIF || "—";
   const estadoTaller = taller?.estado || "Sin estado";
   const correo = taller?.email || "—";
@@ -623,9 +621,10 @@ const TallerDetail = () => {
   const GetCoordenadas = () => setShowMap(false);
 
   // ── Handler: enviar calificación del taller ────────────────────────────────
+  const enviandoCalificacionRef = useRef(false);
   const handleRatingSubmit = async (puntuacion, comentario, etiquetas_rapidas) => {
-    setShowRating(false);
-    setLastRating(puntuacion);
+    if (enviandoCalificacionRef.current) return;
+    enviandoCalificacionRef.current = true;
     try {
       const json = await AsyncStorage.getItem('@userInfo');
       const user = json ? JSON.parse(json) : null;
@@ -641,9 +640,21 @@ const TallerDetail = () => {
           email:  user?.email  || '',
         },
       });
+      // El formulario se cierra solo si se publicó: si falla, lo escrito no se pierde.
+      setLastRating(puntuacion);
+      setShowRating(false);
       setShowRatingSuccess(true);
+      return true;
     } catch (e) {
-      console.warn('[TallerDetail] Error al enviar calificación:', e);
+      Alert.alert(
+        'No se envió tu calificación',
+        e?.response
+          ? 'Intenta de nuevo en un momento.'
+          : 'No hay conexión. Revisa tu internet e intenta de nuevo.',
+      );
+      return false;
+    } finally {
+      enviandoCalificacionRef.current = false;
     }
   };
   const openInstalacionImage = imageSource => {
@@ -668,6 +679,12 @@ const TallerDetail = () => {
     return (
       <View style={styles.loadingContainer}>
         <Text style={styles.loadingText}>No se encontró información del negocio.</Text>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          accessibilityRole="button"
+          style={{marginTop: 16, paddingVertical: 12, paddingHorizontal: 22, borderRadius: 12, backgroundColor: '#1F2344'}}>
+          <Text style={{color: '#FFFFFF', fontWeight: '700'}}>Volver</Text>
+        </TouchableOpacity>
       </View>
     );
   }

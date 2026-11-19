@@ -21,6 +21,7 @@ const BeautifulModal = ({visible, onClose, onSubmit, businessName = ''}) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [selectedTags, setSelectedTags] = useState([]);
+  const [enviando, setEnviando] = useState(false);
 
   // Resetear el formulario cada vez que el modal se abre
   useEffect(() => {
@@ -39,12 +40,22 @@ const BeautifulModal = ({visible, onClose, onSubmit, businessName = ''}) => {
     );
   };
 
-  const handleSubmit = () => {
-    if (!rating) return;
-    onSubmit(rating, comment.trim(), [...selectedTags]);
-    setRating(0);
-    setComment('');
-    setSelectedTags([]);
+  // Solo se limpia si se publicó (onSubmit devuelve false si falló): así no se
+  // pierde lo escrito cuando no hay conexión.
+  const handleSubmit = async () => {
+    if (!rating || enviando) return;
+    setEnviando(true);
+    let ok = true;
+    try {
+      ok = (await onSubmit(rating, comment.trim(), [...selectedTags])) !== false;
+    } finally {
+      setEnviando(false);
+    }
+    if (ok) {
+      setRating(0);
+      setComment('');
+      setSelectedTags([]);
+    }
   };
 
   const handleClose = () => {
@@ -128,8 +139,12 @@ const BeautifulModal = ({visible, onClose, onSubmit, businessName = ''}) => {
                 maxLength={500}
               />
 
-              <Pressable style={styles.button} onPress={handleSubmit}>
-                <Text style={styles.buttonText}>Enviar calificación</Text>
+              <Pressable
+                style={[styles.button, enviando && {opacity: 0.7}]}
+                onPress={handleSubmit}
+                disabled={enviando}
+                accessibilityRole="button">
+                <Text style={styles.buttonText}>{enviando ? 'Enviando…' : 'Enviar calificación'}</Text>
               </Pressable>
             </View>
           </ScrollView>
