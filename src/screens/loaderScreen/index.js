@@ -6,6 +6,7 @@ import { useValues } from '../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import api from '../../../axiosInstance';
 import { sanitizeUserInfo } from '../../utils/sanitizeUserInfo';
+import { conModoRecordado } from '../../utils/modoApp';
 
 const LoaderScreen = ({ navigation }) => {
 
@@ -44,16 +45,15 @@ const LoaderScreen = ({ navigation }) => {
             const result = response.data;
 
             if (result.message === "Usuario encontrado") {
+              // Un taller entra en el último modo que usó (taller o conductor).
+              const sesion = await conModoRecordado(sanitizeUserInfo(result.userData));
               try {
-                const jsonValue = JSON.stringify(sanitizeUserInfo(result.userData));
-                await AsyncStorage.setItem('@userInfo', jsonValue);
-
-                goToProfile(result.userData.typeUser, result.userData.status);
+                await AsyncStorage.setItem('@userInfo', JSON.stringify(sesion));
               } catch (e) {
                 // No se pudo guardar (p. ej. disco lleno): se entra igual con
                 // los datos recibidos, sin volver a cargar en bucle.
-                goToProfile(result.userData.typeUser, result.userData.status);
               }
+              goToProfile(sesion.typeUser, sesion.status);
             } else {
               navigation.replace('Login');
             }

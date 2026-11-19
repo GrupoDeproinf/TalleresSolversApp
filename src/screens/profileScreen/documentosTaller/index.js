@@ -23,6 +23,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import api from '../../../../axiosInstance';
 import {C, PrimaryButton, Banner} from '../../../components/registro/ui';
 import {elegirArchivo, archivoABase64} from '../../../components/registro/mediaPicker';
+import {mezclarConModo} from '../../../utils/modoApp';
 
 const DOCS = [
   {key: 'rifIdFiscal', label: 'RIF', help: 'Foto o PDF legible del RIF vigente.', required: true, pdf: true},
@@ -124,7 +125,7 @@ const DocumentosTaller = ({navigation}) => {
       if (actualizado) {
         const raw = await AsyncStorage.getItem('@userInfo');
         const local = raw ? JSON.parse(raw) : {};
-        await AsyncStorage.setItem('@userInfo', JSON.stringify({...local, ...actualizado}));
+        await AsyncStorage.setItem('@userInfo', JSON.stringify(mezclarConModo(local, actualizado)));
         setGuardados(CAMPOS_SERVIDOR.reduce((acc, k) => ({...acc, [k]: urlDe(actualizado[k])}), {}));
         if (nuevos.rifIdFiscal && actualizado.rif_verificacion?.estado) {
           setRifAviso(actualizado.rif_verificacion);

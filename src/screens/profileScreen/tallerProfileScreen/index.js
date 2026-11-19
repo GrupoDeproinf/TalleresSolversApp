@@ -53,6 +53,7 @@ import MapComponent from '../../map'
 import { Dropdown } from 'react-native-element-dropdown';
 import {splitDocumentId} from '../../../utils/documentId';
 import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
+import { olvidarModo } from '../../../utils/modoApp';
 
 
 const TallerProfileScreen = ({ navigation }) => {
@@ -529,6 +530,7 @@ const TallerProfileScreen = ({ navigation }) => {
 
   const CloseSesion = async () => {
     try {
+      await olvidarModo();
       await AsyncStorage.removeItem('@userInfo');
     } catch (error) {
       console.error('Error removing item:', error);

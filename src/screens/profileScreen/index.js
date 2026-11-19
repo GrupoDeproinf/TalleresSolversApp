@@ -19,12 +19,29 @@ import {
   Trash2,
   BarChart3,
   Camera,
+  Repeat,
 } from 'lucide-react-native';
 
 import api from '../../../axiosInstance';
 import {AppText, Banner, Button, Tag, colors, space, radius} from '../../ui';
 import {Avatar, GrupoMenu, FilaMenu, abrirSoporte, confirmarCerrarSesion} from '../../ui/cuenta';
 import {cerrarSesionFirebase} from '../../utils/sesionSegura';
+import {
+  aplicarModo,
+  cambiarModo,
+  enModoConductor,
+  esCuentaTaller,
+  olvidarModo,
+  MODO_CONDUCTOR,
+  MODO_TALLER,
+} from '../../utils/modoApp';
+
+/** Vuelve a armar la app desde la pantalla principal (tras cambiar de modo). */
+const reiniciarEnInicio = navigation => {
+  let raiz = navigation;
+  while (raiz?.getParent?.()) raiz = raiz.getParent();
+  raiz.reset({index: 0, routes: [{name: 'DrawerScreen'}]});
+};
 
 const SOLVERS_WEB_SIGN_IN = 'https://app.solversapp.com/sign-in?redirectUrl=/';
 
@@ -97,7 +114,9 @@ const ProfileScreen = () => {
       const response = await api.post('/usuarios/getUserByUid', {uid: user.uid});
       const userData = response?.data?.userData;
       if (response.status === 200 && userData) {
-        setinfoUser(prev => ({...prev, ...userData}));
+        // Un taller en modo conductor sigue viendo su perfil de conductor.
+        const modo = enModoConductor(user) ? MODO_CONDUCTOR : MODO_TALLER;
+        setinfoUser(prev => ({...prev, ...aplicarModo(userData, modo)}));
         setimagePerfil(userData.image_perfil || '');
         setAvisoPerfil(null);
         setCargado(true);
@@ -128,6 +147,7 @@ const ProfileScreen = () => {
 
   const cerrarSesion = async () => {
     try {
+      await olvidarModo();
       await AsyncStorage.removeItem('@userInfo');
     } catch (error) {
       console.warn('Error removing item:', error);
@@ -177,13 +197,38 @@ const ProfileScreen = () => {
   const esCliente = infoUser.typeUser === 'Cliente';
   const esTaller = infoUser.typeUser === 'Taller';
   const esAdmin = !esCliente && !esTaller;
+  // Taller que está usando la app como conductor (COT-0111).
+  const tallerComoConductor = esCliente && esCuentaTaller(infoUser);
 
-  // Perfil del negocio en una sola pantalla (antes: editor de 7 pasos).
-  const irAEditar = () => navigation.navigate(esTaller ? 'PerfilNegocio' : 'EditProfile');
+  // Perfil del negocio en una sola pantalla (antes: editor de 7 pasos). En
+  // modo conductor los datos de la cuenta son los del negocio: se editan ahí.
+  const irAEditar = () =>
+    navigation.navigate(esTaller || tallerComoConductor ? 'PerfilNegocio' : 'EditProfile');
 
-  const tipoVisible = esCliente ? 'Conductor' : esTaller ? 'Taller' : infoUser.typeUser || 'Administrador';
+  const [cambiandoModo, setCambiandoModo] = useState(false);
+  const pasarAModo = async modo => {
+    if (cambiandoModo) return;
+    setCambiandoModo(true);
+    try {
+      const nueva = await cambiarModo(modo);
+      if (!nueva) throw new Error('sin cuenta de taller');
+      reiniciarEnInicio(navigation);
+    } catch (e) {
+      setCambiandoModo(false);
+      Alert.alert('Solvers', 'No pudimos cambiar de modo. Intenta de nuevo.');
+    }
+  };
+
+  const tipoVisible = tallerComoConductor
+    ? 'Taller · modo conductor'
+    : esCliente
+    ? 'Conductor'
+    : esTaller
+    ? 'Taller'
+    : infoUser.typeUser || 'Administrador';
   const estado = esTaller ? estadoTaller(infoUser) : null;
-  const pendientes = cargado && !esAdmin ? faltantes({...infoUser, image_perfil: imagePerfil}) : [];
+  const pendientes =
+    cargado && !esAdmin && !tallerComoConductor ? faltantes({...infoUser, image_perfil: imagePerfil}) : [];
 
   return (
     <View style={s.pantalla}>
@@ -229,7 +274,7 @@ const ProfileScreen = () => {
           </View>
           {!esAdmin ? (
             <Button
-              title={esTaller ? 'Editar perfil del negocio' : 'Editar mi perfil'}
+              title={esTaller || tallerComoConductor ? 'Editar perfil del negocio' : 'Editar mi perfil'}
               variant="secondary"
               size="m"
               onPress={irAEditar}
@@ -237,6 +282,44 @@ const ProfileScreen = () => {
             />
           ) : null}
         </View>
+
+        {tallerComoConductor ? (
+          <View style={[s.tarjeta, s.modo]}>
+            <AppText variant="subtitle">Estás usando Solvers como conductor</AppText>
+            <AppText variant="caption" color={colors.muted} style={{marginTop: 2}}>
+              Pide servicios y cuida tus vehículos. Tu taller sigue recibiendo solicitudes y
+              avisos.
+            </AppText>
+            <Button
+              title="Volver a mi taller"
+              variant="primary"
+              size="m"
+              icon={Repeat}
+              loading={cambiandoModo}
+              onPress={() => pasarAModo(MODO_TALLER)}
+              style={{marginTop: space.m}}
+            />
+          </View>
+        ) : null}
+
+        {esTaller ? (
+          <View style={[s.tarjeta, s.modo]}>
+            <AppText variant="subtitle">¿También manejas?</AppText>
+            <AppText variant="caption" color={colors.muted} style={{marginTop: 2}}>
+              Usa Solvers como conductor con esta misma cuenta: registra tus vehículos y pide
+              servicios a otros talleres. Vuelves a tu taller con un toque.
+            </AppText>
+            <Button
+              title="Usar Solvers como conductor"
+              variant="secondary"
+              size="m"
+              icon={Repeat}
+              loading={cambiandoModo}
+              onPress={() => pasarAModo(MODO_CONDUCTOR)}
+              style={{marginTop: space.m}}
+            />
+          </View>
+        ) : null}
 
         {avisoPerfil === 'no_encontrada' ? (
           <Banner
@@ -269,7 +352,16 @@ const ProfileScreen = () => {
         {/* ── Menú ── */}
         {esCliente ? (
           <GrupoMenu titulo="Tu cuenta">
-            <FilaMenu icon={User} titulo="Datos personales" ayuda="Nombre, cédula, teléfono y foto" onPress={irAEditar} />
+            <FilaMenu
+              icon={User}
+              titulo={tallerComoConductor ? 'Datos de la cuenta' : 'Datos personales'}
+              ayuda={
+                tallerComoConductor
+                  ? 'Se editan en el perfil de tu negocio'
+                  : 'Nombre, cédula, teléfono y foto'
+              }
+              onPress={irAEditar}
+            />
             <FilaMenu
               icon={Car}
               titulo="Mis vehículos"
@@ -305,12 +397,6 @@ const ProfileScreen = () => {
               ayuda="Estadísticas completas, en el navegador"
               externo
               onPress={abrirPanelWeb}
-            />
-            <FilaMenu
-              icon={Car}
-              titulo="Mis vehículos"
-              ayuda="Si también usas Solvers como conductor"
-              onPress={() => navigation.navigate('VehiclesScreen')}
             />
           </GrupoMenu>
         ) : null}
@@ -375,6 +461,7 @@ const s = StyleSheet.create({
     justifyContent: 'center',
   },
   aviso: {marginTop: space.m},
+  modo: {marginTop: space.m, borderWidth: 1, borderColor: colors.yellow},
 });
 
 export default ProfileScreen;

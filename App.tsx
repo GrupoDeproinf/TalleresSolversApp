@@ -16,7 +16,25 @@ import {
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MyStack from './src/navigation';
-import { navigate } from './src/navigation';
+import { navigate, reiniciarEn } from './src/navigation';
+import { asegurarModoParaAviso } from './src/utils/modoApp';
+
+// Abre la pantalla de un aviso. Si el aviso es del otro modo (taller o
+// conductor), la app cambia de modo primero y arma de nuevo las pestañas.
+const abrirAviso = async (secretCode: string | undefined, destino: string, espera = 350) => {
+  const cambio = await asegurarModoParaAviso(
+    String(secretCode || ''),
+    isVehicleBannerSecretCode(secretCode),
+  );
+  if (cambio) {
+    reiniciarEn('DrawerScreen');
+  } else {
+    navigate('DrawerScreen');
+  }
+  setTimeout(() => {
+    navigate(destino);
+  }, cambio ? espera + 250 : espera);
+};
 import { external } from './src/style/external.css';
 import {
   textRTLStyle,
@@ -133,24 +151,15 @@ const App = () => {
         secretCode === 'PropuestaAceptada'
       ) {
         setTimeout(() => {
-          navigate('DrawerScreen');
-          setTimeout(() => {
-            navigate('MisSolicitudes');
-          }, 350);
+          abrirAviso(secretCode, 'MisSolicitudes', 350);
         }, 250);
       } else if (secretCode === 'ActualizarKmVehiculos') {
         setTimeout(() => {
-          navigate('DrawerScreen');
-          setTimeout(() => {
-            navigate('HomeScreen');
-          }, 350);
+          abrirAviso(secretCode, 'HomeScreen', 350);
         }, 250);
       } else if (isVehicleBannerSecretCode(secretCode)) {
         setTimeout(() => {
-          navigate('DrawerScreen');
-          setTimeout(() => {
-            navigate('VehiclesScreen');
-          }, 350);
+          abrirAviso(secretCode, 'VehiclesScreen', 350);
         }, 250);
       }
     });
@@ -165,24 +174,15 @@ const App = () => {
           secretCode === 'PropuestaAceptada'
         ) {
           setTimeout(() => {
-            navigate('DrawerScreen');
-            setTimeout(() => {
-              navigate('MisSolicitudes');
-            }, 450);
+            abrirAviso(secretCode, 'MisSolicitudes', 450);
           }, 400);
         } else if (secretCode === 'ActualizarKmVehiculos') {
           setTimeout(() => {
-            navigate('DrawerScreen');
-            setTimeout(() => {
-              navigate('HomeScreen');
-            }, 450);
+            abrirAviso(secretCode, 'HomeScreen', 450);
           }, 400);
         } else if (isVehicleBannerSecretCode(secretCode)) {
           setTimeout(() => {
-            navigate('DrawerScreen');
-            setTimeout(() => {
-              navigate('VehiclesScreen');
-            }, 450);
+            abrirAviso(secretCode, 'VehiclesScreen', 450);
           }, 400);
         }
       });
@@ -217,6 +217,7 @@ const App = () => {
   });
   const [bannerTargetScreen, setBannerTargetScreen] = useState('MisSolicitudes');
   const nuevaSolicitudTimeoutRef = useRef(null);
+  const bannerCodigoRef = useRef<string | undefined>(undefined);
   const bannerTranslateY = useRef(new Animated.Value(-140)).current;
 
   useEffect(() => {
@@ -373,7 +374,7 @@ const App = () => {
 
     console.log("remoteMessage", remoteMessage)
 
-    console.log(remoteMessage.data.secretCode)
+    bannerCodigoRef.current = remoteMessage?.data?.secretCode;
     if (remoteMessage.data.secretCode == "Aprovado Taller") {
       const alertData = alert({
         type: DropdownAlertType.Success,
@@ -649,10 +650,7 @@ const App = () => {
               if (nuevaSolicitudTimeoutRef.current) {
                 clearTimeout(nuevaSolicitudTimeoutRef.current);
               }
-              navigate('DrawerScreen');
-              setTimeout(() => {
-                navigate(bannerTargetScreen);
-              }, 350);
+              abrirAviso(bannerCodigoRef.current, bannerTargetScreen, 350);
             }}
             style={{
               position: 'absolute',

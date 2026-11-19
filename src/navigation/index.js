@@ -82,6 +82,13 @@ export const navigate = (name, params) => {
   }
 };
 
+/** Deja `name` como única pantalla (p. ej. tras cambiar de modo taller/conductor). */
+export const reiniciarEn = (name, params) => {
+  if (navigationRef.isReady()) {
+    navigationRef.reset({index: 0, routes: [{name, params}]});
+  }
+};
+
 const MyStack = () => {
   usePushEffect(() => setupPushDeepLinks(), []);
   // const [initialScreen, setInitialScreen] = useState();

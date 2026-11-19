@@ -38,6 +38,7 @@ import firebase from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
 import {abrirSesionFirebase} from '../../../utils/sesionSegura';
 import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
+import { olvidarModo } from '../../../utils/modoApp';
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -412,6 +413,8 @@ const SignIn = ({navigation}) => {
                 ...userData,
               }),
             );
+            // Cada inicio de sesión empieza en el modo propio de la cuenta.
+            await olvidarModo();
             await AsyncStorage.setItem('@userInfo', jsonValue);
           } catch (e) {
             console.log(e);

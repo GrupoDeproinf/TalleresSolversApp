@@ -37,6 +37,7 @@ import {BottomSheet} from '../../../ui';
 import {Avatar} from '../../../ui/cuenta';
 import {splitDocumentId} from '../../../utils/documentId';
 import {sanitizeUserInfo} from '../../../utils/sanitizeUserInfo';
+import {esCuentaTaller} from '../../../utils/modoApp';
 
 const ESTADOS = [
   'Amazonas', 'Anzoátegui', 'Apure', 'Aragua', 'Barinas', 'Bolívar', 'Carabobo',
@@ -86,8 +87,9 @@ const EditProfile = ({navigation}) => {
     try {
       const raw = await AsyncStorage.getItem('@userInfo');
       const local = raw ? JSON.parse(raw) : {};
-      if (local?.typeUser === 'Taller') {
-        // El negocio tiene su propia pantalla.
+      if (esCuentaTaller(local)) {
+        // El negocio tiene su propia pantalla (también en modo conductor: los
+        // datos de la cuenta son los del negocio).
         navigation.replace('PerfilNegocio');
         return;
       }
