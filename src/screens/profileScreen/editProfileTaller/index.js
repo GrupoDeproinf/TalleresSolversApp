@@ -8,6 +8,7 @@ import { useValues } from '../../../../App';
 import TallerEditStepper from '../editProfile/TallerEditStepper';
 import epStyles from '../editProfile/style.css';
 import {splitDocumentId} from '../../../utils/documentId';
+import {mezclarConModo} from '../../../utils/modoApp';
 
 const DARK_BLUE = '#1F2344';
 const YELLOW = '#FFD60A';
@@ -359,12 +360,11 @@ const TallerEditProfileScreen = ({ navigation }) => {
         try {
           const existing = await AsyncStorage.getItem('@userInfo');
           const prev = existing ? JSON.parse(existing) : {};
-          const merged = {
-            ...prev,
+          const merged = mezclarConModo(prev, {
             ...infoUserCreated,
             uid: uidUserConnected,
             typeUser: 'Taller',
-          };
+          });
           await AsyncStorage.setItem('@userInfo', JSON.stringify(merged));
         } catch (e) {
           console.error('Error al guardar en AsyncStorage:', e);

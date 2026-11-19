@@ -6,6 +6,7 @@ import messaging from '@react-native-firebase/messaging';
 import api from '../../axiosInstance';
 import {sanitizeUserInfo} from './sanitizeUserInfo';
 import {abrirSesionFirebase} from './sesionSegura';
+import {olvidarModo} from './modoApp';
 
 export const obtenerTokenPushSeguro = async () => {
   try {
@@ -35,6 +36,7 @@ export const iniciarSesionTrasRegistro = async (email, password) => {
     throw new Error('Respuesta de inicio de sesión sin usuario');
   }
   await abrirSesionFirebase(response?.data?.customToken);
+  await olvidarModo();
   await AsyncStorage.setItem('@userInfo', JSON.stringify(sanitizeUserInfo(userData)));
   return userData;
 };

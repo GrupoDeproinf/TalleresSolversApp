@@ -16,24 +16,35 @@ import {
 } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import MyStack from './src/navigation';
-import { navigate, reiniciarEn } from './src/navigation';
+import { navigate, navigationRef, reiniciarEn } from './src/navigation';
 import { asegurarModoParaAviso } from './src/utils/modoApp';
 
 // Abre la pantalla de un aviso. Si el aviso es del otro modo (taller o
 // conductor), la app cambia de modo primero y arma de nuevo las pestañas.
+// Solo cuenta el último aviso tocado: si llega otro, el anterior se descarta.
+let avisoVigente = 0;
+const esperar = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const esperarNavegacion = async () => {
+  for (let i = 0; i < 50 && !navigationRef.isReady(); i += 1) {
+    await esperar(100);
+  }
+  return navigationRef.isReady();
+};
 const abrirAviso = async (secretCode: string | undefined, destino: string, espera = 350) => {
+  const mio = ++avisoVigente;
   const cambio = await asegurarModoParaAviso(
     String(secretCode || ''),
     isVehicleBannerSecretCode(secretCode),
   );
+  if (!(await esperarNavegacion()) || mio !== avisoVigente) return;
   if (cambio) {
     reiniciarEn('DrawerScreen');
   } else {
     navigate('DrawerScreen');
   }
-  setTimeout(() => {
-    navigate(destino);
-  }, cambio ? espera + 250 : espera);
+  await esperar(cambio ? espera + 250 : espera);
+  if (mio !== avisoVigente) return;
+  navigate(destino);
 };
 import { external } from './src/style/external.css';
 import {

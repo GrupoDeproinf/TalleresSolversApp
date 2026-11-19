@@ -4,6 +4,9 @@
 // sesión. El modo elegido se guarda en el teléfono ('@modoApp') y se recuerda
 // al abrir la app.
 //
+// El modo se guarda junto con el uid de la cuenta: otra cuenta de taller que
+// entre en el mismo teléfono empieza siempre en modo taller.
+//
 // Cómo funciona: en modo conductor, la sesión guardada ('@userInfo') lleva
 // typeUser 'Cliente' y cuentaTaller: true. Así todas las pantallas que ya
 // deciden por typeUser muestran la experiencia de conductor sin tocarlas. En
@@ -34,17 +37,21 @@ export const aplicarModo = (user, modo) => {
   return modo === MODO_CONDUCTOR ? {...base, typeUser: 'Cliente'} : base;
 };
 
-export const leerModo = async () => {
+const uidDe = user => String(user?.uid ?? user?.id ?? '');
+
+/** Modo recordado para esa cuenta (taller si no hay o es de otra cuenta). */
+export const leerModo = async uid => {
   try {
-    const m = await AsyncStorage.getItem(CLAVE_MODO);
-    return m === MODO_CONDUCTOR ? MODO_CONDUCTOR : MODO_TALLER;
+    const raw = await AsyncStorage.getItem(CLAVE_MODO);
+    const r = raw ? JSON.parse(raw) : null;
+    return r && r.modo === MODO_CONDUCTOR && uid && r.uid === String(uid) ? MODO_CONDUCTOR : MODO_TALLER;
   } catch (e) {
     return MODO_TALLER;
   }
 };
 
 /** Aplica el modo recordado a datos frescos del servidor. */
-export const conModoRecordado = async user => aplicarModo(user, await leerModo());
+export const conModoRecordado = async user => aplicarModo(user, await leerModo(uidDe(user)));
 
 /**
  * Cambia de modo: guarda la elección y reescribe la sesión. Devuelve la sesión
@@ -56,7 +63,10 @@ export const cambiarModo = async modo => {
   if (!esCuentaTaller(user)) return null;
   const nuevo = aplicarModo(user, modo);
   await AsyncStorage.multiSet([
-    [CLAVE_MODO, modo === MODO_CONDUCTOR ? MODO_CONDUCTOR : MODO_TALLER],
+    [
+      CLAVE_MODO,
+      JSON.stringify({uid: uidDe(user), modo: modo === MODO_CONDUCTOR ? MODO_CONDUCTOR : MODO_TALLER}),
+    ],
     ['@userInfo', JSON.stringify(nuevo)],
   ]);
   return nuevo;

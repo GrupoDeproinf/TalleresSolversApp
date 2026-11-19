@@ -55,6 +55,7 @@ import DatePicker from 'react-native-date-picker';
 import { windowHeight } from '../../themes/appConstant';
 
 import { Dropdown } from 'react-native-element-dropdown';
+import {mezclarConModo} from '../../utils/modoApp';
 
 
 
@@ -583,7 +584,7 @@ const ReportarPago = ({ navigation }) => {
       try {
         const {data} = await api.post('/usuarios/getUserByUid', {uid: user.uid});
         if (data?.userData) {
-          await AsyncStorage.setItem('@userInfo', JSON.stringify(sanitizeUserInfo({...user, ...data.userData})));
+          await AsyncStorage.setItem('@userInfo', JSON.stringify(mezclarConModo(user, sanitizeUserInfo(data.userData))));
           actualizado = true;
         }
       } catch (e) {

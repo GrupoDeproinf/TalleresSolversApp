@@ -996,6 +996,7 @@ const styles = StyleSheet.create({
   },
   escaneoTitle: {fontSize: 16, fontWeight: '800', color: '#1F2344'},
   escaneoText: {fontSize: 13, lineHeight: 18, color: '#374151', marginTop: 2},
+  escaneoNota: {fontSize: 11, lineHeight: 15, color: '#6B7280', marginTop: 4},
   escaneoBotones: {flexDirection: 'row', marginTop: 12},
   escaneoBtn: {
     flex: 1,
@@ -1339,6 +1340,9 @@ const VehicleAddStepper = () => {
 
   // ── Escanear el certificado de circulación: la foto llena el formulario ──
   const [escaneo, setEscaneo] = useState({estado: 'inactivo', mensaje: ''});
+  // Formulario al día: la lectura tarda y el conductor puede seguir escribiendo.
+  const formRef = useRef(form);
+  formRef.current = form;
   const escaneandoRef = useRef(false);
   const sinAcentos = v =>
     String(v || '')
@@ -1351,41 +1355,39 @@ const VehicleAddStepper = () => {
   // la lista de datos que se llenaron.
   const mezclarDatosLeidos = (prev, datos, foto) => {
     const llenados = [];
-    {
-      const next = {...prev};
-      const poner = (clave, valor, etiqueta) => {
-        if (valor == null || String(valor).trim() === '') return;
-        if (String(prev[clave] || '').trim() !== '') return; // no pisa lo que ya escribió
-        next[clave] = String(valor);
-        llenados.push(etiqueta);
-      };
-      poner('vehiculo_placa', datos.placa, 'placa');
-      poner('vehiculo_marca', datos.marca, 'marca');
-      poner('vehiculo_modelo', datos.modelo, 'modelo');
-      poner('vehiculo_anio', datos.anio, 'año');
-      poner('vehiculo_color', datos.color, 'color');
-      if (datos.tipo && !String(prev.uid_tipo_vehiculo || '').trim()) {
-        const opciones = tipoVehiculoOptions.length
-          ? tipoVehiculoOptions
-          : TIPO_VEHICULO_OPTIONS_FALLBACK;
-        const op = opciones.find(o => sinAcentos(o?.label) === sinAcentos(datos.tipo));
-        if (op) {
-          next.uid_tipo_vehiculo = String(op.value ?? '');
-          next.tipo_vehiculo = String(op.label ?? '');
-          llenados.push('tipo');
-        }
+    const next = {...prev};
+    const poner = (clave, valor, etiqueta) => {
+      if (valor == null || String(valor).trim() === '') return;
+      if (String(prev[clave] || '').trim() !== '') return; // no pisa lo que ya escribió
+      next[clave] = String(valor);
+      llenados.push(etiqueta);
+    };
+    poner('vehiculo_placa', datos.placa, 'placa');
+    poner('vehiculo_marca', datos.marca, 'marca');
+    poner('vehiculo_modelo', datos.modelo, 'modelo');
+    poner('vehiculo_anio', datos.anio, 'año');
+    poner('vehiculo_color', datos.color, 'color');
+    if (datos.tipo && !String(prev.uid_tipo_vehiculo || '').trim()) {
+      const opciones = tipoVehiculoOptions.length
+        ? tipoVehiculoOptions
+        : TIPO_VEHICULO_OPTIONS_FALLBACK;
+      const op = opciones.find(o => sinAcentos(o?.label) === sinAcentos(datos.tipo));
+      if (op) {
+        next.uid_tipo_vehiculo = String(op.value ?? '');
+        next.tipo_vehiculo = String(op.label ?? '');
+        llenados.push('tipo');
       }
-      // La misma foto queda como frente del certificado de circulación.
-      if (
-        datos.documento === 'certificado_circulacion' &&
-        foto?.uri &&
-        !String(prev.doc_circ_frente_uri || '').trim()
-      ) {
-        next.doc_circ_frente_uri = foto.uri;
-        next.doc_circ_frente_b64 = foto.base64 || '';
-      }
-      return {next, llenados};
     }
+    // La misma foto queda como frente del certificado de circulación.
+    if (
+      datos.documento === 'certificado_circulacion' &&
+      foto?.uri &&
+      !String(prev.doc_circ_frente_uri || '').trim()
+    ) {
+      next.doc_circ_frente_uri = foto.uri;
+      next.doc_circ_frente_b64 = foto.base64 || '';
+    }
+    return {next, llenados};
   };
 
   const leerDocumento = async asset => {
@@ -1402,9 +1404,10 @@ const VehicleAddStepper = () => {
         {timeout: 60000},
       );
       const datos = data?.datos || {};
-      const {llenados} = mezclarDatosLeidos(form, datos, asset);
+      const actual = formRef.current;
+      const {llenados, next} = mezclarDatosLeidos(actual, datos, asset);
       editarForm(prev => mezclarDatosLeidos(prev, datos, asset).next);
-      const faltaKm = !String(form.KM || '').trim();
+      const faltaKm = !String(next.KM || '').trim();
       setEscaneo({
         estado: 'listo',
         mensaje: llenados.length
@@ -1941,6 +1944,9 @@ const VehicleAddStepper = () => {
                   <Text style={styles.escaneoText}>
                     Tómale foto al certificado de circulación y llenamos placa, marca, modelo, año y
                     color por ti.
+                  </Text>
+                  <Text style={styles.escaneoNota}>
+                    La foto la lee un servicio de inteligencia artificial solo para sacar estos datos.
                   </Text>
                 </View>
               </View>
