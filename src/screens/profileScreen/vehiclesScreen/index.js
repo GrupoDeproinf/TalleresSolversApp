@@ -35,6 +35,8 @@ import DatePicker from 'react-native-date-picker';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
 import DocumentPicker from 'react-native-document-picker';
 import IconsIon from 'react-native-vector-icons/Ionicons';
+// Los vencimientos se leen del documento: se escriben (el calendario queda como opción).
+import FechaInput from '../../../ui/FechaInput';
 
 const getVehicleKey = item =>
   String(item?.id ?? item?.uid ?? item?.vehiculo_uid ?? '').trim();
@@ -1361,39 +1363,25 @@ const VehiclesScreen = () => {
                 <View style={styles.driverDocsSection}>
                   <Text style={styles.driverDocsSectionTitle}>Licencia de conducir</Text>
                   <Text style={[styles.driverDocsLabel, {marginTop: 4}]}>Vencimiento *</Text>
-                  <TouchableOpacity
-                    style={styles.driverDocsDateBtn}
-                    onPress={() => openDriverDocsDatePicker('licencia_vencimiento')}
-                    activeOpacity={0.85}>
-                    <Text
-                      style={[
-                        styles.driverDocsDateText,
-                        !driverDocsForm.licencia_vencimiento &&
-                          styles.driverDocsDatePlaceholder,
-                      ]}>
-                      {formatDriverDocDate(driverDocsForm.licencia_vencimiento) ||
-                        'Toca para elegir fecha'}
-                    </Text>
-                  </TouchableOpacity>
+                  <FechaInput
+                    value={driverDocsForm.licencia_vencimiento}
+                    onChange={d => setDriverDocsForm(prev => ({...prev, licencia_vencimiento: d}))}
+                    onOpenCalendar={() => openDriverDocsDatePicker('licencia_vencimiento')}
+                    minYear={2000}
+                    accessibilityLabel="Vencimiento de la licencia"
+                  />
                 </View>
 
                 <View style={styles.driverDocsSection}>
                   <Text style={styles.driverDocsSectionTitle}>Certificado médico</Text>
                   <Text style={[styles.driverDocsLabel, {marginTop: 4}]}>Vencimiento *</Text>
-                  <TouchableOpacity
-                    style={styles.driverDocsDateBtn}
-                    onPress={() => openDriverDocsDatePicker('cert_med_vencimiento')}
-                    activeOpacity={0.85}>
-                    <Text
-                      style={[
-                        styles.driverDocsDateText,
-                        !driverDocsForm.cert_med_vencimiento &&
-                          styles.driverDocsDatePlaceholder,
-                      ]}>
-                      {formatDriverDocDate(driverDocsForm.cert_med_vencimiento) ||
-                        'Toca para elegir fecha'}
-                    </Text>
-                  </TouchableOpacity>
+                  <FechaInput
+                    value={driverDocsForm.cert_med_vencimiento}
+                    onChange={d => setDriverDocsForm(prev => ({...prev, cert_med_vencimiento: d}))}
+                    onOpenCalendar={() => openDriverDocsDatePicker('cert_med_vencimiento')}
+                    minYear={2000}
+                    accessibilityLabel="Vencimiento del certificado médico"
+                  />
                 </View>
 
                 <View style={styles.driverDocsInfoBox}>

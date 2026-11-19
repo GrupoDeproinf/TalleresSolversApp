@@ -31,6 +31,8 @@ import appColors from '../../../../themes/appColors';
 import api from '../../../../../axiosInstance';
 import vehicleFormStyles from '../VehicleFormModal/style.css';
 import BooleanPillToggle from '../BooleanPillToggle';
+// Los vencimientos se leen del documento: se escriben (el calendario queda como opción).
+import FechaInput from '../../../../ui/FechaInput';
 
 const TIPO_VEHICULO_OPTIONS_FALLBACK = [
   {label: 'Automóvil', value: 'Automóvil'},
@@ -2439,18 +2441,13 @@ const VehicleAddStepper = () => {
                   </View>
                 </View>
                 <Text style={[styles.docPhotoLabel, {marginTop: 4}]}>Vencimiento del RCV</Text>
-                <TouchableOpacity
-                  style={styles.docDateBtn}
-                  onPress={() => openDatePicker('doc_rcv_vencimiento')}
-                  activeOpacity={0.85}>
-                  <Text
-                    style={[
-                      styles.docDateBtnText,
-                      !form.doc_rcv_vencimiento && styles.docDatePlaceholder,
-                    ]}>
-                    {formatDateDisplay(form.doc_rcv_vencimiento) || 'Toca para elegir fecha'}
-                  </Text>
-                </TouchableOpacity>
+                <FechaInput
+                  value={form.doc_rcv_vencimiento}
+                  onChange={d => updateField('doc_rcv_vencimiento', d)}
+                  onOpenCalendar={() => openDatePicker('doc_rcv_vencimiento')}
+                  minYear={2000}
+                  accessibilityLabel="Vencimiento del RCV"
+                />
               </View>
 
               <View style={[styles.docBlock, styles.docBlockLast]}>
@@ -2477,18 +2474,13 @@ const VehicleAddStepper = () => {
                 <Text style={[styles.docPhotoLabel, {marginTop: 4}]}>
                   Vencimiento del trimestre
                 </Text>
-                <TouchableOpacity
-                  style={styles.docDateBtn}
-                  onPress={() => openDatePicker('doc_trim_vencimiento')}
-                  activeOpacity={0.85}>
-                  <Text
-                    style={[
-                      styles.docDateBtnText,
-                      !form.doc_trim_vencimiento && styles.docDatePlaceholder,
-                    ]}>
-                    {formatDateDisplay(form.doc_trim_vencimiento) || 'Toca para elegir fecha'}
-                  </Text>
-                </TouchableOpacity>
+                <FechaInput
+                  value={form.doc_trim_vencimiento}
+                  onChange={d => updateField('doc_trim_vencimiento', d)}
+                  onOpenCalendar={() => openDatePicker('doc_trim_vencimiento')}
+                  minYear={2000}
+                  accessibilityLabel="Vencimiento del trimestre"
+                />
               </View>
             </View>
           ) : null}
