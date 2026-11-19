@@ -742,7 +742,7 @@ const VehiclesScreen = () => {
     } catch (err) {
       const errorMsg =
         err?.response?.data?.message ??
-        err?.message ??
+        (err?.response ? null : 'No hay conexión. Revisa tu internet e intenta de nuevo.') ??
         'No se pudieron guardar los documentos. Verifica tu conexión o el servicio.';
       Alert.alert('Error', errorMsg);
     } finally {
@@ -777,7 +777,7 @@ const VehiclesScreen = () => {
         [{ text: 'Entendido' }]
       );
     } catch (err) {
-      const errorMsg = err?.response?.data?.message ?? err?.message ?? 'No se pudo guardar el vehículo. Intenta de nuevo.';
+      const errorMsg = err?.response?.data?.message ?? (err?.response ? null : 'No hay conexión. Revisa tu internet e intenta de nuevo.') ?? 'No se pudo guardar el vehículo. Intenta de nuevo.';
       Alert.alert('Error', errorMsg);
     }
   };

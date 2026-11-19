@@ -790,7 +790,7 @@ const VehicleMaintenanceScreen = () => {
     } catch (err) {
       const msg =
         err?.response?.data?.message ??
-        err?.message ??
+        (err?.response ? null : 'No hay conexión. Revisa tu internet e intenta de nuevo.') ??
         'No se pudo guardar. Intenta de nuevo.';
       Alert.alert('Error', String(msg));
     } finally {

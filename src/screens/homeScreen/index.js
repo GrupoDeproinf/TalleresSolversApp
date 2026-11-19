@@ -331,7 +331,7 @@ const HomeScreen = () => {
     } catch (err) {
       const msg =
         err?.response?.data?.message ??
-        err?.message ??
+        (err?.response ? null : 'No hay conexión. Revisa tu internet e intenta de nuevo.') ??
         'No se pudo guardar. Intenta de nuevo.';
       showAppAlert('Error', String(msg));
     } finally {

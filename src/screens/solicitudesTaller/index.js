@@ -202,8 +202,26 @@ const formatVehiculoValue = (value, suffix = '') => {
   return suffix ? `${value}${suffix}` : String(value);
 };
 
+/** Coordenadas reales (un campo vacío no es el punto 0,0). */
+const coordenadaValida = (lat, lng) => {
+  if ([lat, lng].some(v => v == null || String(v).trim() === '')) return false;
+  const la = Number(lat);
+  const lo = Number(lng);
+  return Number.isFinite(la) && Number.isFinite(lo) && Math.abs(la) <= 90 && Math.abs(lo) <= 180 && !(la === 0 && lo === 0);
+};
+
+/** Mensaje para el taller: el del servidor si lo hay, si no uno claro en español. */
+const mensajeDeError = (e, porDefecto) => {
+  if (!e?.response) {
+    return 'No pudimos conectarnos. Revisa tu internet e intenta de nuevo.';
+  }
+  const d = e.response.data;
+  const delServidor = typeof d === 'string' ? '' : d?.error || d?.message || '';
+  return delServidor && delServidor.length < 160 ? delServidor : porDefecto;
+};
+
 const FILTERS = [
-  { key: 'todas', label: 'Todas' },
+  { key: 'todas', label: 'Por responder' },
   { key: 'aceptadas', label: 'Aceptadas' },
   { key: 'presupuestadas', label: 'Cotizadas' },
   { key: 'inspeccion_previa', label: 'Inspección' },
@@ -231,6 +249,8 @@ const SolicitudesTallerScreen = () => {
   const [serviciosEnEspera, setServiciosEnEspera] = useState([]);
   const [serviciosEnEsperaRaw, setServiciosEnEsperaRaw] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [errorCuenta, setErrorCuenta] = useState('');
+  const pedidoRef = useRef(0);
   const [error, setError] = useState('');
   const [confirmInspeccionVisible, setConfirmInspeccionVisible] = useState(false);
   const [inspeccionMotivo, setInspeccionMotivo] = useState('');
@@ -310,6 +330,8 @@ const SolicitudesTallerScreen = () => {
   }, []);
 
   const loadSolicitudes = useCallback(async () => {
+    // Solo la última carga pinta la lista (cambiar de filtro rápido no mezcla datos).
+    const mio = ++pedidoRef.current;
     try {
       setLoading(true);
       setError('');
@@ -322,11 +344,11 @@ const SolicitudesTallerScreen = () => {
         return;
       }
 
-      console.log("uid- status- en espera", uid, STATUS_EN_ESPERA);
       const response = await api.post('usuarios/getSolicitudesByUsuarioAndStatus', {
         uid_taller: uid,
         status: STATUS_EN_ESPERA,
       });
+      if (mio !== pedidoRef.current) return;
       const data = Array.isArray(response.data) ? response.data : [];
       const sortedData = attachDistanceAndSort(data, userLocation);
       const hasUserLoc =
@@ -347,12 +369,13 @@ const SolicitudesTallerScreen = () => {
       setServiciosEnEspera(filteredData.map(mapItemToServicio));
       setServiciosEnEsperaRaw(filteredData);
     } catch (e) {
+      if (mio !== pedidoRef.current) return;
       setServicios([]);
       setServiciosEnEspera([]);
       setServiciosEnEsperaRaw([]);
       setError('No se pudieron cargar las solicitudes. Intenta de nuevo.');
     } finally {
-      setLoading(false);
+      if (mio === pedidoRef.current) setLoading(false);
     }
   }, [attachDistanceAndSort, userLocation]);
 
@@ -366,6 +389,7 @@ const SolicitudesTallerScreen = () => {
   const loadPropuestasByStatus = useCallback(async filterKey => {
     const status = statusByFilter[filterKey];
     if (!status) return;
+    const mio = ++pedidoRef.current;
     try {
       setLoading(true);
       setError('');
@@ -384,17 +408,18 @@ const SolicitudesTallerScreen = () => {
         uid_taller: uid,
         status,
       });
+      if (mio !== pedidoRef.current) return;
       const data = Array.isArray(response.data) ? response.data : [];
-      console.log("data", data);
       const sortedData = attachDistanceAndSort(data, userLocation);
       setServicios(sortedData.map(mapItemToServicio));
       setServiciosRaw(sortedData);
     } catch (e) {
+      if (mio !== pedidoRef.current) return;
       setServicios([]);
       setServiciosRaw([]);
       setError('No se pudieron cargar las propuestas. Intenta de nuevo.');
     } finally {
-      setLoading(false);
+      if (mio === pedidoRef.current) setLoading(false);
     }
   }, [attachDistanceAndSort, userLocation]);
 
@@ -448,6 +473,7 @@ const SolicitudesTallerScreen = () => {
         }
         const res = await api.post('usuarios/getUserByUid', {uid});
         if (isDead()) return;
+        setErrorCuenta('');
 
         const userRow = flattenUserDataFromGetUserResponse(res?.data ?? {});
         const gate = getTallerSolicitudesAccess(userRow);
@@ -478,10 +504,12 @@ const SolicitudesTallerScreen = () => {
         } else {
           await loadSolicitudes();
         }
-      } catch {
+      } catch (e) {
         if (!isDead()) {
-          setTallerCuentaAprobada(false);
-          setSolicitudesBloqueoMotivo('cuenta_pendiente');
+          // Sin conexión no se sabe si la cuenta está activa: no se afirma que no lo está.
+          setTallerCuentaAprobada(null);
+          setSolicitudesBloqueoMotivo(null);
+          setErrorCuenta(mensajeDeError(e, 'No pudimos comprobar tu cuenta. Intenta de nuevo.'));
           setLoading(false);
           setError('');
           setServicios([]);
@@ -615,18 +643,20 @@ const SolicitudesTallerScreen = () => {
         comentario: (comentario || '').trim(),
       }, userInfo);
 
-      console.log('body1234567890', body);
-
-
 
       await api.post('usuarios/savePropuesta', body);
-      closeCotizacionModal();
+      // closeCotizacionModal() no cierra mientras se envía: se cierra aquí.
+      setLoadingCotizacion(false);
+      setCotizacionModalVisible(false);
+      setPrecioEstimado('');
+      setTiempoEstimado('');
+      setTiempoEstimadoOtro('');
+      setComentario('');
       handleCloseModal();
       handleRefresh();
-      Alert.alert('Cotización enviada', 'Tu cotización ha sido enviada al cliente.');
+      Alert.alert('Cotización enviada', 'Le enviamos tu cotización al conductor.');
     } catch (e) {
-      const msg = e?.response?.data?.message || e?.message || 'No se pudo enviar la cotización.';
-      Alert.alert('Error', msg);
+      Alert.alert('No se envió', mensajeDeError(e, 'No pudimos enviar la cotización. Intenta de nuevo.'));
     } finally {
       setLoadingCotizacion(false);
     }
@@ -681,7 +711,6 @@ const SolicitudesTallerScreen = () => {
         {comentario: motivo},
         userInfo,
       );
-      console.log('body1234567890', body);
       await api.post('usuarios/savePropuesta', body);
       setInspeccionMotivo('');
       setConfirmInspeccionVisible(false);
@@ -689,8 +718,7 @@ const SolicitudesTallerScreen = () => {
       handleRefresh();
       Alert.alert('Inspección solicitada', 'Se ha solicitado la inspección previa para esta solicitud.');
     } catch (e) {
-      const msg = e?.response?.data?.message || e?.message || 'No se pudo completar la acción.';
-      Alert.alert('Error', msg);
+      Alert.alert('No se completó', mensajeDeError(e, 'No pudimos completar la acción. Intenta de nuevo.'));
     } finally {
       setLoadingInspeccion(false);
     }
@@ -708,15 +736,13 @@ const SolicitudesTallerScreen = () => {
       const userInfoStr = await AsyncStorage.getItem('@userInfo');
       const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null;
       const body = buildSavePropuestaBody(rawItem, 'Rechazada', null, userInfo);
-      console.log('body1234567890', body);
       await api.post('usuarios/savePropuesta', body);
       setConfirmRechazarVisible(false);
       handleCloseModal();
       handleRefresh();
       Alert.alert('Solicitud rechazada', 'La solicitud ha sido rechazada.');
     } catch (e) {
-      const msg = e?.response?.data?.message || e?.message || 'No se pudo completar la acción.';
-      Alert.alert('Error', msg);
+      Alert.alert('No se completó', mensajeDeError(e, 'No pudimos completar la acción. Intenta de nuevo.'));
     } finally {
       setLoadingRechazar(false);
     }
@@ -756,6 +782,16 @@ const SolicitudesTallerScreen = () => {
           )}
         </View>
       </View>
+
+      {tallerCuentaAprobada !== true && errorCuenta ? (
+        <View style={styles.emptyState}>
+          <MaterialCommunityIcons name="wifi-off" size={48} color={appColors.subtitle} />
+          <Text style={styles.emptyTitle}>{errorCuenta}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={handleRefresh} activeOpacity={0.85}>
+            <Text style={styles.retryBtnText}>Reintentar</Text>
+          </TouchableOpacity>
+        </View>
+      ) : null}
 
       {tallerCuentaAprobada === true && (
       <>
@@ -1076,8 +1112,7 @@ const SolicitudesTallerScreen = () => {
                 </View>
 
                 {selectedServicio.status === STATUS_EN_ESPERA &&
-                  Number.isFinite(Number(selectedServicio.latitude)) &&
-                  Number.isFinite(Number(selectedServicio.longitude)) && (
+                  coordenadaValida(selectedServicio.latitude, selectedServicio.longitude) && (
                     <View style={[styles.modalSection, { borderLeftColor: '#059669' }]}>
                       <TouchableOpacity
                         activeOpacity={0.85}
@@ -1139,8 +1174,7 @@ const SolicitudesTallerScreen = () => {
                 {/* Sección: Detalles de la propuesta (si existen los 3 campos) */}
                 {selectedServicio.precio_estimado != null &&
                   selectedServicio.precio_estimado !== '' &&
-                  selectedServicio.tiempo_estimado &&
-                  selectedServicio.comentario && (
+                  !!selectedServicio.tiempo_estimado && (
                     <View style={[styles.modalSection, { borderLeftColor: '#D97706' }]}>
                       <TouchableOpacity
                         activeOpacity={0.85}

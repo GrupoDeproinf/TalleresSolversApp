@@ -579,7 +579,7 @@ const SolicitudServicio = () => {
       setErrorEnvio(
         expiro
           ? 'La conexión tardó demasiado y no sabemos si llegó. Antes de reenviar, revisa en Solicitudes si ya aparece.'
-          : err?.response?.data?.message || 'No pudimos enviar tu solicitud. Revisa tu conexión e inténtalo de nuevo.',
+          : err?.response?.data?.error || err?.response?.data?.message || 'No pudimos enviar tu solicitud. Revisa tu conexión e inténtalo de nuevo.',
       );
     } finally {
       enviandoRef.current = false;
