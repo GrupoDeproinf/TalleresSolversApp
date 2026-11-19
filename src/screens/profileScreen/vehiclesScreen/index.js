@@ -375,18 +375,11 @@ const VehiclesScreen = () => {
       const jsonValue = await AsyncStorage.getItem('@userInfo');
       const user = jsonValue != null ? JSON.parse(jsonValue) : null;
 
-      if (!user) {
-        setVehicles([]);
-        setVehicleNotificationsByUid({});
-        setLoading(false);
-        return;
-      }
-
       const uid = user?.uid || user?.id;
       if (!uid) {
         setVehicles([]);
         setVehicleNotificationsByUid({});
-        setLoading(false);
+        setError('No pudimos identificar tu sesión. Cierra sesión y vuelve a entrar.');
         return;
       }
 
@@ -399,8 +392,7 @@ const VehiclesScreen = () => {
       ]);
 
       const data = vehiclesRes?.data;
-      console.log('Data vehículos:', data);
-      const list = Array.isArray(data) ? data : data?.data ?? [];
+      const list = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
 
       if (userRes?.data) {
         const rawUser = userRes.data;
@@ -419,8 +411,11 @@ const VehiclesScreen = () => {
 
       setVehicles(list);
     } catch (err) {
-      console.error('Error al cargar vehículos:', err);
-      setError(err?.response?.data?.message || err?.message || 'Error al cargar vehículos');
+      setError(
+        err?.response
+          ? 'Intenta de nuevo en un momento.'
+          : 'Revisa tu conexión a internet e intenta de nuevo.',
+      );
       setVehicles([]);
       setVehicleNotificationsByUid({});
     } finally {
@@ -846,7 +841,7 @@ const VehiclesScreen = () => {
 
     Alert.alert(
       'Eliminar vehículo',
-      '¿Seguro que deseas eliminar este vehículo?',
+      `Se borrará ${(selectedVehicle?.vehiculo_placa || 'este vehículo').toUpperCase()} con su mantenimiento y documentos. No podrás recuperarlo.`,
       [
         {text: 'Cancelar', style: 'cancel'},
         {
@@ -861,18 +856,18 @@ const VehiclesScreen = () => {
               const uidvehicle = getVehicleKey(selectedVehicle ?? {});
 
               const payload = {uiduser, uidvehicle};
-              console.log('Payload eliminar vehículo:', payload);
 
               await api.post('usuarios/deleteVehiculo', payload);
               setActionModalVisible(false);
               fetchUserVehicles();
               Alert.alert('Vehículo eliminado', 'El vehículo se eliminó correctamente.');
             } catch (err) {
-              const errorMsg =
-                err?.response?.data?.message ??
-                err?.message ??
-                'No se pudo eliminar el vehículo. Intenta de nuevo.';
-              Alert.alert('Error', errorMsg);
+              Alert.alert(
+                'No se eliminó',
+                err?.response
+                  ? 'No pudimos eliminar el vehículo. Intenta de nuevo en un momento.'
+                  : 'No hay conexión. Revisa tu internet e intenta de nuevo.',
+              );
             } finally {
               setDeleting(false);
             }
@@ -1142,87 +1137,78 @@ const VehiclesScreen = () => {
     </TouchableOpacity>
   );
 
+  const BENEFICIOS_VEHICULO = [
+    {
+      icon: 'oil-can',
+      title: 'Avisos de mantenimiento',
+      text: 'Con tu kilometraje te recordamos el cambio de aceite y otros servicios.',
+    },
+    {
+      icon: 'file-alt',
+      title: 'Documentos al día',
+      text: 'Guarda RCV y trimestres, y te avisamos antes de que venzan.',
+    },
+    {
+      icon: 'tools',
+      title: 'Solicita servicios más rápido',
+      text: 'Los talleres ven los datos de tu carro y te cotizan mejor.',
+    },
+  ];
+
   const renderEmptyList = () => {
     if (loading) return null;
     if (error) {
       return (
-        <View style={styles.emptyStateContainer}>
+        <View style={styles.emptyBody}>
           <View style={styles.emptyIconWrap}>
-            <Icons name="car" size={48} color={appColors?.primary} />
+            <Icons name="exclamation-triangle" size={32} color="#1F2344" />
           </View>
-          <Text style={[styles.emptyText, {color: textColorStyle}]}>
-            {error}
-          </Text>
-          <Text style={[styles.emptySubtext, {color: textColorStyle}]}>
-            Vuelve a intentar más tarde
-          </Text>
+          <Text style={styles.emptyTitle}>No pudimos cargar tus vehículos</Text>
+          <Text style={styles.emptyLead}>{error}</Text>
+          <TouchableOpacity
+            style={styles.emptyPrimaryButton}
+            activeOpacity={0.9}
+            onPress={fetchUserVehicles}
+            accessibilityRole="button">
+            <Text style={styles.emptyPrimaryText}>Reintentar</Text>
+          </TouchableOpacity>
         </View>
       );
     }
 
     return (
-      <View style={styles.emptyStateContainer}>
-        {/* Hero superior */}
-        <View style={styles.emptyHero}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={{ position: 'absolute', top: 14, left: 14, zIndex: 3 }}
-            activeOpacity={0.85}>
-            <View
-              style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: 'rgba(255,214,10,0.14)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-              <ArrowLeft size={20} color="#FFD60A" />
-            </View>
-          </TouchableOpacity>
-
-          <View style={styles.emptyHeroInner}>
-            <Text style={styles.emptyHeroTitle}>
-              Controla tus{"\n"}vehículos
-            </Text>
-            <Text style={styles.emptyHeroSubtitle}>
-              Aquí verás y administrarás los vehículos de tu cuenta. Mantén tu historial al día y actualiza cada detalle cuando lo necesites.
-            </Text>
-          </View>
+      <View style={styles.emptyBody}>
+        <View style={styles.emptyIconWrap}>
+          <Icons name="car" size={38} color="#1F2344" />
         </View>
+        <Text style={styles.emptyTitle}>Agrega tu primer vehículo</Text>
+        <Text style={styles.emptyLead}>
+          Es rápido: solo necesitas la placa, marca, modelo, año y kilometraje.
+        </Text>
 
-        {/* Tarjeta de beneficios */}
         <View style={styles.emptyCard}>
-          <View style={styles.emptyCardItem}>
-            <Icons name="check-circle" size={18} color="#1F2344" />
-            <View style={styles.emptyCardItemTextWrap}>
-              <Text style={styles.emptyCardItemTitle}>Controla tu historial</Text>
-              <Text style={styles.emptyCardItemSubtitle}>Más fácil dar seguimiento</Text>
+          {BENEFICIOS_VEHICULO.map((b, i) => (
+            <View
+              key={b.title}
+              style={[styles.emptyCardItem, i === BENEFICIOS_VEHICULO.length - 1 && {marginBottom: 0}]}>
+              <View style={styles.emptyCardIcon}>
+                <Icons name={b.icon} size={16} color="#1F2344" />
+              </View>
+              <View style={styles.emptyCardItemTextWrap}>
+                <Text style={styles.emptyCardItemTitle}>{b.title}</Text>
+                <Text style={styles.emptyCardItemSubtitle}>{b.text}</Text>
+              </View>
             </View>
-          </View>
-          <View style={styles.emptyCardItem}>
-            <Icons name="check-circle" size={18} color="#1F2344" />
-            <View style={styles.emptyCardItemTextWrap}>
-              <Text style={styles.emptyCardItemTitle}>Todo en un solo lugar</Text>
-              <Text style={styles.emptyCardItemSubtitle}>Acceso rápido a tus datos</Text>
-            </View>
-          </View>
-          <View style={styles.emptyCardItem}>
-            <Icons name="check-circle" size={20} color="#1F2344" />
-            <View style={styles.emptyCardItemTextWrap}>
-              <Text style={styles.emptyCardItemTitle}>Menos tiempo</Text>
-              <Text style={styles.emptyCardItemSubtitle}>Regístralo y listo</Text>
-            </View>
-          </View>
+          ))}
         </View>
 
-        {/* Botón principal */}
         <TouchableOpacity
           style={styles.emptyPrimaryButton}
           activeOpacity={0.9}
-          onPress={handleAddVehicle}>
+          onPress={handleAddVehicle}
+          accessibilityRole="button">
           <View style={styles.emptyPrimaryIconWrap}>
-            <Icons name="plus" size={25} color="#1F2344" />
+            <Icons name="plus" size={18} color="#1F2344" />
           </View>
           <Text style={styles.emptyPrimaryText}>Agregar vehículo</Text>
         </TouchableOpacity>
@@ -1232,33 +1218,33 @@ const VehiclesScreen = () => {
 
   return (
     <View style={[styles.container, {backgroundColor: bgFullStyle}]}>
+      <View style={styles.vehiclesTopHeader}>
+        <View style={styles.vehiclesHeaderCircle1} />
+        <View style={styles.vehiclesHeaderCircle2} />
+        <View style={styles.vehiclesHeaderRow}>
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            style={styles.vehiclesHeaderBackBtn}
+            activeOpacity={0.85}>
+            <ArrowLeft size={20} color="#FFD60A" />
+          </TouchableOpacity>
+          <View style={styles.vehiclesHeaderCenter}>
+            <Text style={styles.vehiclesHeaderTitle}>Mis vehículos</Text>
+            <Text style={styles.vehiclesHeaderSubtitle}>
+              {vehicles.length > 0
+                ? 'Toca un vehículo para ver su mantenimiento y documentos.'
+                : 'Tus carros, sus mantenimientos y documentos en un solo lugar.'}
+            </Text>
+          </View>
+        </View>
+      </View>
+
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={appColors?.primary || '#3A4A85'} />
         </View>
       ) : (
         <>
-          {vehicles.length > 0 ? (
-            <View style={styles.vehiclesTopHeader}>
-              <View style={styles.vehiclesHeaderCircle1} />
-              <View style={styles.vehiclesHeaderCircle2} />
-              <View style={styles.vehiclesHeaderRow}>
-                <TouchableOpacity
-                  onPress={() => navigation.goBack()}
-                  style={styles.vehiclesHeaderBackBtn}
-                  activeOpacity={0.85}>
-                  <ArrowLeft size={20} color="#FFD60A" />
-                </TouchableOpacity>
-                <View style={styles.vehiclesHeaderCenter}>
-                  <Text style={styles.vehiclesHeaderTitle}>Vehículos Asociados</Text>
-                  <Text style={styles.vehiclesHeaderSubtitle}>
-                    Tus vehículos en un solo lugar, fácil de revisar.
-                  </Text>
-                </View>
-              </View>
-            </View>
-          ) : null}
-
           {vehicles.length > 0 ? (
             <TouchableOpacity
               style={styles.driverDocsEntryBanner}

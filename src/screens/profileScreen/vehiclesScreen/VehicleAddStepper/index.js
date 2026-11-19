@@ -975,84 +975,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textAlign: 'center',
   },
-  /** Mismo patrón visual que VehicleMaintenanceScreen (kmHero*) */
-  kmHeroOuter: {
-    marginTop: 12,
-    marginHorizontal: 16,
-    alignItems: 'center',
-    alignSelf: 'stretch',
+  footerHint: {
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#4B5563',
+    textAlign: 'center',
+    marginBottom: 8,
   },
-  kmHeroTouchable: {
-    width: '100%',
-    maxWidth: 420,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1F2344',
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
-    borderWidth: 2,
-    borderColor: '#FFD60A',
-    shadowColor: '#FFD60A',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.32,
-    shadowRadius: 10,
-    elevation: 8,
-  },
-  kmHeroIconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: '#FFD60A',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  kmHeroTextCol: {flex: 1, minWidth: 0},
-  kmHeroLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: 'rgba(255,214,10,0.95)',
-    letterSpacing: 0.6,
-    marginBottom: 4,
-    flexWrap: 'wrap',
-  },
-  kmHeroLabelParen: {
-    fontSize: 9,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.55)',
-    letterSpacing: 0.2,
-  },
-  kmHeroInputRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    minWidth: 0,
-  },
-  kmHeroValueInput: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-    paddingVertical: 0,
-    paddingHorizontal: 0,
-    margin: 0,
-    minHeight: 28,
-  },
-  kmHeroHint: {
-    marginTop: 4,
-    fontSize: 11,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.72)',
-  },
-  kmHeroChevron: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,214,10,0.22)',
-    alignItems: 'center',
-    justifyContent: 'center',
+  fieldHint: {
+    marginTop: 6,
+    fontSize: 12,
+    lineHeight: 16,
+    color: '#6B7280',
   },
   footerCardWrap: {
     paddingHorizontal: 16,
@@ -1114,6 +1048,58 @@ const VehicleAddStepper = () => {
   const [photoModalTarget, setPhotoModalTarget] = useState(null); // { uriKey, b64Key }
 
   const kmInputRef = useRef(null);
+  const placaInputRef = useRef(null);
+  const marcaInputRef = useRef(null);
+  const modeloInputRef = useRef(null);
+  const anioInputRef = useRef(null);
+  // Campo a enfocar cuando el paso 1 esté en pantalla (tras una validación fallida).
+  const [campoPendiente, setCampoPendiente] = useState(null);
+  // true en cuanto el usuario cambia algo: se pide confirmación antes de salir.
+  const tocadoRef = useRef(false);
+  // true tras guardar con éxito: se deja salir sin preguntar.
+  const salidaPermitidaRef = useRef(false);
+  const esEdicion = Boolean(vehicleId || initialValues?.id);
+
+  useEffect(() => {
+    if (step !== 1 || !campoPendiente) return;
+    const refs = {
+      placa: placaInputRef,
+      marca: marcaInputRef,
+      modelo: modeloInputRef,
+      anio: anioInputRef,
+      km: kmInputRef,
+    };
+    const t = setTimeout(() => {
+      refs[campoPendiente]?.current?.focus();
+      setCampoPendiente(null);
+    }, 300);
+    return () => clearTimeout(t);
+  }, [step, campoPendiente]);
+
+  useEffect(() => {
+    const quitar = navigation.addListener('beforeRemove', e => {
+      if (salidaPermitidaRef.current) return;
+      if (guardandoRef.current) {
+        // Mientras se guarda no se sale: se espera la respuesta del servidor.
+        e.preventDefault();
+        return;
+      }
+      if (!tocadoRef.current) return;
+      e.preventDefault();
+      Alert.alert('¿Salir sin guardar?', 'Perderás los datos que escribiste de este vehículo.', [
+        {text: 'Seguir editando', style: 'cancel'},
+        {
+          text: 'Salir',
+          style: 'destructive',
+          onPress: () => {
+            salidaPermitidaRef.current = true;
+            navigation.dispatch(e.data.action);
+          },
+        },
+      ]);
+    });
+    return quitar;
+  }, [navigation]);
 
   useEffect(() => {
     if (step !== 3) {
@@ -1241,6 +1227,7 @@ const VehicleAddStepper = () => {
 
   useEffect(() => {
     setStep(1);
+    tocadoRef.current = false;
     setForm(
       initialValues && typeof initialValues === 'object'
         ? {
@@ -1303,7 +1290,11 @@ const VehicleAddStepper = () => {
     );
   }, [initialValues]);
 
-  const updateField = (key, value) => setForm(prev => ({...prev, [key]: value}));
+  const editarForm = updater => {
+    tocadoRef.current = true;
+    setForm(updater);
+  };
+  const updateField = (key, value) => editarForm(prev => ({...prev, [key]: value}));
 
   const getPressurePair = () => parsePressurePair(form.presion_neumatico);
 
@@ -1359,7 +1350,7 @@ const VehicleAddStepper = () => {
 
   const applyPhotoResult = (target, uri, b64) => {
     if (!target) return;
-    setForm(prev => ({...prev, [target.uriKey]: uri, [target.b64Key]: b64}));
+    editarForm(prev => ({...prev, [target.uriKey]: uri, [target.b64Key]: b64}));
   };
 
   const openPhotoOptions = (uriKey, b64Key) => {
@@ -1426,14 +1417,14 @@ const VehicleAddStepper = () => {
         const uri = asset?.uri;
         const base64 = asset?.base64 ?? '';
         if (uri) {
-          setForm(prev => ({...prev, [uriKey]: uri, [base64Key]: base64}));
+          editarForm(prev => ({...prev, [uriKey]: uri, [base64Key]: base64}));
         }
       },
     );
   };
 
   const clearDocument = (uriKey, base64Key) => {
-    setForm(prev => ({...prev, [uriKey]: '', [base64Key]: ''}));
+    editarForm(prev => ({...prev, [uriKey]: '', [base64Key]: ''}));
   };
 
   const openDocImagePreview = useCallback(uri => {
@@ -1493,23 +1484,38 @@ const VehicleAddStepper = () => {
     );
   };
 
+  // Devuelve true si el paso 1 está completo; si no, avisa qué falta y lleva a esa casilla.
   const validateStep1 = () => {
     const placa = (form.vehiculo_placa || '').trim();
     const marca = (form.vehiculo_marca || '').trim();
     const modelo = (form.vehiculo_modelo || '').trim();
     const anio = (form.vehiculo_anio || '').trim();
     const km = (form.KM || '').trim();
-
-    if (!placa) return Alert.alert('Campo requerido', 'La placa del vehículo es obligatoria.'), false;
-    if (!marca) return Alert.alert('Campo requerido', 'La marca del vehículo es obligatoria.'), false;
-    if (!modelo) return Alert.alert('Campo requerido', 'El modelo del vehículo es obligatorio.'), false;
-    if (!anio) return Alert.alert('Campo requerido', 'El año del vehículo es obligatorio.'), false;
-    const anioNum = parseInt(anio, 10);
     const anioMax = new Date().getFullYear() + 1;
-    if (!(anioNum >= 1950 && anioNum <= anioMax))
-      return Alert.alert('Revisa el año', `Escribe el año con 4 cifras, entre 1950 y ${anioMax}.`), false;
+
+    const avisar = (campo, titulo, texto) => {
+      Alert.alert(titulo, texto, [
+        {
+          text: 'Entendido',
+          onPress: () => {
+            setStep(1);
+            setCampoPendiente(campo);
+          },
+        },
+      ]);
+      return false;
+    };
+
+    if (!placa) return avisar('placa', 'Falta la placa', 'Escribe la placa de tu vehículo.');
+    if (!marca) return avisar('marca', 'Falta la marca', 'Escribe la marca, por ejemplo Toyota.');
+    if (!modelo) return avisar('modelo', 'Falta el modelo', 'Escribe el modelo, por ejemplo Corolla.');
+    if (!anio) return avisar('anio', 'Falta el año', 'Escribe el año de tu vehículo.');
+    if (!/^\d{4}$/.test(anio)) return avisar('anio', 'Revisa el año', 'Escribe el año con 4 cifras.');
+    const anioNum = Number(anio);
+    if (anioNum < 1950 || anioNum > anioMax)
+      return avisar('anio', 'Revisa el año', `Escribe un año entre 1950 y ${anioMax}.`);
     if (!km)
-      return Alert.alert('Campo requerido', 'El kilometraje del vehículo es obligatorio.'), false;
+      return avisar('km', 'Falta el kilometraje', 'Escribe lo que marca hoy el odómetro de tu tablero.');
     return true;
   };
 
@@ -1526,15 +1532,7 @@ const VehicleAddStepper = () => {
     const anio = (form.vehiculo_anio || '').trim();
     const km = (form.KM || '').trim();
 
-    if (!validateStep1()) {
-      setStep(1);
-      return;
-    }
-    if (!placa || !marca || !modelo || !anio || !km) {
-      Alert.alert('Faltan datos', 'Completa la información del vehículo en el Paso 1.');
-      setStep(1);
-      return;
-    }
+    if (!validateStep1()) return;
 
     let uiduser = '';
     try {
@@ -1653,7 +1651,12 @@ const VehicleAddStepper = () => {
     setSaving(true);
     try {
       await api.post('usuarios/saveOrUpdateVehiculo', payload);
-      Alert.alert('¡Listo!', 'Tu vehículo se guardó correctamente.', [{text: 'Entendido'}]);
+      salidaPermitidaRef.current = true;
+      Alert.alert(
+        '¡Listo!',
+        esEdicion ? 'Los cambios se guardaron.' : 'Tu vehículo se guardó correctamente.',
+        [{text: 'Entendido'}],
+      );
       navigation.goBack();
     } catch (err) {
       // Sin conexión axios dice "Network Error": se explica en español.
@@ -1677,10 +1680,12 @@ const VehicleAddStepper = () => {
         <TouchableOpacity
           onPress={() => navigation.goBack()}
           style={styles.backBtnCircle}
-          activeOpacity={0.85}>
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Volver">
           <ArrowLeft size={20} color="#FFD60A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Agregar vehículo</Text>
+        <Text style={styles.headerTitle}>{esEdicion ? 'Editar vehículo' : 'Agregar vehículo'}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -1740,57 +1745,22 @@ const VehicleAddStepper = () => {
             </View>
             <View style={styles.progressWrap}>
               <View style={styles.progressTrack}>
-                <View style={[styles.progressFill, {width: `${progressPercentage}%`}]} />
+                <View style={[styles.progressFill, {width: `${Math.round((step / 3) * 100)}%`}]} />
               </View>
-              <Text style={styles.progressText}>{progressPercentage}% completado</Text>
+              <Text style={styles.progressText}>
+                Paso {step} de 3{step > 1 ? ' · opcional' : ''}
+              </Text>
             </View>
           </View>
 
           <View style={styles.tipsCard}>
             <Text style={styles.tipsTitle}>Estos datos se usarán para tus alertas</Text>
             <Text style={styles.tipsSubtitle}>
-              Primero el kilometraje (mismo aviso que en mantenimientos), luego placa, marca, modelo
-              y año. El resto es opcional y podrás completarlo después.
+              Placa, marca, modelo, año y kilometraje son obligatorios. El resto es opcional y podrás
+              completarlo después.
             </Text>
           </View>
 
-          {step === 1 ? (
-            <View style={styles.kmHeroOuter}>
-              <View style={styles.kmHeroTouchable}>
-                <View style={styles.kmHeroIconWrap}>
-                  <IconsFA5 name="tachometer-alt" size={22} color="#1F2344" />
-                </View>
-                <View style={styles.kmHeroTextCol}>
-                  <Text style={styles.kmHeroLabel}>
-                    KILOMETRAJE ACTUAL{' '}
-                    <Text style={styles.kmHeroLabelParen}>(toca para modificar)</Text>
-                  </Text>
-                  <View style={styles.kmHeroInputRow}>
-                    <TextInput
-                      ref={kmInputRef}
-                      style={styles.kmHeroValueInput}
-                      value={form.KM}
-                      onChangeText={v => updateField('KM', v.replace(/\D/g, ''))}
-                      placeholder="Sin registrar — escribe aquí"
-                      placeholderTextColor="rgba(255,255,255,0.45)"
-                      keyboardType="number-pad"
-                      returnKeyType="done"
-                      maxLength={9}
-                    />
-                    <TouchableOpacity
-                      onPress={() => kmInputRef.current?.focus()}
-                      style={[styles.kmHeroChevron, {marginLeft: 8}]}
-                      hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}
-                      accessibilityRole="button"
-                      accessibilityLabel="Editar kilometraje">
-                      <IconsFA5 name="pencil-alt" size={16} color="#FFD60A" />
-                    </TouchableOpacity>
-                  </View>
-                  <Text style={styles.kmHeroHint}>Odómetro del tablero (km)</Text>
-                </View>
-              </View>
-            </View>
-          ) : null}
 
           {step === 1 ? (
             <View style={styles.outerCard}>
@@ -1802,6 +1772,7 @@ const VehicleAddStepper = () => {
                       Placa <Text style={vehicleFormStyles.labelRequired}>*</Text>
                     </Text>
                     <TextInput
+                      ref={placaInputRef}
                       style={vehicleFormStyles.input}
                       value={form.vehiculo_placa}
                       onChangeText={v => updateField('vehiculo_placa', v)}
@@ -1818,6 +1789,7 @@ const VehicleAddStepper = () => {
                         Marca <Text style={vehicleFormStyles.labelRequired}>*</Text>
                       </Text>
                       <TextInput
+                        ref={marcaInputRef}
                         style={vehicleFormStyles.input}
                         value={form.vehiculo_marca}
                         onChangeText={v => updateField('vehiculo_marca', v)}
@@ -1831,6 +1803,7 @@ const VehicleAddStepper = () => {
                         Modelo <Text style={vehicleFormStyles.labelRequired}>*</Text>
                       </Text>
                       <TextInput
+                        ref={modeloInputRef}
                         style={vehicleFormStyles.input}
                         value={form.vehiculo_modelo}
                         onChangeText={v => updateField('vehiculo_modelo', v)}
@@ -1847,6 +1820,7 @@ const VehicleAddStepper = () => {
                         Año <Text style={vehicleFormStyles.labelRequired}>*</Text>
                       </Text>
                       <TextInput
+                        ref={anioInputRef}
                         style={vehicleFormStyles.input}
                         value={form.vehiculo_anio}
                         onChangeText={v => updateField('vehiculo_anio', v.replace(/\D/g, '').slice(0, 4))}
@@ -1867,6 +1841,28 @@ const VehicleAddStepper = () => {
                         returnKeyType="done"
                       />
                     </View>
+                  </View>
+
+                  <View style={vehicleFormStyles.field}>
+                    <Text style={vehicleFormStyles.label}>
+                      Kilometraje actual <Text style={vehicleFormStyles.labelRequired}>*</Text>
+                    </Text>
+                    <TextInput
+                      ref={kmInputRef}
+                      style={vehicleFormStyles.input}
+                      value={form.KM}
+                      onChangeText={v => updateField('KM', v.replace(/\D/g, ''))}
+                      placeholder="Ej: 85000"
+                      placeholderTextColor="#9CA3AF"
+                      keyboardType="number-pad"
+                      returnKeyType="done"
+                      maxLength={9}
+                      accessibilityLabel="Kilometraje actual"
+                    />
+                    <Text style={styles.fieldHint}>
+                      Lo que marca hoy el odómetro de tu tablero. Lo usamos para recordarte tus próximos
+                      mantenimientos.
+                    </Text>
                   </View>
 
                   <View style={vehicleFormStyles.field}>
@@ -2023,7 +2019,7 @@ const VehicleAddStepper = () => {
                                     key={`${field.key}-${option}`}
                                     activeOpacity={0.85}
                                     onPress={() => {
-                                      setForm(prev => ({
+                                      editarForm(prev => ({
                                         ...prev,
                                         marca_aceite_motor: option,
                                         marca_aceite_motor_custom:
@@ -2090,7 +2086,7 @@ const VehicleAddStepper = () => {
                                     key={`${field.key}-${option}`}
                                     activeOpacity={0.85}
                                     onPress={() => {
-                                      setForm(prev => ({
+                                      editarForm(prev => ({
                                         ...prev,
                                         [field.key]: option,
                                         [customKey]:
@@ -2274,6 +2270,13 @@ const VehicleAddStepper = () => {
 
         <View style={styles.stickyFooter}>
           <View style={styles.footerCardInsideSticky}>
+            {step < 3 ? (
+              <Text style={styles.footerHint}>
+                {step === 1
+                  ? 'Los campos con * son obligatorios. La ficha técnica y los documentos son opcionales.'
+                  : 'Puedes guardar ahora o seguir con los documentos.'}
+              </Text>
+            ) : null}
             {step === 1 ? (
               <View style={styles.footerButtonRow}>
                 {/* Fase 2: con placa, marca, modelo, año y km ya se puede guardar.
@@ -2283,7 +2286,7 @@ const VehicleAddStepper = () => {
                   onPress={handleContinue}
                   accessibilityLabel="Agregar ficha técnica y documentos (opcional)"
                   activeOpacity={0.8}>
-                  <Text style={vehicleFormStyles.btnTextSecondary}>Más datos</Text>
+                  <Text style={vehicleFormStyles.btnTextSecondary}>Datos opcionales</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[
@@ -2291,8 +2294,9 @@ const VehicleAddStepper = () => {
                     vehicleFormStyles.btnPrimary,
                     saving && vehicleFormStyles.btnDisabled,
                   ]}
-                  onPress={() => validateStep1() && handleSubmit()}
+                  onPress={handleSubmit}
                   disabled={saving}
+                  accessibilityLabel={esEdicion ? 'Guardar cambios' : 'Guardar vehículo'}
                   activeOpacity={0.8}>
                   {saving ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
@@ -2305,15 +2309,26 @@ const VehicleAddStepper = () => {
               <View style={styles.footerButtonRow}>
                 <TouchableOpacity
                   style={[vehicleFormStyles.btn, vehicleFormStyles.btnSecondary]}
-                  onPress={() => setStep(1)}
+                  onPress={() => setStep(3)}
+                  accessibilityLabel="Agregar documentos (opcional)"
                   activeOpacity={0.8}>
-                  <Text style={vehicleFormStyles.btnTextSecondary}>Atrás</Text>
+                  <Text style={vehicleFormStyles.btnTextSecondary}>Documentos</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[vehicleFormStyles.btn, vehicleFormStyles.btnPrimary]}
-                  onPress={() => setStep(3)}
+                  style={[
+                    vehicleFormStyles.btn,
+                    vehicleFormStyles.btnPrimary,
+                    saving && vehicleFormStyles.btnDisabled,
+                  ]}
+                  onPress={handleSubmit}
+                  disabled={saving}
+                  accessibilityLabel={esEdicion ? 'Guardar cambios' : 'Guardar vehículo'}
                   activeOpacity={0.8}>
-                  <Text style={vehicleFormStyles.btnTextPrimary}>Siguiente</Text>
+                  {saving ? (
+                    <ActivityIndicator size="small" color="#FFFFFF" />
+                  ) : (
+                    <Text style={vehicleFormStyles.btnTextPrimary}>Guardar</Text>
+                  )}
                 </TouchableOpacity>
               </View>
             ) : (
@@ -2332,6 +2347,7 @@ const VehicleAddStepper = () => {
                   ]}
                   onPress={handleSubmit}
                   disabled={saving}
+                  accessibilityLabel={esEdicion ? 'Guardar cambios' : 'Guardar vehículo'}
                   activeOpacity={0.8}>
                   {saving ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
