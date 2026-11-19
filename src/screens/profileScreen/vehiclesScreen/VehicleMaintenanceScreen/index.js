@@ -306,8 +306,10 @@ const VehicleMaintenanceScreen = () => {
     return mergeKmIntoMaintenanceStatus(timeStatus, kmDeltaUntilNext, warningThresholdKm);
   };
 
-  const getStatusMeta = (dueInDays, lastReview, kmDeltaUntilNext) => {
-    const status = getEffectiveMaintenanceStatus(dueInDays, lastReview, kmDeltaUntilNext);
+  // Con los márgenes de cada recordatorio, igual que la lista (antes el detalle
+  // usaba siempre 5 días / 3.000 km y podía decir otra cosa).
+  const getStatusMeta = (dueInDays, lastReview, kmDeltaUntilNext, umbralDias = 5, umbralKm = 3000) => {
+    const status = getEffectiveMaintenanceStatus(dueInDays, lastReview, kmDeltaUntilNext, umbralDias, umbralKm);
     if (status.label === 'PENDIENTE DATA') {
       return {
         icon: 'info-circle',
@@ -926,6 +928,8 @@ const VehicleMaintenanceScreen = () => {
       detailDueDays,
       selectedMaintenance.lastReview,
       selectedMaintenance.kmDeltaUntilNext,
+      selectedMaintenance.intervalDias ?? 5,
+      selectedMaintenance.intervalKm ?? 3000,
     );
   }, [selectedMaintenance, detailDueDays]);
 

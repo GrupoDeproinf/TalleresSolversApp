@@ -23,6 +23,33 @@ const TIME_INTERVAL_PRESETS = [
   '30 meses',
 ];
 
+// Margen para avisar «por vencer» según el tipo de mantenimiento (mismo valor
+// que usa la pantalla de mantenimiento del vehículo).
+export const DEFAULTS_BY_SECRET_CODE = {
+  UltimocambioAceite: {km: 500, dias: 7},
+  KMCorreTiempo: {km: 1000, dias: 15},
+  UltimoMantenimientoSistemaInyeccion: {km: 500, dias: 15},
+  UltimaAlineacionRuedas: {km: 300, dias: 7},
+  UltimoAbastecimientoCombustible: {km: 100, dias: 3},
+  UltimoLavado: {km: 100, dias: 3},
+  UltimoCambioBujiasFiltro: {km: 500, dias: 15},
+};
+
+/** Días y km de margen para avisar «por vencer» en un recordatorio. */
+export const umbralesDeAviso = item => {
+  const def = DEFAULTS_BY_SECRET_CODE[String(item?.secretCode ?? '')] ?? null;
+  const diasApi = Number(item?.intervaloTiempoXVencer);
+  const kmApi = Number(item?.intervaloKMXVencer);
+  const dias =
+    Number.isFinite(diasApi) && diasApi > 0
+      ? Math.round(diasApi)
+      : def
+        ? def.dias
+        : Number(item?.intervalodias ?? item?.intervaloDias ?? 0) || 5;
+  const km = Number.isFinite(kmApi) && kmApi > 0 ? Math.round(kmApi) : def ? def.km : 3000;
+  return {dias: dias > 0 ? dias : 5, km};
+};
+
 const KM_INTERVAL_PRESETS = [
   1000, 3000, 5000, 8000, 10000, 15000, 20000, 25000, 30000, 35000, 100000,
 ];
@@ -166,7 +193,7 @@ const parseOdometerToInt = value => {
 const formatMaintenanceKmCell = n =>
   n != null && Number.isFinite(n) ? `${n.toLocaleString('es-ES')} km` : '--';
 
-const getMaintenanceStatus = (dueInDays, lastReview) => {
+const getMaintenanceStatus = (dueInDays, lastReview, warningThresholdDays = 5) => {
   const normalizedLastReview = String(lastReview || '').trim();
   const noData =
     !normalizedLastReview ||
@@ -176,18 +203,18 @@ const getMaintenanceStatus = (dueInDays, lastReview) => {
   const parsedLast = parseDateFlexible(lastReview);
   if (!parsedLast) return {label: 'PENDIENTE DATA', color: '#6B7280'};
   if (dueInDays < 0) return {label: 'VENCIDO', color: '#E53935'};
-  if (dueInDays <= 5) return {label: 'POR VENCER', color: '#F9A825'};
+  if (dueInDays <= warningThresholdDays) return {label: 'POR VENCER', color: '#F9A825'};
   return {label: 'AL DIA', color: '#2E7D32'};
 };
 
-const mergeKmIntoMaintenanceStatus = (timeStatus, kmDelta) => {
+const mergeKmIntoMaintenanceStatus = (timeStatus, kmDelta, warningThresholdKm = 3000) => {
   if (kmDelta == null || !Number.isFinite(kmDelta)) {
     return timeStatus;
   }
   if (kmDelta < 0) {
     return {label: 'VENCIDO', color: '#E53935'};
   }
-  if (kmDelta >= 0 && kmDelta <= 3000) {
+  if (kmDelta >= 0 && kmDelta <= warningThresholdKm) {
     if (timeStatus.label === 'VENCIDO') {
       return timeStatus;
     }
@@ -196,9 +223,15 @@ const mergeKmIntoMaintenanceStatus = (timeStatus, kmDelta) => {
   return timeStatus;
 };
 
-const getEffectiveMaintenanceStatus = (dueInDays, lastReview, kmDeltaUntilNext) => {
-  const timeStatus = getMaintenanceStatus(dueInDays, lastReview);
-  return mergeKmIntoMaintenanceStatus(timeStatus, kmDeltaUntilNext);
+export const getEffectiveMaintenanceStatus = (
+  dueInDays,
+  lastReview,
+  kmDeltaUntilNext,
+  warningThresholdDays = 5,
+  warningThresholdKm = 3000,
+) => {
+  const timeStatus = getMaintenanceStatus(dueInDays, lastReview, warningThresholdDays);
+  return mergeKmIntoMaintenanceStatus(timeStatus, kmDeltaUntilNext, warningThresholdKm);
 };
 
 const getVehicleId = v =>
@@ -225,14 +258,19 @@ const mapNotificationToMaintenanceItem = (item, index, vehicleOdometerKmResolved
     typeof item?.intervalokm === 'number' && Number.isFinite(item.intervalokm)
       ? Math.max(0, Math.round(item.intervalokm))
       : parseOdometerToInt(item?.intervalokm) ?? 0;
-  let proximoKmNum = parseOdometerToInt(
-    item?.proximoKM ??
-      item?.proximokm ??
-      item?.proximo_km ??
-      item?.proximoKm,
-  );
-  if (proximoKmNum == null && apiUltimoKm != null && intervalKmNum > 0) {
+  // Igual que la pantalla de mantenimiento: el próximo km se calcula con el
+  // último km + el intervalo; el «proximoKM» guardado solo como último recurso
+  // (puede quedar viejo y daba «por vencer» cuando el detalle decía «al día»).
+  let proximoKmNum = null;
+  if (apiUltimoKm != null && intervalKmNum > 0) {
     proximoKmNum = apiUltimoKm + intervalKmNum;
+  } else {
+    proximoKmNum = parseOdometerToInt(
+      item?.proximoKM ??
+        item?.proximokm ??
+        item?.proximo_km ??
+        item?.proximoKm,
+    );
   }
 
   let kmUntilNextServiceText = '--';
@@ -242,7 +280,10 @@ const mapNotificationToMaintenanceItem = (item, index, vehicleOdometerKmResolved
   } else if (proximoKmNum == null) {
     kmUntilNextServiceText = 'Sin hito en km';
   } else {
-    const diff = proximoKmNum - vehicleOdometerKm;
+    const diff =
+      intervalKmNum > 0 && apiUltimoKm != null
+        ? intervalKmNum - (vehicleOdometerKm - apiUltimoKm)
+        : proximoKmNum - vehicleOdometerKm;
     kmDeltaUntilNext = diff;
     if (diff > 0) {
       kmUntilNextServiceText = `Faltan ${diff.toLocaleString('es-ES')} km`;
@@ -275,6 +316,7 @@ const mapNotificationToMaintenanceItem = (item, index, vehicleOdometerKmResolved
     proximoKM: formatMaintenanceKmCell(proximoKmNum),
     kmUntilNextServiceText,
     kmDeltaUntilNext,
+    umbrales: umbralesDeAviso(item),
     raw: item,
   };
 };
@@ -299,6 +341,8 @@ export function countActiveMaintenanceByAlertLevel(vehicle, notificationsBlock) 
       m.dueInDays,
       m.lastReview,
       m.kmDeltaUntilNext,
+      m.umbrales.dias,
+      m.umbrales.km,
     );
     if (eff.label === 'VENCIDO') vencidos += 1;
     else if (eff.label === 'POR VENCER') porVencer += 1;
@@ -384,6 +428,8 @@ export async function fetchHomeDueMaintenanceAlerts(
           m.dueInDays,
           m.lastReview,
           m.kmDeltaUntilNext,
+          m.umbrales.dias,
+          m.umbrales.km,
         );
         if (eff.label !== 'VENCIDO' && eff.label !== 'POR VENCER') continue;
         rows.push({
