@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Modal,
   ScrollView,
+  Alert,
 } from 'react-native';
 import {useNavigation, useRoute} from '@react-navigation/native';
 import {ArrowLeft} from 'lucide-react-native';
@@ -21,6 +22,9 @@ const VehicleNotificationsScreen = () => {
   const [notificationOptions, setNotificationOptions] = useState([]);
   const [loadingOptions, setLoadingOptions] = useState(true);
   const [savingChanges, setSavingChanges] = useState(false);
+  const [errorCarga, setErrorCarga] = useState('');
+  const guardandoRef = useRef(false);
+  const cargaRef = useRef(0);
   const [successModalVisible, setSuccessModalVisible] = useState(false);
   const vehicleId = route?.params?.vehicleId ? String(route.params.vehicleId) : '';
 
@@ -119,8 +123,11 @@ const VehicleNotificationsScreen = () => {
   }, [vehicleId]);
 
   const loadNotificationsInOrder = useCallback(async () => {
+    // Solo la última carga se aplica (la pantalla carga al abrir y al volver).
+    const mia = ++cargaRef.current;
     try {
       setLoadingOptions(true);
+      setErrorCarga('');
 
       // 1) Traer catálogo base en variable temporal.
       const baseOptions = await fetchNotificationOptions();
@@ -137,13 +144,18 @@ const VehicleNotificationsScreen = () => {
       });
 
       // 4) Asignar una sola vez al estado principal usado en el JSX.
-      console.log('mergedOptions =>', mergedOptions);
+      if (mia !== cargaRef.current) return;
       setNotificationOptions(mergedOptions);
     } catch (e) {
-      setNotificationOptions([]);
-      console.log('Error cargando notificaciones:', e?.message || e);
+      // No se vacía la lista: guardar una lista vacía apagaría todos los avisos.
+      if (mia !== cargaRef.current) return;
+      setErrorCarga(
+        e?.response
+          ? 'No pudimos cargar tus avisos. Intenta de nuevo.'
+          : 'No hay conexión. Revisa tu internet e intenta de nuevo.',
+      );
     } finally {
-      setLoadingOptions(false);
+      if (mia === cargaRef.current) setLoadingOptions(false);
     }
   }, [fetchActiveNotificationsByVehicle, fetchNotificationOptions]);
 
@@ -173,6 +185,9 @@ const VehicleNotificationsScreen = () => {
   };
 
   const handleSaveChanges = async () => {
+    if (guardandoRef.current) return;
+    if (errorCarga || notificationOptions.length === 0) return;
+    guardandoRef.current = true;
     try {
       setSavingChanges(true);
 
@@ -186,9 +201,10 @@ const VehicleNotificationsScreen = () => {
         active: Boolean(item.enabled),
       }));
 
-      console.log('notificationsPayload', notificationsPayload);
-      console.log('uiduser', uiduser);
-      console.log('uidvehicle', uidvehicle);
+      if (!uiduser || !uidvehicle) {
+        Alert.alert('No pudimos identificar el vehículo', 'Vuelve a la pantalla anterior e intenta de nuevo.');
+        return;
+      }
 
       await api.post('usuarios/saveUpdateNotificationUser', {
         uiduser,
@@ -198,8 +214,15 @@ const VehicleNotificationsScreen = () => {
 
       setSuccessModalVisible(true);
     } catch (e) {
-      // Si ocurre error, mantenemos la pantalla para reintento.
+      // Se mantiene la pantalla para reintentar, pero se avisa.
+      Alert.alert(
+        'No se guardaron los cambios',
+        e?.response
+          ? 'Intenta de nuevo en un momento.'
+          : 'No hay conexión. Revisa tu internet e intenta de nuevo.',
+      );
     } finally {
+      guardandoRef.current = false;
       setSavingChanges(false);
     }
   };
@@ -304,6 +327,16 @@ const VehicleNotificationsScreen = () => {
               <ActivityIndicator size="small" color="#2D3261" />
               <Text style={styles.loadingText}>Cargando notificaciones...</Text>
             </View>
+          ) : errorCarga ? (
+            <View style={styles.emptyStateWrap}>
+              <Text style={styles.emptyStateText}>{errorCarga}</Text>
+              <TouchableOpacity
+                onPress={loadNotificationsInOrder}
+                accessibilityRole="button"
+                style={{marginTop: 12, alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 18, borderRadius: 12, backgroundColor: '#1F2344'}}>
+                <Text style={{color: '#FFFFFF', fontWeight: '700'}}>Reintentar</Text>
+              </TouchableOpacity>
+            </View>
           ) : notificationOptions.length > 0 ? (
             notificationOptions.map((option, index) => (
               <View key={option.id}>
@@ -341,7 +374,7 @@ const VehicleNotificationsScreen = () => {
           style={styles.saveButton}
           activeOpacity={0.85}
           onPress={handleSaveChanges}
-          disabled={savingChanges || loadingOptions}>
+          disabled={savingChanges || loadingOptions || !!errorCarga || notificationOptions.length === 0}>
           {savingChanges ? (
             <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (

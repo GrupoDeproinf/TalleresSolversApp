@@ -564,7 +564,9 @@ const VehicleMaintenanceScreen = () => {
     }
   }, [vehicleId]);
 
+  const [errorCargaMant, setErrorCargaMant] = useState('');
   const fetchVehicleMaintenances = useCallback(async (options = {}) => {
+    setErrorCargaMant('');
     const silent = Boolean(options?.silent);
     const skipMissingModal = Boolean(options?.skipMissingModal);
     const odometerOverride = options?.odometerKmOverride;
@@ -713,8 +715,12 @@ const VehicleMaintenanceScreen = () => {
         setMissingDataModalVisible(noLastReviewCount > 0);
       }
     } catch (e) {
-      setMaintenanceItems([]);
-      setMissingDataCount(0);
+      // Una falla de red no es «sin mantenimientos»: se conserva la lista y se avisa.
+      setErrorCargaMant(
+        e?.response
+          ? 'No pudimos cargar los mantenimientos. Intenta de nuevo.'
+          : 'No hay conexión. Revisa tu internet e intenta de nuevo.',
+      );
       setMissingDataModalVisible(false);
     } finally {
       if (!silent) {
@@ -825,8 +831,11 @@ const VehicleMaintenanceScreen = () => {
     });
   };
 
+  // Bloqueo inmediato: dos toques en Guardar no envían el cambio dos veces.
+  const guardandoDetalleRef = useRef(false);
   const handleSaveDetailChanges = async () => {
-    if (!selectedMaintenance) return;
+    if (!selectedMaintenance || guardandoDetalleRef.current) return;
+    guardandoDetalleRef.current = true;
     try {
       setSavingDetailChanges(true);
       const userInfoStr = await AsyncStorage.getItem('@userInfo');
@@ -850,10 +859,11 @@ const VehicleMaintenanceScreen = () => {
       const vehicleKmDigits = String(
         vehicleData?.KM ?? vehicleData?.km_actual ?? '',
       ).replace(/[^\d]/g, '');
-      const ultimoKM = Number(vehicleKmDigits);
+      // Sin kilometraje registrado no se inventa un 0: esos campos no se envían.
+      const ultimoKM = vehicleKmDigits ? Number(vehicleKmDigits) : NaN;
       const ultimoKMSafe =
-        Number.isFinite(ultimoKM) && ultimoKM >= 0 ? Math.round(ultimoKM) : 0;
-      const proximoKMSafe = ultimoKMSafe + intervalokmNum;
+        Number.isFinite(ultimoKM) && ultimoKM >= 0 ? Math.round(ultimoKM) : null;
+      const proximoKMSafe = ultimoKMSafe != null ? ultimoKMSafe + intervalokmNum : null;
 
       const newUltimaRevisionFmt = formatDateDDMMYYYY(selectedMaintenance?.lastReview);
       const prevUltimaRevisionFmt = formatDateDDMMYYYY(
@@ -876,8 +886,8 @@ const VehicleMaintenanceScreen = () => {
         proximaRevision: formatDateDDMMYYYY(computedProximaRevision),
         intervalodias: intervalodiasFinal,
         intervalokm: intervalokmNum,
-        ...(ultimaRevisionChanged ? { ultimoKM: ultimoKMSafe } : {}),
-        ...(intervalokmChanged ? { proximoKM: proximoKMSafe } : {}),
+        ...(ultimaRevisionChanged && ultimoKMSafe != null ? { ultimoKM: ultimoKMSafe } : {}),
+        ...(intervalokmChanged && proximoKMSafe != null ? { proximoKM: proximoKMSafe } : {}),
       };
 
       await api.post('usuarios/updateNotificationUser', payload);
@@ -885,8 +895,14 @@ const VehicleMaintenanceScreen = () => {
       closeDetailSheet();
       setSaveSuccessModalVisible(true);
     } catch (e) {
-      
+      Alert.alert(
+        'No se guardó el cambio',
+        e?.response
+          ? 'Intenta de nuevo en un momento.'
+          : 'No hay conexión. Revisa tu internet e intenta de nuevo.',
+      );
     } finally {
+      guardandoDetalleRef.current = false;
       setSavingDetailChanges(false);
     }
   };
@@ -1056,6 +1072,16 @@ const VehicleMaintenanceScreen = () => {
         {loadingMaintenances ? (
           <View style={styles.loadingMaintenancesWrap}>
             <Text style={styles.loadingMaintenancesText}>Cargando mantenimientos...</Text>
+          </View>
+        ) : errorCargaMant && maintenanceItems.length === 0 ? (
+          <View style={styles.emptyMaintenancesWrap}>
+            <Text style={styles.emptyMaintenancesTitle}>{errorCargaMant}</Text>
+            <TouchableOpacity
+              onPress={() => fetchVehicleMaintenances()}
+              accessibilityRole="button"
+              style={{marginTop: 12, alignSelf: 'center', paddingVertical: 10, paddingHorizontal: 18, borderRadius: 12, backgroundColor: '#1F2344'}}>
+              <Text style={{color: '#FFFFFF', fontWeight: '700'}}>Reintentar</Text>
+            </TouchableOpacity>
           </View>
         ) : maintenanceItems.length === 0 ? (
           <View style={styles.emptyMaintenancesWrap}>
@@ -1495,6 +1521,11 @@ const VehicleMaintenanceScreen = () => {
       <DatePicker
         modal
         mode="date"
+        maximumDate={new Date()}
+        title="¿Cuándo fue la última revisión?"
+        confirmText="Listo"
+        cancelText="Cancelar"
+        locale="es"
         open={lastReviewPickerVisible}
         date={lastReviewPickerDate}
         onConfirm={handleConfirmLastReviewInModal}
