@@ -22,6 +22,7 @@ import {
   Clock,
   CheckCircle2,
   Info,
+  ArrowLeft,
 } from 'lucide-react-native';
 import {colors, space, radius, type, fonts, shadow, TOUCH, MAX_FONT_SCALE} from './tokens';
 
@@ -224,6 +225,59 @@ export const TallerCardSkeleton = () => (
       <Skeleton width="70%" height={18} />
       <Skeleton width="50%" height={14} />
       <Skeleton width={70} height={22} r={radius.pill} />
+    </View>
+  </View>
+);
+
+/**
+ * Esqueleto de una pantalla de detalle (taller o servicio). Se usa cuando la
+ * forma de la pantalla ya se conoce antes de cargar: foto, título, etiquetas y
+ * secciones. Lleva su botón de volver para poder salir mientras carga.
+ */
+export const DetalleSkeleton = ({onBack, topInset = 0}) => (
+  <View style={{flex: 1, backgroundColor: colors.bg}}>
+    {/* Solo este elemento se anuncia; el botón Volver queda accesible aparte. */}
+    <View
+      accessible
+      accessibilityRole="progressbar"
+      accessibilityLabel="Cargando contenido"
+      accessibilityLiveRegion="polite">
+      <Skeleton height={220 + topInset} r={0} />
+    </View>
+    {onBack ? (
+      <Pressable
+        onPress={onBack}
+        accessibilityRole="button"
+        accessibilityLabel="Volver"
+        hitSlop={8}
+        style={{
+          position: 'absolute',
+          top: topInset + space.s,
+          left: space.m,
+          width: 40,
+          height: 40,
+          borderRadius: 20,
+          backgroundColor: 'rgba(31,35,68,0.55)',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <ArrowLeft size={20} color="#FFFFFF" strokeWidth={2.4} />
+      </Pressable>
+    ) : null}
+    <View style={{padding: space.m, gap: space.s}}>
+      <Skeleton width="75%" height={24} />
+      <Skeleton width="45%" height={16} />
+      <View style={{flexDirection: 'row', gap: space.s, marginTop: space.xs}}>
+        <Skeleton width={84} height={26} r={radius.pill} />
+        <Skeleton width={110} height={26} r={radius.pill} />
+      </View>
+      {[0, 1, 2].map(i => (
+        <View key={i} style={[ui.card, {marginTop: space.m, gap: space.s}]}>
+          <Skeleton width="40%" height={16} />
+          <Skeleton height={14} />
+          <Skeleton width="85%" height={14} />
+        </View>
+      ))}
     </View>
   </View>
 );

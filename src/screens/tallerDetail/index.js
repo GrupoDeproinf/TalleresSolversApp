@@ -39,7 +39,7 @@ import {
   Banknote,
   Store,
 } from "lucide-react-native";
-import { AppText, Tag, Card, TallerCard, TallerCardSkeleton, colors, space, radius, shadow } from "../../ui";
+import { AppText, Tag, Card, TallerCard, TallerCardSkeleton, DetalleSkeleton, colors, space, radius, shadow } from "../../ui";
 import { Galeria, Seccion, Valoracion, MetodosPago, Horario, listaImagenes } from "../../ui/detalle";
 import api from "../../../axiosInstance";
 import MapboxNavigation from "../../commonComponents/MapboxNavigation";
@@ -666,13 +666,9 @@ const TallerDetail = () => {
     setSelectedInstalacionImage(null);
   };
 
+  // La ficha del negocio siempre tiene la misma forma: esqueleto mientras carga.
   if (loading) {
-    return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#2D3261" />
-        <Text style={styles.loadingText}>Cargando información del negocio...</Text>
-      </View>
-    );
+    return <DetalleSkeleton onBack={() => navigation.goBack()} topInset={insets.top} />;
   }
 
   if (!taller) {

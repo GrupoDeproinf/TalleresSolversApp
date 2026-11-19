@@ -18,7 +18,7 @@ import {
   RefreshControl,
 } from 'react-native';
 import {CircleUserRound, KeyRound, LifeBuoy, LogOut} from 'lucide-react-native';
-import {AppText, Banner, BottomSheet, colors, space} from '../../ui';
+import {AppText, Banner, BottomSheet, TallerCardSkeleton, colors, space} from '../../ui';
 import {Avatar, GrupoMenu, FilaMenu, abrirSoporte, confirmarCerrarSesion} from '../../ui/cuenta';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import { cerrarSesionFirebase } from '../../utils/sesionSegura';
@@ -666,9 +666,11 @@ const TalleresContainer = ({navigation}) => {
         }
         ListEmptyComponent={
           errorCarga && !dataTalleres.length ? null : cargando ? (
-            <View style={styles.emptyWrap}>
-              <ActivityIndicator size="large" color="#1D1E56" />
-              <Text style={styles.emptyText}>Cargando negocios…</Text>
+            // Esqueleto de la lista de negocios mientras carga.
+            <View accessible accessibilityLabel="Cargando negocios">
+              {[0, 1, 2, 3, 4].map(i => (
+                <TallerCardSkeleton key={i} />
+              ))}
             </View>
           ) : (
             <View style={styles.emptyWrap}>

@@ -20,6 +20,7 @@ import {useRoute} from '@react-navigation/native';
 import {Search} from '../../../assets/icons/search';
 import Geolocation from '@react-native-community/geolocation';
 import {windowWidth} from '../../../themes/appConstant';
+import {Skeleton, radius} from '../../../ui';
 
 const CategoryDetail = ({navigation}) => {
   const {isDark, bgFullStyle} = useValues();
@@ -257,8 +258,18 @@ const CategoryDetail = ({navigation}) => {
 
       {/* ── CONTENIDO ── */}
       {loading ? (
-        <View style={styles.loaderWrap}>
-          <ActivityIndicator size="large" color="#FFD60A" />
+        // Esqueleto de la cuadrícula de servicios (dos columnas), como queda al cargar.
+        <View
+          style={{flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 12}}
+          accessible
+          accessibilityLabel="Cargando servicios">
+          {[0, 1, 2, 3, 4, 5].map(i => (
+            <View key={i} style={{width: '48%', marginBottom: 14}}>
+              <Skeleton height={120} r={radius.m} />
+              <Skeleton width="80%" height={14} style={{marginTop: 8}} />
+              <Skeleton width="50%" height={12} style={{marginTop: 6}} />
+            </View>
+          ))}
         </View>
       ) : (
         <NewCategoriesDetail

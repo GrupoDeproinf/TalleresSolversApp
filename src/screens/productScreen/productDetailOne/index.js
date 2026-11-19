@@ -65,7 +65,7 @@ import {
   ShieldCheck,
   Store,
 } from 'lucide-react-native';
-import { AppText, Tag, TallerCard, colors, space, radius, shadow, TOUCH } from '../../../ui';
+import { AppText, Tag, TallerCard, DetalleSkeleton, colors, space, radius, shadow, TOUCH } from '../../../ui';
 import { Galeria, Seccion, Valoracion, MetodosPago, metodosActivos, Horario, listaImagenes } from '../../../ui/detalle';
 
 /** `metodos_pago` viene como objeto { efectivo: true, ... }, no como array. */
@@ -270,7 +270,8 @@ const ProductDetailOne = ({ navigation }) => {
   const [dataProductCategory, setDataProductCategory] = useState('');
   const [dataComments, setDataComments] = useState([]);
   const [dataAverage, setDataAverage] = useState(0);
-  const [renderLoading, setRenderLoading] = useState(false);
+  // La ficha siempre tiene la misma forma: mientras carga se muestra su esqueleto.
+  const [renderLoading, setRenderLoading] = useState(true);
 
   const [showRuta, setshowRuta] = useState(false);
   const [showArrived, setShowArrived] = useState(false);
@@ -290,11 +291,12 @@ const ProductDetailOne = ({ navigation }) => {
   useEffect(() => {
     const initScreen = async () => {
       const { uid, typeUser } = route.params || {};
-      // setRenderLoading(true);
       if (uid) {
-        console.log(uid);
-        console.log("uiddjfkbdfjgbdjfkg", uid)
-        await getDataFirst(uid, typeUser);
+        try {
+          await getDataFirst(uid, typeUser);
+        } catch (_) {
+          // La ficha se muestra igual con lo que haya llegado.
+        }
       }
       InteractionManager.runAfterInteractions(() => {
         requestAnimationFrame(() => {
@@ -763,6 +765,10 @@ const ProductDetailOne = ({ navigation }) => {
       dataTotal: DataService,
     });
 
+  if (renderLoading) {
+    return <DetalleSkeleton onBack={() => navigation.goBack()} topInset={insets.top} />;
+  }
+
   return (
     <View style={sd.pantalla}>
       <ScrollView
@@ -1039,30 +1045,6 @@ const ProductDetailOne = ({ navigation }) => {
         servicio={{categoriaId: DataService?.uid_categoria, nombre: DataService?.nombre_servicio}}
       />
 
-      {renderLoading ? (
-        <View
-          style={{
-            ...StyleSheet.absoluteFillObject,
-            backgroundColor: 'rgba(9, 13, 46, 0.28)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 999,
-          }}>
-          <View
-            style={{
-              backgroundColor: 'rgba(255,255,255,0.95)',
-              borderRadius: 14,
-              paddingHorizontal: 18,
-              paddingVertical: 14,
-              alignItems: 'center',
-            }}>
-            <ActivityIndicator size="large" color="#2D3261" />
-            <Text style={{marginTop: 10, color: '#2D3261', fontWeight: '700'}}>
-              Cargando informacion...
-            </Text>
-          </View>
-        </View>
-      ) : null}
     </View>
   );
 };

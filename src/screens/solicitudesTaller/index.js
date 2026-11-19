@@ -3,6 +3,7 @@ import {
   View,
   Text,
   ScrollView,
+  RefreshControl,
   TouchableOpacity,
   TouchableWithoutFeedback,
   Modal,
@@ -526,6 +527,18 @@ const SolicitudesTallerScreen = () => {
     void bootstrapFromGetUserByUid(null);
   }, [bootstrapFromGetUserByUid]);
 
+  // Actualizar jalando la lista hacia abajo: se hace con el pulgar, sin
+  // estirarse hasta el botón de arriba.
+  const [refrescando, setRefrescando] = useState(false);
+  const jalarParaActualizar = useCallback(async () => {
+    setRefrescando(true);
+    try {
+      await bootstrapFromGetUserByUid(null);
+    } finally {
+      setRefrescando(false);
+    }
+  }, [bootstrapFromGetUserByUid]);
+
   useFocusEffect(
     useCallback(() => {
       const cancelRef = {cancelled: false};
@@ -770,7 +783,7 @@ const SolicitudesTallerScreen = () => {
           </View>
           {tallerCuentaAprobada === true && (
             <Text style={styles.headerSubtitle}>
-              Revisa las solicitudes que han llegado a tu taller y decide el siguiente paso.
+              Revisa las solicitudes que han llegado a tu taller y decide el siguiente paso. Desliza hacia abajo para actualizar.
             </Text>
           )}
           {tallerCuentaAprobada === false && (
@@ -830,15 +843,18 @@ const SolicitudesTallerScreen = () => {
       {/* Lista filtrada */}
       <ScrollView
         style={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={refrescando} onRefresh={jalarParaActualizar} tintColor={appColors.primary} />
+        }
         contentContainerStyle={
-          loading
+          loading && !refrescando
             ? styles.loadingContent
             : filteredServicios.length === 0
             ? styles.emptyContent
             : styles.listContent
         }
         showsVerticalScrollIndicator={false}>
-        {loading ? (
+        {loading && !refrescando ? (
           <View style={styles.loadingState}>
             <ActivityIndicator size="large" color={appColors.primary} />
             <Text style={styles.loadingText}>Cargando solicitudes...</Text>
