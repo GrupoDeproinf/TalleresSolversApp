@@ -1,5 +1,5 @@
 import React from 'react';
-import {NavigationContainer, createNavigationContainerRef} from '@react-navigation/native';
+import {NavigationContainer, DefaultTheme, createNavigationContainerRef} from '@react-navigation/native';
 import {useEffect as usePushEffect} from 'react';
 import {setupPushDeepLinks} from '../utils/pushDeepLink';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
@@ -74,6 +74,14 @@ import RadioSelector from '../screens/perimeter-map';
 
 
 const Stack = createNativeStackNavigator();
+
+// Fondo claro fijo detrás de todas las pantallas: sin esto, en teléfonos con
+// modo oscuro se veía negro durante el cambio de pantalla.
+const TEMA_CLARO = {
+  ...DefaultTheme,
+  dark: false,
+  colors: {...DefaultTheme.colors, background: '#F5F6FA', card: '#FFFFFF'},
+};
 export const navigationRef = createNavigationContainerRef();
 
 export const navigate = (name, params) => {
@@ -107,8 +115,10 @@ const MyStack = () => {
 
 
   return (
-    <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator initialRouteName='LoaderScreen' screenOptions={{headerShown: false}}>
+    <NavigationContainer ref={navigationRef} theme={TEMA_CLARO}>
+      <Stack.Navigator
+        initialRouteName='LoaderScreen'
+        screenOptions={{headerShown: false, contentStyle: {backgroundColor: '#F5F6FA'}}}>
         <Stack.Screen name="Login" component={Login} />
         {/* <Stack.Screen name="Login" component={Login} /> */}
 
