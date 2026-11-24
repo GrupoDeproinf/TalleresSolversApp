@@ -35,7 +35,10 @@ export const iniciarSesionTrasRegistro = async (email, password) => {
   if (!userData || !userData.uid) {
     throw new Error('Respuesta de inicio de sesión sin usuario');
   }
-  await abrirSesionFirebase(response?.data?.customToken);
+  // Sin sesión segura, mejor mandar al Login (el registro ya quedó hecho).
+  if (!(await abrirSesionFirebase(response?.data?.customToken))) {
+    throw new Error('No se pudo abrir la sesión segura');
+  }
   await olvidarModo();
   await AsyncStorage.setItem('@userInfo', JSON.stringify(sanitizeUserInfo(userData)));
   return userData;

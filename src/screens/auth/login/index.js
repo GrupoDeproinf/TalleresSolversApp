@@ -363,7 +363,13 @@ const SignIn = ({navigation}) => {
         if (!result?.customToken || !result?.userData) {
           throw new Error('Respuesta de inicio de sesión incompleta');
         }
-        await abrirSesionFirebase(result.customToken);
+        // Sin la sesión segura de Firebase el servidor rechazará las llamadas
+        // y la persona volvería al Login una y otra vez: mejor avisar ya.
+        if (!(await abrirSesionFirebase(result.customToken))) {
+          const e = new Error('No se pudo abrir la sesión segura');
+          e.sesionSegura = true;
+          throw e;
+        }
 
         if (
           result.message === 'Usuario autenticado exitosamente' ||
@@ -434,7 +440,11 @@ const SignIn = ({navigation}) => {
         // Siempre se le dice algo al usuario (antes varios errores no
         // mostraban nada y sin conexión decía "Usuario no encontrado").
         setSignInDisabled(false);
-        showToast(mensajeErrorLogin(error));
+        showToast(
+          error?.sesionSegura
+            ? 'No pudimos iniciar sesión de forma segura. Revisa tu conexión e intenta de nuevo.'
+            : mensajeErrorLogin(error),
+        );
       } finally {
         enviandoRef.current = false;
       }
