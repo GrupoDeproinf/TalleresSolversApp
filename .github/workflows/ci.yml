@@ -19,5 +19,7 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      - run: npm ci --no-audit --no-fund
+      # Conflictos de versiones heredados (lucide pide React 18; la app usa 19):
+      # se instala igual que en local.
+      - run: npm ci --no-audit --no-fund --legacy-peer-deps
       - run: node scripts/verificar-sintaxis.js
