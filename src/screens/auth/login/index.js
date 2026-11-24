@@ -36,7 +36,7 @@ import DeviceInfo from 'react-native-device-info';
 import messaging from '@react-native-firebase/messaging';
 import firebase from '@react-native-firebase/app';
 import auth from '@react-native-firebase/auth';
-import {abrirSesionFirebase} from '../../../utils/sesionSegura';
+import {abrirSesionFirebase, cerrarSesionFirebase} from '../../../utils/sesionSegura';
 import { sanitizeUserInfo } from '../../../utils/sanitizeUserInfo';
 import { olvidarModo } from '../../../utils/modoApp';
 
@@ -351,6 +351,9 @@ const SignIn = ({navigation}) => {
     if (isEmailValid && isPasswordValid) {
       enviandoRef.current = true;
       setSignInDisabled(true);
+      // Si el login no termina después de abrir la sesión de Firebase, se
+      // cierra: no debe quedar una sesión válida de un acceso rechazado.
+      let sesionAbierta = false;
       try {
         // Hacer la solicitud POST utilizando Axios
         const response = await api.post('/usuarios/authenticateUser', {
@@ -370,6 +373,7 @@ const SignIn = ({navigation}) => {
           e.sesionSegura = true;
           throw e;
         }
+        sesionAbierta = true;
 
         if (
           result.message === 'Usuario autenticado exitosamente' ||
@@ -383,6 +387,7 @@ const SignIn = ({navigation}) => {
 
 
             if (userData?.status == "Eliminado") {
+              await cerrarSesionFirebase();
               setShowEliminadoModal(true);
               setSignInDisabled(false);
               return;
@@ -432,6 +437,7 @@ const SignIn = ({navigation}) => {
           setSignInDisabled(false);
           navigation.navigate('LoaderScreen');
         } else {
+          await cerrarSesionFirebase();
           setSignInDisabled(false);
           
           showToast('No pudimos iniciar sesión. Intenta de nuevo.');
@@ -439,6 +445,7 @@ const SignIn = ({navigation}) => {
       } catch (error) {
         // Siempre se le dice algo al usuario (antes varios errores no
         // mostraban nada y sin conexión decía "Usuario no encontrado").
+        if (sesionAbierta) await cerrarSesionFirebase();
         setSignInDisabled(false);
         showToast(
           error?.sesionSegura

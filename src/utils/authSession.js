@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import messaging from '@react-native-firebase/messaging';
 import api from '../../axiosInstance';
 import {sanitizeUserInfo} from './sanitizeUserInfo';
-import {abrirSesionFirebase} from './sesionSegura';
+import {abrirSesionFirebase, cerrarSesionFirebase} from './sesionSegura';
 import {olvidarModo} from './modoApp';
 
 export const obtenerTokenPushSeguro = async () => {
@@ -39,8 +39,14 @@ export const iniciarSesionTrasRegistro = async (email, password) => {
   if (!(await abrirSesionFirebase(response?.data?.customToken))) {
     throw new Error('No se pudo abrir la sesión segura');
   }
-  await olvidarModo();
-  await AsyncStorage.setItem('@userInfo', JSON.stringify(sanitizeUserInfo(userData)));
+  try {
+    await olvidarModo();
+    await AsyncStorage.setItem('@userInfo', JSON.stringify(sanitizeUserInfo(userData)));
+  } catch (e) {
+    // Sin la sesión guardada en el teléfono, tampoco se deja la de Firebase.
+    await cerrarSesionFirebase();
+    throw e;
+  }
   return userData;
 };
 
