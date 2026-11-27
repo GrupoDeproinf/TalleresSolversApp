@@ -860,7 +860,11 @@ const FormTaller = () => {
     {label: 'Logo', uri: logotipoNegocioLocalUri || logotipoNegocioUrl},
     {label: 'Permiso de operación', uri: permisoOperacionLocalUri || permisoOperacionUrl},
   ].filter(f => f.uri && !esPdf(f.uri));
-  const inicioVisor = Math.max(0, fotosVisor.findIndex(f => f.uri === imgFullscreen));
+  // Si la foto tocada no está en la lista (no debería pasar: los PDF no la
+  // abren aquí), se muestra sola en vez de otra.
+  const indiceTocada = fotosVisor.findIndex(f => f.uri === imgFullscreen);
+  const fotosDelVisor = indiceTocada >= 0 ? fotosVisor : imgFullscreen ? [{uri: imgFullscreen, label: 'Foto'}] : [];
+  const inicioVisor = Math.max(0, indiceTocada);
 
   const whatsContacto = whats || phone;
   const hayRuta = locationPicked && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng));
@@ -872,7 +876,10 @@ const FormTaller = () => {
     const resto = i >= 0 ? [...cola.slice(i + 1), ...cola.slice(0, i)] : cola;
     return resto.find(c => c.uid && c.uid !== uidTaller) || null;
   }, [cola, uidTaller]);
+  const yendoRef = useRef(false);
   const irAlSiguiente = () => {
+    if (yendoRef.current) return;
+    yendoRef.current = true;
     setSuccessModalType(null);
     if (siguiente) navigation.replace('FormTaller', {uid: siguiente.uid, cola: cola.filter(c => c.uid !== uidTaller)});
     else navigation.goBack();
@@ -1121,6 +1128,7 @@ const FormTaller = () => {
                 disabled={!puedeLlamar(phone)}
                 accessibilityRole="button"
                 accessibilityLabel="Llamar al taller"
+                accessibilityState={{disabled: !puedeLlamar(phone)}}
                 style={({pressed}) => [fx.contactoBtn, pressed && {opacity: 0.7}, !puedeLlamar(phone) && {opacity: 0.4}]}>
                 <Phone size={20} color={DARK_BLUE} strokeWidth={2.2} />
                 <Text style={fx.contactoTexto}>Llamar</Text>
@@ -1130,6 +1138,7 @@ const FormTaller = () => {
                 disabled={!puedeWhatsApp(whatsContacto)}
                 accessibilityRole="button"
                 accessibilityLabel="Escribir por WhatsApp"
+                accessibilityState={{disabled: !puedeWhatsApp(whatsContacto)}}
                 style={({pressed}) => [fx.contactoBtn, pressed && {opacity: 0.7}, !puedeWhatsApp(whatsContacto) && {opacity: 0.4}]}>
                 <MessageCircle size={20} color={ui.whatsapp} strokeWidth={2.2} />
                 <Text style={[fx.contactoTexto, {color: ui.whatsapp}]}>WhatsApp</Text>
@@ -1139,6 +1148,7 @@ const FormTaller = () => {
                 disabled={!hayRuta}
                 accessibilityRole="button"
                 accessibilityLabel="Cómo llegar al taller"
+                accessibilityState={{disabled: !hayRuta}}
                 style={({pressed}) => [fx.contactoBtn, pressed && {opacity: 0.7}, !hayRuta && {opacity: 0.4}]}>
                 <Navigation size={20} color={DARK_BLUE} strokeWidth={2.2} />
                 <Text style={fx.contactoTexto}>Cómo llegar</Text>
@@ -1566,7 +1576,7 @@ const FormTaller = () => {
       {/* ── Visor de fotos: deslizar, pellizcar y doble toque ───────────── */}
       <VisorFotos
         visible={!!imgFullscreen}
-        fotos={fotosVisor.length ? fotosVisor : imgFullscreen ? [{uri: imgFullscreen, label: 'Foto'}] : []}
+        fotos={fotosDelVisor}
         inicio={inicioVisor}
         onClose={() => setImgFullscreen(null)}
       />

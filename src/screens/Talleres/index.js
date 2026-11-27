@@ -1,7 +1,8 @@
 // Lista de negocios del certificador.
 //
 // Lo que esperan una decisión va primero, ordenado por quien lleva más días
-// esperando. Cada tarjeta dice cuánto tiene listo y qué le falta, y deja
+// esperando. Cada tarjeta dice qué documentos tiene y cuáles le faltan
+// (los servicios no llegan en la lista: se comprueban en la ficha), y deja
 // llamar, escribir por WhatsApp o abrir la ruta sin entrar en la ficha.
 //
 // La lista se muestra en cuanto llegan los datos: la distancia se calcula
@@ -115,20 +116,28 @@ const calcularDistanciaKm = (lat1, lng1, lat2, lng2) => {
 const UBICACION_VALIDA_MS = 5 * 60 * 1000;
 let ubicacionGuardada = null; // {latitude, longitude, at}
 let pidiendoUbicacion = null; // promesa en curso
+let ubicacionNegada = false; // si dijo que no, no se vuelve a pedir hasta reabrir la app
 
 const pedirUbicacion = async () => {
   if (ubicacionGuardada && Date.now() - ubicacionGuardada.at < UBICACION_VALIDA_MS) return ubicacionGuardada;
+  if (ubicacionNegada) return ubicacionGuardada;
   if (pidiendoUbicacion) return pidiendoUbicacion;
   pidiendoUbicacion = (async () => {
     try {
       if (Platform.OS === 'android') {
         const r = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
-        if (r !== PermissionsAndroid.RESULTS.GRANTED) return null;
+        if (r !== PermissionsAndroid.RESULTS.GRANTED) {
+          ubicacionNegada = true;
+          return null;
+        }
       }
       const pos = await new Promise(resolve =>
         Geolocation.getCurrentPosition(
           p => resolve({latitude: p.coords.latitude, longitude: p.coords.longitude, at: Date.now()}),
-          () => resolve(null),
+          err => {
+            if (err?.code === 1) ubicacionNegada = true; // PERMISSION_DENIED (iOS)
+            resolve(null);
+          },
           {enableHighAccuracy: false, timeout: 15000, maximumAge: 60000},
         ),
       );
@@ -238,7 +247,7 @@ const TarjetaNegocio = ({item, porRevisar, mostrarEstatus, onPress}) => {
     item.nombre || 'Sin nombre',
     porRevisar ? textoEspera(dias) : soloFecha(creado),
     linea,
-    porRevisar ? (completo ? 'Todo listo para aprobar' : falta) : tag?.label,
+    porRevisar ? (completo ? 'Documentos completos' : falta) : tag?.label,
   ]
     .filter(Boolean)
     .join('. ');
@@ -288,7 +297,7 @@ const TarjetaNegocio = ({item, porRevisar, mostrarEstatus, onPress}) => {
                 maxFontSizeMultiplier={MAX_FONT_SCALE}
                 style={[st.falta, completo && st.listo]}
                 numberOfLines={2}>
-                {completo ? `Todo listo: ${rev.listos} de ${rev.total}` : falta}
+                {completo ? `Documentos completos · ${rev.listos} de ${rev.total}` : falta}
               </Text>
               {item.status === 'En espera de documentos' ? <Tag label="Esperando documentos" tone="info" /> : null}
             </View>
@@ -597,15 +606,15 @@ const TalleresContainer = () => {
                 accessibilityState={{selected: soloListos}}
                 accessibilityLabel={
                   soloListos
-                    ? 'Mostrando solo los listos para aprobar. Tocar para ver todos'
-                    : `${listos.length} con todo listo para aprobar. Tocar para ver solo esos`
+                    ? 'Mostrando solo los que tienen los documentos completos. Tocar para ver todos'
+                    : `${listos.length} con los documentos completos. Tocar para ver solo esos`
                 }
                 style={({pressed}) => [st.listos, pressed && {opacity: 0.85}]}>
                 <CircleCheck size={18} color={colors.ok} strokeWidth={2.4} />
                 <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={st.listosTexto}>
                   {soloListos
-                    ? `Solo los ${listos.length} listos para aprobar`
-                    : `${listos.length} ${listos.length === 1 ? 'tiene' : 'tienen'} todo listo para aprobar`}
+                    ? `Solo los ${listos.length} con documentos completos`
+                    : `${listos.length} ${listos.length === 1 ? 'tiene' : 'tienen'} los documentos completos`}
                 </Text>
                 <Text style={st.listosAccion}>{soloListos ? 'Ver todos' : 'Ver'}</Text>
               </Pressable>

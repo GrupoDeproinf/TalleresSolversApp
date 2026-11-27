@@ -127,7 +127,8 @@ const VisorFotos = ({visible, fotos = [], inicio = 0, onClose}) => {
             </Text>
             {fotos.length > 1 ? (
               <Text style={st.sub}>
-                {indice + 1} de {fotos.length} · Desliza para ver la siguiente
+                {indice + 1} de {fotos.length}
+                {zoom ? ' · Toca dos veces para volver' : ' · Desliza para ver la siguiente'}
               </Text>
             ) : null}
           </View>
@@ -135,7 +136,9 @@ const VisorFotos = ({visible, fotos = [], inicio = 0, onClose}) => {
             <X size={22} color="#FFFFFF" strokeWidth={2.4} />
           </Pressable>
         </View>
+        {/* La clave remonta la lista al abrir: así siempre arranca en la foto tocada. */}
         <FlatList
+          key={visible ? `abierto-${inicio}-${fotos.length}` : 'cerrado'}
           ref={lista}
           data={fotos}
           horizontal
