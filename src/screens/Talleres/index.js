@@ -1,409 +1,392 @@
+// Lista de negocios del certificador.
+//
+// Lo que esperan una decisión va primero, ordenado por quien lleva más días
+// esperando. Cada tarjeta dice cuánto tiene listo y qué le falta, y deja
+// llamar, escribir por WhatsApp o abrir la ruta sin entrar en la ficha.
+//
+// La lista se muestra en cuanto llegan los datos: la distancia se calcula
+// después, con la ubicación del teléfono, y no bloquea (antes la lista
+// esperaba al GPS, hasta 15 s, cada vez que se volvía a esta pantalla).
+import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 import {
-  Animated,
   FlatList,
-  Text,
-  View,
-  TouchableOpacity,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
   Platform,
   PermissionsAndroid,
-  TouchableWithoutFeedback,
-  Keyboard,
-  StatusBar,
-  Image,
-  ScrollView,
-  ActivityIndicator,
+  Pressable,
   RefreshControl,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
-import {CircleUserRound, KeyRound, LifeBuoy, LogOut} from 'lucide-react-native';
-import {AppText, Banner, BottomSheet, TallerCardSkeleton, colors, space} from '../../ui';
-import {Avatar, GrupoMenu, FilaMenu, abrirSoporte, confirmarCerrarSesion} from '../../ui/cuenta';
-import React, {useEffect, useMemo, useRef, useState} from 'react';
-import { cerrarSesionFirebase } from '../../utils/sesionSegura';
+import {
+  CalendarDays,
+  CircleCheck,
+  KeyRound,
+  LifeBuoy,
+  LogOut,
+  MessageCircle,
+  Navigation,
+  Phone,
+  RefreshCw,
+  SlidersHorizontal,
+  Store,
+  X,
+} from 'lucide-react-native';
 import DatePicker from 'react-native-date-picker';
-import styles from './style.css.js';
-import {useValues} from '../../../App';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {useNavigation} from '@react-navigation/native';
-import api from '../../../axiosInstance';
-import Icons from 'react-native-vector-icons/FontAwesome';
-import Icons5 from 'react-native-vector-icons/FontAwesome5';
 import Geolocation from '@react-native-community/geolocation';
-import notImageFound from '../../assets/noimageNew.png';
+import {
+  AppText,
+  Banner,
+  BottomSheet,
+  Button,
+  Chip,
+  EmptyState,
+  IconButton,
+  SearchBar,
+  Segmented,
+  Tag,
+  TallerCardSkeleton,
+  MAX_FONT_SCALE,
+  TOUCH,
+  colors,
+  fonts,
+  radius,
+  shadow,
+  space,
+} from '../../ui';
+import {Avatar, GrupoMenu, FilaMenu, abrirSoporte, confirmarCerrarSesion} from '../../ui/cuenta';
+import {cerrarSesionFirebase} from '../../utils/sesionSegura';
+import {abrirRutaExterna, abrirWhatsApp, llamar, puedeLlamar, puedeWhatsApp} from '../../utils/contacto';
+import {
+  ESTADOS_POR_REVISAR,
+  diasDesde,
+  resumenRevision,
+  revisionDeFicha,
+  textoEspera,
+  textoFalta,
+} from '../../utils/revisionTaller';
+import api from '../../../axiosInstance';
 
-/** Convierte createdAt (Firestore timestamp, ISO string o número) a Date */
+// ── Fechas y texto ─────────────────────────────────────────────────────────
+
+/** createdAt llega como timestamp de Firestore, texto ISO o número. */
 const parseCreatedAt = raw => {
   if (!raw) return null;
-  if (typeof raw === 'object' && typeof raw._seconds === 'number')
-    return new Date(raw._seconds * 1000);
-  if (typeof raw === 'number')
-    return new Date(raw > 1e12 ? raw : raw * 1000);
+  if (typeof raw === 'object' && typeof raw._seconds === 'number') return new Date(raw._seconds * 1000);
+  if (typeof raw === 'number') return new Date(raw > 1e12 ? raw : raw * 1000);
   const d = new Date(raw);
   return isNaN(d.getTime()) ? null : d;
 };
 
-const formatDate = date => {
-  if (!date) return null;
-  const d = date.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'});
-  const t = date.toLocaleTimeString('es-ES', {hour: '2-digit', minute: '2-digit'});
-  return `${d} ${t}`;
-};
-
-const isSameDay = (d1, d2) => {
-  if (!d1 || !d2) return false;
-  return (
-    d1.getFullYear() === d2.getFullYear() &&
-    d1.getMonth()    === d2.getMonth() &&
-    d1.getDate()     === d2.getDate()
-  );
-};
-
-/** Solo la fecha (sin hora): la hora no le dice nada al certificador. */
 const soloFecha = date =>
   date ? date.toLocaleDateString('es-ES', {day: '2-digit', month: '2-digit', year: 'numeric'}) : null;
 
-/** "hoy", "hace 1 día", "hace 5 días". */
-const haceDias = date => {
-  if (!date) return null;
-  const dias = Math.floor((Date.now() - date.getTime()) / 86400000);
-  if (dias <= 0) return 'hoy';
-  return `hace ${dias} ${dias === 1 ? 'día' : 'días'}`;
-};
+const isSameDay = (a, b) =>
+  !!a && !!b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 
 /** Minúsculas y sin acentos, para buscar "jose" y encontrar "José". */
 const normalizar = v =>
   String(v || '')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
+    .replace(/[̀-ͯ]/g, '');
 
 /** Solo dígitos, para buscar teléfonos y RIF con o sin guiones. */
 const digitos = v => String(v || '').replace(/\D/g, '');
 
-const ESPERANDO = ['En espera por aprobación', 'En espera de documentos'];
+const formatKm = km => (km == null ? null : km < 1 ? `${Math.round(km * 1000)} m` : `${km.toFixed(1)} km`);
+
+// ── Ubicación del teléfono (sin bloquear la lista) ─────────────────────────
 
 const toRad = v => (v * Math.PI) / 180;
 const calcularDistanciaKm = (lat1, lng1, lat2, lng2) => {
   const R = 6371;
   const dLat = toRad(lat2 - lat1);
   const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 };
 
-const requestLocationPermission = async () => {
-  if (Platform.OS !== 'android') return true;
-  const granted = await PermissionsAndroid.request(
-    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-  );
-  return granted === PermissionsAndroid.RESULTS.GRANTED;
+// Se guarda unos minutos: al volver de una ficha no se vuelve a pedir.
+const UBICACION_VALIDA_MS = 5 * 60 * 1000;
+let ubicacionGuardada = null; // {latitude, longitude, at}
+let pidiendoUbicacion = null; // promesa en curso
+
+const pedirUbicacion = async () => {
+  if (ubicacionGuardada && Date.now() - ubicacionGuardada.at < UBICACION_VALIDA_MS) return ubicacionGuardada;
+  if (pidiendoUbicacion) return pidiendoUbicacion;
+  pidiendoUbicacion = (async () => {
+    try {
+      if (Platform.OS === 'android') {
+        const r = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION);
+        if (r !== PermissionsAndroid.RESULTS.GRANTED) return null;
+      }
+      const pos = await new Promise(resolve =>
+        Geolocation.getCurrentPosition(
+          p => resolve({latitude: p.coords.latitude, longitude: p.coords.longitude, at: Date.now()}),
+          () => resolve(null),
+          {enableHighAccuracy: false, timeout: 15000, maximumAge: 60000},
+        ),
+      );
+      if (pos) ubicacionGuardada = pos;
+      return pos || ubicacionGuardada;
+    } catch {
+      return ubicacionGuardada;
+    } finally {
+      pidiendoUbicacion = null;
+    }
+  })();
+  return pidiendoUbicacion;
 };
 
-const getCurrentLocation = async () => {
-  const hasPermission = await requestLocationPermission();
-  if (!hasPermission) return null;
-  return new Promise(resolve => {
-    Geolocation.getCurrentPosition(
-      pos => resolve({latitude: pos.coords.latitude, longitude: pos.coords.longitude}),
-      () => resolve(null),
-      {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
-    );
+const conDistancia = (lista, pos) =>
+  lista.map(item => {
+    const lat = Number(item?.ubicacion?.lat);
+    const lng = Number(item?.ubicacion?.lng);
+    const km =
+      pos && Number.isFinite(lat) && Number.isFinite(lng)
+        ? calcularDistanciaKm(pos.latitude, pos.longitude, lat, lng)
+        : null;
+    return {...item, km_distance: km};
   });
+
+// ── Pestañas, filtros y orden ──────────────────────────────────────────────
+
+const PESTANAS = [
+  {value: 'por_revisar', label: 'Por revisar', test: t => ESTADOS_POR_REVISAR.includes(t.status)},
+  {value: 'aprobado', label: 'Aprobados', test: t => t.status === 'Aprobado'},
+  {value: 'rechazado', label: 'Rechazados', test: t => t.status === 'Rechazado'},
+];
+
+const SUBESTATUS = [
+  {key: 'En espera por aprobación', label: 'En revisión'},
+  {key: 'En espera de documentos', label: 'Esperando documentos'},
+];
+
+const PLANES = [
+  {key: 'con_plan', label: 'Con plan', test: t => !!t.subscripcion_actual?.nombre},
+  {key: 'sin_plan', label: 'Sin plan', test: t => !t.subscripcion_actual?.nombre},
+  {key: 'vencido', label: 'Plan vencido', test: t => t.subscripcion_actual?.status === 'Vencido'},
+];
+
+const ORDENES = [
+  {key: 'espera', label: 'Más tiempo esperando'},
+  {key: 'nuevo', label: 'Más nuevos'},
+  {key: 'cerca', label: 'Más cercanos'},
+];
+
+const fechaMs = t => parseCreatedAt(t.createdAt)?.getTime() ?? 0;
+const ordenar = (lista, orden) => {
+  const r = [...lista];
+  if (orden === 'nuevo') return r.sort((a, b) => fechaMs(b) - fechaMs(a));
+  if (orden === 'cerca') {
+    return r.sort((a, b) => (a.km_distance ?? Infinity) - (b.km_distance ?? Infinity));
+  }
+  // «espera»: el que lleva más tiempo, primero. Sin fecha, al final.
+  return r.sort((a, b) => (fechaMs(a) || Infinity) - (fechaMs(b) || Infinity));
 };
 
-const STATUS_DOT = {
-  'En espera por aprobación': { color: '#F59E0B', label: 'En revisión' },
-  'En espera de documentos': { color: '#3B82F6', label: 'Esperando documentos' },
-  Aprobado: { color: '#22C55E', label: 'Aprobado' },
-  Pendiente: { color: '#F59E0B', label: 'Pendiente' },
-  Rechazado: { color: '#EF4444', label: 'Rechazado' },
+const FILTROS_VACIOS = {estados: [], subestatus: [], plan: null, dia: null, orden: null};
+
+const STATUS_TAG = {
+  'En espera por aprobación': {label: 'En revisión', tone: 'warn'},
+  'En espera de documentos': {label: 'Esperando documentos', tone: 'info'},
+  Aprobado: {label: 'Aprobado', tone: 'ok'},
+  Rechazado: {label: 'Rechazado', tone: 'error'},
+  Pendiente: {label: 'Pendiente', tone: 'warn'},
 };
 
-const TallerCard = ({item, onPress}) => {
-  const statusDot = STATUS_DOT[item.status] || null;
-  const hasImage = item.image_perfil && item.image_perfil !== '';
-  const categoria = item.tipo || item.categoria || 'General';
-  const km = item.km_distance != null ? (item.km_distance < 1 ? `${Math.round(item.km_distance * 1000)} m` : `${item.km_distance.toFixed(1)} km`) : null;
-  const suscripcion = item.subscripcion_actual || null;
-  const suscripcionActiva = suscripcion?.status === 'Aprobado';
-  const createdDate = parseCreatedAt(item.createdAt);
-  const createdLabel = ESPERANDO.includes(item.status)
-    ? `Registrado ${haceDias(createdDate)}`
-    : soloFecha(createdDate);
-  const planEstado = suscripcion?.status === 'Aprobado' ? 'activo' : String(suscripcion?.status || '').toLowerCase();
+// ── Tarjeta ────────────────────────────────────────────────────────────────
+
+const Accion = ({icon: Icon, label, onPress, disabled, color = colors.navy}) => (
+  <Pressable
+    onPress={onPress}
+    disabled={disabled}
+    accessibilityRole="button"
+    accessibilityLabel={label}
+    accessibilityState={{disabled: !!disabled}}
+    hitSlop={4}
+    style={({pressed}) => [st.accion, pressed && {backgroundColor: colors.border}, disabled && {opacity: 0.35}]}>
+    <Icon size={16} color={color} strokeWidth={2.3} />
+    <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={[st.accionTexto, {color}]} numberOfLines={1}>
+      {label}
+    </Text>
+  </Pressable>
+);
+
+const TarjetaNegocio = ({item, porRevisar, mostrarEstatus, onPress}) => {
+  const creado = parseCreatedAt(item.createdAt);
+  const dias = diasDesde(creado);
+  const rev = resumenRevision(revisionDeFicha(item));
+  const completo = rev.listos === rev.total;
+  const tag = STATUS_TAG[item.status];
+  const plan = item.subscripcion_actual?.nombre
+    ? `Plan ${item.subscripcion_actual.nombre}${item.subscripcion_actual.status === 'Vencido' ? ' (vencido)' : ''}`
+    : 'Sin plan';
+  const linea = [item.ciudad || item.municipio || item.estado, formatKm(item.km_distance), plan].filter(Boolean).join(' · ');
+  const whats = item.whatsapp || item.phone;
+  const lat = Number(item?.ubicacion?.lat);
+  const lng = Number(item?.ubicacion?.lng);
+  const hayRuta = Number.isFinite(lat) && Number.isFinite(lng) && !(lat === 0 && lng === 0);
+  const falta = textoFalta(rev.faltan);
+
+  const a11y = [
+    item.nombre || 'Sin nombre',
+    porRevisar ? textoEspera(dias) : soloFecha(creado),
+    linea,
+    porRevisar ? (completo ? 'Todo listo para aprobar' : falta) : tag?.label,
+  ]
+    .filter(Boolean)
+    .join('. ');
 
   return (
-    <TouchableOpacity style={styles.card} onPress={() => onPress(item)} activeOpacity={0.88}>
-      {/* Imagen */}
-      <View style={styles.cardImageWrap}>
-        <Image
-          style={styles.cardImage}
-          source={hasImage ? {uri: item.image_perfil} : notImageFound}
-          resizeMode={hasImage ? 'cover' : 'contain'}
+    <View style={st.card}>
+      <Pressable
+        onPress={() => onPress(item)}
+        accessibilityRole="button"
+        accessibilityLabel={`${a11y}. Abrir ficha`}
+        style={({pressed}) => [st.cardMain, pressed && {opacity: 0.85}]}>
+        <View style={st.cardTop}>
+          <AppText variant="subtitle" numberOfLines={1} style={{flex: 1}}>
+            {item.nombre || 'Sin nombre'}
+          </AppText>
+          {porRevisar ? (
+            <Text
+              maxFontSizeMultiplier={MAX_FONT_SCALE}
+              style={[st.espera, dias != null && dias < 3 && {color: colors.muted, fontFamily: fonts.medium}]}>
+              {textoEspera(dias)}
+            </Text>
+          ) : (
+            <AppText variant="caption" color={colors.muted}>
+              {soloFecha(creado)}
+            </AppText>
+          )}
+        </View>
+        {linea ? (
+          <AppText variant="caption" color={colors.muted} numberOfLines={1}>
+            {linea}
+          </AppText>
+        ) : null}
+
+        {porRevisar ? (
+          <View style={{gap: 6, marginTop: 2}}>
+            <View style={st.barra} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <View
+                style={[
+                  st.barraLlena,
+                  {width: `${Math.round((rev.listos / rev.total) * 100)}%`},
+                  !completo && {backgroundColor: '#C97A00'},
+                ]}
+              />
+            </View>
+            <View style={st.filaEstado}>
+              <Text
+                maxFontSizeMultiplier={MAX_FONT_SCALE}
+                style={[st.falta, completo && st.listo]}
+                numberOfLines={2}>
+                {completo ? `Todo listo: ${rev.listos} de ${rev.total}` : falta}
+              </Text>
+              {item.status === 'En espera de documentos' ? <Tag label="Esperando documentos" tone="info" /> : null}
+            </View>
+          </View>
+        ) : mostrarEstatus && tag ? (
+          <Tag label={tag.label} tone={tag.tone} style={{alignSelf: 'flex-start', marginTop: 2}} />
+        ) : null}
+      </Pressable>
+
+      <View style={st.acciones}>
+        <Accion icon={Phone} label="Llamar" onPress={() => llamar(item.phone)} disabled={!puedeLlamar(item.phone)} />
+        <Accion
+          icon={MessageCircle}
+          label="WhatsApp"
+          color={colors.whatsapp}
+          onPress={() => abrirWhatsApp(whats, `Hola, te escribo de Solvers sobre el registro de ${item.nombre || 'tu negocio'}.`)}
+          disabled={!puedeWhatsApp(whats)}
+        />
+        <Accion
+          icon={Navigation}
+          label="Cómo llegar"
+          onPress={() => abrirRutaExterna({lat, lng}, item.nombre)}
+          disabled={!hayRuta}
         />
       </View>
-
-      {/* Contenido */}
-      <View style={styles.cardBody}>
-        {/* Fila badge + status */}
-        <View style={styles.cardTopRow}>
-          {!!item.estado && (
-            <View style={styles.cardCategoriaBadge}>
-              <Text style={styles.cardCategoriaText}>{item.estado}</Text>
-            </View>
-          )}
-          {suscripcion?.nombre ? (
-            <View style={[styles.cardPlanBadge, {backgroundColor: suscripcionActiva ? '#E3F2FD' : '#FEF9C3'}]}>
-              <Text style={[styles.cardPlanText, {color: suscripcionActiva ? '#1565C0' : '#B45309'}]}>
-                {suscripcion.nombre}
-                {planEstado ? <Text style={styles.cardPlanStatus}>{` · ${planEstado}`}</Text> : null}
-              </Text>
-            </View>
-          ) : (
-            <View style={[styles.cardPlanBadge, {backgroundColor: '#F1F3F9'}]}>
-              <Text style={[styles.cardPlanText, {color: '#9BA6B8'}]}>Sin plan</Text>
-            </View>
-          )}
-          {statusDot && (
-            <View style={styles.cardStatusRow}>
-              <View style={[styles.cardStatusDot, {backgroundColor: statusDot.color}]} />
-              <Text style={[styles.cardStatusLabel, {color: statusDot.color}]}>{statusDot.label}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Nombre */}
-        <Text style={styles.cardName} numberOfLines={1}>
-          {item.nombre || 'Sin nombre'}
-        </Text>
-
-        {/* Teléfono */}
-        {!!item.phone && (
-          <View style={styles.cardInfoRow}>
-            <Icons5 name="phone-alt" size={10} color="#9BA6B8" />
-            <Text style={styles.cardInfoText} numberOfLines={1}>{item.phone}</Text>
-          </View>
-        )}
-
-        {/* RIF */}
-        {!!item.rif && (
-          <View style={styles.cardInfoRow}>
-            <Icons5 name="id-card" size={10} color="#9BA6B8" />
-            <Text style={styles.cardInfoText} numberOfLines={1}>RIF: {item.rif}</Text>
-          </View>
-        )}
-
-        {/* Distancia + Fecha */}
-        <View style={styles.cardBottomRow}>
-          {km && (
-            <View style={styles.cardKmBadge}>
-              <Icons5 name="route" size={9} color="#2D3261" />
-              <Text style={styles.cardKmText}>{km}</Text>
-            </View>
-          )}
-          {createdLabel && (
-            <View style={styles.cardDateBadge}>
-              <Icons5 name="calendar-alt" size={9} color="#9BA6B8" />
-              <Text style={styles.cardDateText}>{createdLabel}</Text>
-            </View>
-          )}
-        </View>
-      </View>
-
-      {/* Flecha */}
-      <View style={styles.cardArrow}>
-        <Icons5 name="chevron-right" size={12} color="#2D3261" />
-      </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
-const DISTANCIA_OPTS = [
-  {key: 'asc',  label: 'Más cercanos', icon: 'sort-amount-up-alt'},
-  {key: 'desc', label: 'Más lejanos',  icon: 'sort-amount-down-alt'},
-];
+// ── Pantalla ───────────────────────────────────────────────────────────────
 
-const PLAN_OPTS = [
-  {key: 'con_plan',  label: 'Con plan'},
-  {key: 'sin_plan',  label: 'Sin plan'},
-];
+const TalleresContainer = () => {
+  const navigation = useNavigation();
 
-const planVencido = t => t?.subscripcion_actual?.status === 'Vencido';
-const ESTATUS_OPTS = [
-  {key: 'por_atender', label: 'Por atender', test: t => ['En espera por aprobación', 'En espera de documentos'].includes(t.status)},
-  {key: 'revision', label: 'En revisión', test: t => t.status === 'En espera por aprobación'},
-  {key: 'documentos', label: 'Esperando documentos', test: t => t.status === 'En espera de documentos'},
-  {key: 'aprobado', label: 'Aprobados', test: t => t.status === 'Aprobado'},
-  {key: 'rechazado', label: 'Rechazados', test: t => t.status === 'Rechazado'},
-  {key: 'vencido', label: 'Plan vencido', test: planVencido},
-  {key: 'todos', label: 'Todos', test: () => true},
-];
-
-const FECHA_OPTS = [
-  {key: 'nuevo', label: 'Más nuevo'},
-  {key: 'viejo', label: 'Más viejo'},
-];
-
-
-const TalleresContainer = ({navigation}) => {
-  const {bgFullStyle} = useValues();
-
-  const [dataTalleres, setdataTalleres] = useState([]);
-  const [filteredData, setFilteredData] = useState([]);
-  const [showFilterModal, setShowFilterModal] = useState(false);
-
-  // Drafts del modal
-  const [draftEstados, setDraftEstados]     = useState([]);     // string[]
-  const [draftStatus, setDraftStatus]       = useState([]);     // string[]
-  const [draftPlan, setDraftPlan]           = useState(null);   // null | 'con_plan' | 'sin_plan'
-  const [draftDistancia, setDraftDistancia] = useState('asc');  // 'asc' | 'desc'
-  const [draftFecha, setDraftFecha]         = useState(null);   // null | 'nuevo' | 'viejo'
-  const [draftFechaDia, setDraftFechaDia]   = useState(null);   // Date | null
-
-  // Filtros aplicados
-  const [filterNombre, setFilterNombre]       = useState('');
-  const [filterEstados, setFilterEstados]     = useState([]);   // string[]
-  const [filterStatus, setFilterStatus]       = useState([]);   // string[]
-  const [filterPlan, setFilterPlan]           = useState(null);
-  const [filterDistancia, setFilterDistancia] = useState('asc');
-  const [filterFecha, setFilterFecha]         = useState(null);
-  const [filterFechaDia, setFilterFechaDia]   = useState(null);
-
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  // Mientras llega la lista no se muestra "No se encontraron negocios".
+  const [talleres, setTalleres] = useState([]);
   const [cargando, setCargando] = useState(true);
-  const [estatusRapido, setEstatusRapido] = useState('por_atender');
-  const [refreshing, setRefreshing] = useState(false);
+  const [refrescando, setRefrescando] = useState(false);
   const [errorCarga, setErrorCarga] = useState(false);
+  const [pestana, setPestana] = useState('por_revisar');
+  const [busqueda, setBusqueda] = useState('');
+  const [soloListos, setSoloListos] = useState(false);
+  const [filtros, setFiltros] = useState(FILTROS_VACIOS);
+  const [borrador, setBorrador] = useState(FILTROS_VACIOS);
+  const [verFiltros, setVerFiltros] = useState(false);
+  const [verFecha, setVerFecha] = useState(false);
   const [cuentaVisible, setCuentaVisible] = useState(false);
   const [yo, setYo] = useState(null);
-
-  const spinAnim = useRef(new Animated.Value(0)).current;
-  const spin = spinAnim.interpolate({inputRange: [0, 1], outputRange: ['0deg', '360deg']});
-
-  const triggerRefresh = async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    Animated.loop(
-      Animated.timing(spinAnim, {toValue: 1, duration: 700, useNativeDriver: true}),
-    ).start();
-    await getData();
-    spinAnim.stopAnimation();
-    spinAnim.setValue(0);
-    setRefreshing(false);
-  };
-
-  /** Estados únicos disponibles en la data cargada */
-  const estadosDisponibles = useMemo(() => {
-    const set = new Set();
-    dataTalleres.forEach(t => { if (t.estado) set.add(t.estado); });
-    return Array.from(set).sort();
-  }, [dataTalleres]);
-
-  const STATUS_COLOR = {
-    Aprobado:  {color: '#22C55E', bg: '#F0FDF4'},
-    Pendiente: {color: '#F59E0B', bg: '#FFFBEB'},
-    Rechazado: {color: '#EF4444', bg: '#FEF2F2'},
-  };
-
-  /** Status únicos disponibles en la data cargada */
-  const statusDisponibles = useMemo(() => {
-    const set = new Set();
-    dataTalleres.forEach(t => { if (t.status) set.add(t.status); });
-    return Array.from(set).sort();
-  }, [dataTalleres]);
-
-  const navigationScreen = useNavigation();
-
-  // Re-aplica los filtros automáticamente cada vez que cambia la data o cualquier filtro activo
-  useEffect(() => {
-    applyFilters(
-      dataTalleres,
-      filterNombre,
-      filterEstados,
-      filterStatus,
-      filterPlan,
-      filterDistancia,
-      filterFecha,
-      filterFechaDia,
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dataTalleres, filterNombre, filterEstados, filterStatus, filterPlan, filterDistancia, filterFecha, filterFechaDia]);
+  const pedidoRef = useRef(0);
 
   useEffect(() => {
-    const unsubscribe = navigationScreen.addListener('focus', () => {
-      getData();
-    });
-    return unsubscribe;
-  }, [navigationScreen]);
+    AsyncStorage.getItem('@userInfo')
+      .then(v => setYo(v ? JSON.parse(v) : null))
+      .catch(() => setYo(null));
+  }, []);
 
-  const getData = async () => {
+  const cargar = useCallback(async () => {
+    const mio = ++pedidoRef.current;
     try {
-      await getDataInterno();
-    } finally {
-      setCargando(false);
-    }
-  };
-
-  const getDataInterno = async () => {
-    try {
-      const jsonValue = await AsyncStorage.getItem('@userInfo');
-      const user = jsonValue != null ? JSON.parse(jsonValue) : null;
-      try {
-        const response = await api.post(
-          '/usuarios/getTalleres',
-          {estado: user.estado, todos: true},
-          {headers: {'Content-Type': 'application/json'}},
-        );
-        if (response.status === 200) {
-          setErrorCarga(false);
-          const location = await getCurrentLocation();
-          const withDistance = response.data.map(item => {
-            const lat = Number(item?.ubicacion?.lat);
-            const lng = Number(item?.ubicacion?.lng);
-            let km_distance = null;
-            if (
-              location &&
-              Number.isFinite(location.latitude) &&
-              Number.isFinite(location.longitude) &&
-              Number.isFinite(lat) &&
-              Number.isFinite(lng)
-            ) {
-              km_distance = calcularDistanciaKm(location.latitude, location.longitude, lat, lng);
-            }
-            return {...item, km_distance};
-          });
-          const sorted = [...withDistance].sort((a, b) => {
-            const dA = a.km_distance != null ? a.km_distance : Infinity;
-            const dB = b.km_distance != null ? b.km_distance : Infinity;
-            return dA - dB;
-          });
-          setdataTalleres(sorted); // el useEffect reactivo re-aplica los filtros activos
-        } else {
-          setdataTalleres([]);
-          setFilteredData([]);
-        }
-      } catch {
-        // Sin conexión o error del servidor: se conserva lo que ya estaba en
-        // pantalla y se avisa, en vez de decir que no hay negocios.
-        setErrorCarga(true);
-      }
+      const v = await AsyncStorage.getItem('@userInfo');
+      const user = v ? JSON.parse(v) : null;
+      const r = await api.post(
+        '/usuarios/getTalleres',
+        {estado: user?.estado, todos: true},
+        {headers: {'Content-Type': 'application/json'}},
+      );
+      if (mio !== pedidoRef.current) return;
+      const lista = Array.isArray(r?.data) ? r.data : [];
+      setErrorCarga(false);
+      // Se pinta ya, con la última ubicación conocida si la hay.
+      setTalleres(conDistancia(lista, ubicacionGuardada));
+      // La distancia se completa después, sin bloquear la lista.
+      pedirUbicacion().then(pos => {
+        if (pos && mio === pedidoRef.current) setTalleres(conDistancia(lista, pos));
+      });
     } catch {
-      setErrorCarga(true);
+      // Sin conexión o error del servidor: se conserva lo que ya estaba.
+      if (mio === pedidoRef.current) setErrorCarga(true);
+    } finally {
+      if (mio === pedidoRef.current) setCargando(false);
     }
+  }, []);
+
+  useEffect(() => navigation.addListener('focus', cargar), [navigation, cargar]);
+
+  const refrescar = async () => {
+    if (refrescando) return;
+    setRefrescando(true);
+    await cargar();
+    setRefrescando(false);
   };
 
-  const applyFilters = (source, nombre, estados, status, plan, distancia, fecha, fechaDia) => {
-    let result = [...source];
-
-    if (nombre.trim()) {
-      const q = normalizar(nombre.trim());
-      const qd = digitos(nombre);
-      result = result.filter(
+  // Filtros del panel (estado, plan, día) y búsqueda.
+  const filtrados = useMemo(() => {
+    let r = talleres;
+    const q = normalizar(busqueda.trim());
+    const qd = digitos(busqueda);
+    if (q) {
+      r = r.filter(
         t =>
           normalizar(t.nombre).includes(q) ||
           normalizar(t.responsable || t.nombre_responsable).includes(q) ||
@@ -411,496 +394,327 @@ const TalleresContainer = ({navigation}) => {
           (qd.length >= 4 && (digitos(t.rif).includes(qd) || digitos(t.phone).includes(qd))),
       );
     }
-    if (estados && estados.length > 0) {
-      result = result.filter(t => estados.includes(t.estado));
+    if (filtros.estados.length) r = r.filter(t => filtros.estados.includes(t.estado));
+    if (filtros.plan) {
+      const p = PLANES.find(x => x.key === filtros.plan);
+      if (p) r = r.filter(p.test);
     }
-    if (status && status.length > 0) {
-      result = result.filter(t => status.includes(t.status));
+    if (filtros.dia) r = r.filter(t => isSameDay(parseCreatedAt(t.createdAt), filtros.dia));
+    return r;
+  }, [talleres, busqueda, filtros]);
+
+  const conteo = useMemo(() => {
+    const c = {};
+    PESTANAS.forEach(p => {
+      c[p.value] = filtrados.filter(p.test).length;
+    });
+    return c;
+  }, [filtrados]);
+
+  // Al buscar se busca en todos los estatus: así se encuentra cualquier
+  // negocio sin saber en qué pestaña está.
+  const buscando = busqueda.trim().length > 0;
+  const enPestana = useMemo(() => {
+    if (buscando) return filtrados;
+    const p = PESTANAS.find(x => x.value === pestana) || PESTANAS[0];
+    let r = filtrados.filter(p.test);
+    if (pestana === 'por_revisar' && filtros.subestatus.length) {
+      r = r.filter(t => filtros.subestatus.includes(t.status));
     }
-    if (plan === 'con_plan') {
-      result = result.filter(t => !!t.subscripcion_actual?.nombre);
-    } else if (plan === 'sin_plan') {
-      result = result.filter(t => !t.subscripcion_actual?.nombre);
-    }
+    return r;
+  }, [filtrados, pestana, filtros.subestatus, buscando]);
 
-    // Filtro por día específico
-    if (fechaDia) {
-      result = result.filter(t => isSameDay(parseCreatedAt(t.createdAt), fechaDia));
-    }
+  const listos = useMemo(
+    () =>
+      pestana === 'por_revisar' && !buscando
+        ? enPestana.filter(t => {
+            const s = resumenRevision(revisionDeFicha(t));
+            return s.listos === s.total;
+          })
+        : [],
+    [enPestana, pestana, buscando],
+  );
 
-    // Ordenamiento: fecha tiene prioridad sobre distancia cuando está activo
-    if (fecha === 'nuevo') {
-      result.sort((a, b) => {
-        const tA = parseCreatedAt(a.createdAt)?.getTime() ?? 0;
-        const tB = parseCreatedAt(b.createdAt)?.getTime() ?? 0;
-        return tB - tA;
-      });
-    } else if (fecha === 'viejo') {
-      result.sort((a, b) => {
-        const tA = parseCreatedAt(a.createdAt)?.getTime() ?? 0;
-        const tB = parseCreatedAt(b.createdAt)?.getTime() ?? 0;
-        return tA - tB;
-      });
-    } else {
-      result.sort((a, b) => {
-        const dA = a.km_distance != null ? a.km_distance : Infinity;
-        const dB = b.km_distance != null ? b.km_distance : Infinity;
-        return distancia === 'asc' ? dA - dB : dB - dA;
-      });
-    }
+  const orden = filtros.orden || (pestana === 'por_revisar' && !buscando ? 'espera' : 'nuevo');
+  const visibles = useMemo(() => {
+    const base = soloListos && listos.length ? listos : enPestana;
+    return ordenar(base, orden);
+  }, [enPestana, listos, soloListos, orden]);
 
-    setFilteredData(result);
+  useEffect(() => {
+    if (!listos.length) setSoloListos(false);
+  }, [listos.length]);
+
+  const estadosDisponibles = useMemo(
+    () => Array.from(new Set(talleres.map(t => t.estado).filter(Boolean))).sort(),
+    [talleres],
+  );
+
+  const filtrosActivos =
+    filtros.estados.length +
+    filtros.subestatus.length +
+    (filtros.plan ? 1 : 0) +
+    (filtros.dia ? 1 : 0) +
+    (filtros.orden ? 1 : 0);
+
+  const abrirFiltros = () => {
+    setBorrador(filtros);
+    setVerFiltros(true);
   };
-
-  const handleSearchChange = text => {
-    setFilterNombre(text);
-    // el useEffect reactivo re-aplica los filtros al cambiar filterNombre
+  const aplicarFiltros = () => {
+    setFiltros(borrador);
+    setVerFiltros(false);
   };
-
-  const toggleDraftEstado = est => {
-    setDraftEstados(prev =>
-      prev.includes(est) ? prev.filter(e => e !== est) : [...prev, est],
-    );
+  const limpiarFiltros = () => {
+    setBorrador(FILTROS_VACIOS);
+    setFiltros(FILTROS_VACIOS);
+    setVerFiltros(false);
   };
+  const alternar = (campo, valor) =>
+    setBorrador(b => ({
+      ...b,
+      [campo]: b[campo].includes(valor) ? b[campo].filter(x => x !== valor) : [...b[campo], valor],
+    }));
 
-  const toggleDraftStatus = st => {
-    setDraftStatus(prev =>
-      prev.includes(st) ? prev.filter(s => s !== st) : [...prev, st],
-    );
-  };
-
-  const handleApply = () => {
-    setFilterEstados(draftEstados);
-    setFilterStatus(draftStatus);
-    setFilterPlan(draftPlan);
-    setFilterDistancia(draftDistancia);
-    setFilterFecha(draftFecha);
-    setFilterFechaDia(draftFechaDia);
-    setShowFilterModal(false);
-    // el useEffect reactivo re-aplica los filtros al cambiar los filterX states
-  };
-
-  const handleClear = () => {
-    setDraftEstados([]);
-    setDraftStatus([]);
-    setDraftPlan(null);
-    setDraftDistancia('asc');
-    setDraftFecha(null);
-    setDraftFechaDia(null);
-    setFilterEstados([]);
-    setFilterStatus([]);
-    setFilterPlan(null);
-    setFilterDistancia('asc');
-    setFilterFecha(null);
-    setFilterFechaDia(null);
-    setShowFilterModal(false);
-    // el useEffect reactivo re-aplica los filtros al resetear los filterX states
-  };
-
-  const openModal = () => {
-    setDraftEstados(filterEstados);
-    setDraftStatus(filterStatus);
-    setDraftPlan(filterPlan);
-    setDraftDistancia(filterDistancia);
-    setDraftFecha(filterFecha);
-    setDraftFechaDia(filterFechaDia);
-    setShowFilterModal(true);
-  };
-
-  const abrirCuenta = async () => {
-    try {
-      const v = await AsyncStorage.getItem('@userInfo');
-      setYo(v ? JSON.parse(v) : null);
-    } catch {
-      setYo(null);
-    }
-    setCuentaVisible(true);
+  // La ficha recibe la cola de «Por revisar» en el orden de la lista, para
+  // ofrecer «Revisar el siguiente» después de decidir.
+  const abrirFicha = item => {
+    const cola =
+      pestana === 'por_revisar' && !buscando
+        ? visibles.filter(t => t.uid).map(t => ({uid: t.uid, nombre: t.nombre || '', createdAt: fechaMs(t)}))
+        : [];
+    navigation.navigate('FormTaller', {uid: item.uid, cola});
   };
 
   const cerrarSesion = async () => {
     setCuentaVisible(false);
-    try { await AsyncStorage.removeItem('@userInfo'); } catch {}
+    try {
+      await AsyncStorage.removeItem('@userInfo');
+    } catch {}
     await cerrarSesionFirebase();
-    try { await AsyncStorage.removeItem('userToken'); navigationScreen.replace('Login'); } catch {}
+    try {
+      await AsyncStorage.removeItem('userToken');
+      navigation.replace('Login');
+    } catch {}
   };
 
-  const handleCardPress = item => {
-    navigationScreen.navigate('FormTaller', {uid: item.uid});
-  };
-
-  const opcionEstatus = ESTATUS_OPTS.find(o => o.key === estatusRapido) || ESTATUS_OPTS[0];
-  const listaVisible = useMemo(
-    () => filteredData.filter(opcionEstatus.test),
-    [filteredData, opcionEstatus],
-  );
-  const conteoEstatus = useMemo(() => {
-    const c = {};
-    ESTATUS_OPTS.forEach(o => { c[o.key] = filteredData.filter(o.test).length; });
-    return c;
-  }, [filteredData]);
-
-  const modalActiveCount = [
-    ...filterEstados,
-    ...filterStatus,
-    filterPlan,
-    filterDistancia !== 'asc' ? filterDistancia : null,
-    filterFecha,
-    filterFechaDia ? 'dia' : null,
-  ].filter(Boolean).length;
+  const nombreCorto = String(yo?.nombre || '').trim().split(/\s+/)[0];
+  const tituloLista = buscando ? 'Resultados' : (PESTANAS.find(p => p.value === pestana) || PESTANAS[0]).label;
 
   return (
-    <View style={styles.screen}>
-      <StatusBar barStyle="light-content" backgroundColor="#1D1E56" />
+    <View style={st.screen}>
+      <StatusBar barStyle="dark-content" backgroundColor={colors.bg} />
 
-      {/* ── HEADER ── */}
-      <View style={styles.header}>
-        <View style={styles.headerCircle1} />
-        <View style={styles.headerCircle2} />
-        <View style={styles.headerRow}>
-          <TouchableOpacity
-            style={styles.headerLogoutBtn}
-            onPress={abrirCuenta}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Mi cuenta">
-            <CircleUserRound size={22} color="#FFFFFF" strokeWidth={2.2} />
-          </TouchableOpacity>
-          <View style={styles.headerTitleWrap}>
-            <Text style={styles.headerTitle}>Negocios</Text>
-            <Text style={styles.headerSubtitle}>Gestión y validación de negocios registrados</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.headerRefreshBtn}
-            onPress={triggerRefresh}
-            activeOpacity={0.8}
-            accessibilityRole="button"
-            accessibilityLabel="Actualizar la lista">
-            <Animated.View style={{transform: [{rotate: spin}]}}>
-              <Icons5 name="sync-alt" size={16} color="#FFFFFF" />
-            </Animated.View>
-          </TouchableOpacity>
+      {/* Cabecera */}
+      <View style={st.header}>
+        <View style={{flex: 1}}>
+          <AppText variant="caption" color={colors.muted} numberOfLines={1}>
+            {[yo?.estado, nombreCorto ? `Hola, ${nombreCorto}` : null].filter(Boolean).join(' · ') ||
+              'Certificador de Solvers'}
+          </AppText>
+          <AppText variant="display" numberOfLines={1} accessibilityRole="header">
+            {tituloLista}
+          </AppText>
         </View>
+        <IconButton icon={RefreshCw} label="Actualizar la lista" onPress={refrescar} />
+        <Pressable
+          onPress={() => setCuentaVisible(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Mi cuenta"
+          hitSlop={6}>
+          <Avatar uri={yo?.image_perfil} size={40} />
+        </Pressable>
       </View>
 
-      {/* ── SEARCH BAR ── */}
-      <View style={styles.searchBar}>
-        <View style={styles.searchInputWrap}>
-          <Icons5 name="search" size={14} color="#9BA6B8" />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Nombre, RIF o teléfono"
-            placeholderTextColor="#9BA6B8"
-            value={filterNombre}
-            onChangeText={handleSearchChange}
-            returnKeyType="search"
-          />
-          {filterNombre.length > 0 && (
-            <TouchableOpacity onPress={() => handleSearchChange('')}>
-              <Icons name="times-circle" size={16} color="#C7CBEF" />
-            </TouchableOpacity>
-          )}
-        </View>
-        <TouchableOpacity style={[styles.searchFilterBtn, modalActiveCount > 0 && styles.searchFilterBtnActive]} onPress={openModal} activeOpacity={0.8}>
-          <Icons5 name="sliders-h" size={16} color={modalActiveCount > 0 ? '#FFFFFF' : '#2D3261'} />
-          {modalActiveCount > 0 && (
-            <View style={styles.searchFilterBadge}>
-              <Text style={styles.searchFilterBadgeText}>{modalActiveCount}</Text>
+      <Segmented
+        style={st.segmented}
+        value={buscando ? null : pestana}
+        onChange={v => {
+          setPestana(v);
+          setSoloListos(false);
+          if (busqueda) setBusqueda('');
+        }}
+        options={PESTANAS.map(p => ({
+          value: p.value,
+          label: cargando ? p.label : `${p.label} ${conteo[p.value] || 0}`,
+        }))}
+      />
+
+      <View style={st.buscarFila}>
+        <SearchBar value={busqueda} onChangeText={setBusqueda} placeholder="Nombre, RIF o teléfono" style={{flex: 1}} />
+        <Pressable
+          onPress={abrirFiltros}
+          accessibilityRole="button"
+          accessibilityLabel={filtrosActivos ? `Filtros, ${filtrosActivos} activos` : 'Filtros'}
+          style={({pressed}) => [st.filtrosBtn, filtrosActivos > 0 && st.filtrosBtnOn, pressed && {opacity: 0.8}]}>
+          <SlidersHorizontal size={20} color={filtrosActivos ? colors.yellow : colors.navy} strokeWidth={2.2} />
+          {filtrosActivos > 0 ? (
+            <View style={st.filtrosBadge}>
+              <Text style={st.filtrosBadgeText}>{filtrosActivos}</Text>
             </View>
-          )}
-        </TouchableOpacity>
+          ) : null}
+        </Pressable>
       </View>
 
-      {/* ── FILTRO RÁPIDO POR ESTATUS ── */}
-      <View>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{paddingHorizontal: 16, paddingBottom: 8, gap: 8}}>
-          {ESTATUS_OPTS.map(o => {
-            const on = o.key === estatusRapido;
-            return (
-              <TouchableOpacity
-                key={o.key}
-                onPress={() => setEstatusRapido(o.key)}
-                activeOpacity={0.85}
-                accessibilityRole="tab"
-                accessibilityState={{selected: on}}
-                style={{
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  minHeight: 40,
-                  paddingHorizontal: 14,
-                  borderRadius: 999,
-                  borderWidth: 1,
-                  borderColor: on ? '#1D1E56' : '#E3E6F0',
-                  backgroundColor: on ? '#1D1E56' : '#FFFFFF',
-                }}>
-                <Text style={{color: on ? '#FFD60A' : '#1D1E56', fontWeight: on ? '800' : '600', fontSize: 14}}>
-                  {o.label}
-                  {cargando ? '' : ` (${conteoEstatus[o.key] || 0})`}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      {/* ── LIST ── */}
       <FlatList
-        data={listaVisible}
-        keyExtractor={(item, idx) => String(item.uid || item.id || idx)}
-        renderItem={({item}) => <TallerCard item={item} onPress={handleCardPress} />}
-        contentContainerStyle={styles.listContent}
+        data={visibles}
+        keyExtractor={(item, i) => String(item.uid || item.id || i)}
+        renderItem={({item}) => (
+          <TarjetaNegocio
+            item={item}
+            porRevisar={!buscando && pestana === 'por_revisar'}
+            mostrarEstatus={buscando}
+            onPress={abrirFicha}
+          />
+        )}
+        contentContainerStyle={st.lista}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={triggerRefresh} tintColor="#1D1E56" />}
+        keyboardShouldPersistTaps="handled"
+        refreshControl={<RefreshControl refreshing={refrescando} onRefresh={refrescar} tintColor={colors.navy} />}
         ListHeaderComponent={
-          errorCarga ? (
-            <Banner
-              tone="warn"
-              text={dataTalleres.length ? 'No pudimos actualizar la lista. Revisa tu conexión.' : 'No pudimos cargar los negocios. Revisa tu conexión.'}
-              actionLabel="Reintentar"
-              onAction={triggerRefresh}
-              style={{marginBottom: space.m}}
-            />
-          ) : null
+          <View style={{gap: space.s}}>
+            {errorCarga ? (
+              <Banner
+                tone="warn"
+                text={
+                  talleres.length
+                    ? 'No pudimos actualizar la lista. Revisa tu conexión.'
+                    : 'No pudimos cargar los negocios. Revisa tu conexión.'
+                }
+                actionLabel="Reintentar"
+                onAction={refrescar}
+              />
+            ) : null}
+            {buscando && !cargando ? (
+              <AppText variant="caption" color={colors.muted}>
+                {visibles.length === 1 ? '1 negocio' : `${visibles.length} negocios`} en todos los estatus
+              </AppText>
+            ) : null}
+            {listos.length > 0 ? (
+              <Pressable
+                onPress={() => setSoloListos(v => !v)}
+                accessibilityRole="button"
+                accessibilityState={{selected: soloListos}}
+                accessibilityLabel={
+                  soloListos
+                    ? 'Mostrando solo los listos para aprobar. Tocar para ver todos'
+                    : `${listos.length} con todo listo para aprobar. Tocar para ver solo esos`
+                }
+                style={({pressed}) => [st.listos, pressed && {opacity: 0.85}]}>
+                <CircleCheck size={18} color={colors.ok} strokeWidth={2.4} />
+                <Text maxFontSizeMultiplier={MAX_FONT_SCALE} style={st.listosTexto}>
+                  {soloListos
+                    ? `Solo los ${listos.length} listos para aprobar`
+                    : `${listos.length} ${listos.length === 1 ? 'tiene' : 'tienen'} todo listo para aprobar`}
+                </Text>
+                <Text style={st.listosAccion}>{soloListos ? 'Ver todos' : 'Ver'}</Text>
+              </Pressable>
+            ) : null}
+          </View>
         }
         ListEmptyComponent={
-          errorCarga && !dataTalleres.length ? null : cargando ? (
-            // Esqueleto de la lista de negocios mientras carga.
+          errorCarga && !talleres.length ? null : cargando ? (
             <View accessible accessibilityLabel="Cargando negocios">
-              {[0, 1, 2, 3, 4].map(i => (
+              {[0, 1, 2, 3].map(i => (
                 <TallerCardSkeleton key={i} />
               ))}
             </View>
           ) : (
-            <View style={styles.emptyWrap}>
-              <Icons5 name="store-slash" size={40} color="#C7CBEF" />
-              <Text style={styles.emptyText}>
-                {estatusRapido === 'todos' && !filterNombre && modalActiveCount === 0
-                  ? 'No se encontraron negocios'
-                  : 'No hay negocios con estos filtros'}
-              </Text>
-            </View>
+            <EmptyState
+              icon={Store}
+              title={
+                buscando || filtrosActivos
+                  ? 'No hay negocios con estos filtros'
+                  : pestana === 'por_revisar'
+                  ? 'No hay negocios por revisar'
+                  : 'No hay negocios aquí'
+              }
+              message={
+                buscando || filtrosActivos
+                  ? 'Prueba con otra búsqueda o quita algún filtro.'
+                  : pestana === 'por_revisar'
+                  ? 'Cuando un taller termine su registro aparecerá en esta lista.'
+                  : null
+              }
+              actionLabel={filtrosActivos ? 'Quitar filtros' : null}
+              onAction={filtrosActivos ? limpiarFiltros : null}
+            />
           )
         }
       />
 
-      {/* ── FILTER MODAL ── */}
-      <Modal
-        visible={showFilterModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowFilterModal(false)}>
-        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-          <View style={styles.modalOverlay}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}>
-              <TouchableWithoutFeedback>
-                <View style={styles.modalContent}>
-                  {/* Handle */}
-                  <View style={styles.modalHandle} />
+      {/* Filtros */}
+      <BottomSheet visible={verFiltros} onClose={() => setVerFiltros(false)} title="Filtros">
+        <ScrollView style={{maxHeight: 460}} contentContainerStyle={{gap: space.l, paddingBottom: space.m}}>
+          <Grupo titulo="Ordenar">
+            {ORDENES.map(o => (
+              <Chip
+                key={o.key}
+                label={o.label}
+                selected={(borrador.orden || null) === o.key}
+                onPress={() => setBorrador(b => ({...b, orden: b.orden === o.key ? null : o.key}))}
+              />
+            ))}
+          </Grupo>
+          <Grupo titulo="En «Por revisar»">
+            {SUBESTATUS.map(s => (
+              <Chip
+                key={s.key}
+                label={s.label}
+                selected={borrador.subestatus.includes(s.key)}
+                onPress={() => alternar('subestatus', s.key)}
+              />
+            ))}
+          </Grupo>
+          <Grupo titulo="Plan">
+            {PLANES.map(p => (
+              <Chip
+                key={p.key}
+                label={p.label}
+                selected={borrador.plan === p.key}
+                onPress={() => setBorrador(b => ({...b, plan: b.plan === p.key ? null : p.key}))}
+              />
+            ))}
+          </Grupo>
+          {estadosDisponibles.length > 1 ? (
+            <Grupo titulo="Estado">
+              {estadosDisponibles.map(e => (
+                <Chip key={e} label={e} selected={borrador.estados.includes(e)} onPress={() => alternar('estados', e)} />
+              ))}
+            </Grupo>
+          ) : null}
+          <Grupo titulo="Registrado el día">
+            <Chip
+              icon={CalendarDays}
+              label={borrador.dia ? soloFecha(borrador.dia) : 'Elegir un día'}
+              selected={!!borrador.dia}
+              onPress={() => setVerFecha(true)}
+            />
+            {borrador.dia ? <Chip icon={X} label="Quitar día" onPress={() => setBorrador(b => ({...b, dia: null}))} /> : null}
+          </Grupo>
+        </ScrollView>
+        <View style={st.filtrosPie}>
+          <Button title="Quitar filtros" variant="secondary" size="m" onPress={limpiarFiltros} style={{flex: 1}} />
+          <Button title="Aplicar" variant="primary" size="m" onPress={aplicarFiltros} style={{flex: 1.4}} />
+        </View>
+        <DatePicker
+          modal
+          open={verFecha}
+          date={borrador.dia || new Date()}
+          mode="date"
+          locale="es"
+          title="Registrado el día"
+          confirmText="Elegir"
+          cancelText="Cancelar"
+          onConfirm={d => {
+            setVerFecha(false);
+            setBorrador(b => ({...b, dia: d}));
+          }}
+          onCancel={() => setVerFecha(false)}
+        />
+      </BottomSheet>
 
-                  {/* Header */}
-                  <View style={styles.modalHeader}>
-                    <View>
-                      <Text style={styles.modalTitle}>Filtrar negocios</Text>
-                      <Text style={styles.modalSubtitle}>
-                        {modalActiveCount > 0 ? `${modalActiveCount} filtro${modalActiveCount > 1 ? 's' : ''} activo${modalActiveCount > 1 ? 's' : ''}` : 'Personaliza tu búsqueda'}
-                      </Text>
-                    </View>
-                    <TouchableOpacity style={styles.modalCloseBtn} onPress={() => setShowFilterModal(false)}>
-                      <Icons name="times" size={14} color="#6B7280" />
-                    </TouchableOpacity>
-                  </View>
-
-                  <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-
-                    {/* ── Sección: Estado / Ciudad ── */}
-                    {estadosDisponibles.length > 0 && (
-                      <>
-                        <Text style={[styles.modalSectionLabel, {marginTop: 4}]}>
-                          <Icons5 name="map-marker-alt" size={11} color="#1D1E56" />{'  '}Estado / Ciudad
-                        </Text>
-                        <View style={styles.modalChipRowWrap}>
-                          {estadosDisponibles.map(est => {
-                            const active = draftEstados.includes(est);
-                            return (
-                              <TouchableOpacity
-                                key={est}
-                                style={[styles.modalChipWrap, active && styles.modalChipActive]}
-                                onPress={() => toggleDraftEstado(est)}
-                                activeOpacity={0.8}>
-                                {active && <Icons5 name="check" size={9} color="#FFD60A" style={{marginRight: 4}} />}
-                                <Text style={[styles.modalChipText, active && styles.modalChipTextActive]}>
-                                  {est}
-                                </Text>
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </View>
-                      </>
-                    )}
-
-                    {/* ── Sección: Status (comentada — API devuelve un solo status) ── */}
-                    {/* {statusDisponibles.length > 0 && (
-                      <>
-                        <Text style={[styles.modalSectionLabel, {marginTop: 20}]}>
-                          <Icons5 name="toggle-on" size={11} color="#1D1E56" />{'  '}Estado del negocio
-                        </Text>
-                        <View style={styles.modalChipRowWrap}>
-                          {statusDisponibles.map(st => {
-                            const active = draftStatus.includes(st);
-                            const palette = STATUS_COLOR[st] || {color: '#6B7280', bg: '#F4F6FB'};
-                            return (
-                              <TouchableOpacity
-                                key={st}
-                                style={[
-                                  styles.modalChipWrap,
-                                  active
-                                    ? {backgroundColor: palette.bg, borderColor: palette.color}
-                                    : null,
-                                ]}
-                                onPress={() => toggleDraftStatus(st)}
-                                activeOpacity={0.8}>
-                                <View style={[styles.modalStatusDot, {backgroundColor: palette.color}]} />
-                                <Text style={[
-                                  styles.modalChipText,
-                                  active && {color: palette.color, fontWeight: '800'},
-                                ]}>
-                                  {'  '}{st}
-                                </Text>
-                              </TouchableOpacity>
-                            );
-                          })}
-                        </View>
-                      </>
-                    )} */}
-
-                    {/* ── Sección: Fecha de registro ── */}
-                    <Text style={[styles.modalSectionLabel, {marginTop: 20}]}>
-                      <Icons5 name="calendar-alt" size={11} color="#1D1E56" />{'  '}Fecha de registro
-                    </Text>
-                    <View style={styles.modalChipRow}>
-                      {FECHA_OPTS.map(opt => {
-                        const active = draftFecha === opt.key;
-                        return (
-                          <TouchableOpacity
-                            key={opt.key}
-                            style={[styles.modalChip, active && styles.modalChipActive]}
-                            onPress={() => setDraftFecha(active ? null : opt.key)}
-                            activeOpacity={0.8}>
-                            <Icons5
-                              name={opt.key === 'nuevo' ? 'sort-amount-down' : 'sort-amount-up'}
-                              size={11}
-                              color={active ? '#FFD60A' : '#6B7280'}
-                            />
-                            <Text style={[styles.modalChipText, active && styles.modalChipTextActive]}>
-                              {'  '}{opt.label}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-
-                    {/* Día específico */}
-                    <TouchableOpacity
-                      style={[styles.modalDateBtn, draftFechaDia && styles.modalDateBtnActive]}
-                      onPress={() => setShowDatePicker(true)}
-                      activeOpacity={0.8}>
-                      <Icons5 name="calendar-day" size={11} color={draftFechaDia ? '#FFD60A' : '#6B7280'} />
-                      <Text style={[styles.modalDateBtnText, draftFechaDia && styles.modalDateBtnTextActive]}>
-                        {'  '}{draftFechaDia ? formatDate(draftFechaDia) : 'Día específico'}
-                      </Text>
-                      {draftFechaDia && (
-                        <TouchableOpacity
-                          onPress={() => setDraftFechaDia(null)}
-                          style={styles.modalDateBtnClear}
-                          hitSlop={{top: 8, bottom: 8, left: 8, right: 8}}>
-                          <Icons name="times" size={10} color="#FFFFFF" />
-                        </TouchableOpacity>
-                      )}
-                    </TouchableOpacity>
-
-                    {/* ── Sección: Plan ── */}
-                    <Text style={[styles.modalSectionLabel, {marginTop: 20}]}>
-                      <Icons5 name="crown" size={11} color="#1D1E56" />{'  '}Plan de suscripción
-                    </Text>
-                    <View style={styles.modalChipRow}>
-                      {PLAN_OPTS.map(opt => {
-                        const active = draftPlan === opt.key;
-                        return (
-                          <TouchableOpacity
-                            key={opt.key}
-                            style={[styles.modalChip, active && styles.modalChipActive]}
-                            onPress={() => setDraftPlan(active ? null : opt.key)}
-                            activeOpacity={0.8}>
-                            <Text style={[styles.modalChipText, active && styles.modalChipTextActive]}>
-                              {opt.label}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-
-                    {/* ── Sección: Distancia ── */}
-                    <Text style={[styles.modalSectionLabel, {marginTop: 20}]}>
-                      <Icons5 name="route" size={11} color="#1D1E56" />{'  '}Ordenar por distancia
-                    </Text>
-                    <View style={styles.modalChipRow}>
-                      {DISTANCIA_OPTS.map(opt => {
-                        const active = draftDistancia === opt.key;
-                        return (
-                          <TouchableOpacity
-                            key={opt.key}
-                            style={[styles.modalChip, active && styles.modalChipActive]}
-                            onPress={() => setDraftDistancia(opt.key)}
-                            activeOpacity={0.8}>
-                            <Icons5 name={opt.icon} size={11} color={active ? '#FFFFFF' : '#6B7280'} />
-                            <Text style={[styles.modalChipText, active && styles.modalChipTextActive]}>
-                              {'  '}{opt.label}
-                            </Text>
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </View>
-
-                    {/* ── Botones ── */}
-                    <View style={styles.modalBtnRow}>
-                      <TouchableOpacity style={styles.modalBtnClear} onPress={handleClear}>
-                        <Text style={styles.modalBtnClearText}>Limpiar todo</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.modalBtnApply} onPress={handleApply}>
-                        <Icons5 name="check" size={13} color="#FFFFFF" />
-                        <Text style={styles.modalBtnApplyText}>{'  '}Aplicar</Text>
-                      </TouchableOpacity>
-                    </View>
-
-                  </ScrollView>
-
-                  <DatePicker
-                    modal
-                    open={showDatePicker}
-                    date={draftFechaDia || new Date()}
-                    mode="date"
-                    locale="es"
-                    title="Seleccionar día"
-                    confirmText="Confirmar"
-                    cancelText="Cancelar"
-                    onConfirm={date => {
-                      setShowDatePicker(false);
-                      setDraftFechaDia(date);
-                    }}
-                    onCancel={() => setShowDatePicker(false)}
-                  />
-                </View>
-              </TouchableWithoutFeedback>
-            </KeyboardAvoidingView>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* ── MI CUENTA ── */}
+      {/* Mi cuenta */}
       <BottomSheet visible={cuentaVisible} onClose={() => setCuentaVisible(false)} title="Mi cuenta">
         <View style={{flexDirection: 'row', alignItems: 'center', gap: space.m}}>
           <Avatar uri={yo?.image_perfil} size={56} />
@@ -920,7 +734,7 @@ const TalleresContainer = ({navigation}) => {
             ayuda="Te enviamos un enlace a tu correo"
             onPress={() => {
               setCuentaVisible(false);
-              navigationScreen.navigate('ForgetPassword');
+              navigation.navigate('ForgetPassword');
             }}
           />
           <FilaMenu icon={LifeBuoy} titulo="Soporte" ayuda="Escríbenos por WhatsApp" externo onPress={abrirSoporte} />
@@ -932,5 +746,102 @@ const TalleresContainer = ({navigation}) => {
     </View>
   );
 };
+
+const Grupo = ({titulo, children}) => (
+  <View style={{gap: space.s}}>
+    <AppText variant="caption" color={colors.muted} style={st.grupoTitulo}>
+      {titulo}
+    </AppText>
+    <View style={st.chips}>{children}</View>
+  </View>
+);
+
+const st = StyleSheet.create({
+  screen: {flex: 1, backgroundColor: colors.bg},
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s,
+    paddingHorizontal: space.m,
+    paddingTop: space.m,
+    paddingBottom: space.s,
+  },
+  segmented: {marginHorizontal: space.m},
+  buscarFila: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s,
+    paddingHorizontal: space.m,
+    paddingTop: space.s + 4,
+    paddingBottom: space.s,
+  },
+  filtrosBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: radius.m,
+    backgroundColor: colors.card,
+    borderWidth: 1,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filtrosBtnOn: {backgroundColor: colors.navy, borderColor: colors.navy},
+  filtrosBadge: {
+    position: 'absolute',
+    top: -4,
+    right: -4,
+    minWidth: 20,
+    height: 20,
+    borderRadius: 10,
+    paddingHorizontal: 5,
+    backgroundColor: colors.yellow,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  filtrosBadgeText: {fontFamily: fonts.bold, fontSize: 12, color: colors.navy},
+  lista: {paddingHorizontal: space.m, paddingTop: space.xs, paddingBottom: space.xl, gap: space.s + 4},
+  listos: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.s,
+    minHeight: TOUCH,
+    paddingHorizontal: space.m,
+    borderRadius: radius.m,
+    backgroundColor: colors.okBg,
+  },
+  listosTexto: {flex: 1, fontFamily: fonts.semibold, fontSize: 14, color: colors.ok},
+  listosAccion: {fontFamily: fonts.bold, fontSize: 14, color: colors.ok},
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: radius.l,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow.card,
+  },
+  cardMain: {padding: space.m, paddingBottom: space.s + 4, gap: 4},
+  cardTop: {flexDirection: 'row', alignItems: 'center', gap: space.s},
+  espera: {fontFamily: fonts.bold, fontSize: 13, color: colors.warn},
+  barra: {height: 6, borderRadius: 3, backgroundColor: colors.skeleton, overflow: 'hidden'},
+  barraLlena: {height: '100%', borderRadius: 3, backgroundColor: colors.ok},
+  filaEstado: {flexDirection: 'row', alignItems: 'center', gap: space.s},
+  falta: {flex: 1, fontFamily: fonts.medium, fontSize: 13, lineHeight: 18, color: colors.warn},
+  listo: {color: colors.ok, fontFamily: fonts.bold},
+  acciones: {flexDirection: 'row', gap: space.s, paddingHorizontal: space.m, paddingBottom: space.m},
+  accion: {
+    flex: 1,
+    minHeight: TOUCH,
+    borderRadius: radius.s,
+    backgroundColor: colors.bg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 6,
+  },
+  accionTexto: {fontFamily: fonts.semibold, fontSize: 13},
+  grupoTitulo: {textTransform: 'uppercase', letterSpacing: 0.6, fontFamily: fonts.semibold},
+  chips: {flexDirection: 'row', flexWrap: 'wrap', gap: space.s},
+  filtrosPie: {flexDirection: 'row', gap: space.s, paddingTop: space.s, paddingBottom: space.m},
+});
 
 export default TalleresContainer;

@@ -1,4 +1,5 @@
 import {
+  Pressable,
   Text,
   TextInput,
   TouchableOpacity,
@@ -17,7 +18,7 @@ import {
   ActivityIndicator,
   PermissionsAndroid,
 } from 'react-native';
-import React, {useState, useCallback, useRef} from 'react';
+import React, {useState, useCallback, useRef, useMemo} from 'react';
 import PhoneInput from '../../ui/PhoneInput';
 import {mostrarTelefono} from '../../utils/telefono';
 import {OPCIONES_HORA} from '../../utils/taller';
@@ -30,7 +31,10 @@ import {useValues} from '../../../App';
 import api from '../../../axiosInstance';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Button as UIButton, colors as ui} from '../../ui';
-import {Check, X as XIcon, CircleAlert} from 'lucide-react-native';
+import {Check, X as XIcon, CircleAlert, ChevronDown, ChevronRight, MessageCircle, Navigation, Phone} from 'lucide-react-native';
+import VisorFotos from '../../ui/VisorFotos';
+import {abrirRutaExterna, abrirWhatsApp, llamar, puedeLlamar, puedeWhatsApp} from '../../utils/contacto';
+import {puntosRevision, textoEspera, diasDesde} from '../../utils/revisionTaller';
 import styles from './style.css';
 import TextInputs from '../../commonComponents/textInputs';
 import {WebView} from 'react-native-webview';
@@ -209,6 +213,37 @@ const SectionHeader = ({title}) => (
   </View>
 );
 
+// ── Sección que se pliega al revisar (el certificador abre solo lo que necesita)
+const Seccion = ({titulo, plegable, abierta, onToggle, resumen, children}) => (
+  <View style={styles.section}>
+    {plegable ? (
+      <Pressable
+        onPress={onToggle}
+        accessibilityRole="button"
+        accessibilityState={{expanded: !!abierta}}
+        accessibilityLabel={`${titulo}${resumen ? `: ${resumen}` : ''}. ${abierta ? 'Plegar' : 'Ver'}`}
+        style={({pressed}) => [fx.plegable, pressed && {opacity: 0.7}]}>
+        <View style={{flex: 1}}>
+          <Text style={styles.sectionHeaderText}>{titulo.toUpperCase()}</Text>
+          {!abierta && resumen ? (
+            <Text style={fx.plegableResumen} numberOfLines={1}>
+              {resumen}
+            </Text>
+          ) : null}
+        </View>
+        {abierta ? (
+          <ChevronDown size={20} color="#5B6078" strokeWidth={2.2} />
+        ) : (
+          <ChevronRight size={20} color="#5B6078" strokeWidth={2.2} />
+        )}
+      </Pressable>
+    ) : (
+      <SectionHeader title={titulo} />
+    )}
+    {!plegable || abierta ? children : null}
+  </View>
+);
+
 // ── Field row: text in view mode, input in edit mode ───────────────────────
 // Pass `value` for text-based fields. Omit `value` for complex fields
 // (Dropdown, Map, RadioButton) — they always render children.
@@ -373,6 +408,7 @@ const FormTaller = () => {
   const [conteoServicios, setConteoServicios] = useState(null);
   const [saving, setSaving] = useState(false);
   const [imgFullscreen, setImgFullscreen] = useState(null);
+  const [abiertas, setAbiertas] = useState({});
 
   const [photoModalVisible, setPhotoModalVisible] = useState(false);
   const [photoModalTarget, setPhotoModalTarget] = useState(null); // { setBase64, setLocalUri }
@@ -800,17 +836,60 @@ const FormTaller = () => {
   const showMap = Number.isFinite(mapLat) && Number.isFinite(mapLng);
 
   // Lo que el certificador revisa antes de aprobar, a la vista y en orden.
-  const revision = [
-    {key: 'rif', label: 'Número de RIF', ok: !!String(cedula || '').trim()},
-    {key: 'docRif', label: 'Foto del RIF', ok: !!(rifIdFiscalUrl || rifIdFiscalLocalUri)},
-    {key: 'frente', label: 'Foto del frente', ok: !!(fotoFrenteTallerUrl || fotoFrenteTallerLocalUri)},
-    {key: 'interior', label: 'Foto del interior', ok: !!(fotoInternaTallerUrl || fotoInternaTallerLocalUri)},
-    {key: 'ubicacion', label: 'Ubicación en el mapa', ok: !!locationPicked},
-    ...(conteoServicios ? [{key: 'servicios', label: 'Al menos un servicio', ok: conteoServicios.total > 0}] : []),
-  ];
+  const revision = puntosRevision({
+    rif: !!String(cedula || '').trim(),
+    docRif: !!(rifIdFiscalUrl || rifIdFiscalLocalUri),
+    frente: !!(fotoFrenteTallerUrl || fotoFrenteTallerLocalUri),
+    interior: !!(fotoInternaTallerUrl || fotoInternaTallerLocalUri),
+    ubicacion: !!locationPicked,
+    servicios: conteoServicios ? conteoServicios.total : null,
+  });
   const revisionOk = revision.filter(r => r.ok).length;
   const porDecidir = ['En espera por aprobación', 'En espera de documentos', 'Pendiente'].includes(dataTaller?.status);
   const statusLabel = STATUS_LABEL[dataTaller?.status] || dataTaller?.status || '';
+
+  // Al revisar, los datos secundarios se pliegan; al editar se ve todo.
+  const plegable = porDecidir && !isEditing;
+  const alternarSeccion = k => setAbiertas(a => ({...a, [k]: !a[k]}));
+
+  // Fotos para el visor (los PDF se abren en el lector del sistema).
+  const fotosVisor = [
+    {label: 'RIF', uri: rifIdFiscalLocalUri || rifIdFiscalUrl},
+    {label: 'Frente del taller', uri: fotoFrenteTallerLocalUri || fotoFrenteTallerUrl},
+    {label: 'Interior del taller', uri: fotoInternaTallerLocalUri || fotoInternaTallerUrl},
+    {label: 'Logo', uri: logotipoNegocioLocalUri || logotipoNegocioUrl},
+    {label: 'Permiso de operación', uri: permisoOperacionLocalUri || permisoOperacionUrl},
+  ].filter(f => f.uri && !esPdf(f.uri));
+  const inicioVisor = Math.max(0, fotosVisor.findIndex(f => f.uri === imgFullscreen));
+
+  const whatsContacto = whats || phone;
+  const hayRuta = locationPicked && Number.isFinite(Number(lat)) && Number.isFinite(Number(lng));
+
+  // «Revisar el siguiente»: la lista manda la cola de «Por revisar» en orden.
+  const cola = Array.isArray(route.params?.cola) ? route.params.cola : [];
+  const siguiente = useMemo(() => {
+    const i = cola.findIndex(c => c.uid === uidTaller);
+    const resto = i >= 0 ? [...cola.slice(i + 1), ...cola.slice(0, i)] : cola;
+    return resto.find(c => c.uid && c.uid !== uidTaller) || null;
+  }, [cola, uidTaller]);
+  const irAlSiguiente = () => {
+    setSuccessModalType(null);
+    if (siguiente) navigation.replace('FormTaller', {uid: siguiente.uid, cola: cola.filter(c => c.uid !== uidTaller)});
+    else navigation.goBack();
+  };
+  const creadoMs = siguiente?.createdAt || 0;
+  const esperaSiguiente = creadoMs ? textoEspera(diasDesde(new Date(creadoMs))) : '';
+
+  const resumenRedes = [LinkFacebook && 'Facebook', LinkInstagram && 'Instagram', LinkTiktok && 'TikTok'].filter(Boolean).join(' · ') || 'Sin redes';
+  const resumenPagos = metodosPago.filter(m => m.checked).map(m => m.label).join(' · ') || 'Sin métodos';
+  const diasAbiertos = BUSINESS_DAYS.filter(d => businessHours[d.key]?.enabled).length;
+  const resumenHorario = diasAbiertos ? `Abre ${diasAbiertos} ${diasAbiertos === 1 ? 'día' : 'días'} a la semana` : 'Sin horario';
+  const resumenDetalles =
+    areasDeEspecialidades(dataTaller?.especialidades)
+      .map(c => String((c && (c.nombre || c.name)) || (typeof c === 'string' ? c : '')).trim())
+      .filter(Boolean)
+      .slice(0, 3)
+      .join(' · ') || (Caracteristicas ? 'Descripción' : 'Sin descripción');
 
   const statusColor =
     dataTaller?.status === 'Aprobado' ? '#22C55E'
@@ -912,109 +991,87 @@ const FormTaller = () => {
   return (
     <View style={{flex: 1, backgroundColor: '#F4F5F9'}}>
 
-      {/* ── Profile Header ──────────────────────────────────────────────── */}
-      <View style={[styles.profileHeader, {paddingTop: insets.top + 4}]}>
-        {/* Decorative circles */}
-        <View style={styles.headerCircle1} pointerEvents="none" />
-        <View style={styles.headerCircle2} pointerEvents="none" />
-
-        {/* Top row: back + status */}
-        <View style={styles.headerTopRow}>
+      {/* ── Cabecera compacta: nombre y estatus a la vista ────────────────── */}
+      <View style={[styles.profileHeader, fx.cabecera, {paddingTop: insets.top + 6}]}>
+        <View style={fx.cabeceraFila}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
-            style={styles.backBtn}
+            style={[styles.backBtn, {width: 44, height: 44, borderRadius: 22}]}
+            accessibilityRole="button"
+            accessibilityLabel="Volver"
             activeOpacity={0.85}>
             <Icons name="angle-left" size={22} color={YELLOW} />
           </TouchableOpacity>
-          <View style={{flex: 1}} />
+          <Image
+            source={imagePerfil ? {uri: imagePerfil} : notImageFound}
+            style={fx.cabeceraAvatar}
+            resizeMode="cover"
+          />
+          <View style={{flex: 1, minWidth: 0}}>
+            <Text style={fx.cabeceraNombre} numberOfLines={2} accessibilityRole="header">
+              {NameTaller || 'Negocio'}
+            </Text>
+            {estadoSelected ? (
+              <Text style={fx.cabeceraSub} numberOfLines={1}>
+                {estadoSelected}
+              </Text>
+            ) : null}
+          </View>
           {dataTaller?.status ? (
             <View style={[styles.statusBadge, {backgroundColor: statusColor}]}>
-              <Text style={[styles.statusBadgeText, {color: statusTextColor}]}>
-                {statusLabel}
-              </Text>
+              <Text style={[styles.statusBadgeText, {color: statusTextColor}]}>{statusLabel}</Text>
             </View>
           ) : null}
         </View>
 
-        {/* Avatar */}
-        <View style={styles.avatarWrap}>
-          <Image
-            source={imagePerfil ? {uri: imagePerfil} : notImageFound}
-            style={styles.avatarImg}
-            resizeMode="cover"
-          />
-        </View>
-
-        {/* Name & estado */}
-        <Text style={styles.profileName} numberOfLines={2}>
-          {NameTaller || 'Negocio'}
-        </Text>
-        {estadoSelected ? (
-          <View style={styles.profileLocationRow}>
-            <Icons5 name="map-marker-alt" size={10} color="rgba(255,255,255,0.5)" />
-            <Text style={styles.profileSubtitle}> {estadoSelected}</Text>
-          </View>
-        ) : null}
-
-        {/* Servicios cargados: para saber si ya está listo para aprobarse */}
-        {conteoServicios ? (
-          <TouchableOpacity
-            onPress={() => navigation.navigate('ServiciosContainer', {uid_taller: uidTaller, nombre_taller: NameTaller})}
-            activeOpacity={0.85}
-            accessibilityRole="button"
-            accessibilityLabel={`${conteoServicios.total} servicios cargados. Ver servicios`}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              alignSelf: 'center',
-              marginTop: 10,
-              minHeight: 36,
-              paddingHorizontal: 14,
-              borderRadius: 999,
-              backgroundColor: conteoServicios.total > 0 ? 'rgba(34,197,94,0.18)' : 'rgba(245,158,11,0.22)',
-            }}>
-            <Icons5 name={conteoServicios.total > 0 ? 'check-circle' : 'exclamation-circle'} size={12} color={conteoServicios.total > 0 ? '#86EFAC' : '#FCD34D'} />
-            <Text style={{color: '#FFFFFF', fontWeight: '700', fontSize: 13}}>
-              {conteoServicios.total === 0
-                ? '  Sin servicios cargados'
-                : `  ${conteoServicios.total} servicio${conteoServicios.total === 1 ? '' : 's'} cargado${conteoServicios.total === 1 ? '' : 's'}${conteoServicios.publicados ? ` · ${conteoServicios.publicados} publicado${conteoServicios.publicados === 1 ? '' : 's'}` : ''}`}
-            </Text>
-            <Icons5 name="chevron-right" size={10} color="rgba(255,255,255,0.7)" style={{marginLeft: 6}} />
-          </TouchableOpacity>
-        ) : null}
-
-        {/* Divider */}
-        <View style={styles.headerDivider} />
-
-        {/* Buttons */}
-        <View style={styles.profileBtnsRow}>
-          <TouchableOpacity
-            style={styles.profileBtnPrimary}
-            onPress={() => setAccionesModalVisible(true)}
-            activeOpacity={0.85}>
-            <Icons5 name="ellipsis-h" size={13} color={DARK_BLUE} />
-            <Text style={styles.profileBtnPrimaryText}>  Acciones</Text>
-          </TouchableOpacity>
-          {isEditing && (
+        <View style={fx.cabeceraBotones}>
+          {conteoServicios ? (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ServiciosContainer', {uid_taller: uidTaller, nombre_taller: NameTaller})}
+              activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityLabel={`${conteoServicios.total} servicios cargados. Ver servicios`}
+              style={[
+                fx.servicios,
+                {backgroundColor: conteoServicios.total > 0 ? 'rgba(34,197,94,0.18)' : 'rgba(245,158,11,0.22)'},
+              ]}>
+              <Icons5
+                name={conteoServicios.total > 0 ? 'check-circle' : 'exclamation-circle'}
+                size={12}
+                color={conteoServicios.total > 0 ? '#86EFAC' : '#FCD34D'}
+              />
+              <Text style={fx.serviciosTexto} numberOfLines={1}>
+                {conteoServicios.total === 0
+                  ? '  Sin servicios'
+                  : `  ${conteoServicios.total} servicio${conteoServicios.total === 1 ? '' : 's'}`}
+              </Text>
+              <Icons5 name="chevron-right" size={10} color="rgba(255,255,255,0.7)" style={{marginLeft: 6}} />
+            </TouchableOpacity>
+          ) : (
+            <View style={{flex: 1}} />
+          )}
+          {isEditing ? (
             <>
-              <TouchableOpacity
-                style={styles.profileBtnCancel}
-                onPress={() => setIsEditing(false)}
-                activeOpacity={0.85}>
-                <Icons name="times" size={13} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.profileBtnCancelText}>  Cancelar</Text>
+              <TouchableOpacity style={fx.botonCabecera} onPress={() => setIsEditing(false)} activeOpacity={0.85}>
+                <Text style={fx.botonCabeceraTexto}>Cancelar</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.profileBtnSave}
+                style={[fx.botonCabecera, {backgroundColor: '#22C55E'}]}
                 onPress={handleSave}
                 disabled={saving}
                 activeOpacity={0.85}>
-                <Icons5 name="save" size={13} color="#FFFFFF" />
-                <Text style={styles.profileBtnSaveText}>
-                  {saving ? '  Guardando…' : '  Guardar'}
-                </Text>
+                <Text style={[fx.botonCabeceraTexto, {color: '#FFFFFF'}]}>{saving ? 'Guardando…' : 'Guardar'}</Text>
               </TouchableOpacity>
             </>
+          ) : (
+            <TouchableOpacity
+              style={[fx.botonCabecera, {backgroundColor: YELLOW}]}
+              onPress={() => setAccionesModalVisible(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Más acciones: editar, cargar o ver servicios"
+              activeOpacity={0.85}>
+              <Text style={[fx.botonCabeceraTexto, {color: DARK_BLUE}]}>Acciones</Text>
+            </TouchableOpacity>
           )}
         </View>
       </View>
@@ -1030,11 +1087,16 @@ const FormTaller = () => {
 
           {!isEditing && porDecidir ? (
             <View style={fx.revision} accessibilityRole="summary">
-              <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 8}}>
-                <Text style={fx.revisionTitulo}>Antes de aprobar</Text>
+              <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 10}}>
+                <Text style={fx.revisionTitulo}>Revisión</Text>
                 <Text style={[fx.revisionConteo, revisionOk === revision.length && {color: ui.ok}]}>
                   {revisionOk} de {revision.length}
                 </Text>
+              </View>
+              <View style={[styles.docGrid, {marginBottom: 6}]}>
+                {docThumb({label: 'RIF', url: rifIdFiscalUrl, localUri: rifIdFiscalLocalUri, onSelect: () => openPhotoOptions(setRifIdFiscalBase64, setRifIdFiscalLocalUri)})}
+                {docThumb({label: 'Frente del taller', url: fotoFrenteTallerUrl, localUri: fotoFrenteTallerLocalUri, onSelect: () => openPhotoOptions(setFotoFrenteTallerBase64, setFotoFrenteTallerLocalUri)})}
+                {docThumb({label: 'Interior del taller', url: fotoInternaTallerUrl, localUri: fotoInternaTallerLocalUri, onSelect: () => openPhotoOptions(setFotoInternaTallerBase64, setFotoInternaTallerLocalUri)})}
               </View>
               {revision.map(r => (
                 <View key={r.key} style={fx.revisionFila} accessibilityLabel={`${r.label}: ${r.ok ? 'listo' : 'falta'}`}>
@@ -1049,6 +1111,38 @@ const FormTaller = () => {
                   </Text>
                 </View>
               ))}
+            </View>
+          ) : null}
+
+          {!isEditing ? (
+            <View style={fx.contacto}>
+              <Pressable
+                onPress={() => llamar(phone)}
+                disabled={!puedeLlamar(phone)}
+                accessibilityRole="button"
+                accessibilityLabel="Llamar al taller"
+                style={({pressed}) => [fx.contactoBtn, pressed && {opacity: 0.7}, !puedeLlamar(phone) && {opacity: 0.4}]}>
+                <Phone size={20} color={DARK_BLUE} strokeWidth={2.2} />
+                <Text style={fx.contactoTexto}>Llamar</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => abrirWhatsApp(whatsContacto, `Hola, te escribo de Solvers sobre el registro de ${NameTaller || 'tu negocio'}.`)}
+                disabled={!puedeWhatsApp(whatsContacto)}
+                accessibilityRole="button"
+                accessibilityLabel="Escribir por WhatsApp"
+                style={({pressed}) => [fx.contactoBtn, pressed && {opacity: 0.7}, !puedeWhatsApp(whatsContacto) && {opacity: 0.4}]}>
+                <MessageCircle size={20} color={ui.whatsapp} strokeWidth={2.2} />
+                <Text style={[fx.contactoTexto, {color: ui.whatsapp}]}>WhatsApp</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => abrirRutaExterna({lat: Number(lat), lng: Number(lng)}, NameTaller)}
+                disabled={!hayRuta}
+                accessibilityRole="button"
+                accessibilityLabel="Cómo llegar al taller"
+                style={({pressed}) => [fx.contactoBtn, pressed && {opacity: 0.7}, !hayRuta && {opacity: 0.4}]}>
+                <Navigation size={20} color={DARK_BLUE} strokeWidth={2.2} />
+                <Text style={fx.contactoTexto}>Cómo llegar</Text>
+              </Pressable>
             </View>
           ) : null}
 
@@ -1230,8 +1324,12 @@ const FormTaller = () => {
           </View>
 
           {/* ── Presence / Redes ────────────────────────────────────────── */}
-          <View style={styles.section}>
-            <SectionHeader title="Redes sociales" />
+          <Seccion
+            titulo="Redes sociales"
+            plegable={plegable}
+            abierta={!!abiertas.redes}
+            onToggle={() => alternarSeccion('redes')}
+            resumen={resumenRedes}>
             <FieldBlock
               label="Facebook"
               value={LinkFacebook}
@@ -1250,11 +1348,15 @@ const FormTaller = () => {
               isEditing={isEditing}>
               <EditInput value={LinkTiktok} onChangeText={setLinkTiktok} autoCapitalize="none" />
             </FieldBlock>
-          </View>
+          </Seccion>
 
           {/* ── Detalles ────────────────────────────────────────────────── */}
-          <View style={styles.section}>
-            <SectionHeader title="Detalles del negocio" />
+          <Seccion
+            titulo="Detalles del negocio"
+            plegable={plegable}
+            abierta={!!abiertas.detalles}
+            onToggle={() => alternarSeccion('detalles')}
+            resumen={resumenDetalles}>
             <FieldBlock
               label="Descripción"
               value={Caracteristicas}
@@ -1279,11 +1381,15 @@ const FormTaller = () => {
                 </View>
               </View>
             ) : null}
-          </View>
+          </Seccion>
 
           {/* ── Métodos de pago ─────────────────────────────────────────── */}
-          <View style={styles.section}>
-            <SectionHeader title="Métodos de pago" />
+          <Seccion
+            titulo="Métodos de pago"
+            plegable={plegable}
+            abierta={!!abiertas.pagos}
+            onToggle={() => alternarSeccion('pagos')}
+            resumen={resumenPagos}>
             {!isEditing && (
               <Text style={styles.pagoHint}>
                 {metodosPago.filter(m => m.checked).map(m => m.label).join(' · ') || '—'}
@@ -1302,11 +1408,15 @@ const FormTaller = () => {
                 ))}
               </View>
             )}
-          </View>
+          </Seccion>
 
           {/* ── Horarios ────────────────────────────────────────────────── */}
-          <View style={styles.section}>
-            <SectionHeader title="Horarios de atención" />
+          <Seccion
+            titulo="Horarios de atención"
+            plegable={plegable}
+            abierta={!!abiertas.horarios}
+            onToggle={() => alternarSeccion('horarios')}
+            resumen={resumenHorario}>
             {BUSINESS_DAYS.map(day => {
               const dayData = businessHours[day.key] || {};
               return (
@@ -1393,11 +1503,11 @@ const FormTaller = () => {
                 </View>
               );
             })}
-          </View>
+          </Seccion>
 
           {/* ── Documentos ──────────────────────────────────────────────── */}
           <View style={styles.section}>
-            <SectionHeader title="Documentos" />
+            <SectionHeader title={plegable ? 'Otros archivos' : 'Documentos'} />
             {[rifIdFiscalLocalUri, fotoFrenteTallerLocalUri, fotoInternaTallerLocalUri, logotipoNegocioLocalUri, permisoOperacionLocalUri].some(Boolean) ? (
               <View style={{flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#E8F7EE', borderRadius: 12, padding: 12, marginBottom: 12}}>
                 <Icons5 name="check-circle" size={14} color="#15803D" />
@@ -1410,9 +1520,13 @@ const FormTaller = () => {
               {/* Los del registro actual: RIF, frente, interior y logo. El
                   permiso de operación ya no se pide: solo se muestra si un
                   registro anterior lo tiene. */}
-              {docThumb({label: 'RIF',                    url: rifIdFiscalUrl,       localUri: rifIdFiscalLocalUri,       onSelect: () => openPhotoOptions(setRifIdFiscalBase64,       setRifIdFiscalLocalUri)})}
-              {docThumb({label: 'Frente del taller',      url: fotoFrenteTallerUrl,  localUri: fotoFrenteTallerLocalUri,  onSelect: () => openPhotoOptions(setFotoFrenteTallerBase64,  setFotoFrenteTallerLocalUri)})}
-              {docThumb({label: 'Interior del taller',    url: fotoInternaTallerUrl, localUri: fotoInternaTallerLocalUri, onSelect: () => openPhotoOptions(setFotoInternaTallerBase64, setFotoInternaTallerLocalUri)})}
+              {plegable ? null : (
+                <>
+                  {docThumb({label: 'RIF',                    url: rifIdFiscalUrl,       localUri: rifIdFiscalLocalUri,       onSelect: () => openPhotoOptions(setRifIdFiscalBase64,       setRifIdFiscalLocalUri)})}
+                  {docThumb({label: 'Frente del taller',      url: fotoFrenteTallerUrl,  localUri: fotoFrenteTallerLocalUri,  onSelect: () => openPhotoOptions(setFotoFrenteTallerBase64,  setFotoFrenteTallerLocalUri)})}
+                  {docThumb({label: 'Interior del taller',    url: fotoInternaTallerUrl, localUri: fotoInternaTallerLocalUri, onSelect: () => openPhotoOptions(setFotoInternaTallerBase64, setFotoInternaTallerLocalUri)})}
+                </>
+              )}
               {docThumb({label: 'Logo',                   url: logotipoNegocioUrl,   localUri: logotipoNegocioLocalUri,   onSelect: () => openPhotoOptions(setLogotipoNegocioBase64,   setLogotipoNegocioLocalUri)})}
               {permisoOperacionUrl || permisoOperacionLocalUri
                 ? docThumb({label: 'Permiso de operación', url: permisoOperacionUrl, localUri: permisoOperacionLocalUri, onSelect: () => openPhotoOptions(setPermisoOperacionBase64, setPermisoOperacionLocalUri)})
@@ -1449,29 +1563,13 @@ const FormTaller = () => {
         </View>
       ) : null}
 
-      {/* ── Modal: imagen fullscreen ────────────────────────────────────── */}
-      <Modal
-        transparent
-        animationType="fade"
+      {/* ── Visor de fotos: deslizar, pellizcar y doble toque ───────────── */}
+      <VisorFotos
         visible={!!imgFullscreen}
-        onRequestClose={() => setImgFullscreen(null)}
-        statusBarTranslucent>
-        <View style={styles.imgFullBackdrop}>
-          <TouchableOpacity
-            style={styles.imgFullClose}
-            onPress={() => setImgFullscreen(null)}
-            activeOpacity={0.8}>
-            <Icons name="times" size={20} color="#FFFFFF" />
-          </TouchableOpacity>
-          {imgFullscreen ? (
-            <Image
-              source={{uri: imgFullscreen}}
-              style={styles.imgFullImage}
-              resizeMode="contain"
-            />
-          ) : null}
-        </View>
-      </Modal>
+        fotos={fotosVisor.length ? fotosVisor : imgFullscreen ? [{uri: imgFullscreen, label: 'Foto'}] : []}
+        inicio={inicioVisor}
+        onClose={() => setImgFullscreen(null)}
+      />
 
       {/* ── Modal: menú acciones ─────────────────────────────────────────── */}
       <Modal
@@ -1725,14 +1823,27 @@ const FormTaller = () => {
 
             <View style={styles.successDivider} />
 
+            {siguiente ? (
+              <View style={fx.siguiente}>
+                <Text style={fx.siguienteEtiqueta}>SIGUIENTE POR REVISAR</Text>
+                <Text style={fx.siguienteNombre} numberOfLines={1}>{siguiente.nombre || 'Negocio sin nombre'}</Text>
+                {esperaSiguiente ? <Text style={fx.siguienteEspera}>{esperaSiguiente}</Text> : null}
+              </View>
+            ) : null}
+            {siguiente ? (
+              <TouchableOpacity style={styles.successBtnPrimary} activeOpacity={0.88} onPress={irAlSiguiente}>
+                <Text style={styles.successBtnPrimaryText}>Revisar el siguiente</Text>
+              </TouchableOpacity>
+            ) : null}
+
             <Text style={styles.successPromptTitle}>¿Deseas cargar servicios ahora?</Text>
             <Text style={styles.successPromptBody}>
               Puedes agregar los servicios de este negocio en este momento o hacerlo más tarde desde su perfil.
             </Text>
 
-            {/* Botón principal: Cargar servicios */}
+            {/* Cargar servicios (principal solo si no hay otro por revisar) */}
             <TouchableOpacity
-              style={styles.successBtnPrimary}
+              style={siguiente ? styles.successBtnSecondary : styles.successBtnPrimary}
               activeOpacity={0.88}
               onPress={() => {
                 setSuccessModalType(null);
@@ -1743,7 +1854,7 @@ const FormTaller = () => {
                 });
               }}>
               <Icons5 name="plus-circle" size={16} color="#1D1E56" />
-              <Text style={styles.successBtnPrimaryText}>  Cargar servicios ahora</Text>
+              <Text style={siguiente ? styles.successBtnSecondaryText : styles.successBtnPrimaryText}>  Cargar servicios ahora</Text>
             </TouchableOpacity>
 
             {/* Botón secundario: Continuar */}
@@ -1779,6 +1890,19 @@ const FormTaller = () => {
               {' '}ha sido rechazada correctamente.{'\n'}
               El propietario ha sido informado con el motivo indicado.
             </Text>
+
+            {siguiente ? (
+              <View style={fx.siguiente}>
+                <Text style={fx.siguienteEtiqueta}>SIGUIENTE POR REVISAR</Text>
+                <Text style={fx.siguienteNombre} numberOfLines={1}>{siguiente.nombre || 'Negocio sin nombre'}</Text>
+                {esperaSiguiente ? <Text style={fx.siguienteEspera}>{esperaSiguiente}</Text> : null}
+              </View>
+            ) : null}
+            {siguiente ? (
+              <TouchableOpacity style={[styles.successBtnPrimary, {marginTop: 12}]} activeOpacity={0.88} onPress={irAlSiguiente}>
+                <Text style={styles.successBtnPrimaryText}>Revisar el siguiente</Text>
+              </TouchableOpacity>
+            ) : null}
 
             <TouchableOpacity
               style={[styles.successBtnPrimary, {backgroundColor: '#FEE2E2', borderColor: '#FECACA'}]}
@@ -1933,6 +2057,49 @@ const MOTIVOS_RAPIDOS = [
 ];
 
 const fx = StyleSheet.create({
+  cabecera: {paddingBottom: 14, paddingHorizontal: 0, alignItems: 'stretch', borderBottomLeftRadius: 24, borderBottomRightRadius: 24},
+  cabeceraFila: {flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16},
+  cabeceraAvatar: {width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.15)'},
+  cabeceraNombre: {fontSize: 17, fontWeight: '800', color: '#FFFFFF'},
+  cabeceraSub: {fontSize: 13, color: 'rgba(255,255,255,0.7)', marginTop: 2},
+  cabeceraBotones: {flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, marginTop: 12},
+  servicios: {flex: 1, flexDirection: 'row', alignItems: 'center', minHeight: 40, paddingHorizontal: 12, borderRadius: 999},
+  serviciosTexto: {flexShrink: 1, color: '#FFFFFF', fontWeight: '700', fontSize: 13},
+  botonCabecera: {
+    minHeight: 40,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  botonCabeceraTexto: {fontSize: 14, fontWeight: '800', color: '#FFFFFF'},
+  contacto: {flexDirection: 'row', gap: 8, marginBottom: 12},
+  contactoBtn: {
+    flex: 1,
+    minHeight: 56,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E3E5EE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+  },
+  contactoTexto: {fontSize: 13, fontWeight: '700', color: '#1F2344'},
+  plegable: {flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44},
+  plegableResumen: {fontSize: 13, color: '#5B6078', marginTop: 4},
+  siguiente: {
+    alignSelf: 'stretch',
+    backgroundColor: '#F5F6FA',
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 14,
+    gap: 2,
+  },
+  siguienteEtiqueta: {fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: '#5B6078'},
+  siguienteNombre: {fontSize: 15, fontWeight: '800', color: '#1F2344'},
+  siguienteEspera: {fontSize: 13, fontWeight: '700', color: '#955800'},
   revision: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
